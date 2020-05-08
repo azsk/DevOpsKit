@@ -354,7 +354,7 @@ class ControlStateExtension
 		{
 			if($this.InvocationContext)
 			{
-			  $projectName = $this.GetProjectNameFronExtStorage();
+			  $projectName = $this.GetProjectNameFromExtStorage();
 			}
 		}
 		elseif($this.resourceType -eq "Project" )
@@ -368,7 +368,7 @@ class ControlStateExtension
 		return $projectName;
 	}
 
-	[string] GetProjectNameFronExtStorage()
+	[string] GetProjectNameFromExtStorage()
 	{
 		try {
 			$rmContext = [ContextHelper]::GetCurrentContext();
