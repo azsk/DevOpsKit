@@ -298,6 +298,42 @@ class AppService: AzSVTBase
       return $controlResult;
     }
 
+	hidden [ControlResult] CheckAppServiceRootPageAuth([ControlResult] $controlResult)
+    {
+		$controlStatus = [VerificationResult]::Failed
+		$TenantId = ([ContextHelper]::GetCurrentRMContext()).Tenant.Id
+		$authString = [string]::Format("https://login.windows.net/{0}",$TenantId)
+		$redirectStatusCode = 302
+		$temp = @($this.ResourceObject.Properties.HostNames | where-object { $_.Contains('.azurewebsites.') })
+		$appURL = $temp[0]
+		$appURI = [string]::Format("https://{0}",$appURL)
+		try{
+
+			$appResponse = Invoke-WebRequest -uri $appURI  -Method GET  -UseBasicParsing -maximumredirection 0
+			if($null -ne $appResponse -and [Helpers]::CheckMember($appResponse,"StatusCode")) {
+				if($appResponse.StatusCode -eq $redirectStatusCode -and $appResponse.RawContent.Contains($AuthString)){
+					$controlStatus = [VerificationResult]::Passed
+					$controlResult.AddMessage("AAD Authentication for root page is enabled.");
+				}else{
+					$controlStatus = [VerificationResult]::Failed
+					$controlResult.AddMessage("AAD Authentication for root page is not configured.");
+				}
+			}else{
+				$controlStatus = [VerificationResult]::Verify
+				$controlResult.AddMessage("Please verify that AAD Authentication is configured for root page.");
+			}
+		
+		}catch{
+
+			$controlStatus = [VerificationResult]::Manual
+			$controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false;
+			$controlResult.AddMessage("Please verify manually that AAD Authentication is configured for root page.");
+		}
+				
+		$controlResult.VerificationResult = $controlStatus
+		return $controlResult;
+	}
+	
     hidden [ControlResult] CheckAppServiceRemoteDebuggingConfiguration([ControlResult] $controlResult)
 	{
 		if([Helpers]::CheckMember($this.WebAppDetails,"SiteConfig"))
