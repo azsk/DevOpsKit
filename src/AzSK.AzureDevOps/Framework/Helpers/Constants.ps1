@@ -91,8 +91,13 @@ class Constants
 
 	#Ext Storage
 	static [string] $StorageUri = "https://extmgmt.dev.azure.com/{0}/_apis/extensionmanagement/installedextensions/azsdktm/ADOSecurityScanner/Data/Scopes/Default/Current/Collections/{1}/Documents/{2}?api-version=5.1-preview.1" 
+	static [string] $AttRepoStorageUri = "https://dev.azure.com/{0}/{1}/_apis/git/repositories/{2}/pushes?api-version=5.0" 
+	static [string] $GetAttRepoStorageUri = "https://{0}.visualstudio.com/{1}/_apis/git/repositories/{2}/Items?path=%2F{3}&recursionLevel=0&includeContentMetadata=true&versionDescriptor.version={4}&versionDescriptor.versionOptions=0&versionDescriptor.versionType=0&includeContent=true&resolveLfs=true?api-version=4.1-preview.1" 
 	static [string] $AutoUpdateMessage = "Auto-update for AzSK.AzureDevOps is currently not enabled for your machine."
-	static [string] $OrgPolicyRepo = "AzSK_Policy_"; 
+	static [string] $AttestationRepo = "ADOScanner_Attestation"; 
+	static [string] $AttestationBranch = "master"; 
+	static [string] $OrgPolicyRepo = "ADOScanner_Policy_"; 
+	static [string] $OrgAttPrjExtFile = "Org_Config"; 
 
 	static [string] $StorageAccountPreName= "azsk"
 	static [string] $AzSKAppFolderPath = [Environment]::GetFolderPath('LocalApplicationData') + "/Microsoft/" + [Constants]::AzSKModuleName

@@ -77,7 +77,7 @@ class ADOSVTBase: SVTBase {
 			$resourceType = $ControlResults[0].FeatureName
 			$resourceName = $ControlResults[0].ResourceContext.ResourceName
 
-			$this.ControlStateExt.SetControlState($id, $effectiveResourceStates, $true, $resourceType, $resourceName)
+			$this.ControlStateExt.SetControlState($id, $effectiveResourceStates, $true, $resourceType, $resourceName, $ControlResults[0].ResourceContext.ResourceGroupName)
 		}
 	}
 
@@ -89,10 +89,14 @@ class ADOSVTBase: SVTBase {
 				if ($this.ResourceContext) {
 					$resourceType = $this.ResourceContext.ResourceTypeName
 				}
-				$resourceStates = $this.ControlStateExt.GetControlState($this.ResourceId, $resourceType, $this.ResourceContext.ResourceName)
+				#Fetch control state for organization only if project is configured for org spesific control attestation (Check for Organization only, for other resource go inside without project check).
+				if($resourceType -ne "Organization" -or $this.ControlStateExt.GetProject())
+				{
+				$resourceStates = $this.ControlStateExt.GetControlState($this.ResourceId, $resourceType, $this.ResourceContext.ResourceName, $this.ResourceContext.ResourceGroupName)
 				if ($null -ne $resourceStates) {
 					$this.ResourceState += $resourceStates
 				}
+			    }
 				else {
 					return $null;
 				}				

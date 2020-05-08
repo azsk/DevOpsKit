@@ -12,7 +12,6 @@
           "AzureDevOps_Organization_AuthZ_Review_Extension_Managers",
           "AzureDevOps_Organization_AuthZ_Review_Project_Collection_Service_Accounts",
           "AzureDevOps_Organization_SI_Review_Auto_Injected_Extensions"
-  
         ]
      },
      {
@@ -29,7 +28,6 @@
          "AzureDevOps_ServiceConnection_AuthZ_Disable_InheritPermissions",
          "AzureDevOps_ServiceConnection_AuthZ_Dont_Grant_All_Pipelines_Access",
          "AzureDevOps_ServiceConnection_AuthZ_Dont_Allow_Global_SecurityGroups"
-
       ]
      },
      {
@@ -50,7 +48,6 @@
       "ControlIds": [
         "AzureDevOps_AgentPool_AuthZ_Disable_Inherited_Permissions",
         "AzureDevOps_AgentPool_AuthZ_Project_Dont_Grant_All_Pipeline_Access"
-    
       ]
      }
     ]
@@ -61,7 +58,11 @@
   },
   "AllowAttestationResourceType": [
     "Organization",
-    "Project"
+    "Project",
+    "Build",
+    "Release",
+    "ServiceConnection",
+    "AgentPool"
    ],
   "AttestationExpiryPeriodInDays": {
     "Default": 90,

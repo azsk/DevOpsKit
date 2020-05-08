@@ -1,0 +1,49 @@
+{
+    "Post" :
+    {
+    "refUpdates": [
+        {
+            "name": "refs/heads/master",
+            "oldObjectId": "{0}"
+        }
+    ],
+    "commits": [
+        {
+            "comment": "Updated the attestation data.",
+            "changes": [
+                {
+                    "changeType": "{1}",
+                    "item": {
+                        "path": "{2}"
+                    },
+                    "newContent": {
+                        "content": "{3}",
+                        "contentType": 0
+                    }
+                }
+            ]
+        }
+    ]
+},
+"Delete": {
+    "refUpdates": [
+        {
+            "name": "refs/heads/master",
+            "oldObjectId": "{0}"
+        }
+    ],
+    "commits": [
+        {
+            "comment": "Deleted the attestation data.",
+            "changes": [
+                {
+                    "changeType": "delete",
+                    "item": {
+                        "path": "{1}"
+                    }
+                }
+            ]
+        }
+    ]
+}
+}

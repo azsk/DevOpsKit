@@ -260,12 +260,12 @@ class SVTResourceResolver: AzSKRoot
                                 $svtResource.ResourceName = $bldDef.name;
                                 $svtResource.ResourceGroupName =$bldDef.project.name;
                                 $svtResource.ResourceType = "AzureDevOps.Build";
-                                $svtResource.ResourceId = $bldDef.url
+                                $svtResource.ResourceId = $bldDef.url.split('?')[0];
                                 $svtResource.ResourceTypeMapping = ([SVTMapping]::AzSKDevOpsResourceMapping |
                                                                 Where-Object { $_.ResourceType -eq $svtResource.ResourceType } |
                                                                 Select-Object -First 1)
                                 $svtResource.ResourceDetails = $bldDef
-                                $link = $svtResource.ResourceId.replace('_apis/build/Definitions','_build?definitionId=').split('?')[0];
+                                $link = $svtResource.ResourceId.replace('_apis/build/Definitions/','_build?definitionId=');
                                 $svtResource.ResourceDetails  | Add-Member -Name 'ResourceLink' -Type NoteProperty -Value $link;
                                 $this.SVTResources +=$svtResource
 
@@ -289,12 +289,12 @@ class SVTResourceResolver: AzSKRoot
                                     $svtResource.ResourceName = $bldDef.name;
                                     $svtResource.ResourceGroupName =$bldDef.project.name;
                                     $svtResource.ResourceType = "AzureDevOps.Build";
-                                    $svtResource.ResourceId = $bldDef.url
+                                    $svtResource.ResourceId = $bldDef.url.split('?')[0];
                                     $svtResource.ResourceTypeMapping = ([SVTMapping]::AzSKDevOpsResourceMapping |
                                                                     Where-Object { $_.ResourceType -eq $svtResource.ResourceType } |
                                                                     Select-Object -First 1)
-
-                                    $link = $svtResource.ResourceId.replace('_apis/build/Definitions','_build?definitionId=').split('?')[0];
+      
+                                    $link = $svtResource.ResourceId.replace('_apis/build/Definitions/','_build?definitionId=');
                                     $svtResource.ResourceDetails = New-Object -TypeName psobject -Property @{ ResourceLink = $link }
                                                                                                      
                                     $this.SVTResources +=$svtResource
