@@ -119,7 +119,6 @@ function Get-AzSKAzureServicesSecurityStatus
 		[Parameter(Mandatory = $true, ParameterSetName = "BulkAttestation", HelpMessage="Comma separated control ids to filter the security controls. e.g.: Azure_Subscription_AuthZ_Limit_Admin_Owner_Count, Azure_Storage_DP_Encrypt_At_Rest_Blob etc.")]
 		[Parameter(Mandatory = $true, ParameterSetName = "BulkAttestationClear", HelpMessage="Comma separated control ids to filter the security controls. e.g.: Azure_Subscription_AuthZ_Limit_Admin_Owner_Count, Azure_Storage_DP_Encrypt_At_Rest_Blob etc.")]
 		[Alias("BulkAttestControlId","cids","bacid")]
-		[AllowEmptyString()]
 		$ControlIds,
 
 		[string] 
