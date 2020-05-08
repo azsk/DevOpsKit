@@ -141,7 +141,13 @@ function Get-AzSKAzureDevOpsSecurityStatus
 		[switch]
         [Parameter(Mandatory = $false)]
 		[Alias("aex")]
-		$AddException
+		$AddException,
+
+		[string]
+		[Parameter(HelpMessage="Project name to store attestation details for organization-specific controls.")]
+		[ValidateNotNullOrEmpty()]
+		[Alias("atp")]
+		$AttestationHostProjectName
 
 	)
 	Begin

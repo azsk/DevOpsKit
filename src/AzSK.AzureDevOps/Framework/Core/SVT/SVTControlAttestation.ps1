@@ -107,7 +107,7 @@ class SVTControlAttestation
 				Write-Host "Please select an action from below: `n[0]: Skip`n[1]: Attest" -ForegroundColor Cyan
 				$userChoice = Read-Host "User Choice"
 				if(-not [string]::IsNullOrWhiteSpace($userChoice))
-				{
+				{     
 					$userChoice = $userChoice.Trim();
 				}
 			}
@@ -223,8 +223,7 @@ class SVTControlAttestation
 				{
 					$controlState.State = [StateData]::new();
 				}
-				#TODO
-				$test =[ContextHelper]::GetCurrentContext();
+
 				$controlState.State.AttestedBy = [ContextHelper]::GetCurrentSessionUser();
 				$controlState.State.AttestedDate = [DateTime]::UtcNow;
 				$controlState.State.Justification = $Justification	
@@ -361,21 +360,30 @@ class SVTControlAttestation
 			$filteredControlResults = @()
 			$allowedResourcesToAttest = @()
 
-			if($null -ne $this.ControlSettings.AllowAttestationResourceType){
+			if($null -ne $this.ControlSettings.AllowAttestationResourceType)
+			{
 				$allowedResourcesToAttest = $this.ControlSettings.AllowAttestationResourceType
 				$attNonEnabledResource = $this.ControlResults | Where {$_.FeatureName -notin $allowedResourcesToAttest }
-			    if( $null -ne $attNonEnabledResource -and ($attNonEnabledResource | Measure-Object).Count -gt 0 )
-			    {
-					$allowedResources = ($allowedResourcesToAttest -join ", ")
-			        Write-Host ("$([Constants]::SingleDashLine)`n Currently, attestation is supported only for [$($allowedResources)] controls.`n$([Constants]::SingleDashLine)") -ForegroundColor Red
-			    }
 			}
 			
-			$filteredControlResults += ($this.ControlResults | Where {$_.FeatureName -in $allowedResourcesToAttest }) | Group-Object { $_.GetUniqueId() }
+			$filteredControlResults += ($this.ControlResults | Where {$_.FeatureName -in $allowedResourcesToAttest }) | Group-Object { $_.GetUniqueId() }  
 			if((($filteredControlResults | Measure-Object).Count -eq 1 -and ($filteredControlResults[0].Group | Measure-Object).Count -gt 0 -and $null -ne $filteredControlResults[0].Group[0].ResourceContext) `
 				-or ($filteredControlResults | Measure-Object).Count -gt 1)
 			{
 				Write-Host "No. of candidate resources for the attestation: $($filteredControlResults.Count)" -ForegroundColor Cyan
+				if ($this.InvocationContext) 
+		        {
+		        	if ($this.InvocationContext.BoundParameters["AttestationHostProjectName"]) 
+		        	{
+		        		if($this.controlStateExtension.GetControlStatePermission("Organization", ""))
+		        		{ 
+		        			$this.controlStateExtension.SetProjectInExtForOrg()	
+		        		}
+		        		else {
+		        			Write-Host "Error: Configuring attestation host project name denied.`nThis may be because: `n  (a) You are attempting to configure the host project without project collection administrator privileges.`n  (b) You are logged in using PAT Token." -ForegroundColor Red
+		        		}
+		        	}
+		        }
 			}
 		
 			#show warning if the keys count is greater than certain number.
@@ -401,14 +409,24 @@ class SVTControlAttestation
 						$isSubscriptionScan = $true;
 						Write-Host $([String]::Format([Constants]::ModuleAttestStartHeadingSub, $resourceValue[0].FeatureName, $resourceValue[0].SubscriptionContext.SubscriptionName, $resourceValue[0].SubscriptionContext.SubscriptionId)) -ForegroundColor Cyan
 					}	
-
-					if($this.controlStateExtension.GetControlStatePermission($resourceValue[0].FeatureName, $resourceValue[0].ResourceContext.ResourceName) )
+                    
+					if(($resourceValue[0].FeatureName -eq "Organization" -or $resourceValue[0].FeatureName -eq "Project") -and !$this.controlStateExtension.GetControlStatePermission($resourceValue[0].FeatureName, $resourceValue[0].ResourceContext.ResourceName) )
 					{
+					  Write-Host "Error: Attestation denied.`nThis may be because: `n  (a) You are attempting to attest controls for areas you do not have RBAC permission to.`n  (b) You are logged in using PAT Token (currently not supported for organization and project control's attestation)." -ForegroundColor Red
+					  continue
+					}
+					if($resourceValue[0].FeatureName -eq "Organization" -and !$this.controlStateExtension.GetProject())
+				    { 
+						Write-Host "`nNo project defined to store organization attestation details." -ForegroundColor Red
+						Write-Host "Use the '-AttestationHostProjectName' parameter with this command to configure the project that will host attestation details for organization level controls.`nRun 'Get-Help -Name Get-AzSKAzureDevOpsSecurityStatus -Full' for more info." -ForegroundColor Yellow
+						continue
+					}
 					[ControlState[]] $resourceControlStates = @()
 					$count = 0;
 					[SVTEventContext[]] $filteredControlItems = @()
 					$resourceValue | ForEach-Object { 
 						$controlItem = $_;
+
 						$matchedControlItem = $false;
 						if(($controlItem.ControlResults | Measure-Object).Count -gt 0)
 						{
@@ -447,6 +465,7 @@ class SVTControlAttestation
 					#Added below variable to supply in setcontrol to send in controlstateextension to verify resourcetype
 					$FeatureName = "";
 					$resourceName = "";
+					$resourceGroupName = "";
 					if($count -gt 0)
 					{
 						Write-Host "No. of controls that need to be attested: $count" -ForegroundColor Cyan
@@ -455,6 +474,7 @@ class SVTControlAttestation
 						 {
 							$FeatureName = $controlItem.FeatureName
 							$resourceName = $controlItem.ResourceContext.ResourceName
+							$resourceGroupName = $controlItem.ResourceContext.ResourceGroupName
 							$controlId = $controlItem.ControlItem.ControlID
 							$controlSeverity = $controlItem.ControlItem.ControlSeverity
 							$controlResult = $null;
@@ -521,7 +541,7 @@ class SVTControlAttestation
 						}
 
 						Write-Host "Committing the attestation details for this resource..." -ForegroundColor Cyan
-						$this.controlStateExtension.SetControlState($resourceValueKey, $resourceControlStates, $false, $FeatureName, $resourceName )
+						$this.controlStateExtension.SetControlState($resourceValueKey, $resourceControlStates, $false, $FeatureName, $resourceName, $resourceGroupName)
 						Write-Host "Commit succeeded." -ForegroundColor Cyan
 					}
 					
@@ -535,11 +555,6 @@ class SVTControlAttestation
 						$isSubscriptionScan = $true;
 						Write-Host $([String]::Format([Constants]::CompletedAttestAnalysisSub, $resourceValue[0].FeatureName, $resourceValue[0].SubscriptionContext.SubscriptionName, $resourceValue[0].SubscriptionContext.SubscriptionId)) -ForegroundColor Cyan
 					}	
-				 }
-				 else
-				 {
-					Write-Host "Error: Attestation denied.`nThis may be because: `n  (a) you are attempting to attest controls for areas you do not have RBAC permission to.`n  (b) you are logged in using PAT Token (currently not supported for attestation)." -ForegroundColor red 
-				 }
 				}
 			
 			}

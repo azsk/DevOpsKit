@@ -20,12 +20,17 @@ class ControlStateExtension
 	hidden [PSObject] $ControlSettings; 
 	hidden [PSObject] $resourceType;
 	hidden [PSObject] $resourceName;
+	hidden [PSObject] $resourceGroupName;
+	hidden [PSObject] $AttestationBody;
+	[bool] $IsPersistedControlStates = $false;
+	[bool] $IsExceptionChekingControlStateIndexerPresent = $false
 
 	ControlStateExtension([SubscriptionContext] $subscriptionContext, [InvocationInfo] $invocationContext)
 	{
 		$this.SubscriptionContext = $subscriptionContext;
 		$this.InvocationContext = $invocationContext;	
 		$this.ControlSettings = [ConfigurationManager]::LoadServerConfigFile("ControlSettings.json");	
+		$this.AttestationBody = [ConfigurationManager]::LoadServerConfigFile("ADOAttestation.json");
 	}
 
 	hidden [void] Initialize([bool] $CreateResourcesIfNotExists)
@@ -91,27 +96,25 @@ class ControlStateExtension
 				$loopValue = $loopValue - 1;
 				try
 				{
-					$rmContext = [ContextHelper]::GetCurrentContext();
-					$user = "";
-					$base64AuthInfo = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(("{0}:{1}" -f $user,$rmContext.AccessToken)))
-				   
-					try
-					{
-					   $uri = [Constants]::StorageUri -f $this.SubscriptionContext.subscriptionid, $this.SubscriptionContext.subscriptionid, $this.IndexerBlobName 
-					   $webRequestResult = Invoke-RestMethod -Uri $uri -Method Get -ContentType "application/json" -Headers @{Authorization=("Basic {0}" -f $base64AuthInfo)}
-					   $indexerObject =  $webRequestResult.value.value | ConvertFrom-Json;
-					   $loopValue = 0;
-					}
-					catch{
-						#Attestation index blob is not preset then return
-						$this.IsControlStateIndexerPresent = $false
-						return $true;
-					}
-					
+				  $this.IsExceptionChekingControlStateIndexerPresent = $false
+				  $webRequestResult = $this.GetExtStorageContent( $this.IndexerBlobName );
+				  if($webRequestResult){
+				   $indexerObject = $webRequestResult 
+				  }
+				  else {
+					  if ($this.IsExceptionChekingControlStateIndexerPresent -eq $false) {
+						  $this.IsControlStateIndexerPresent = $true
+					  }
+					  else {
+						$this.IsControlStateIndexerPresent = $false  
+					  }
+				  }
+				  $loopValue = 0;
 				}
-				catch
-				{
-					#eat this exception and retry
+				catch{
+					#Attestation index blob is not preset then return
+					$this.IsControlStateIndexerPresent = $false
+					return $true;
 				}
 			}
 			$this.ControlStateIndexer += $indexerObject;
@@ -120,13 +123,25 @@ class ControlStateExtension
 		return $true;
 	}
 
-	hidden [PSObject] GetControlState([string] $id, [string] $resourceType, [string] $resourceName)
+	hidden [PSObject] GetControlState([string] $id, [string] $resourceType, [string] $resourceName, [string] $resourceGroupName)
 	{
 		try
 		{
 			$this.resourceType = $resourceType;
 			$this.resourceName = $resourceName
+			$this.resourceGroupName = $resourceGroupName
 			[ControlState[]] $controlStates = @();
+			
+			if(!$this.GetProject())
+			{
+				return $null;
+			}
+
+			if($this.resourceType -eq "Project" ){
+			    $this.ControlStateIndexer =  $null;
+			    $this.IsControlStateIndexerPresent = $true;
+			}
+			
 			$retVal = $this.ComputeControlStateIndexer();
 
 			if($null -ne $this.ControlStateIndexer -and  $retVal)
@@ -142,7 +157,7 @@ class ControlStateExtension
 					$controlStateBlobName = $hashId + ".json"
 
 					$ControlStatesJson = $null;
-					$ControlStatesJson = $this.GetExtStorageContent($controlStateBlobName) | ConvertFrom-Json;
+					$ControlStatesJson = $this.GetExtStorageContent($controlStateBlobName)
 					if($ControlStatesJson )
 					{
 				    	$retVal = $true;
@@ -168,18 +183,34 @@ class ControlStateExtension
 					}
 				}
 			}
+			if($this.resourceType -eq "Organization" ){
+			    $this.ControlStateIndexer =  $null;
+			    $this.IsControlStateIndexerPresent = $true;
+			}
 			return $controlStates;
 		}
 		catch{
+
+			if($this.resourceType -eq "Organization"){
+			    $this.ControlStateIndexer = $null;
+			    $this.IsControlStateIndexerPresent = $true;
+			}
 			[EventBase]::PublishGenericException($_);
 			return $null;
 		}
 	}
 
-	hidden [void] SetControlState([string] $id, [ControlState[]] $controlStates, [bool] $Override, [string] $resourceType, [string] $resourceName)
+	hidden [void] SetControlState([string] $id, [ControlState[]] $controlStates, [bool] $Override, [string] $resourceType, [string] $resourceName, [string] $resourceGroupName)
 	{	
 		$this.resourceType = $resourceType;	
 		$this.resourceName = $resourceName;
+		$this.resourceGroupName = $resourceGroupName
+		
+		if(!$this.GetProject())
+		{
+			return
+		}
+		
 		$AzSKTemp = Join-Path $([Constants]::AzSKAppFolderPath) "Temp" | Join-Path -ChildPath $this.UniqueRunId | Join-Path -ChildPath "ServerControlState";				
 		if(-not (Test-Path $(Join-Path $AzSKTemp "ControlState")))
 		{
@@ -202,8 +233,10 @@ class ControlStateExtension
 		$finalControlStates = $controlStates | Where-Object { $_.ActualVerificationResult -ne [VerificationResult]::Passed};
 		if(($finalControlStates | Measure-Object).Count -gt 0)
 		{
+			$this.IsPersistedControlStates = $false;
 			if($Override)
 			{
+				$this.IsPersistedControlStates = $true;
 				# in the case of override, just persist what is evaluated in the current context. No merging with older data
 				$this.UpdateControlIndexer($id, $finalControlStates, $false);
 				$finalControlStates = $finalControlStates | Where-Object { $_.State};
@@ -214,7 +247,7 @@ class ControlStateExtension
 				$persistedControlStates = $this.GetPersistedControlStates("$hash.json");
 				$finalControlStates = $this.MergeControlStates($persistedControlStates, $finalControlStates);
 				$this.UpdateControlIndexer($id, $finalControlStates, $false);
-				#TODO
+				
 			}
 		}
 		else
@@ -250,42 +283,152 @@ class ControlStateExtension
 	{
 		$fileContent = Get-Content -Path $FullName -raw  
 		$fileName = $FullName.split('\')[-1];
-		 
-		$collectionName = "";
-		if($this.resourceType -eq "Organization" -or $fileName -eq $this.IndexerBlobName)
-		{
-			$collectionName = $this.SubscriptionContext.subscriptionid;
-		}
-		else {
-			$collectionName = $this.resourceName 
-		}
+
+		$projectName = $this.GetProject();
 
 		$rmContext = [ContextHelper]::GetCurrentContext();
 		$user = "";
 		$base64AuthInfo = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(("{0}:{1}" -f $user,$rmContext.AccessToken)))
 	   
-		$body = @{"id" = "$fileName"; "__etag" = -1; "value"= $fileContent;} | ConvertTo-Json
-		$uri = [Constants]::StorageUri -f $this.SubscriptionContext.subscriptionid, $collectionName, $fileName  
-		try {
-		$webRequestResult = Invoke-RestMethod -Uri $uri -Method Put -ContentType "application/json" -Headers @{Authorization=("Basic {0}" -f $base64AuthInfo)} -Body $body
+		$uri = "https://dev.azure.com/{0}/{1}/_apis/git/repositories/{2}/refs?api-version=5.0" -f $this.SubscriptionContext.subscriptionid, $projectName, [Constants]::AttestationRepo 
+        try {
+		$webRequest = Invoke-RestMethod -Uri $uri -Method Get -ContentType "application/json" -Headers @{Authorization=("Basic {0}" -f $base64AuthInfo)}
+		$branchId = ($webRequest.value | where {$_.name -eq 'refs/heads/master'}).ObjectId
+
+		$uri = [Constants]::AttRepoStorageUri -f $this.SubscriptionContext.subscriptionid, $projectName, [Constants]::AttestationRepo  
+		$body = $this.CreateBody($fileContent, $fileName, $branchId);
+		$webRequestResult = Invoke-RestMethod -Uri $uri -Method Post -ContentType "application/json" -Headers @{Authorization=("Basic {0}" -f $base64AuthInfo)} -Body $body
 
 		if ($fileName -eq $this.IndexerBlobName) {
 		   $this.IsControlStateIndexerPresent = $true;
 		 }   
 	   }
-		catch {Write-Host $_}
+		catch {
+			Write-Host "Error: Attestation denied.`nThis may be because: `n  (a) ADOScanner_Attestation repository is not present in the project or you do not have write permission on the repository." -ForegroundColor Red
+			Write-Host $_
+		}
+	}
+
+	
+	[string] CreateBody([string] $fileContent, [string] $fileName, [string] $branchId){
+		
+		$body = $this.AttestationBody.Post | ConvertTo-Json -Depth 10
+		$body = $body.Replace("{0}",$branchId) 
+
+		$body = $body.Replace("{2}", $this.CreatePath($fileName))  
+		if ( $this.IsControlStateIndexerPresent -and $fileName -eq $this.IndexerBlobName ) {
+			$body = $body.Replace("{1}","edit") 
+		}
+		elseif ($this.IsPersistedControlStates -and $fileName -ne $this.IndexerBlobName ) {
+			$body = $body.Replace("{1}","edit") 
+		}
+		else {
+			$body = $body.Replace("{1}","add") 
+		}
+
+        $content = ($fileContent | ConvertTo-Json -Depth 10) -replace '^.|.$', ''
+		$body = $body.Replace("{3}", $content)
+
+		return $body;		 
+	}
+
+	[string] CreatePath($fileName){
+		$path = $fileName
+		if (!($this.resourceType -eq "Organization" -or $fileName -eq $this.IndexerBlobName) -and ($this.resourceType -ne "Project")) {
+			$path = $this.resourceGroupName + "/" + $this.resourceType + "/" + $fileName;
+		}
+		elseif(!($this.resourceType -eq "Organization" -or $fileName -eq $this.IndexerBlobName))
+		{
+			$path = $this.resourceName + "/" + $fileName;
+		}
+		
+		return $path;
+	}
+
+	[string] GetProject(){
+		$projectName = "";
+		if ($this.resourceType -eq "Organization" -or $this.resourceType -eq $null) 
+		{
+			if($this.InvocationContext)
+			{
+			  $projectName = $this.GetProjectNameFronExtStorage();
+			}
+		}
+		elseif($this.resourceType -eq "Project" )
+		{
+			$projectName = $this.resourceName
+		}
+		else {
+			$projectName = $this.resourceGroupName
+		}
+		
+		return $projectName;
+	}
+
+	[string] GetProjectNameFronExtStorage()
+	{
+		try {
+			$rmContext = [ContextHelper]::GetCurrentContext();
+		    $user = "";
+		    $base64AuthInfo = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(("{0}:{1}" -f $user,$rmContext.AccessToken)))
+		    
+		    $uri = [Constants]::StorageUri -f $this.SubscriptionContext.subscriptionid, $this.SubscriptionContext.subscriptionid, [Constants]::OrgAttPrjExtFile 
+		    $webRequestResult = Invoke-RestMethod -Uri $uri -Method Get -ContentType "application/json" -Headers @{Authorization=("Basic {0}" -f $base64AuthInfo)}
+		    return $webRequestResult.Project
+		}
+		catch {
+			return $null;
+		}
+	}
+
+	[bool] SetProjectInExtForOrg() {
+		$projectName = $this.InvocationContext.BoundParameters["AttestationHostProjectName"]
+		$rmContext = [ContextHelper]::GetCurrentContext();
+		$user = "";
+		$base64AuthInfo = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(("{0}:{1}" -f $user, $rmContext.AccessToken)))
+		$fileName = [Constants]::OrgAttPrjExtFile 
+
+		$apiURL = "https://dev.azure.com/{0}/_apis/projects?api-version=4.1" -f $($this.SubscriptionContext.SubscriptionName);
+		try { 
+			$responseObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL) ;
+			$projects = $responseObj | Where-Object { $projectName -contains $_.name }
+
+			if ($null -eq $projects) {
+				Write-Host "$($projectName) Project not found: Incorrect project name or you do not have neccessary permission to access the project." -ForegroundColor Red
+				return $false
+			}
+                   
+		}
+		catch {
+			Write-Host "$($projectName) Project not found: Incorrect project name or you do not have neccessary permission to access the project." -ForegroundColor Red
+			return $false
+		}
+			   
+		$uri = [Constants]::StorageUri -f $this.SubscriptionContext.subscriptionid, $this.SubscriptionContext.subscriptionid, $fileName
+		try {
+			$webRequestResult = Invoke-RestMethod -Uri $uri -Method Get -ContentType "application/json" -Headers @{Authorization = ("Basic {0}" -f $base64AuthInfo) }
+			Write-Host "Project $($webRequestResult.Project) is already configured to store attestation details for organization-specific controls." -ForegroundColor Yellow
+		}
+		catch {
+			$body = @{"id" = "$fileName"; "Project" = $projectName; } | ConvertTo-Json
+			$uri = [Constants]::StorageUri -f $this.SubscriptionContext.subscriptionid, $this.SubscriptionContext.subscriptionid, $fileName  
+			try {
+				$webRequestResult = Invoke-RestMethod -Uri $uri -Method Put -ContentType "application/json" -Headers @{Authorization = ("Basic {0}" -f $base64AuthInfo) } -Body $body	
+				return $true;
+			}
+			catch {	
+			}
+				
+		}
+		return $false;
 	}
 
 	[PSObject] GetExtStorageContent($fileName)
 	{
-		$collectionName = "";
-		if($this.resourceType -eq "Organization" -or $fileName -eq $this.IndexerBlobName)
-		{
-			$collectionName = $this.SubscriptionContext.subscriptionid;
-		}
-		else {
-			$collectionName = $this.resourceName  
-		}
+		$projectName = $this.GetProject();
+		$branchName =  [Constants]::AttestationBranch
+
+		$fileName = $this.CreatePath($fileName);
 
 		$rmContext = [ContextHelper]::GetCurrentContext();
 		$user = "";
@@ -293,36 +436,46 @@ class ControlStateExtension
 		
 		try
 		{
-		   $uri = [Constants]::StorageUri -f $this.SubscriptionContext.subscriptionid, $collectionName, $fileName 
+		   $uri = [Constants]::GetAttRepoStorageUri -f $this.SubscriptionContext.subscriptionid, $projectName, [Constants]::AttestationRepo, $fileName, $branchName 
 		   $webRequestResult = Invoke-RestMethod -Uri $uri -Method Get -ContentType "application/json" -Headers @{Authorization=("Basic {0}" -f $base64AuthInfo)}
-		   return $webRequestResult.value.value
+           if ($webRequestResult) {
+			return $webRequestResult
+		   }
+		   return $null;
 		}
 		catch{
+			if ($fileName -eq  $this.IndexerBlobName) {
+				$this.IsExceptionChekingControlStateIndexerPresent = $true
+			}
 			return $null;
 		}
 	}
 
 	[void] RemoveExtStorageContent($fileName)
 	{
-		$collectionName = "";
-		if($this.resourceType -eq "Organization" -or $fileName -eq $this.IndexerBlobName)
-		{
-			$collectionName = $this.SubscriptionContext.subscriptionid;
-		}
-		else {
-			$collectionName = $this.resourceName  
-		}
+		$projectName = $this.GetProject();
+		$fileName = $this.CreatePath($fileName);
 
 		$rmContext = [ContextHelper]::GetCurrentContext();
 		$user = "";
 		$base64AuthInfo = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(("{0}:{1}" -f $user,$rmContext.AccessToken)))
 		
+		$uri = "https://dev.azure.com/{0}/{1}/_apis/git/repositories/{2}/refs?api-version=5.0" -f $this.SubscriptionContext.subscriptionid, $projectName, [Constants]::AttestationRepo 
+        $webRequest = Invoke-RestMethod -Uri $uri -Method Get -ContentType "application/json" -Headers @{Authorization=("Basic {0}" -f $base64AuthInfo)}
+		$branchId = ($webRequest.value | where {$_.name -eq 'refs/heads/master'}).ObjectId
+		
+		$body = $this.AttestationBody.Delete | ConvertTo-Json -Depth 10;
+		$body = $body.Replace('{0}',$branchId)
+		$body = $body.Replace('{1}',$fileName)
+
 		try
 		{
-		   $uri = [Constants]::StorageUri -f $this.SubscriptionContext.subscriptionid, $collectionName, $fileName 
-		   $webRequestResult = Invoke-RestMethod -Uri $uri -Method Delete -ContentType "application/json" -Headers @{Authorization=("Basic {0}" -f $base64AuthInfo)}
+		   $uri = [Constants]::AttRepoStorageUri -f $this.SubscriptionContext.subscriptionid, $projectName, [Constants]::AttestationRepo  
+		   $webRequestResult = Invoke-RestMethod -Uri $uri -Method Post -ContentType "application/json" -Headers @{Authorization=("Basic {0}" -f $base64AuthInfo)} -Body $body
 		}
 		catch{
+			Write-Host "Could not remove attastation for: " + $fileName;
+			Write-Host $_
 		}
 	}
 
@@ -393,11 +546,15 @@ class ControlStateExtension
 			try
 			{
 				#$ControlStatesJson = @()
-				$ControlStatesJson = $this.GetExtStorageContent($controlStateBlobName) | ConvertFrom-Json;
+				$ControlStatesJson = $this.GetExtStorageContent($controlStateBlobName) 
+				if ($ControlStatesJson) {
+					$this.IsPersistedControlStates = $true
+				}
 				$loopValue = 0;
 			}
 			catch
 			{
+				$this.IsPersistedControlStates = $false;
 				#$ControlStatesJson = @()
 				#eat this exception and retry
 			}
@@ -438,11 +595,19 @@ class ControlStateExtension
 		{				
 			$tempHash = [Helpers]::ComputeHash($id);
 			#take the current indexer value
-			$filteredIndexerObject = $this.ControlStateIndexer | Where-Object { $_.HashId -eq $tempHash}
-			#remove the current index from the list
-			$filteredIndexerObject2 = $this.ControlStateIndexer | Where-Object { $_.HashId -ne $tempHash}
+			$filteredIndexerObject = $null;
+			$filteredIndexerObject2 = $null;
+			if ($this.ControlStateIndexer -and ($this.ControlStateIndexer | Measure-Object).Count -gt 0) {
+				$filteredIndexerObject = $this.ControlStateIndexer | Where-Object { $_.HashId -eq $tempHash}
+			    #remove the current index from the list
+			    $filteredIndexerObject2 = $this.ControlStateIndexer | Where-Object { $_.HashId -ne $tempHash}
+			}
+
 			$this.ControlStateIndexer = @();
-			$this.ControlStateIndexer += $filteredIndexerObject2
+			if($filteredIndexerObject2)
+			{
+			  $this.ControlStateIndexer += $filteredIndexerObject2
+			}
 			if(-not $ToBeDeleted)
 			{	
 				$currentIndexObject = $null;
