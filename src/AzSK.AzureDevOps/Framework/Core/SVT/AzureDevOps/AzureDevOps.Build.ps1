@@ -216,7 +216,6 @@ class Build: ADOSVTBase
 
     hidden [ControlResult] CheckInheritPermissions([ControlResult] $controlResult)
     {
-        $failMsg = $null
         try
         {
             if($this.SecurityNamespaceId -and $this.BuildObj.project.id)
@@ -226,32 +225,22 @@ class Build: ADOSVTBase
                 $header = [WebRequestHelper]::GetAuthHeaderFromUri($apiURL);
                 $responseObj = Invoke-RestMethod -Method Get -Uri $apiURL -Headers $header -UseBasicParsing
                 $responseObj = ($responseObj.SelectNodes("//script") | Where-Object { $_.class -eq "permissions-context" }).InnerXML | ConvertFrom-Json; 
-                if(!$responseObj -or ![Helpers]::CheckMember($responseObj,"inheritPermissions"))
+                if($responseObj -and [Helpers]::CheckMember($responseObj,"inheritPermissions") -and $responseObj.inheritPermissions -eq $true)
                 {
-                    $controlResult.AddMessage([VerificationResult]::Failed,"Unable to verify inherit permission option. Please navigate to the your build pipeline and verify that inherit permission is disabled.",$responseObj);
-                }
-                elseif($responseObj.inheritPermissions -eq $true)
-                {
-                    $controlResult.AddMessage([VerificationResult]::Failed,"Inherited permissions are allowed on build pipeline.");
+                    $controlResult.AddMessage([VerificationResult]::Failed,"Inherited permissions are enabled on build pipeline.",$responseObj);
                 }
                 else 
                 {
-                    $controlResult.AddMessage([VerificationResult]::Passed,"Inherited permissions are disabled on release pipeline.");    
+                    $controlResult.AddMessage([VerificationResult]::Passed,"Inherited permissions are disabled on build pipeline.");    
                 }
                 $header = $null;
                 $responseObj = $null;
+                
             }
         }
         catch
         {
-            #TODO: added temporarily to check 
-            Write-Error $_.Exception.Message;             
-            $failMsg = $_
-        }
-        
-        if(![string]::IsNullOrEmpty($failMsg))
-        {
-            $controlResult.AddMessage([VerificationResult]::Manual,"Unable to fetch build pipeline details. $($failMsg). Please verify from portal that permission inheritance is turned OFF.");
+            $controlResult.AddMessage([VerificationResult]::Manual,"Unable to fetch build pipeline details. $($_). Please verify from portal that permission inheritance is turned OFF.");
         }
 
         return $controlResult
