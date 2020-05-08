@@ -380,7 +380,7 @@ class SVTControlAttestation
 		        			$this.controlStateExtension.SetProjectInExtForOrg()	
 		        		}
 		        		else {
-		        			Write-Host "Error: Configuring attestation host project name denied.`nThis may be because: `n  (a) You are attempting to configure the host project without project collection administrator privileges.`n  (b) You are logged in using PAT Token." -ForegroundColor Red
+		        			Write-Host "Error: Could not configure host project for organization controls attestation.`nThis may be because: `n  (a) You may not have correct privilege (requires 'Project Collection Administrator').`n  (b) You are logged in using PAT Token (which is not supported for this currently)." -ForegroundColor Red
 		        		}
 		        	}
 		        }
@@ -417,7 +417,7 @@ class SVTControlAttestation
 					}
 					if($resourceValue[0].FeatureName -eq "Organization" -and !$this.controlStateExtension.GetProject())
 				    { 
-						Write-Host "`nNo project defined to store organization attestation details." -ForegroundColor Red
+						Write-Host "`nNo project defined to store attestation details for organization-specific controls." -ForegroundColor Red
 						Write-Host "Use the '-AttestationHostProjectName' parameter with this command to configure the project that will host attestation details for organization level controls.`nRun 'Get-Help -Name Get-AzSKAzureDevOpsSecurityStatus -Full' for more info." -ForegroundColor Yellow
 						continue
 					}

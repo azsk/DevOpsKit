@@ -23,7 +23,7 @@ class ControlStateExtension
 	hidden [PSObject] $resourceGroupName;
 	hidden [PSObject] $AttestationBody;
 	[bool] $IsPersistedControlStates = $false;
-	[bool] $IsExceptionChekingControlStateIndexerPresent = $false
+	[bool] $IsExceptionCheckingControlStateIndexerPresent = $false
 
 	ControlStateExtension([SubscriptionContext] $subscriptionContext, [InvocationInfo] $invocationContext)
 	{
@@ -96,13 +96,15 @@ class ControlStateExtension
 				$loopValue = $loopValue - 1;
 				try
 				{
-				  $this.IsExceptionChekingControlStateIndexerPresent = $false
-				  $webRequestResult = $this.GetExtStorageContent( $this.IndexerBlobName );
+				  #IsExceptionCheckingControlStateIndexerPresent is used if file present in repo then variable is false, if file not present then it goes to exception so variable value is true.
+				  #If file resent in repo with no content, there will be no exception in api call and respose body will be null
+				  $this.IsExceptionCheckingControlStateIndexerPresent = $false
+				  $webRequestResult = $this.GetRepoFileContent( $this.IndexerBlobName );
 				  if($webRequestResult){
 				   $indexerObject = $webRequestResult 
 				  }
 				  else {
-					  if ($this.IsExceptionChekingControlStateIndexerPresent -eq $false) {
+					  if ($this.IsExceptionCheckingControlStateIndexerPresent -eq $false) {
 						  $this.IsControlStateIndexerPresent = $true
 					  }
 					  else {
@@ -157,7 +159,8 @@ class ControlStateExtension
 					$controlStateBlobName = $hashId + ".json"
 
 					$ControlStatesJson = $null;
-					$ControlStatesJson = $this.GetExtStorageContent($controlStateBlobName)
+					#Fetch attestation file content from repository
+					$ControlStatesJson = $this.GetRepoFileContent($controlStateBlobName)
 					if($ControlStatesJson )
 					{
 				    	$retVal = $true;
@@ -268,7 +271,7 @@ class ControlStateExtension
 			    $state = $_;
 			    try
 			    {
-			    	$this.UploadExtStorage($state.FullName);
+			    	$this.UploadFileContent($state.FullName);
 			    }
 			    catch
 			    {
@@ -279,7 +282,7 @@ class ControlStateExtension
 		}
 	}
 
-	[void] UploadExtStorage( $FullName )
+	[void] UploadFileContent( $FullName )
 	{
 		$fileContent = Get-Content -Path $FullName -raw  
 		$fileName = $FullName.split('\')[-1];
@@ -423,7 +426,7 @@ class ControlStateExtension
 		return $false;
 	}
 
-	[PSObject] GetExtStorageContent($fileName)
+	[PSObject] GetRepoFileContent($fileName)
 	{
 		$projectName = $this.GetProject();
 		$branchName =  [Constants]::AttestationBranch
@@ -445,7 +448,7 @@ class ControlStateExtension
 		}
 		catch{
 			if ($fileName -eq  $this.IndexerBlobName) {
-				$this.IsExceptionChekingControlStateIndexerPresent = $true
+				$this.IsExceptionCheckingControlStateIndexerPresent = $true
 			}
 			return $null;
 		}
@@ -508,7 +511,7 @@ class ControlStateExtension
 					$loopValue = $loopValue - 1;
 					try
 					{
-						$this.UploadExtStorage($state.FullName);
+						$this.UploadFileContent($state.FullName);
 						$loopValue = 0;
 					}
 					catch
@@ -546,7 +549,7 @@ class ControlStateExtension
 			try
 			{
 				#$ControlStatesJson = @()
-				$ControlStatesJson = $this.GetExtStorageContent($controlStateBlobName) 
+				$ControlStatesJson = $this.GetRepoFileContent($controlStateBlobName) 
 				if ($ControlStatesJson) {
 					$this.IsPersistedControlStates = $true
 				}

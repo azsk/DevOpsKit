@@ -89,6 +89,7 @@ class ADOSVTBase: SVTBase {
 				if ($this.ResourceContext) {
 					$resourceType = $this.ResourceContext.ResourceTypeName
 				}
+				#Fetch control state for organization only if project is configured for org spesific control attestation (Check for Organization only, for other resource go inside without project check).
 				if($resourceType -ne "Organization" -or $this.ControlStateExt.GetProject())
 				{
 				$resourceStates = $this.ControlStateExt.GetControlState($this.ResourceId, $resourceType, $this.ResourceContext.ResourceName, $this.ResourceContext.ResourceGroupName)
