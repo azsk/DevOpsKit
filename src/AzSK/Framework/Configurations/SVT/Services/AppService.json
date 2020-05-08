@@ -706,6 +706,27 @@
         ],
         "Enabled": true,
         "Rationale": "CORS enables applications running under one domain to access a resource under another domain. Allowing cross-origin credentials is a security risk. A website at another domain can send a signed-in user's credentials to the app on the user's behalf without the user's knowledge."
+      },
+      {
+        "ControlID": "Azure_AppService_AuthN_Redirect_To_Login",
+        "Description": "App Service must authenticate users using Azure Active Directory backed credentials",
+        "Id": "AppService460",
+        "ControlSeverity": "High",
+        "Automated": "Yes",
+        "MethodName": "CheckAppServiceRootPageAuth",
+        "Rationale": "Using the native enterprise directory for authentication ensures that there is a built-in high level of assurance in the user identity established for subsequent access control.All Enterprise subscriptions are automatically associated with their enterprise directory (xxx.onmicrosoft.com) and users in the native directory are trusted for authentication to enterprise subscriptions.",
+        "Recommendation": "Go to Azure Portal --> your App Service --> Settings --> Authentication/Authorization --> turn on 'App Service Authentication' --> Click on 'Azure Active Directory' under Authentication Providers to configure the AAD authentication. There will be a list of options to choose from under 'Action to take when request is not authenticated'. Please make sure that this value is not set to 'Allow Anonymous requests (no action)'. Note: If you are implementing this control via code, then you can attest to the same and mark this as passed. Note: In case of Functions apps, AAD authentication is required only for 'Http Trigger' functions.",
+        "Tags": [
+          "SDL",
+          "TCP",
+          "Automated",
+          "AuthN",
+          "AppService",
+          "FunctionApp",
+          "Windows",
+          "Linux"
+        ],
+        "Enabled": true
       }
      
     ]
