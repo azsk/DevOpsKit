@@ -421,6 +421,7 @@ class ControlStateExtension
 				return $true;
 			}
 			catch {	
+			Write-Host "Error: Could not configure host project for org-specifi controls attestation because 'ADOSecurityScanner' extension is not installed in your organization." -ForegroundColor Red
 			}
 				
 		}
