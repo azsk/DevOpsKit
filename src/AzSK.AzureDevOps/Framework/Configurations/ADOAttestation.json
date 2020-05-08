@@ -34,7 +34,7 @@
     ],
     "commits": [
         {
-            "comment": "Deleted task markdown file.",
+            "comment": "Deleted the attestation data.",
             "changes": [
                 {
                     "changeType": "delete",
