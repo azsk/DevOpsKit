@@ -566,7 +566,7 @@ class VirtualMachine: AzSVTBase
 			$mandatoryPolicyAssignmentReq = $true
 			$requiredGuestConfigPolicies.RequiredPolicyDefinitionIds | Foreach-Object {
 				$policyDefinitionId = $_
-				$policyDefStr = "(PolicyDefinitionId eq '/providers/microsoft.authorization/policydefinitions/$($policyDefinitionId)')"
+				$policyDefStr = "(PolicyDefinitionId eq '$($policyDefinitionId)')"
 				$requiredPolicyDefList += $policyDefStr
 			}
 		}
@@ -575,7 +575,7 @@ class VirtualMachine: AzSVTBase
 			$mandatoryPolicySetAssignmentReq = $true
 			$requiredGuestConfigPolicies.RequiredPolicySetDefinitionIds | Foreach-Object {
 				$policyDefinitionSetId = $_
-				$policyDefStr = "(PolicySetDefinitionId eq '/providers/Microsoft.Authorization/policySetDefinitions/$($policyDefinitionSetId)')"
+				$policyDefStr = "(PolicySetDefinitionId eq '$($policyDefinitionSetId)')"
 				$requiredPolicySetDefList += $policyDefStr
 			}
 		}
@@ -595,7 +595,7 @@ class VirtualMachine: AzSVTBase
 					$requiredGuestConfigPolicies.RequiredPolicyDefinitionIds | ForEach-Object{
 						$currRequiredPolicyId = $_
 						$requiredPolicyStatus = @()
-						$requiredPolicyStatus += $policyState | Where-Object {$_.PolicyDefinitionId.EndsWith($currRequiredPolicyId)}
+						$requiredPolicyStatus += $policyState | Where-Object {$_.PolicyDefinitionId -eq $currRequiredPolicyId}
 						# Check if required assignment is present for required policy
 						if($requiredPolicyStatus){
 							# Check compliance of policy , if required assignment is present for the policy
@@ -614,7 +614,7 @@ class VirtualMachine: AzSVTBase
 					$requiredGuestConfigPolicies.RequiredPolicySetDefinitionIds  | ForEach-Object{
 						$currRequiredPolicySetId = $_
 						$requiredPolicyStatus = @()
-						$requiredPolicyStatus += $policyState | Where-Object {$_.PolicySetDefinitionId.EndsWith($currRequiredPolicySetId)}
+						$requiredPolicyStatus += $policyState | Where-Object {$_.PolicySetDefinitionId -eq $currRequiredPolicySetId}
 						# Check if required assignment is present for required policy set
 						if($requiredPolicyStatus){
 							# Check compliance of policy in the set, if required assignment is present for the policy set
