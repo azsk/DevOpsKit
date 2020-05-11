@@ -709,7 +709,7 @@
       },
       {
         "ControlID": "Azure_AppService_AuthN_Redirect_To_Login_Page",
-        "Description": "App Service must be set uo to redirect unauthenticated requests to login page",
+        "Description": "App Service must be set to redirect unauthenticated requests to login page",
         "Id": "AppService460",
         "ControlSeverity": "High",
         "Automated": "Yes",
