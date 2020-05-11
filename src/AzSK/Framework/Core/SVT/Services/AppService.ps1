@@ -313,10 +313,10 @@ class AppService: AzSVTBase
 			if($null -ne $appResponse -and [Helpers]::CheckMember($appResponse,"StatusCode")) {
 				if($appResponse.StatusCode -eq $redirectStatusCode -and $appResponse.RawContent.Contains($AuthString)){
 					$controlStatus = [VerificationResult]::Passed
-					$controlResult.AddMessage("AAD Authentication for root page is enabled.");
+					$controlResult.AddMessage("Root page redirects to login page.");
 				}else{
 					$controlStatus = [VerificationResult]::Failed
-					$controlResult.AddMessage("AAD Authentication for root page is not configured.");
+					$controlResult.AddMessage("Root page didn't redirect to login page.");
 				}
 			}else{
 				$controlStatus = [VerificationResult]::Verify

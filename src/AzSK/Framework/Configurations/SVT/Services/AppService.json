@@ -708,8 +708,8 @@
         "Rationale": "CORS enables applications running under one domain to access a resource under another domain. Allowing cross-origin credentials is a security risk. A website at another domain can send a signed-in user's credentials to the app on the user's behalf without the user's knowledge."
       },
       {
-        "ControlID": "Azure_AppService_AuthN_Redirect_To_Login",
-        "Description": "App Service must authenticate users using Azure Active Directory backed credentials",
+        "ControlID": "Azure_AppService_AuthN_Redirect_To_Login_Page",
+        "Description": "App Service must be set uo to redirect unauthenticated requests to login page",
         "Id": "AppService460",
         "ControlSeverity": "High",
         "Automated": "Yes",
@@ -722,7 +722,6 @@
           "Automated",
           "AuthN",
           "AppService",
-          "FunctionApp",
           "Windows",
           "Linux"
         ],
