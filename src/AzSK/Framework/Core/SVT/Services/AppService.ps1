@@ -311,7 +311,7 @@ class AppService: AzSVTBase
 
 			$appResponse = Invoke-WebRequest -uri $appURI  -Method GET  -UseBasicParsing -maximumredirection 0
 			if($null -ne $appResponse -and [Helpers]::CheckMember($appResponse,"StatusCode")) {
-				if($appResponse.StatusCode -eq $redirectStatusCode -and $appResponse.RawContent.Contains($AuthString)){
+				if($appResponse.StatusCode -eq $redirectStatusCode -and $appResponse.Headers.Location.Contains($AuthString)){
 					$controlStatus = [VerificationResult]::Passed
 					$controlResult.AddMessage("Root page redirects to login page.");
 				}else{
