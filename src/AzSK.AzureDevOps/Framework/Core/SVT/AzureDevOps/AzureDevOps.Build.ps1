@@ -332,15 +332,12 @@ class Build: ADOSVTBase
                 $nonsetablevar +=$_.Name;  
             }
            } 
-           if($setablevar -or $nonsetablevar){
-            $controlResult.AddMessage([VerificationResult]::Verify,"");
-              if($setablevar)  { 
-                $controlResult.AddMessage("The below variables are settable at queue time",$setablevar);   
-              }
-              if ($nonsetablevar) {
-                $controlResult.AddMessage("The below variables are not settable at queue time",$nonsetablevar);      
-              }
-            
+           if(($setablevar | Measure-Object).Count -gt 0){
+                $controlResult.AddMessage([VerificationResult]::Verify,"The below variables are settable at queue time",$setablevar);
+                $controlResult.SetStateData("Variables settable at queue time: ", $setablevar);
+                if ($nonsetablevar) {
+                    $controlResult.AddMessage("The below variables are not settable at queue time",$nonsetablevar);      
+                } 
            }
                  
         }
@@ -371,7 +368,7 @@ class Build: ADOSVTBase
                $sourceobj = $null;
            }
            else {
-            $controlResult.AddMessage([VerificationResult]::Verify,"Pipelines build code is from external sources.");   
+            $controlResult.AddMessage([VerificationResult]::Verify,"Pipeline build code is built from external sources.");   
            }
         }
 

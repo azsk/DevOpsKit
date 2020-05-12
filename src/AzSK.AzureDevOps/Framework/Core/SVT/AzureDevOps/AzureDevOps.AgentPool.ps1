@@ -15,8 +15,10 @@ class AgentPool: ADOSVTBase
     {
         if(($this.AgentObj | Measure-Object).Count -gt 0)
         {
-         $roles =   $this.AgentObj  | Select-Object -Property @{Name="Name"; Expression = {$_.identity.displayName}},@{Name="Role"; Expression = {$_.role.displayName}}
-         $controlResult.AddMessage([VerificationResult]::Verify,"Validate that the following identities have been provided with minimum RBAC access to agent.", $roles);
+            $roles = @();
+            $roles +=   ($this.AgentObj  | Select-Object -Property @{Name="Name"; Expression = {$_.identity.displayName}},@{Name="Role"; Expression = {$_.role.displayName}});
+            $controlResult.AddMessage([VerificationResult]::Verify,"Validate whether following identities have been provided with minimum RBAC access to agent pool.", $roles);
+            $controlResult.SetStateData("Validate whether following identities have been provided with minimum RBAC access to agent pool.", $roles);
         }
         elseif(($this.AgentObj | Measure-Object).Count -eq 0)
         {
@@ -32,17 +34,19 @@ class AgentPool: ADOSVTBase
         $inheritedRoles = $this.AgentObj | Where-Object {$_.access -eq "inherited"} 
             if( ($inheritedRoles | Measure-Object).Count -gt 0)
             {
-                $roles =   $inheritedRoles  | Select-Object -Property @{Name="Name"; Expression = {$_.identity.displayName}},@{Name="Role"; Expression = {$_.role.displayName}}
-                $controlResult.AddMessage([VerificationResult]::Failed,"Found inherited role assignment on agent.", $roles);
+                $roles = @();
+                $roles +=   ($inheritedRoles  | Select-Object -Property @{Name="Name"; Expression = {$_.identity.displayName}},@{Name="Role"; Expression = {$_.role.displayName}});
+                $controlResult.AddMessage([VerificationResult]::Failed,"Found inherited role assignments on agent pool.", $roles);
+                $controlResult.SetStateData("Found inherited role assignments on agent pool.", $roles);
             }
             else {
-                $controlResult.AddMessage([VerificationResult]::Passed,"No inherited role assignment found")
+                $controlResult.AddMessage([VerificationResult]::Passed,"No inherited role assignments found.")
             }
         
         }
         elseif(($this.AgentObj | Measure-Object).Count -eq 0)
         {
-            $controlResult.AddMessage([VerificationResult]::Passed,"No role assignment found")
+            $controlResult.AddMessage([VerificationResult]::Passed,"No role assignment found.")
         }
         return $controlResult
     }
@@ -58,19 +62,19 @@ class AgentPool: ADOSVTBase
             {
                   $agentPools = ($agentPoolsObj.fps.dataProviders.data."ms.vss-build-web.agent-pools-data-provider".taskAgentPools | Where-Object { ($_.autoProvision -eq $true -and $_.Name -eq $this.ResourceContext.resourcename) }) #| Select-Object @{Name = "Name"; Expression = {$_.Name}}
                   if (($agentPools | Measure-Object).Count -gt 0 ) {
-                    $controlResult.AddMessage([VerificationResult]::Passed,"Auto-provision is enabled for the $($agentPools) agent pools.");
+                    $controlResult.AddMessage([VerificationResult]::Passed,"Auto-provisioning is enabled for the $($agentPools) agent pools.");
                   }
                   else {
-                    $controlResult.AddMessage([VerificationResult]::Failed,"Auto-provision is not enabled for the agent pool.");
+                    $controlResult.AddMessage([VerificationResult]::Failed,"Auto-provisioning is not enabled for the agent pool.");
                    }
             }
             else {
-                $controlResult.AddMessage([VerificationResult]::Failed,"Auto-provision is not enabled for the agent pool.");
+                $controlResult.AddMessage([VerificationResult]::Failed,"Auto-provisioning is not enabled for the agent pool.");
             }
             $agentPoolsObj =$null;
         }
         catch{
-            $controlResult.AddMessage([VerificationResult]::Manual,"could not able to fetch agent pool details.");
+            $controlResult.AddMessage([VerificationResult]::Manual,"Could not fetch agent pool details.");
         }
         return $controlResult
     }
@@ -95,7 +99,7 @@ class AgentPool: ADOSVTBase
         }
         catch{
             $controlResult.AddMessage($_); 
-            $controlResult.AddMessage([VerificationResult]::Manual,"could not able to fetch agent pool details.");
+            $controlResult.AddMessage([VerificationResult]::Manual,"Could not fetch agent pool details.");
         }
         return $controlResult
     }

@@ -148,7 +148,7 @@ class SVTResourceResolver: AzSKRoot
                                             Where-Object { $_.ResourceType -eq $svtResource.ResourceType } |
                                             Select-Object -First 1)
            
-            $svtResource.ResourceDetails  = New-Object -TypeName psobject -Property @{ ResourceLink = ($svtResource.ResourceId.Replace('Organization','https://dev.azure.com') + "_settings/users") }
+            $svtResource.ResourceDetails  = New-Object -TypeName psobject -Property @{ ResourceLink = "https://dev.azure.com/$($this.organizationName)/_settings/users" }
             $this.SVTResources +=$svtResource
         }
 
