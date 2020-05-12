@@ -231,7 +231,7 @@ class Release: ADOSVTBase
         $responseObj = ($responseObj.SelectNodes("//script") | Where-Object { $_.class -eq "permissions-context" }).InnerXML | ConvertFrom-Json; 
         if($responseObj.inheritPermissions -eq $true)
         {
-            $controlResult.AddMessage([VerificationResult]::Failed,"Inherited permissions are allowed on release pipeline.");
+            $controlResult.AddMessage([VerificationResult]::Failed,"Inherited permissions are enabled on release pipeline.");
         }
         else 
         {
@@ -314,8 +314,10 @@ class Release: ADOSVTBase
             }
             else
             {
-                $controlResult.AddMessage([VerificationResult]::Verify,"Validate users/groups added as approver within release pipeline.",$approversList);
-                $controlResult.SetStateData("List of approvers for each release stage: ", $approversList);
+                $stateData = @();
+                $stateData += $approversList;
+                $controlResult.AddMessage([VerificationResult]::Verify,"Validate users/groups added as approver within release pipeline.",$stateData);
+                $controlResult.SetStateData("List of approvers for each release stage: ", $stateData);
             }
             $approversList = $null;
         }
@@ -407,7 +409,10 @@ class Release: ADOSVTBase
                
                if( ($nonadoresource | Measure-Object).Count -gt 0){
                    $nonadoresource = $nonadoresource | Select-Object -Property @{Name="alias"; Expression = {$_.alias}},@{Name="Type"; Expression = {$_.type}}
-                   $controlResult.AddMessage([VerificationResult]::Verify,"Pipelines contains artifact from the below external sources.", $nonadoresource);    
+                   $stateData = @();
+                   $stateData += $nonadoresource;
+                   $controlResult.AddMessage([VerificationResult]::Verify,"Pipeline contains artifacts from below external sources.", $stateData);    
+                   $controlResult.SetStateData("Pipeline contains artifacts from below external sources.", $stateData);  
                }
                else {
                 $controlResult.AddMessage([VerificationResult]::Passed,"Pipeline does not contain artifacts from external sources");   

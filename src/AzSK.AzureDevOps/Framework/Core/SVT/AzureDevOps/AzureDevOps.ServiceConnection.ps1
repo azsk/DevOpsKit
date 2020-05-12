@@ -37,17 +37,17 @@ class ServiceConnection: ADOSVTBase
             if($this.ServiceEndpointsObj.data.scopeLevel -eq "Subscription")
             {
                 $controlResult.AddMessage([VerificationResult]::Failed,
-                                        "Define RG level scope for below service endpoints");
+                                        "Service connection is configured at subscription scope.");
             }
             else{
                 $controlResult.AddMessage([VerificationResult]::Passed,
-                                        "Service endpoints is configured with RG level scope");
+                                        "Service connection is configured at resource group scope.");
             }
         }
         else
         {
             $controlResult.AddMessage([VerificationResult]::Verify,
-                                        "Service endpoint details not found. Verify connection access is scoped at RG level");
+                                        "Service connection details not found. Verify connection access is configured at resource group scope.");
         }
         return $controlResult;
     }
@@ -59,16 +59,16 @@ class ServiceConnection: ADOSVTBase
             if($this.ServiceEndpointsObj.type -eq "azure")
             {
                     $controlResult.AddMessage([VerificationResult]::Failed,
-                                                "Found below classic service endpoints");
+                                                "Classic service connection detected.");
             }
             else {
                 $controlResult.AddMessage([VerificationResult]::Passed,
-                                                "No Classic Endpoint found");
+                                                "Classic service connection not detected.");
             }
         }
         else{
             $controlResult.AddMessage([VerificationResult]::Manual,
-                                                "Connection type not found");
+                                                "Service connection type could not be detetcted.");
         }
         return $controlResult;
     }
@@ -81,12 +81,12 @@ class ServiceConnection: ADOSVTBase
             if( $this.ServiceEndpointsObj.authorization.parameters.authenticationType -eq "spnKey")
             {
                 $controlResult.AddMessage([VerificationResult]::Failed,
-                                        "Endpoint is used with secret based auth");
+                                        "Service endpoint is authenticated using secret.");
             }
             else
             {
                 $controlResult.AddMessage([VerificationResult]::Passed,
-                                            "Service Endpoints is Cert based authenticated");
+                                            "Service endpoint is authenticated using certificate.");
             }
         }
         return $controlResult;
@@ -103,11 +103,11 @@ class ServiceConnection: ADOSVTBase
             if([DateTime]$serverFileContent[0].value[0].data.startTime -gt (Get-Date).AddDays(-180))
             {
                 $controlResult.AddMessage([VerificationResult]::Failed,
-                                    "Endpoint used with secret based auth");
+                                    "Service endpoint is authenticated using secret.");
             }
             else {
                 $controlResult.AddMessage([VerificationResult]::Passed,
-                "Endpoint used with Cert based authenticated");
+                "Service endpoint is authenticated using certificate.");
             }
         }
         $serverFileContent = $null;
@@ -128,10 +128,10 @@ class ServiceConnection: ADOSVTBase
             }
             elseif([Helpers]::CheckMember($responseObj,"inheritPermissions") -and $responseObj.inheritPermissions -eq $true)
             {
-                $controlResult.AddMessage([VerificationResult]::Failed,"Found service connection with inherit permissions turned ON.");
+                $controlResult.AddMessage([VerificationResult]::Failed,"Inherited permissions are enabled on service connection.");
             }
             else {
-                $controlResult.AddMessage([VerificationResult]::Passed,"");
+                $controlResult.AddMessage([VerificationResult]::Passed,"Inherited permissions are disabled on service connection.");
             }
             
             $Endpoint = $null; 
@@ -158,6 +158,7 @@ class ServiceConnection: ADOSVTBase
             $apiURL = "https://{0}.visualstudio.com/_apis/securityroles/scopes/distributedtask.serviceendpointrole/roleassignments/resources/{1}_{2}" -f $($this.SubscriptionContext.SubscriptionName), $($this.ProjectId),$($this.ServiceEndpointsObj.id);
             $responseObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
             $nonCompliantIdentities = @();
+            $otherIdentities = @();
             if((($responseObj | Measure-Object).Count -gt 0) -and [Helpers]::CheckMember($responseObj,"identity"))
             {
                 $responseObj.identity | ForEach-Object {
@@ -189,6 +190,7 @@ class ServiceConnection: ADOSVTBase
                 {
                     $controlResult.AddMessage([VerificationResult]::Failed,"Do not grant global security groups access to service connections. Granting elevated permissions to these groups can risk exposure of service connections to unwarranted individuals.");
                     $controlResult.AddMessage("List of service connections granting access to global security groups:",$nonCompliantIdentities)
+                    $controlResult.SetStateData("List of service connections granting access to global security groups:",$nonCompliantIdentities)
                 }
                 else{
                     $controlResult.AddMessage([VerificationResult]::Passed,"");
@@ -221,6 +223,7 @@ class ServiceConnection: ADOSVTBase
             $apiURL = "https://{0}.visualstudio.com/_apis/securityroles/scopes/distributedtask.serviceendpointrole/roleassignments/resources/{1}_{2}" -f $($this.SubscriptionContext.SubscriptionName), $($this.ProjectId),$($this.ServiceEndpointsObj.id);
             $responseObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
             $nonCompliantIdentities = @();
+            $otherIdentities = @();
             if((($responseObj | Measure-Object).Count -gt 0) -and [Helpers]::CheckMember($responseObj,"identity"))
             {
                 $responseObj.identity | ForEach-Object {
@@ -229,6 +232,7 @@ class ServiceConnection: ADOSVTBase
                     {
                         if ($responseObj.identity.uniqueName -contains 'Project Collection Build Service') {
                              $IsGlobalSecurityGroupPermitted = $true;
+                             $nonCompliantIdentities += $identity
                             }
                       # $apiURL = "https://vssps.dev.azure.com/e/Microsoft/_apis/Identities/{0}" -f $($identity.id)
                       # $identityObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
@@ -254,6 +258,7 @@ class ServiceConnection: ADOSVTBase
                 {
                     $controlResult.AddMessage([VerificationResult]::Failed,"Do not grant global security groups access to service connections. Granting elevated permissions to these groups can risk exposure of service connections to unwarranted individuals.");
                     $controlResult.AddMessage("List of service connections granting access to global security groups:",$nonCompliantIdentities)
+                    $controlResult.SetStateData("List of service connections granting access to global security groups:",$nonCompliantIdentities)
                 }
                 else{
                     $controlResult.AddMessage([VerificationResult]::Passed,"");
