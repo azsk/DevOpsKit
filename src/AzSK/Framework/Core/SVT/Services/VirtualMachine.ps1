@@ -564,6 +564,7 @@ class VirtualMachine: AzSVTBase
 		# Check if there is any mandatory policyId defined in control settings
 		if([Helpers]::CheckMember($this.VMControlSettings.RequiredGuestConfigPolicies, "RequiredPolicyDefinitionIds")){
 			$mandatoryPolicyAssignmentReq = $true
+			# Keeping whole Policy stringId in control settings to handle custom Policy enforced at management group level
 			$requiredGuestConfigPolicies.RequiredPolicyDefinitionIds | Foreach-Object {
 				$policyDefinitionId = $_
 				$policyDefStr = "(PolicyDefinitionId eq '$($policyDefinitionId)')"
@@ -573,6 +574,7 @@ class VirtualMachine: AzSVTBase
 		# Check if there is any mandatory policySetId defined in control settings
 		if([Helpers]::CheckMember($this.VMControlSettings.RequiredGuestConfigPolicies, "RequiredPolicySetDefinitionIds")){
 			$mandatoryPolicySetAssignmentReq = $true
+			# Keeping whole Policy Set stringId in control settings to handle custom Policy Set  enforced at management group level
 			$requiredGuestConfigPolicies.RequiredPolicySetDefinitionIds | Foreach-Object {
 				$policyDefinitionSetId = $_
 				$policyDefStr = "(PolicySetDefinitionId eq '$($policyDefinitionSetId)')"
