@@ -540,7 +540,7 @@
   "WhitelistedResourceGroups": [],
   "InClusterCA": {
     "AKS":{
-      "RequiredImagePath": "azsktest/akstest",
+      "RequiredImagePath": "azskteam/azsk-aks",
       "RequiredImageTag": "latest"
     }
   },

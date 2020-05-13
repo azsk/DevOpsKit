@@ -309,19 +309,26 @@ class AppService: AzSVTBase
 		$appURI = [string]::Format("https://{0}",$appURL)
 		try{
 
-			$appResponse = Invoke-WebRequest -uri $appURI  -Method GET  -UseBasicParsing -maximumredirection 0
-			if($null -ne $appResponse -and [Helpers]::CheckMember($appResponse,"StatusCode")) {
-				if($appResponse.StatusCode -eq $redirectStatusCode -and $appResponse.Headers.Location.Contains($AuthString)){
-					$controlStatus = [VerificationResult]::Passed
-					$controlResult.AddMessage("Root page redirects to login page.");
-				}else{
-					$controlStatus = [VerificationResult]::Failed
-					$controlResult.AddMessage("Root page didn't redirect to login page.");
-				}
+			if($this.ResourceObject.Properties.state -ne "Running"){
+				$controlStatus = [VerificationResult]::Manual
+				$controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false;
+				$controlResult.AddMessage("App Service is not in running state, unable to evaluate control.");
 			}else{
-				$controlStatus = [VerificationResult]::Verify
-				$controlResult.AddMessage("Please verify that AAD Authentication is configured for root page.");
+				$appResponse = Invoke-WebRequest -uri $appURI  -Method GET  -UseBasicParsing -maximumredirection 0 -ErrorAction SilentlyContinue -WarningAction SilentlyContinue
+				if($null -ne $appResponse -and [Helpers]::CheckMember($appResponse,"StatusCode")) {
+					if($appResponse.StatusCode -eq $redirectStatusCode -and $appResponse.Headers.Location.Contains($AuthString)){
+						$controlStatus = [VerificationResult]::Passed
+						$controlResult.AddMessage("Root page redirects to login page.");
+					}else{
+						$controlStatus = [VerificationResult]::Failed
+						$controlResult.AddMessage("Root page didn't redirect to login page.");
+					}
+				}else{
+					$controlStatus = [VerificationResult]::Verify
+					$controlResult.AddMessage("Please verify that AAD Authentication is configured for root page.");
+				}
 			}
+			
 		
 		}catch{
 
