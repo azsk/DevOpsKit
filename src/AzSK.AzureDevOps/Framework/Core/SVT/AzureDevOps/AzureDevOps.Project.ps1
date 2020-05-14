@@ -48,7 +48,7 @@ class Project: ADOSVTBase
         $responseObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
         if([Helpers]::CheckMember($responseObj,"visibility"))
         {
-            if($responseObj.visibility -eq "Private")
+            if(($responseObj.visibility -eq "private") -or ($responseObj.visibility -eq "organization"))
             {
                 $controlResult.AddMessage([VerificationResult]::Passed,
                                                 "Project visibility is set to $($responseObj.visibility)."); 
@@ -59,7 +59,6 @@ class Project: ADOSVTBase
                                                 "Project visibility is set to $($responseObj.visibility).");
             }
         }
-        $controlResult.SetStateData("Project visibility is set to ", $responseObj.visibility);
         return $controlResult;
     }
 

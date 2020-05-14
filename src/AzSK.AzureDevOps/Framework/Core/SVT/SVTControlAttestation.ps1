@@ -380,7 +380,7 @@ class SVTControlAttestation
 		        			$this.controlStateExtension.SetProjectInExtForOrg()	
 		        		}
 		        		else {
-		        			Write-Host "Error: Could not configure host project for organization controls attestation.`nThis may be because: `n  (a) You may not have correct privilege (requires 'Project Collection Administrator').`n  (b) You are logged in using PAT Token (which is not supported for this currently)." -ForegroundColor Red
+		        			Write-Host "Error: Could not configure host project for organization controls attestation.`nThis may be because: `n  (a) You may not have correct privilege (requires 'Project Collection Administrator').`n  (b) You are logged in using PAT (which is not supported for this currently)." -ForegroundColor Red
 		        		}
 		        	}
 		        }
@@ -412,7 +412,7 @@ class SVTControlAttestation
                     
 					if(($resourceValue[0].FeatureName -eq "Organization" -or $resourceValue[0].FeatureName -eq "Project") -and !$this.controlStateExtension.GetControlStatePermission($resourceValue[0].FeatureName, $resourceValue[0].ResourceContext.ResourceName) )
 					{
-					  Write-Host "Error: Attestation denied.`nThis may be because: `n  (a) You are attempting to attest controls for areas you do not have RBAC permission to.`n  (b) You are logged in using PAT Token (currently not supported for organization and project control's attestation)." -ForegroundColor Red
+					  Write-Host "Error: Attestation denied.`nThis may be because: `n  (a) You are attempting to attest controls for areas you do not have RBAC permission to.`n  (b) You are logged in using PAT (currently not supported for organization and project control's attestation)." -ForegroundColor Red
 					  continue
 					}
 					if($resourceValue[0].FeatureName -eq "Organization" -and !$this.controlStateExtension.GetProject())

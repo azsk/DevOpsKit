@@ -19,24 +19,24 @@ class User: ADOSVTBase
             {
                 $fullAccessPATNames = $fullAccessPATList | Select displayName,scope 
                 $controlResult.AddMessage([VerificationResult]::Failed,
-                                        "Below PAT token has full access",$fullAccessPATNames);
+                                        "Below PAT has full access",$fullAccessPATNames);
             }
             else {
                 $AccessPATNames = $responseObj | Select displayName,scope 
                 $controlResult.AddMessage([VerificationResult]::Verify,
-                                        "Verify PAT token has minimum required permissions",$AccessPATNames)   
+                                        "Verify PAT has minimum required permissions",$AccessPATNames)   
             }
         }
         else
         {
             $controlResult.AddMessage([VerificationResult]::Passed,
-                                        "No PAT token found");
+                                        "No PAT found");
         }
                     
        }
        catch {
            $controlResult.AddMessage([VerificationResult]::Passed,
-                                           "No PAT token found");
+                                           "No PAT found");
        }
         
         return $controlResult;
@@ -87,23 +87,23 @@ class User: ADOSVTBase
                 if(($res | Measure-Object).Count -gt 0)
                 {
                  $PATList =($AccessPATList | Select-Object -Property @{Name="Name"; Expression = {$_.displayName}},@{Name="ValidFrom"; Expression = {$_.validfrom}},@{Name="ValidTo"; Expression = {$_.validto}},@{Name="ValidationPeriod"; Expression = {([datetime]::parseexact($_.validto.Split('T')[0], 'yyyy-MM-dd', $null) - [datetime]::parseexact($_.validfrom.Split('T')[0], 'yyyy-MM-dd', $null)).Days}});    
-                 $controlResult.AddMessage([VerificationResult]::Failed, "Below PAT tokens have validity period more than 180 days",$PATList)  
+                 $controlResult.AddMessage([VerificationResult]::Failed, "Below PATs have validity period more than 180 days",$PATList)  
                 }
             }
             else {
                 $controlResult.AddMessage([VerificationResult]::Passed,
-                                         "No PAT token found with validity period more than 180 days")  
+                                         "No PAT found with validity period more than 180 days")  
             }
         }
         else
         {
             $controlResult.AddMessage([VerificationResult]::Passed,
-                                        "No PAT token found");
+                                        "No PAT found");
         }
        }
        catch {
         $controlResult.AddMessage([VerificationResult]::Manual,
-        "Not able to find PAT token");
+        "Not able to find PAT.");
        }
         
         return $controlResult;
@@ -129,16 +129,16 @@ class User: ADOSVTBase
                  
                 if (($PATExpri7Days | Measure-Object).Count -gt 0) {
                     $PAT7List =($PATExpri7Days | Select-Object -Property @{Name="Name"; Expression = {$_.displayName}},@{Name="ValidFrom"; Expression = {$_.validfrom}},@{Name="ValidTo"; Expression = {$_.validto}},@{Name="Remaining"; Expression = {([datetime]::parseexact($_.validto.Split('T')[0], 'yyyy-MM-dd', $null) - $date).Days}});    
-                    $controlResult.AddMessage("PAT tokens which expire within 7 days", $PAT7List )
+                    $controlResult.AddMessage("PATs which expire within 7 days", $PAT7List )
                 }
                 if (($PATExpri30Days | Measure-Object).Count -gt 0) {
                     $PAT30List =($PATExpri30Days | Select-Object -Property @{Name="Name"; Expression = {$_.displayName}},@{Name="ValidFrom"; Expression = {$_.validfrom}},@{Name="ValidTo"; Expression = {$_.validto}},@{Name="Remaining"; Expression = {([datetime]::parseexact($_.validto.Split('T')[0], 'yyyy-MM-dd', $null) - $date).Days}});    
-                    $controlResult.AddMessage("PAT tokens which expire after 7 days but withing 30 days", $PAT30List )
+                    $controlResult.AddMessage("PATs which expire after 7 days but withing 30 days", $PAT30List )
                 }
               
                 if (($PATOther | Measure-Object).Count -gt 0) {
                     $PATOList =($PATOther | Select-Object -Property @{Name="Name"; Expression = {$_.displayName}},@{Name="ValidFrom"; Expression = {$_.validfrom}},@{Name="ValidTo"; Expression = {$_.validto}},@{Name="Remaining"; Expression = {([datetime]::parseexact($_.validto.Split('T')[0], 'yyyy-MM-dd', $null) - $date).Days}});    
-                    $controlResult.AddMessage("PAT tokens which expire after 30 days", $PATOList )
+                    $controlResult.AddMessage("PATs which expire after 30 days", $PATOList )
                 }
                 if(($PATExpri7Days | Measure-Object).Count -gt 0)
                 {
@@ -148,23 +148,23 @@ class User: ADOSVTBase
                     $controlResult.AddMessage([VerificationResult]::Verify,"")
                 }
                 else {
-                    $controlResult.AddMessage([VerificationResult]::Passed, "No PAT tokens found which expire within 30 days")
+                    $controlResult.AddMessage([VerificationResult]::Passed, "No PATs found which expire within 30 days")
                 }
             }
             else {
                 $controlResult.AddMessage([VerificationResult]::Passed,
-                                         "No active PAT token found")  
+                                         "No active PAT found.")  
             }
         }
         else
         {
             $controlResult.AddMessage([VerificationResult]::Passed,
-                                        "No PAT token found");
+                                        "No PAT found.");
         }
        }
        catch {
         $controlResult.AddMessage([VerificationResult]::Manual,
-        "Not able to find PAT token");
+        "Not able to find PAT.");
        }
         
         return $controlResult;
