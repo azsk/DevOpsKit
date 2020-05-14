@@ -308,7 +308,8 @@ class ControlStateExtension
 	   }
 		catch {
 			$repoName = [Constants]::AttestationRepo
-			Write-Host "Error: Attestation denied.`nThis may be because: `n  (a) $($repoName) repository is not present in the project or you do not have write permission on the repository." -ForegroundColor Red
+			Write-Host "Error: Attestation denied.`nThis may be because: `n  (a) $($repoName) repository is not present in the project `n  (b) you do not have write permission on the repository. `n" -ForegroundColor Red
+			Write-Host "See more at https://aka.ms/adoscanner (search for 'ADOScanner_Attestation' on the page). `n" -ForegroundColor Yellow 
 		}
 	}
 
