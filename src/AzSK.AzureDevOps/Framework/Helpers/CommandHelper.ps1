@@ -33,6 +33,23 @@ class CommandHelper
             Noun = "AzSKAzureDevOpsReleaseSecurityStatus";
             ShortName = "gadsr";
 			IsLatestRequired = $false;
+		},
+		[CommandDetails]@{
+            Verb = "Set";
+            Noun = "AzSKMonitoringSettings";
+            ShortName = "SMS";
+        },
+		#[CommandDetails]@{
+        #    Verb = "Install";
+        #    Noun = "Install-AzSKMonitoringSolution";
+        #    ShortName = "IMS";
+		#	IsLatestRequired = $false;
+		#},
+		[CommandDetails]@{
+            Verb = "Clear";
+            Noun = "AzSKSessionState";
+            ShortName = "CSS";
+			IsLatestRequired = $false;
         }
     );
 

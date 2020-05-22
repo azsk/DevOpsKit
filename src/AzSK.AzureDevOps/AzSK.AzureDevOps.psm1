@@ -2,7 +2,7 @@
 
 . $PSScriptRoot\Framework\Framework.ps1
 
-@("$PSScriptRoot\SVT") |
+@("$PSScriptRoot\SVT", "$PSScriptRoot\AlertMonitoring") |
     ForEach-Object {
     (Get-ChildItem -Path $_ -Recurse -File -Include "*.ps1") |
         ForEach-Object {
@@ -119,7 +119,7 @@ function Set-AzSKPrivacyNoticeResponse {
 
 function Clear-AzSKSessionState {
 
-    Write-Host "Clearing AzSK session state..." -ForegroundColor Yellow
+    Write-Host "Clearing AzSK.AzureDevOps session state..." -ForegroundColor Yellow
     [ConfigOverride]::ClearConfigInstance()
     Write-Host "Session state cleared." -ForegroundColor Yellow
 

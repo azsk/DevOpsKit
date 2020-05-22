@@ -396,7 +396,7 @@ class SVTResourceResolver: AzSKRoot
                 
                 if($this.AgentPools.Count -gt 0 -and ($this.ResourceTypeName -eq [ResourceTypeName]::All -or $this.ResourceTypeName -eq [ResourceTypeName]::AgentPool))
                 {
-                    if($this.AgentPools -ne "*")
+                    if($this.ProjectNames -ne "*")
                     {
                         $this.PublishCustomMessage("Getting agent pools configurations...");
                     }
