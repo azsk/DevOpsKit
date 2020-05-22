@@ -8,11 +8,11 @@
   "visibility": [
     "Build"
   ],
-  "author": "azsdktm",
+  "author": "ADOScanner",
   "version": {
     "Major": 1,
     "Minor": 0,
-    "Patch": 31
+    "Patch": 34
   },
   "demands": [
   ],
@@ -47,33 +47,33 @@
       "name": "BuildNames",
       "type": "string",
       "label": "Build Names",
-      "defaultValue": "*",
-      "required": true,
-      "helpMarkDown": "Comma-separated list of builds against which Security Verification should be run."
+      "defaultValue": "",
+      "required": false,
+      "helpMarkDown": "Comma-separated list of builds against which Security Verification Tests (SVTs) should be run or use '*' to scan all builds."
     },
     {
       "name": "ReleaseNames",
       "type": "string",
       "label": "Release Names",
-      "defaultValue": "*",
-      "required": true,
-      "helpMarkDown": "Comma-separated list of releases against which Security Verification Tests (SVTs) should be run."
+      "defaultValue": "",
+      "required": false,
+      "helpMarkDown": "Comma-separated list of releases against which Security Verification Tests (SVTs) should be run or use '*' to scan all releases."
     },
     {
       "name": "ServiceConnectionNames",
       "type": "string",
       "label": "Service Connection Names",
-      "defaultValue": "*",
+      "defaultValue": "",
       "required": false,
-      "helpMarkDown": "Comma-separated list of service connections against which Security Verification Tests (SVTs) should be run."
+      "helpMarkDown": "Comma-separated list of service connections against which Security Verification Tests (SVTs) should be run or use '*' to scan all service connections."
     },
     {
       "name": "AgentPoolNames",
       "type": "string",
       "label": "Agent Pool Names",
-      "defaultValue": "*",
+      "defaultValue": "",
       "required": false,
-      "helpMarkDown": "Comma-separated list of agent pools against which Security Verification Tests (SVTs) should be run."
+      "helpMarkDown": "Comma-separated list of agent pools against which Security Verification Tests (SVTs) should be run or use '*' to scan all agent pools."
     },
     {
       "name": "isBaseline",

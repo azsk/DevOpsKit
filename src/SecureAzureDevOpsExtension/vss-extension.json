@@ -1,9 +1,9 @@
 {
     "manifestVersion": 1,
     "id": "ADOSecurityScanner",
-    "publisher": "azsdktm",
-    "public": true,
-    "version": "0.9.12",
+    "publisher": "ADOScanner",
+    "public": false,
+    "version": "0.9.15",
     "name": "ADO Security Scanner",
     "description": "ADO Security Scanner provide security guidelines for devops components like Org, Project, Build, Release etc.",
     "categories": ["Azure Boards","Azure Pipelines"],
@@ -104,25 +104,7 @@
                     ],
                 "supportedScopes": ["project_team"]
             }
-        },
-        {
-            "id": "collection-level-admin-hub",
-            "type": "ms.vss-web.hub",
-            "description": "ADO Scanner Policy",
-            "targets": [
-                "ms.vss-web.collection-admin-hub-group"
-            ],
-            "restrictedTo": [
-                "member"
-              ],
-            "properties": {
-                "name": " ADO Scanner Policy",
-                "order": 101,
-                "uri": "OrgPolicyHub.html",
-                "icon": "images/Icon.png"
-            }
         }
-
     ],
     "files": [
         {
@@ -142,10 +124,6 @@
         },
         {
             "path": "OrgLevelTemp_Old.html",
-            "addressable": true
-        },
-        {
-            "path": "OrgPolicyHub.html",
             "addressable": true
         },
         {

@@ -1,5 +1,0 @@
-{
-    "AzSKConfigURL":  "https://extmgmt.dev.azure.com/_Org_Name_/_apis/ExtensionManagement/InstalledExtensions/ADOScanner/ADOSecurityScanner/Data/Scopes/Default/Current/Collections/MyCollection/Documents?api-version=5.1-preview.1",
-    "PolicyMessage":  "Running AzSK cmdlet using ***_PolicyOrgName_*** policy...",
-    "PolicyOrgName":  ""
-}

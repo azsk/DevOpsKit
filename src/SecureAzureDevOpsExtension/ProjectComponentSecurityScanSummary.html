@@ -60,15 +60,14 @@
     .bubble-verify {
       background-color: #FFFF00;
     }
+    .bubble-exception {
+      background-color: #F58B1F;  
+    }
   </style>
 
 
   <script type="text/javascript">
-   // var arrdata = { Passed: 0, Failed: 0, Verify: 0 };
-   // var Releasedata = { Passed: 0, Failed: 0, Verify: 0 };
-   // var Conndata = { Passed: 0, Failed: 0, Verify: 0 };
-   // var AgentPooldata = { Passed: 0, Failed: 0, Verify: 0 };
-
+ 
     // var context = VSS.getWebContext();
 
     VSS.init({
@@ -179,10 +178,10 @@
       $("#tblScanResultRelease > tbody").html("");
       $("#tblScanResultAgentPool > tbody").html("");
       
-      var arrdata = { Passed: 0, Failed: 0, Verify: 0 };
-      var Releasedata = { Passed: 0, Failed: 0, Verify: 0 };
-      var Conndata = { Passed: 0, Failed: 0, Verify: 0 };
-      var AgentPooldata = { Passed: 0, Failed: 0, Verify: 0 };
+      var arrdata = { Passed: 0, Failed: 0, Verify: 0, Exception: 0 };
+      var Releasedata = { Passed: 0, Failed: 0, Verify: 0, Exception: 0 };
+      var Conndata = { Passed: 0, Failed: 0, Verify: 0, Exception: 0 };
+      var AgentPooldata = { Passed: 0, Failed: 0, Verify: 0, Exception: 0 };
 
       Buildcounter = 0;
       Releasecounter = 0;
@@ -239,6 +238,10 @@
             Conndata.Verify = Conndata.Verify + 1;
             bulbClass = 'bubble-verify';
           }
+          else if (e.Status == "Exception") {
+            Conndata.Exception = Conndata.Exception + 1;
+            bulbClass = 'bubble-exception';
+          }
           else if (e.Status == "Failed") {
             Conndata.Failed = Conndata.Failed + 1;
             bulbClass = 'bubble-failed';
@@ -276,6 +279,10 @@
             arrdata.Verify = arrdata.Verify + 1;
             bulbClass = 'bubble-verify';
           }
+          else if (e.Status == "Exception") {
+            arrdata.Exception = arrdata.Exception + 1;
+            bulbClass = 'bubble-exception';
+          }
           else if (e.Status == "Failed") {
             arrdata.Failed = arrdata.Failed + 1;
             bulbClass = 'bubble-failed';
@@ -305,6 +312,10 @@
          else if (e.Status == "Verify") {
             Releasedata.Verify = Releasedata.Verify + 1;
             bulbClass = 'bubble-verify';
+          }
+          else if (e.Status == "Exception") {
+            Releasedata.Exception = Releasedata.Exception + 1;
+            bulbClass = 'bubble-exception';
           }
          else if (e.Status == "Failed") {
             Releasedata.Failed = Releasedata.Failed + 1;
@@ -337,6 +348,10 @@
          else if (e.Status == "Verify") {
             AgentPooldata.Verify = AgentPooldata.Verify + 1;
             bulbClass = 'bubble-verify';
+          }
+          else if (e.Status == "Exception") {
+            AgentPooldata.Exception = AgentPooldata.Exception + 1;
+            bulbClass = 'bubble-exception';
           }
          else if (e.Status == "Failed") {
             AgentPooldata.Failed = AgentPooldata.Failed + 1;
@@ -409,7 +424,7 @@
           }
         },
         xAxis: {
-          categories: ['Passed', 'Failed', 'Verify']
+          categories: ['Passed', 'Failed', 'Verify','Exception']
         },
         legend: {
           layout: 'horizontal',
@@ -418,7 +433,7 @@
         },
         series: [{
           name: 'Control',
-          data: [{ name: 'Passed', y: dataforchart.Passed, color: '#339947' }, { name: 'Failed', y: dataforchart.Failed, color: '#FF0000' }, { name: 'Verify', y: dataforchart.Verify, color: '#FFFF00' }],
+          data: [{ name: 'Passed', y: dataforchart.Passed, color: '#339947' }, { name: 'Failed', y: dataforchart.Failed, color: '#FF0000' }, { name: 'Verify', y: dataforchart.Verify, color: '#FFFF00' }, { name: 'Exception', y: dataforchart.Exception, color: '#F58B1F' }],
           innerSize: '45%',
           showInLegend: true
         }]
