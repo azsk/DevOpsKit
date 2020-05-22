@@ -72,6 +72,9 @@
         'Get-AzSKAzureDevOpsProjectSecurityStatus',
         'Get-AzSKAzureDevOpsBuildSecurityStatus',
         'Get-AzSKAzureDevOpsReleaseSecurityStatus',
+        'Set-AzSKOMSSettings',
+        'Set-AzSKMonitoringSettings',
+        'Clear-AzSKSessionState',
         'Set-AzSKAzureDevOpsPolicySettings',
         'Set-AzSKPrivacyNoticeResponse'
     )
