@@ -210,7 +210,7 @@ function Get-AzSKAzureDevOpsOrgSecurityStatus
 		Token to run scan in non-interactive mode.
 	
 	.PARAMETER DoNotOpenOutputFolder
-		Do not auto open output folder after scan completion. This parameter is used in non-interactive console.	
+		Do not auto-open output folder after scan completion. This parameter is used in non-interactive console.	
 
 	.NOTES
 	This command helps the Org Owner to verify whether their Azure DevOps Org is compliant with the security guidance or not 
