@@ -76,15 +76,6 @@
       "IsEnabled": false
     },
     {
-      "Name": "EnableASCPolicyOnVMCheckUsingPolicyAssessmentKey",
-      "Description": "",
-      "Sources": ["*"],
-      "EnabledForSubs": [],
-      "DisabledForSubs": [],
-      "UnderPreview": false,
-      "IsEnabled": true
-    },
-    {
       "Name": "EnableResourceGroupPersistentAccessCheck",
       "Description" : "",
       "Sources" : ["CA"],

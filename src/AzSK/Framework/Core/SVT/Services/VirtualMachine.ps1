@@ -370,14 +370,7 @@ class VirtualMachine: AzSVTBase
 		elseif($null -ne $this.ASCSettings -and [Helpers]::CheckMember($this.ASCSettings, "properties.policyAssessments"))
 		{
 			$antimalwareSetting = $null
-			if([FeatureFlightingManager]::GetFeatureStatus("EnableASCPolicyOnVMCheckUsingPolicyAssessmentKey",$($this.SubscriptionContext.SubscriptionId)) -eq $true)
-			{
-				$antimalwareSetting = $this.ASCSettings.properties.policyAssessments | Where-Object {$_.assessmentKey -eq $this.ControlSettings.VirtualMachine.ASCPolicies.PolicyAssignment.EndpointProtectionAssessmentKey};
-			}
-			else 
-			{
-				$antimalwareSetting = $this.ASCSettings.properties.policyAssessments | Where-Object {$_.policyName -eq $this.ControlSettings.VirtualMachine.ASCPolicies.PolicyAssignment.EndpointProtection};
-			}
+			$antimalwareSetting = $this.ASCSettings.properties.policyAssessments | Where-Object {$_.assessmentKey -eq $this.ControlSettings.VirtualMachine.ASCPolicies.PolicyAssignment.EndpointProtectionAssessmentKey};
 			
 			if($null -ne $antimalwareSetting)
 			{
@@ -862,14 +855,7 @@ class VirtualMachine: AzSVTBase
 		if($null -ne $this.ASCSettings -and [Helpers]::CheckMember($this.ASCSettings, "properties.policyAssessments"))
 		{
 			$adeSetting = $null
-			if([FeatureFlightingManager]::GetFeatureStatus("EnableASCPolicyOnVMCheckUsingPolicyAssessmentKey",$($this.SubscriptionContext.SubscriptionId)) -eq $true)
-			{
-				$adeSetting = $this.ASCSettings.properties.policyAssessments | Where-Object {$_.assessmentKey -eq $this.ControlSettings.VirtualMachine.ASCPolicies.PolicyAssignment.DiskEncryptionAssessmentKey};
-			}
-			else 
-			{
-				$adeSetting = $this.ASCSettings.properties.policyAssessments | Where-Object {$_.policyName -eq $this.ControlSettings.VirtualMachine.ASCPolicies.PolicyAssignment.DiskEncryption};
-			}
+			$adeSetting = $this.ASCSettings.properties.policyAssessments | Where-Object {$_.assessmentKey -eq $this.ControlSettings.VirtualMachine.ASCPolicies.PolicyAssignment.DiskEncryptionAssessmentKey};
 			
 			if($null -ne $adeSetting)
 			{
@@ -936,14 +922,8 @@ class VirtualMachine: AzSVTBase
 		if($null -ne $this.ASCSettings -and [Helpers]::CheckMember($this.ASCSettings, "properties.policyAssessments"))
 		{
 			$vulnSetting = $null
-			if([FeatureFlightingManager]::GetFeatureStatus("EnableASCPolicyOnVMCheckUsingPolicyAssessmentKey",$($this.SubscriptionContext.SubscriptionId)) -eq $true)
-			{
-				$vulnSetting = $this.ASCSettings.properties.policyAssessments | Where-Object {$_.assessmentKey -eq $this.ControlSettings.VirtualMachine.ASCPolicies.PolicyAssignment.VulnerabilityScanAssessmentKey};
-			}
-			else 
-			{
-				$vulnSetting = $this.ASCSettings.properties.policyAssessments | Where-Object {$_.policyName -eq $this.ControlSettings.VirtualMachine.ASCPolicies.PolicyAssignment.VulnerabilityScan};
-			}
+			$vulnSetting = $this.ASCSettings.properties.policyAssessments | Where-Object {$_.assessmentKey -eq $this.ControlSettings.VirtualMachine.ASCPolicies.PolicyAssignment.VulnerabilityScanAssessmentKey};
+			
 
 			if($null -ne $vulnSetting)
 			{
@@ -988,15 +968,8 @@ class VirtualMachine: AzSVTBase
 				if($null -ne $this.ASCSettings -and [Helpers]::CheckMember($this.ASCSettings, "properties.policyAssessments"))
 				{
 					$patchSetting = $null
-					if([FeatureFlightingManager]::GetFeatureStatus("EnableASCPolicyOnVMCheckUsingPolicyAssessmentKey",$($this.SubscriptionContext.SubscriptionId)) -eq $true)
-					{
-						$patchSetting = $this.ASCSettings.properties.policyAssessments | Where-Object {$_.assessmentKey -eq $this.ControlSettings.VirtualMachine.ASCPolicies.PolicyAssignment.OSUpdatesAssessmentKey};
-					}
-					else 
-					{
-						$patchSetting = $this.ASCSettings.properties.policyAssessments | Where-Object {$_.policyName -eq $this.ControlSettings.VirtualMachine.ASCPolicies.PolicyAssignment.OSUpdates};
-					}
-
+					$patchSetting = $this.ASCSettings.properties.policyAssessments | Where-Object {$_.assessmentKey -eq $this.ControlSettings.VirtualMachine.ASCPolicies.PolicyAssignment.OSUpdatesAssessmentKey};
+			
 					if($null -ne $patchSetting)
 					{
 						$ascPatchStatus = $patchSetting.assessmentResult;
@@ -1090,14 +1063,7 @@ class VirtualMachine: AzSVTBase
 			if($null -ne $this.ASCSettings -and [Helpers]::CheckMember($this.ASCSettings, "properties.policyAssessments"))
 			{
 				$vulnSetting = $null
-				if([FeatureFlightingManager]::GetFeatureStatus("EnableASCPolicyOnVMCheckUsingPolicyAssessmentKey",$($this.SubscriptionContext.SubscriptionId)) -eq $true)
-				{
-					$vulnSetting = $this.ASCSettings.properties.policyAssessments | Where-Object {$_.assessmentKey -eq $this.ControlSettings.VirtualMachine.ASCPolicies.PolicyAssignment.VulnerabilityScanAssessmentKey};
-				}
-				else 
-				{
-					$vulnSetting = $this.ASCSettings.properties.policyAssessments | Where-Object {$_.policyName -eq $this.ControlSettings.VirtualMachine.ASCPolicies.PolicyAssignment.VulnerabilityScan};
-				}
+				$vulnSetting = $this.ASCSettings.properties.policyAssessments | Where-Object {$_.assessmentKey -eq $this.ControlSettings.VirtualMachine.ASCPolicies.PolicyAssignment.VulnerabilityScanAssessmentKey};
 				
 				if($null -ne $vulnSetting)
 				{
