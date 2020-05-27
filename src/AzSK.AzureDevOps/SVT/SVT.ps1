@@ -78,8 +78,11 @@ function Get-AzSKAzureDevOpsSecurityStatus
 		$ScanAllArtifacts,
 
 		[string] 
-		[Parameter(Mandatory = $false, HelpMessage = "Comma separated control ids to filter the security controls. e.g.: AzureDevOps_Organization_AuthN_Use_AAD_Auth, AzureDevOps_Organization_SI_Review_InActive_Users etc.")]
-		[Alias("cids")]
+		[Parameter(Mandatory = $false, ParameterSetName = "Default", HelpMessage = "Comma separated control ids to filter the security controls. e.g.: AzureDevOps_Organization_AuthN_Use_AAD_Auth, AzureDevOps_Organization_SI_Review_InActive_Users etc.")]
+		[Parameter(Mandatory = $true, ParameterSetName = "BulkAttestation", HelpMessage="Comma separated control ids to filter the security controls. e.g.: AzureDevOps_Organization_AuthN_Use_AAD_Auth, AzureDevOps_Organization_SI_Review_InActive_Users etc.")]
+		[Parameter(Mandatory = $true, ParameterSetName = "BulkAttestationClear", HelpMessage="Comma separated control ids to filter the security controls. e.g.: AzureDevOps_Organization_AuthN_Use_AAD_Auth, AzureDevOps_Organization_SI_Review_InActive_Users etc.")]
+		[Alias("BulkAttestControlId","cids","bacid")]
+		[AllowEmptyString()]
 		$ControlIds,
 
 		[switch]
@@ -231,8 +234,11 @@ function Get-AzSKAzureDevOpsOrgSecurityStatus
 		$OrganizationName,
 
 		[string] 
-		[Parameter(Mandatory = $false, HelpMessage = "Comma separated control ids to filter the security controls. e.g.: AzureDevOps_Organization_AuthN_Use_AAD_Auth, AzureDevOps_Organization_SI_Review_InActive_Users etc.")]
-		[Alias("cids")]
+		[Parameter(Mandatory = $false, ParameterSetName = "Default", HelpMessage = "Comma separated control ids to filter the security controls. e.g.: AzureDevOps_Organization_AuthN_Use_AAD_Auth, AzureDevOps_Organization_SI_Review_InActive_Users etc.")]
+		[Parameter(Mandatory = $true, ParameterSetName = "BulkAttestation", HelpMessage="Comma separated control ids to filter the security controls. e.g.: AzureDevOps_Organization_AuthN_Use_AAD_Auth, AzureDevOps_Organization_SI_Review_InActive_Users etc.")]
+		[Parameter(Mandatory = $true, ParameterSetName = "BulkAttestationClear", HelpMessage="Comma separated control ids to filter the security controls. e.g.: AzureDevOps_Organization_AuthN_Use_AAD_Auth, AzureDevOps_Organization_SI_Review_InActive_Users etc.")]
+		[Alias("BulkAttestControlId","cids","bacid")]
+		[AllowEmptyString()]
 		$ControlIds,
 
 		[switch]
@@ -376,8 +382,11 @@ function Get-AzSKAzureDevOpsProjectSecurityStatus
 		$ProjectNames,
 
 		[string] 
-		[Parameter(Mandatory = $false, HelpMessage = "Comma separated control ids to filter the security controls. e.g.: AzureDevOps_Organization_AuthN_Use_AAD_Auth, AzureDevOps_Organization_SI_Review_InActive_Users etc.")]
-		[Alias("cids")]
+		[Parameter(Mandatory = $false, ParameterSetName = "Default", HelpMessage = "Comma separated control ids to filter the security controls. e.g.: AzureDevOps_Organization_AuthN_Use_AAD_Auth, AzureDevOps_Organization_SI_Review_InActive_Users etc.")]
+		[Parameter(Mandatory = $true, ParameterSetName = "BulkAttestation", HelpMessage="Comma separated control ids to filter the security controls. e.g.: AzureDevOps_Organization_AuthN_Use_AAD_Auth, AzureDevOps_Organization_SI_Review_InActive_Users etc.")]
+		[Parameter(Mandatory = $true, ParameterSetName = "BulkAttestationClear", HelpMessage="Comma separated control ids to filter the security controls. e.g.: AzureDevOps_Organization_AuthN_Use_AAD_Auth, AzureDevOps_Organization_SI_Review_InActive_Users etc.")]
+		[Alias("BulkAttestControlId","cids","bacid")]
+		[AllowEmptyString()]
 		$ControlIds,
 
 		[switch]
@@ -527,8 +536,11 @@ function Get-AzSKAzureDevOpsBuildSecurityStatus
 		$BuildNames,
 
 		[string] 
-		[Parameter(Mandatory = $false, HelpMessage = "Comma separated control ids to filter the security controls. e.g.: AzureDevOps_Organization_AuthN_Use_AAD_Auth, AzureDevOps_Organization_SI_Review_InActive_Users etc.")]
-		[Alias("cids")]
+		[Parameter(Mandatory = $false, ParameterSetName = "Default", HelpMessage = "Comma separated control ids to filter the security controls. e.g.: AzureDevOps_Organization_AuthN_Use_AAD_Auth, AzureDevOps_Organization_SI_Review_InActive_Users etc.")]
+		[Parameter(Mandatory = $true, ParameterSetName = "BulkAttestation", HelpMessage="Comma separated control ids to filter the security controls. e.g.: AzureDevOps_Organization_AuthN_Use_AAD_Auth, AzureDevOps_Organization_SI_Review_InActive_Users etc.")]
+		[Parameter(Mandatory = $true, ParameterSetName = "BulkAttestationClear", HelpMessage="Comma separated control ids to filter the security controls. e.g.: AzureDevOps_Organization_AuthN_Use_AAD_Auth, AzureDevOps_Organization_SI_Review_InActive_Users etc.")]
+		[Alias("BulkAttestControlId","cids","bacid")]
+		[AllowEmptyString()]
 		$ControlIds,
 
 		[switch]
@@ -575,6 +587,15 @@ function Get-AzSKAzureDevOpsBuildSecurityStatus
 					$secStatus.Severity = $Severity;
 					$secStatus.UseBaselineControls = $UseBaselineControls;
 					$secStatus.UsePreviewBaselineControls = $UsePreviewBaselineControls;
+
+					#build the attestation options object
+				    [AttestationOptions] $attestationOptions = [AttestationOptions]::new();
+				    $attestationOptions.AttestControls = $ControlsToAttest				
+				    $attestationOptions.JustificationText = $JustificationText
+				    $attestationOptions.AttestationStatus = $AttestationStatus
+				    $attestationOptions.IsBulkClearModeOn = $BulkClear
+				    $attestationOptions.IsExemptModeOn = $AddException
+				    $secStatus.AttestationOptions = $attestationOptions;
 
 				return $secStatus.EvaluateControlStatus();
 			} 
@@ -644,8 +665,11 @@ function Get-AzSKAzureDevOpsReleaseSecurityStatus
 		$ReleaseNames,
 
 		[string] 
-		[Parameter(Mandatory = $false, HelpMessage = "Comma separated control ids to filter the security controls. e.g.: AzureDevOps_Organization_AuthN_Use_AAD_Auth, AzureDevOps_Organization_SI_Review_InActive_Users etc.")]
-		[Alias("cids")]
+		[Parameter(Mandatory = $false, ParameterSetName = "Default", HelpMessage = "Comma separated control ids to filter the security controls. e.g.: AzureDevOps_Organization_AuthN_Use_AAD_Auth, AzureDevOps_Organization_SI_Review_InActive_Users etc.")]
+		[Parameter(Mandatory = $true, ParameterSetName = "BulkAttestation", HelpMessage="Comma separated control ids to filter the security controls. e.g.: AzureDevOps_Organization_AuthN_Use_AAD_Auth, AzureDevOps_Organization_SI_Review_InActive_Users etc.")]
+		[Parameter(Mandatory = $true, ParameterSetName = "BulkAttestationClear", HelpMessage="Comma separated control ids to filter the security controls. e.g.: AzureDevOps_Organization_AuthN_Use_AAD_Auth, AzureDevOps_Organization_SI_Review_InActive_Users etc.")]
+		[Alias("BulkAttestControlId","cids","bacid")]
+		[AllowEmptyString()]
 		$ControlIds,
 
 		[switch]
@@ -691,6 +715,15 @@ function Get-AzSKAzureDevOpsReleaseSecurityStatus
 					$secStatus.Severity = $Severity;
 					$secStatus.UseBaselineControls = $UseBaselineControls;
 					$secStatus.UsePreviewBaselineControls = $UsePreviewBaselineControls;
+
+					#build the attestation options object
+				    [AttestationOptions] $attestationOptions = [AttestationOptions]::new();
+				    $attestationOptions.AttestControls = $ControlsToAttest				
+				    $attestationOptions.JustificationText = $JustificationText
+				    $attestationOptions.AttestationStatus = $AttestationStatus
+				    $attestationOptions.IsBulkClearModeOn = $BulkClear
+				    $attestationOptions.IsExemptModeOn = $AddException
+				    $secStatus.AttestationOptions = $attestationOptions;
 					
 				return $secStatus.EvaluateControlStatus();
 			}    
