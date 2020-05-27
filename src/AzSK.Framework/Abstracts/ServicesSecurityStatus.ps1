@@ -252,12 +252,7 @@ class ServicesSecurityStatus: AzSVTCommandBase
 
 				}
 				
-					
-				# Register/Deregister all listeners to cleanup the memory
-				if([FeatureFlightingManager]::GetFeatureStatus("EnableListenerReset","*") -eq $true)
-				{
-					[AzListenerHelper]::RegisterListeners();
-				}
+				
 			}
             catch
             {

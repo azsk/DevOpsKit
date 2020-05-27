@@ -49,15 +49,6 @@
       "IsEnabled": false
     },
     {
-      "Name": "EnableListenerReset",
-      "Description" : "",
-      "Sources" : ["*"],
-      "EnabledForSubs": [],
-      "DisabledForSubs": [],      
-      "UnderPreview" : false,
-      "IsEnabled": false
-    },
-    {
       "Name": "EnableResourceGroupTagTelemetry",
       "Description" : "",
       "Sources" : ["*"],
