@@ -112,7 +112,7 @@ function Set-AzSKMonitoringSettings
 			{
 				$appSettings.LASource = "SDL"
 			}
-			#TODO: change AzSK to ADO
+		
 			$appSettings.LAType = "AzSK_ADO"
 			[ConfigurationManager]::UpdateAzSKSettings($appSettings);
 			[ConfigOverride]::ClearConfigInstance()
