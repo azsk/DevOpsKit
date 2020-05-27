@@ -4,8 +4,8 @@
   "IsMaintenanceMode": false,
   "Controls": [
     {
-      "ControlID": "AzureDevOps_Project_AuthZ_Set_Visibility_Private",
-      "Description": "Ensure that project visibility is set to private",
+      "ControlID": "AzureDevOps_Project_AuthZ_Set_Visibility_PrivateOrEnterprise",
+      "Description": "Ensure that project visibility is set to private or enterprise.",
       "Id": "Project110",
       "ControlSeverity": "High",
       "Automated": "Yes",
