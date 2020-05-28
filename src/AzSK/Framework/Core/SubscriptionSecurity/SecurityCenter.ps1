@@ -523,6 +523,8 @@ class SecurityCenter: AzSKRoot
 
 				if($configuredPolicyObject.$policyName.value -ne "Disabled")				# If the desired effect of a policy is not "Disabled" i.e. "Audit/AuditIfNotExists", then atleast one initiative assignment should have the correct effect so that the policy is correctly configured on the sub.
 				{
+					if([Helpers]::CheckMember($subPolicy.Properties,"parameters"))
+					{
 					$enabledAssignments = $subPolicy | where{[Helpers]::CheckMember($_.Properties.parameters,$policyName) -and $_.Properties.parameters.$policyName.value -eq $configuredPolicyObject.$policyName.value}	
 					$counter = ($enabledAssignments | Measure-Object).Count
 
@@ -530,11 +532,15 @@ class SecurityCenter: AzSKRoot
 					{
 						$MisConfiguredPolicies += ("Misconfigured Mandatory Policy: [" + $policyName + "]");
 					}
+				}else {
+					$MisConfiguredPolicies += ("Misconfigured Mandatory Policy: [" + $policyName + "]");
+				}
 
 				}
 				elseif($configuredPolicyObject.$policyName.value -eq "Disabled")           # If the desired effect of a policy is "Disabled", then no initiative assignments should have a stronger effect (Audit / AuditIfNotExists) for the policy under consideration.
 				{
-		
+					if([Helpers]::CheckMember($subPolicy.Properties,"parameters"))
+					{
 					$enabledAssignments = $subPolicy | where{[Helpers]::CheckMember($_.Properties.parameters,$policyName) -and $_.Properties.parameters.$policyName.value -ne $configuredPolicyObject.$policyName.value}	
 					$counter = ($enabledAssignments | Measure-Object).Count
 
@@ -551,6 +557,10 @@ class SecurityCenter: AzSKRoot
 							$MisConfiguredPolicies += ("Misconfigured Mandatory Policy: [" + $policyName + "]");
 						}
 					}
+				}
+				else {
+					$MisConfiguredPolicies += ("Misconfigured Mandatory Policy: [" + $policyName + "]");
+				}
 				}
 			}
 
@@ -589,7 +599,8 @@ class SecurityCenter: AzSKRoot
 
 				if($configuredOptionalPolicyObject.$policyName.value -ne "Disabled")		# If the desired effect of a policy is not "Disabled" i.e. "Audit/AuditIfNotExists", then atleast one initiative assignment should have the correct effect so that the policy is correctly configured on the sub.
 				{
-
+					if([Helpers]::CheckMember($subPolicy.Properties,"parameters"))
+                    {
 					$enabledAssignments = $subPolicy | where{[Helpers]::CheckMember($_.Properties.parameters,$policyName) -and $_.Properties.parameters.$policyName.value -eq $configuredOptionalPolicyObject.$policyName.value}	
 					$counter = ($enabledAssignments | Measure-Object).Count
 
@@ -597,11 +608,19 @@ class SecurityCenter: AzSKRoot
 					{
 						$MisConfiguredOptionalPolicies += ("Misconfigured Optional Policy: [" + $policyName + "]");
 					}
+				}
+				else {
+					$MisConfiguredOptionalPolicies += ("Misconfigured Optional Policy: [" + $policyName + "]");
+				}
 
 				}
 				elseif($configuredOptionalPolicyObject.$policyName.value -eq "Disabled")    # If the desired effect of a policy is "Disabled", then no initiative assignments should have a stronger effect (Audit / AuditIfNotExists) for the policy under consideration.
 				{
-	
+					$enabledAssignments= $null;
+                    $counter = 0;
+                    
+	                if([Helpers]::CheckMember($subPolicy.Properties,"parameters"))
+                    {
 					$enabledAssignments = $subPolicy | where{[Helpers]::CheckMember($_.Properties.parameters,$policyName) -and $_.Properties.parameters.$policyName.value -ne $configuredOptionalPolicyObject.$policyName.value}	
 					$counter = ($enabledAssignments | Measure-Object).Count
 
@@ -619,7 +638,11 @@ class SecurityCenter: AzSKRoot
 							$MisConfiguredOptionalPolicies += ("Misconfigured Optional Policy: [" + $policyName + "]");
 						}
 					}
-				}
+					}  
+					else{
+						$MisConfiguredOptionalPolicies += ("Misconfigured Optional Policy: [" + $policyName + "]");
+						}
+			   }
 			}
 
 		}
