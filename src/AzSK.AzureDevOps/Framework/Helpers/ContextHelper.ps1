@@ -26,7 +26,7 @@ class ContextHelper {
             }
             [AuthenticationResult] $result = $null;
             
-            if ($azSKUI = Get-Variable 'AzSKShowLoginUI' -Scope Global -ErrorAction 'Ignore') {
+            if ($azSKUI = Get-Variable 'AzSKADOLoginUI' -Scope Global -ErrorAction 'Ignore') {
                 if ($azSKUI.Value -eq 1) {
                     $result = $ctx.AcquireToken($azureDevOpsResourceId, $clientId, [Uri]::new($replyUri),[PromptBehavior]::Always);
                 }
