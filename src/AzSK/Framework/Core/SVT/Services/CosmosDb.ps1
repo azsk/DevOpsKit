@@ -16,7 +16,7 @@ class CosmosDb : AzSVTBase
 		{
 			$this.Resource =  Get-AzResource -Name $this.ResourceContext.ResourceName `
 			-ResourceGroupName $this.ResourceContext.ResourceGroupName `
-			-ResourceType $this.ResourceContext.ResourceType
+			-ResourceType $this.ResourceContext.ResourceType -ApiVersion "2020-03-01"
 			
             if(-not $this.Resource)
             {
