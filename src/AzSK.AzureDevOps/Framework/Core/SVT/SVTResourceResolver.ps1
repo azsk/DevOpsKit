@@ -33,7 +33,6 @@ class SVTResourceResolver: AzSKRoot {
     SVTResourceResolver([string]$organizationName, $ProjectNames, $BuildNames, $ReleaseNames, $AgentPools, $ServiceConnectionNames, $MaxObj, $ScanAllArtifacts, $PATToken, $ResourceTypeName): Base($organizationName, $PATToken) {
         $this.MaxObjectsToScan = $MaxObj #default = 0 => scan all if "*" specified...
 
-        $this.SetallTheParamValues($organizationName, $ProjectNames, $BuildNames, $ReleaseNames, $AgentPools, $ScanAllArtifacts, $PATToken, $ResourceTypeName);
         if (-not [string]::IsNullOrEmpty($ServiceConnectionNames)) {
             $this.ServiceConnections += $this.ConvertToStringArray($ServiceConnectionNames);
 
@@ -44,7 +43,10 @@ class SVTResourceResolver: AzSKRoot {
 
         if ($ScanAllArtifacts) {
             $this.ServiceConnections = "*"
-        }        
+        }
+
+        $this.SetallTheParamValues($organizationName, $ProjectNames, $BuildNames, $ReleaseNames, $AgentPools, $ScanAllArtifacts, $PATToken, $ResourceTypeName);
+                
     }
 
     [void] SetallTheParamValues([string]$organizationName, $ProjectNames, $BuildNames, $ReleaseNames, $AgentPools, $ScanAllArtifacts, $PATToken, $ResourceTypeName) { 
@@ -88,15 +90,30 @@ class SVTResourceResolver: AzSKRoot {
             }
             if($this.BuildNames -eq "*") 
             {
-                $message += " ,builds";
+                if($message -ne ""){
+                  $message += " ,builds";
+                }
+                else {
+                    $message += "builds";
+                }
             }
             if($this.ReleaseNames -eq "*") 
             {
-                $message += " ,releases";
+                if($message -ne ""){
+                 $message += " ,releases";
+                }
+                else {
+                    $message += "releases"; 
+                }
             }
             if($this.ServiceConnections -eq "*") 
             {
-                $message += " ,service connections";
+                if($message -ne ""){
+                 $message += " ,service connections";
+                }
+                else {
+                    $message += "service connections";
+                }
             }
             if($this.AgentPools -eq "*") 
             {
