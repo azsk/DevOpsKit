@@ -25,7 +25,19 @@ class ContextHelper {
                 $ctx = [AuthenticationContext]::new("https://login.microsoftonline.com/" + $homeTenant);
             }
             [AuthenticationResult] $result = $null;
-            $result = $ctx.AcquireToken($azureDevOpsResourceId, $clientId, [Uri]::new($replyUri),[PromptBehavior]::Always);
+            
+            if ($azSKUI = Get-Variable 'AzSKShowLoginUI' -Scope Global -ErrorAction 'Ignore') {
+                if ($azSKUI.Value -eq 1) {
+                    $result = $ctx.AcquireToken($azureDevOpsResourceId, $clientId, [Uri]::new($replyUri),[PromptBehavior]::Always);
+                }
+                else {
+                    $result = $ctx.AcquireToken($azureDevOpsResourceId, $clientId, [Uri]::new($replyUri),[PromptBehavior]::Auto);
+                }
+            }
+            else {
+                $result = $ctx.AcquireToken($azureDevOpsResourceId, $clientId, [Uri]::new($replyUri),[PromptBehavior]::Auto);
+            }
+            
             [ContextHelper]::ConvertToContextObject($result)
         }
         return [ContextHelper]::currentContext

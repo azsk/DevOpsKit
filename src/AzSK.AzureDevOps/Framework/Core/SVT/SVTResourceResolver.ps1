@@ -80,6 +80,31 @@ class SVTResourceResolver: AzSKRoot {
             }
         }
 
+        if ($this.ProjectNames -eq "*" -or $this.BuildNames -eq "*" -or $this.ReleaseNames -eq "*" -or $this.ServiceConnections -eq "*" -or $this.AgentPools -eq "*") {
+            $message = "";
+            if($this.ProjectNames -eq "*") 
+            {
+                $message = "projects";
+            }
+            if($this.BuildNames -eq "*") 
+            {
+                $message += " ,builds";
+            }
+            if($this.ReleaseNames -eq "*") 
+            {
+                $message += " ,releases";
+            }
+            if($this.ServiceConnections -eq "*") 
+            {
+                $message += " ,service connections";
+            }
+            if($this.AgentPools -eq "*") 
+            {
+                $message += " ,agent pools";
+            }
+            $this.PublishCustomMessage("Using '*' can take a long time for the scan to complete in larger projects. You may want to provide a comma-separated list of $($message).");
+        }
+
         if ($ScanAllArtifacts) {
             $this.ProjectNames = "*"
             $this.BuildNames = "*"
@@ -91,7 +116,7 @@ class SVTResourceResolver: AzSKRoot {
     [void] LoadResourcesForScan() {
         
         #Call APIS for Organization,User/Builds/Releases/ServiceConnections 
-        if ($this.ResourceTypeName -eq [ResourceTypeName]::All -or $this.ResourceTypeName -eq [ResourceTypeName]::Organization) {
+        if ($this.ResourceTypeName -in ([ResourceTypeName]::Organization, [ResourceTypeName]::All, [ResourceTypeName]::Org_Project_User)) {
             #Checking if org name is correct 
             $apiURL = "https://dev.azure.com/{0}/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1" -f $($this.organizationName);
 
@@ -120,7 +145,7 @@ class SVTResourceResolver: AzSKRoot {
             
         }
 
-        if ($this.ResourceTypeName -eq [ResourceTypeName]::All -or $this.ResourceTypeName -eq [ResourceTypeName]::User) {
+        if ($this.ResourceTypeName -in ([ResourceTypeName]::User, [ResourceTypeName]::All, [ResourceTypeName]::Org_Project_User, [ResourceTypeName]::Build_Release_SvcConn_AgentPool_User)) {
             $svtResource = [SVTResource]::new();
             $svtResource.ResourceName = $this.organizationName;
             $svtResource.ResourceType = "AzureDevOps.User";
@@ -160,7 +185,7 @@ class SVTResourceResolver: AzSKRoot {
             foreach ($thisProj in $projects) 
             {
                 $projectName = $thisProj.name
-                if ($this.ResourceTypeName -eq [ResourceTypeName]::All -or $this.ResourceTypeName -eq [ResourceTypeName]::Project) {
+                if ($this.ResourceTypeName -in ([ResourceTypeName]::Project, [ResourceTypeName]::All, [ResourceTypeName]::Org_Project_User)) {
                     $svtResource = [SVTResource]::new();
                     $svtResource.ResourceName = $thisProj.name;
                     $svtResource.ResourceGroupName = $this.organizationName
@@ -175,7 +200,7 @@ class SVTResourceResolver: AzSKRoot {
                     $this.SVTResources += $svtResource
                 }
 
-                if ($this.BuildNames.Count -gt 0 -and ($this.ResourceTypeName -eq [ResourceTypeName]::All -or $this.ResourceTypeName -eq [ResourceTypeName]::Build)) {
+                if ($this.BuildNames.Count -gt 0 -and ($this.ResourceTypeName -in ([ResourceTypeName]::Build, [ResourceTypeName]::All, [ResourceTypeName]::Build_Release, [ResourceTypeName]::Build_Release_SvcConn_AgentPool_User))) {
                     if ($this.ProjectNames -ne "*") {
                         $this.PublishCustomMessage("Getting build configurations...");
                     }
@@ -233,7 +258,7 @@ class SVTResourceResolver: AzSKRoot {
                     }          
                 }
 
-                if ($this.ReleaseNames.Count -gt 0 -and ($this.ResourceTypeName -eq [ResourceTypeName]::All -or $this.ResourceTypeName -eq [ResourceTypeName]::Release)) 
+                if ($this.ReleaseNames.Count -gt 0 -and ($this.ResourceTypeName -in ([ResourceTypeName]::Release, [ResourceTypeName]::All, [ResourceTypeName]::Build_Release, [ResourceTypeName]::Build_Release_SvcConn_AgentPool_User)))
                 {
                     if ($this.ProjectNames -ne "*") {
                         $this.PublishCustomMessage("Getting release configurations...");
@@ -315,7 +340,7 @@ class SVTResourceResolver: AzSKRoot {
                     }
                 }
 
-                if ($this.ServiceConnections.Count -gt 0 -and ($this.ResourceTypeName -eq [ResourceTypeName]::All -or $this.ResourceTypeName -eq [ResourceTypeName]::ServiceConnection)) 
+                if ($this.ServiceConnections.Count -gt 0 -and ($this.ResourceTypeName -in ([ResourceTypeName]::ServiceConnection, [ResourceTypeName]::All, [ResourceTypeName]::Build_Release_SvcConn_AgentPool_User)))
                 {
                     if ($this.ProjectNames -ne "*") {
                         $this.PublishCustomMessage("Getting service endpoint configurations...");
@@ -352,7 +377,7 @@ class SVTResourceResolver: AzSKRoot {
                     }
                 }
                 
-                if ($this.AgentPools.Count -gt 0 -and ($this.ResourceTypeName -eq [ResourceTypeName]::All -or $this.ResourceTypeName -eq [ResourceTypeName]::AgentPool)) {
+                if ($this.AgentPools.Count -gt 0 -and ($this.ResourceTypeName -in ([ResourceTypeName]::AgentPool, [ResourceTypeName]::All, [ResourceTypeName]::Build_Release_SvcConn_AgentPool_User))) {
                     if ($this.ProjectNames -ne "*") {
                         $this.PublishCustomMessage("Getting agent pools configurations...");
                     }
