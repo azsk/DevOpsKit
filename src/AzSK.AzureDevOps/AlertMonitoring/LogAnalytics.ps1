@@ -112,7 +112,8 @@ function Set-AzSKMonitoringSettings
 			{
 				$appSettings.LASource = "SDL"
 			}
-			$appSettings.LAType = "AzSK"
+		
+			$appSettings.LAType = "AzSK_ADO"
 			[ConfigurationManager]::UpdateAzSKSettings($appSettings);
 			[ConfigOverride]::ClearConfigInstance()
 			[EventBase]::PublishGenericCustomMessage([Constants]::SingleDashLine + "`r`nWe have added new queries for the Monitoring solution. These will help reflect the aggregate control pass/fail status more accurately. Please go here to get them:  https://aka.ms/devopskit/omsqueries `r`n",[MessageType]::Warning);
