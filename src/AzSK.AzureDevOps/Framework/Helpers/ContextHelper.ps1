@@ -1,13 +1,17 @@
-<#
-.Description
-# Context class for indenity details. 
-# Provides functionality to login, create context, get token for api calls
-#>
 using namespace Microsoft.IdentityModel.Clients.ActiveDirectory
+using namespace System.IO
+using namespace System.Security.Cryptography
+
+class MyTokenCache: TokenCache
+{
+
+
+}
 
 class ContextHelper {
     
     static hidden [Context] $currentContext;
+    static [bool] $bUseTokenCache = $false;
 
     hidden static [PSObject] GetCurrentContext()
     {
@@ -17,16 +21,36 @@ class ContextHelper {
             $replyUri = [Constants]::DefaultReplyUri; 
             $azureDevOpsResourceId = [Constants]::DefaultAzureDevOpsResourceId;
             [AuthenticationContext] $ctx = $null;
+            
+            if ([ContextHelper]::bUseTokenCache)
+            { 
+                $tokenCache = [AzSKADOTokenCache]::new();  
+                $ctx = [AuthenticationContext]::new("https://login.windows.net/common", $tokenCache);
+            }
+            else 
+            {
+                $ctx = [AuthenticationContext]::new("https://login.windows.net/common");
+            }
 
-            $ctx = [AuthenticationContext]::new("https://login.windows.net/common");
+            # TODO: what is this code for?
             if ($ctx.TokenCache.Count -gt 0)
             {
                 [String] $homeTenant = $ctx.TokenCache.ReadItems().First().TenantId;
                 $ctx = [AuthenticationContext]::new("https://login.microsoftonline.com/" + $homeTenant);
             }
+        
             [AuthenticationResult] $result = $null;
-            $result = $ctx.AcquireToken($azureDevOpsResourceId, $clientId, [Uri]::new($replyUri),[PromptBehavior]::Always);
-            [ContextHelper]::ConvertToContextObject($result)
+            try 
+            {
+               $task = $ctx.AcquireTokenSilentAsync($azureDevOpsResourceId, $clientId).GetAwaiter();
+               $result = $task.Wait(100); #100ms
+            }
+            catch  
+            {
+                $result = $ctx.AcquireToken($azureDevOpsResourceId, $clientId, [Uri]::new($replyUri), [PromptBehavior]::Auto);
+            }
+
+            [ContextHelper]::ConvertToContextObject($result);
         }
         return [ContextHelper]::currentContext
     }

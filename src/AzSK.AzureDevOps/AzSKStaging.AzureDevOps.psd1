@@ -51,7 +51,7 @@
     RequiredModules        = @()
 
     # Assemblies that must be loaded prior to importing this module
-    RequiredAssemblies = @('.\Lib\Newtonsoft.Json.dll','.\Lib\Microsoft.ApplicationInsights.dll','.\Lib\Microsoft.IdentityModel.Clients.ActiveDirectory.dll')
+    RequiredAssemblies = @('.\Lib\Newtonsoft.Json.dll','.\Lib\Microsoft.ApplicationInsights.dll','.\Lib\Microsoft.IdentityModel.Clients.ActiveDirectory.dll', '.\Lib\System.Security.Cryptography.ProtectedData.dll')
 
     # Script files (.ps1) that are run in the caller's environment prior to importing this module.
     ScriptsToProcess       = @()
