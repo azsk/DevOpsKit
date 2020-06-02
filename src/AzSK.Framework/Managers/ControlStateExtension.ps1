@@ -185,12 +185,17 @@ class ControlStateExtension
 	
 	hidden [bool] ComputeControlStateIndexer()
 	{
+		$ContainerName = [Constants]::AttestationDataContainerName;
 		#check for permission validation
 		if($this.HasControlStateReadPermissions -le 0) 
 		{
 			return $false;
 		}
 		#return if you don't have the required state attestation configuration during the runtime evaluation
+		if($null -eq $this.AzSKStorageContainer)
+        {
+            $this.AzSKStorageContainer = Get-AzStorageContainer -Context $this.AzSKStorageAccount.Context -Name $ContainerName -ErrorAction SilentlyContinue
+        }
 		if( $null -eq $this.AzSKResourceGroup -or $null -eq $this.AzSKStorageAccount -or $null -eq $this.AzSKStorageContainer)
 		{
 			return $false;
@@ -242,7 +247,7 @@ class ControlStateExtension
 			if($null -eq $indexerBlob)
 			{			
 				#Set attenstation index file is not present on blob storage
-				$this.IsControlStateIndexerPresent = $false
+				#$this.IsControlStateIndexerPresent = $false
 				return $true;
 			}
 
