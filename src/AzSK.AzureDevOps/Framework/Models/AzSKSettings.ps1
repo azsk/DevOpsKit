@@ -164,7 +164,7 @@ class AzSKSettings {
 					    $orgName = [AzSKSettings]::SubscriptionContext.SubscriptionName;
 
 					    $repoName = [Constants]::OrgPolicyRepo + $projectName;
-					    $branch = "master";
+					    $branch = "";
 					    if($parsedSettings.BranchId)
 						{
 							$branch = $parsedSettings.BranchId;
