@@ -24,7 +24,7 @@ function Get-AzSKAzureDevOpsSecurityStatus
 	   Agent name for which the security evaluation has to be performed.	
 
 	.NOTES
-	This command helps the application team to verify whether their Azure resources are compliant with the security guidance or not 
+	This command helps the application team to verify whether their Azure resources are compliant with the security guidance or not. 
 
 	.LINK
 	https://aka.ms/azskossdocs 
