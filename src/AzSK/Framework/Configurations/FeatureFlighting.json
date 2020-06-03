@@ -112,15 +112,6 @@
       "IsEnabled": true
     },
     {
-      "Name": "EnableCSPSubsValidation",
-      "Description": "",
-      "Sources": ["*"],
-      "EnabledForSubs": [],
-      "DisabledForSubs": [],
-      "UnderPreview": false,
-      "IsEnabled": true
-    },
-    {
       "Name": "FetchRGPIMControlStatusFromComplianceState",
       "Description": "",
       "Sources": ["*"],

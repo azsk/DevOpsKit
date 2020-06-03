@@ -48,23 +48,15 @@ class RoleAssignmentHelper
 
 			if($includeClassicAdministrators)
 			{
-
 				#Checking feature flighting status for CSP subs validating and accordingly making another attempt skipping -IncludeClassicAdministrators
-				if([FeatureFlightingManager]::GetFeatureStatus("EnableCSPSubsValidation",$subscriptionId) -eq $true)
-				{
-					try{
-						$roleAssignments = Get-AzRoleAssignment -IncludeClassicAdministrators -ErrorAction Stop;
-					}
-					catch{
-						# Assuming -IncludeClassicAdministrators not supported for CSP subs, giving another try
-						$roleAssignments = Get-AzRoleAssignment -ErrorAction Stop;
-					}
-				}
-				else{
-					# If feature flighting is disabled, use existing code path
+				try{
 					$roleAssignments = Get-AzRoleAssignment -IncludeClassicAdministrators -ErrorAction Stop;
 				}
-
+				catch{
+					# Assuming -IncludeClassicAdministrators not supported for CSP subs, giving another try
+					$roleAssignments = Get-AzRoleAssignment -ErrorAction Stop;
+				}
+				
 			}
 			else
 			{
@@ -97,20 +89,14 @@ class RoleAssignmentHelper
 			if($includeClassicAdministrators)
 			{
 				#Checking feature flighting status for CSP subs validating and accordingly making another attempt skipping -IncludeClassicAdministrators
-				if([FeatureFlightingManager]::GetFeatureStatus("EnableCSPSubsValidation",$subscriptionId) -eq $true)
-				{
-					try{
+				try{
 						$roleAssignments = Get-AzRoleAssignment -ResourceGroupName $resourceGroupName -IncludeClassicAdministrators -ErrorAction Stop;
 					}
 					catch{
 						# Assuming -IncludeClassicAdministrators not supported for CSP subs, giving another try
 						$roleAssignments = Get-AzRoleAssignment -ResourceGroupName $resourceGroupName -ErrorAction Stop;
 					}
-				}
-				else{
-					# If feature flighting is disabled, use existing code path
-					$roleAssignments = Get-AzRoleAssignment -ResourceGroupName $resourceGroupName -IncludeClassicAdministrators -ErrorAction Stop;
-				}
+				
 			}
 			else
 			{
@@ -140,23 +126,14 @@ class RoleAssignmentHelper
 			$subscriptionId = $currentContext.Subscription.Id
 			if($includeClassicAdministrators)
 			{
-
 				#Checking feature flighting status for CSP subs validating and accordingly making another attempt skipping -IncludeClassicAdministrators
-				if([FeatureFlightingManager]::GetFeatureStatus("EnableCSPSubsValidation",$subscriptionId) -eq $true)
-				{
-					try{
-						$roleAssignments = Get-AzRoleAssignment -ResourceGroupName $resourceGroupName -ResourceName $resourceName -ResourceType $resourceType -IncludeClassicAdministrators -ErrorAction Stop;
-					}
-					catch{
-						# Assuming -IncludeClassicAdministrators not supported for CSP subs, giving another try
-						$roleAssignments = Get-AzRoleAssignment -ResourceGroupName $resourceGroupName -ResourceName $resourceName -ResourceType $resourceType -ErrorAction Stop;
-					}
-				}
-				else{
-					# If feature flighting is disabled, use existing code path
+				try{
 					$roleAssignments = Get-AzRoleAssignment -ResourceGroupName $resourceGroupName -ResourceName $resourceName -ResourceType $resourceType -IncludeClassicAdministrators -ErrorAction Stop;
 				}
-
+				catch{
+					# Assuming -IncludeClassicAdministrators not supported for CSP subs, giving another try
+					$roleAssignments = Get-AzRoleAssignment -ResourceGroupName $resourceGroupName -ResourceName $resourceName -ResourceType $resourceType -ErrorAction Stop;
+				}
 			}
 			else
 			{
