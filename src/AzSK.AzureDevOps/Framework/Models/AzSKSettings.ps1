@@ -163,8 +163,9 @@ class AzSKSettings {
 					    $projectName = [AzSKSettings]::InvocationContext.BoundParameters["ProjectNames"].split(',')[0];
 					    $orgName = [AzSKSettings]::SubscriptionContext.SubscriptionName;
 
-					    $repoName = [Constants]::OrgPolicyRepo + $projectName;
-					    $branch = "";
+						$repoName = [Constants]::OrgPolicyRepo + $projectName;
+						# Declaring $branch variable with its default value as 'master' (production policy branch)
+					    $branch = "master";
 					    if($parsedSettings.BranchId)
 						{
 							$branch = $parsedSettings.BranchId;
