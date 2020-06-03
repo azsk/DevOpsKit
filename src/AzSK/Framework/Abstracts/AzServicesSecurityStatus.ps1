@@ -1,7 +1,6 @@
 Set-StrictMode -Version Latest
 class AzServicesSecurityStatus: ServicesSecurityStatus
 {
-	[bool] $IsPartialCommitScanActive = $false;
 	AzServicesSecurityStatus([string] $subscriptionId, [InvocationInfo] $invocationContext, [SVTResourceResolver] $resolver):
         Base($subscriptionId, $invocationContext)
     {

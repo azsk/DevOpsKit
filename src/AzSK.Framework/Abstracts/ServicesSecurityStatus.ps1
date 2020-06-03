@@ -2,6 +2,7 @@
 class ServicesSecurityStatus: ADOSVTCommandBase
 {
 	[SVTResourceResolver] $Resolver = $null;
+	[bool] $IsPartialCommitScanActive = $false;
 	ServicesSecurityStatus([string] $subscriptionId, [InvocationInfo] $invocationContext, [SVTResourceResolver] $resolver):
         Base($subscriptionId, $invocationContext)
     {
@@ -13,10 +14,13 @@ class ServicesSecurityStatus: ADOSVTCommandBase
 		$this.Resolver = $resolver;
 		$this.Resolver.LoadResourcesForScan();
 
+		$this.UsePartialCommits = $invocationContext.BoundParameters["UsePartialCommits"];
+
 		#BaseLineControlFilter with control ids
 		$this.UseBaselineControls = $invocationContext.BoundParameters["UseBaselineControls"];
 		$this.UsePreviewBaselineControls = $invocationContext.BoundParameters["UsePreviewBaselineControls"];
 		$this.BaselineFilterCheck();
+		$this.UsePartialCommitsCheck();
 	}
 
 	[SVTEventContext[]] ComputeApplicableControls()
@@ -172,6 +176,12 @@ class ServicesSecurityStatus: ADOSVTCommandBase
 				$svtClassName = $_.ResourceTypeMapping.ClassName;
 
 				$svtObject = $null;
+
+				#Update resource scan retry count in scan snapshot in storage if user partial commit switch is on
+				if($this.UsePartialCommits)
+				{
+					$this.UpdateRetryCountForPartialScan();
+				}
 
 				try
 				{
@@ -349,6 +359,18 @@ class ServicesSecurityStatus: ADOSVTCommandBase
 		}
 	}
 
+	[void] UpdateRetryCountForPartialScan()
+	{
+		$scanSource = [AzSKSettings]::GetInstance().GetScanSource();
+		[PartialScanManager] $partialScanMngr = [PartialScanManager]::GetInstance();
+		$baselineControlsDetails = $partialScanMngr.GetBaselineControlDetails()
+		#If Scan source is in supported sources or UsePartialCommits switch is available
+		if ($this.UsePartialCommits -or ($baselineControlsDetails.SupportedSources -contains $scanSource))
+		{
+			$partialScanMngr.UpdateResourceScanRetryCount($_.ResourceId);
+		}
+	}
+	
 	[void] UsePartialCommitsCheck()
     {
             #If Scan source is in supported sources or UsePartialCommits switch is available

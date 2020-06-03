@@ -140,7 +140,6 @@ class PartialScanManager
 			{
 				$resourceValue.ModifiedDate = [DateTime]::UtcNow;
 				$resourceValue.State = $state;
-				#$this.ResourceScanTrackerObj.ResourceMapTable[$idHash] = $resourceValue;
 			}
 			else
 			{
@@ -171,7 +170,7 @@ class PartialScanManager
 				{
 					$resourceValue.State = [ScanState]::ERR
 				}
-				#$this.PersistStorageBlob();
+				$this.PersistStorageBlob();
 			}
 			else
 			{
@@ -364,9 +363,9 @@ class PartialScanManager
 			{
 				Get-AzStorageBlobContent -CloudBlob $controlStateBlob.ICloudBlob -Context $this.AzSKStorageAccount.Context -Destination $masterFilePath -Force
 				$this.ResourceScanTrackerObj = Get-ChildItem -Path $masterFilePath -Force | Get-Content | ConvertFrom-Json
-				$resources = Get-AzResource
+				#$resources = Get-AzResource
 				#filter resources which are removed from subscription
-				$this.ResourceScanTrackerObj.ResourceMapTable = $this.ResourceScanTrackerObj.ResourceMapTable | Where-Object{$resources.ResourceId -contains $_.Id -or $_.Id -eq "AzSKCfg"}
+				#$this.ResourceScanTrackerObj.ResourceMapTable = $this.ResourceScanTrackerObj.ResourceMapTable | Where-Object{$resources.ResourceId -contains $_.Id -or $_.Id -eq "AzSKCfg"}
 			}			
 		}
 	}

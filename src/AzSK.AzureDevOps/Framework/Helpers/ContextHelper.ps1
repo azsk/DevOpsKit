@@ -25,7 +25,7 @@ class ContextHelper {
                 $ctx = [AuthenticationContext]::new("https://login.microsoftonline.com/" + $homeTenant);
             }
             [AuthenticationResult] $result = $null;
-            $result = $ctx.AcquireToken($azureDevOpsResourceId, $clientId, [Uri]::new($replyUri),[PromptBehavior]::Always);
+            $result = $ctx.AcquireToken($azureDevOpsResourceId, $clientId, [Uri]::new($replyUri),[PromptBehavior]::Auto);
             [ContextHelper]::ConvertToContextObject($result)
         }
         return [ContextHelper]::currentContext

@@ -22,6 +22,7 @@ class ListenerHelper
         [WriteEnvironmentFile]::GetInstance().RegisterEvents();
 		[WriteFixControlFiles]::GetInstance().RegisterEvents();
         [GenericListener]::GetInstance().RegisterEvents();		
+        [WriteCAStatus]::GetInstance().RegisterEvents();
     }
 
 
@@ -40,7 +41,8 @@ class ListenerHelper
         [RemoteReportsListener]::GetInstance().UnregisterEvents();
         [WriteEnvironmentFile]::GetInstance().UnregisterEvents();
 		[WriteFixControlFiles]::GetInstance().UnregisterEvents();
-        [GenericListener]::GetInstance().UnregisterEvents();		
+        [GenericListener]::GetInstance().UnregisterEvents();	
+        [WriteCAStatus]::GetInstance().UnregisterEvents();	
     }	
 }
 #[ListenerHelper]::RegisterListeners();

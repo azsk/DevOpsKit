@@ -116,6 +116,11 @@ function Get-AzSKAzureDevOpsSecurityStatus
 
 		[switch]
         [Parameter(Mandatory = $false)]
+		[Alias("upc")]
+		$UsePartialCommits,	
+		
+		[switch]
+        [Parameter(Mandatory = $false)]
 		[Alias("dnof")]
 		$DoNotOpenOutputFolder,
 

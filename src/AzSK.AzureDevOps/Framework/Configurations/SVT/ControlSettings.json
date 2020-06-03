@@ -1,5 +1,6 @@
 {
   "BaselineControls": {
+    "ExpiryInDays":0,
     "ResourceTypeControlIdMappingList": [
       {
         "ResourceType": "Organization",
