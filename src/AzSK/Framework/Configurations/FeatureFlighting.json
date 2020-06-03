@@ -239,7 +239,7 @@
       "IsEnabled": true
     },
     {
-      "Name": "DisableAnonymouscheckforDLGen2",
+      "Name": "EnableAnonymouscheckforADLGen2",
       "Description": "",
       "Sources": ["*"],
       "EnabledForSubs": [],

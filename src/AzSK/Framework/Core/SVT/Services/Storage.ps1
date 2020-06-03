@@ -69,11 +69,11 @@ class Storage: AzSVTBase
 			$result = $result | Where-Object {$_.Tags -contains "PremiumFileShareStorage"}
 		}
 
-		 #using featureflight for disabling the code for skipping control 'Azure_Storage_AuthN_Dont_Allow_Anonymous' for Data lake Storage Gen2 as blob storage is now supported.
-		 if([FeatureFlightingManager]::GetFeatureStatus("DisableAnonymouscheckforDLGen2",$($this.SubscriptionContext.SubscriptionId)) -eq $false)
+		 #using featureflight for enabling the control 'Azure_Storage_AuthN_Dont_Allow_Anonymous' for DatalakeStorageGen2 as blob storage is now supported.
+		 if([FeatureFlightingManager]::GetFeatureStatus("EnableAnonymouscheckforADLGen2",$($this.SubscriptionContext.SubscriptionId)) -eq $false)
 		 {
 			 $resource = Get-AzResource -ResourceId $this.ResourceContext.ResourceId;
-			 #Disabling the control 'Azure_Storage_AuthN_Dont_Allow_Anonymous' for Data Lake Storage Gen2 resources with hierarchical namespace accounts enabled as blob storage is not currently supported.
+			 #Disabling the control 'Azure_Storage_AuthN_Dont_Allow_Anonymous' for Data Lake Storage Gen2 resources with hierarchical namespace accounts enabled.
 	 
 			 if(([Helpers]::CheckMember($resource.Properties, "isHnsEnabled") -and ($resource.Properties.isHnsEnabled -eq $true)))
 			 {
