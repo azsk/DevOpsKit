@@ -279,6 +279,24 @@ function Set-AzSKPIMConfiguration {
 
         [Parameter(Mandatory = $false, ParameterSetName = "ConfigureRoleSettings")]
         [Parameter(Mandatory = $false, ParameterSetName = "ConfigureRoleForManagementGroup")]
+        [int]
+        [Alias("eaa")]
+        $ExpireActiveAssignmentsInDays = -1,
+
+        [Parameter(Mandatory = $false, ParameterSetName = "ConfigureRoleSettings")]
+        [Parameter(Mandatory = $false, ParameterSetName = "ConfigureRoleForManagementGroup")]
+        [string]
+        [Alias("raa")]
+        $RequireMFAOnActiveAssignment,
+
+        [Parameter(Mandatory = $false, ParameterSetName = "ConfigureRoleSettings")]
+        [Parameter(Mandatory = $false, ParameterSetName = "ConfigureRoleForManagementGroup")]
+        [string]
+        [Alias("rja")]
+        $RequireJustificationOnActiveAssignment,
+
+        [Parameter(Mandatory = $false, ParameterSetName = "ConfigureRoleSettings")]
+        [Parameter(Mandatory = $false, ParameterSetName = "ConfigureRoleForManagementGroup")]
         [bool]
         $ApplyConditionalAccessPolicyForRoleActivation,
         [Alias("ApplyConditonalAccessPolicyForRoleActivation")]
@@ -304,7 +322,7 @@ function Set-AzSKPIMConfiguration {
         [Parameter(Mandatory = $false, ParameterSetName = "Assign")]
         [Parameter(Mandatory = $false, ParameterSetName = "AssignForManagementGroup")]
         [Alias("at")]
-		$AssignmentType = [AssignmentType]::Eligible
+        $AssignmentType = [AssignmentType]::Eligible
     )
     Begin {
         [CommandHelper]::BeginCommand($MyInvocation);
@@ -385,8 +403,20 @@ function Set-AzSKPIMConfiguration {
                     $pimconfig.InvokeFunction($pimconfig.ExtendSoonToExpireAssignments, @($ManagementGroupId, $null, $null, $null, $RoleNames, $ExpiringInDays, $DurationInDays, $Force))
                 }
             }
+            
+
             elseif ($PSCmdlet.ParameterSetName -eq 'ConfigureRoleSettings' -or $PSCmdlet.ParameterSetName -eq 'ConfigureRoleForManagementGroup')
             {
+
+                $roleSettings = [pscustomobject]@{
+                    'MaximumActivationDuration' = $MaximumActivationDuration
+                    'RequireJustificationOnActivation' = $RequireJustificationOnActivation
+                    'ExpireEligibleAssignmentsAfter' = $ExpireEligibleAssignmentsInDays
+                    'ExpireActiveAssignmentsAfter' = $ExpireActiveAssignmentsInDays
+                    'RequireMFAOnActiveAssignment'= $RequireMFAOnActiveAssignment
+                    'RequireJustificationOnActiveAssignment'= $RequireJustificationOnActiveAssignment
+                    }
+
                 if($null -ne $PSCmdlet.MyInvocation.BoundParameters["RequireMFAOnActivation"] -and $null -ne $PSCmdlet.MyInvocation.BoundParameters["ApplyConditionalAccessPolicyForRoleActivation"])
                     {
                         throw [SuppressedException] "'RequireMFAOnActivation' and 'ApplyConditionalAccessPolicyForRoleActivation' are exclusive switches. Please use only one of them in the command"   
@@ -399,12 +429,12 @@ function Set-AzSKPIMConfiguration {
                         if($RequireMFAOnActivation -eq $true)
                         {
                             #Both CA and MFA can not be applied simultaneously. Therefore, if MFA is set to true then CA is set to false.     
-                            $pimconfig.InvokeFunction($pimconfig.ConfigureRoleSettings,@($ManagementGroupId, $null, $null, $null, $RoleName, $ExpireEligibleAssignmentsInDays, $RequireJustificationOnActivation, $MaximumActivationDuration, $true, $false));
+                            $pimconfig.InvokeFunction($pimconfig.ConfigureRoleSettings,@($ManagementGroupId, $null, $null, $null, $RoleName, $roleSettings, $true, $false));
                         }  
                         else 
                         {
                             #If MFA is set to false then CA settings should remain unchanged. Hence sending null in CA parameter 
-                            $pimconfig.InvokeFunction($pimconfig.ConfigureRoleSettings,@($ManagementGroupId, $null, $null, $null, $RoleName, $ExpireEligibleAssignmentsInDays, $RequireJustificationOnActivation, $MaximumActivationDuration,  $false, $null));
+                            $pimconfig.InvokeFunction($pimconfig.ConfigureRoleSettings,@($ManagementGroupId, $null, $null, $null, $RoleName, $roleSettings ,  $false, $null));
                         }  
                     }
                     elseif ($null -ne $PSCmdlet.MyInvocation.BoundParameters["ApplyConditionalAccessPolicyForRoleActivation"])
@@ -412,19 +442,19 @@ function Set-AzSKPIMConfiguration {
                         if($ApplyConditionalAccessPolicyForRoleActivation -eq $true)
                         {
                             #Both Conditional Access policy and MFA can not be applied simultaneously. Therefore, if CA is set to true then MFA is set to false.     
-                            $pimconfig.InvokeFunction($pimconfig.ConfigureRoleSettings,@($ManagementGroupId, $null, $null, $null, $RoleName, $ExpireEligibleAssignmentsInDays, $RequireJustificationOnActivation, $MaximumActivationDuration, $false, $true));
+                            $pimconfig.InvokeFunction($pimconfig.ConfigureRoleSettings,@($ManagementGroupId, $null, $null, $null, $RoleName, $roleSettings, $false, $true));
                         }  
                         else 
                         {
                             #If CA is set to false then MFA settings should remain unchanged. Hence sending null in MFA parameter 
-                            $pimconfig.InvokeFunction($pimconfig.ConfigureRoleSettings,@($ManagementGroupId, $null, $null, $null, $RoleName, $ExpireEligibleAssignmentsInDays, $RequireJustificationOnActivation, $MaximumActivationDuration, $null, $false));
+                            $pimconfig.InvokeFunction($pimconfig.ConfigureRoleSettings,@($ManagementGroupId, $null, $null, $null, $RoleName, $roleSettings, $null, $false));
                         }  
                     }
                         
                     else 
                     {
                         #If neither CA nor MFA parameter is passed in command then both should remain unchanged. Identifying this case in code by sending false for both CA and MFA 
-                        $pimconfig.InvokeFunction($pimconfig.ConfigureRoleSettings,@($ManagementGroupId, $null, $null, $null, $RoleName, $ExpireEligibleAssignmentsInDays, $RequireJustificationOnActivation, $MaximumActivationDuration, $false, $false))
+                        $pimconfig.InvokeFunction($pimconfig.ConfigureRoleSettings,@($ManagementGroupId, $null, $null, $null, $RoleName, $roleSettings, $false, $false))
                     }
                 }
                 else{ #for subscriptionid
@@ -434,11 +464,11 @@ function Set-AzSKPIMConfiguration {
                         if($RequireMFAOnActivation -eq $true)
                         {
                             #Both CA and MFA can not be applied simultaneously      
-                            $pimconfig.InvokeFunction($pimconfig.ConfigureRoleSettings,@($null, $SubscriptionId, $ResourceGroupName, $ResourceName, $RoleName, $ExpireEligibleAssignmentsInDays, $RequireJustificationOnActivation, $MaximumActivationDuration, $true, $false));
+                            $pimconfig.InvokeFunction($pimconfig.ConfigureRoleSettings,@($null, $SubscriptionId, $ResourceGroupName, $ResourceName, $RoleName, $roleSettings, $true, $false));
                         }  
                         else 
                         {
-                            $pimconfig.InvokeFunction($pimconfig.ConfigureRoleSettings,@($null, $SubscriptionId, $ResourceGroupName, $ResourceName, $RoleName, $ExpireEligibleAssignmentsInDays, $RequireJustificationOnActivation, $MaximumActivationDuration,  $false, $null));
+                            $pimconfig.InvokeFunction($pimconfig.ConfigureRoleSettings,@($null, $SubscriptionId, $ResourceGroupName, $ResourceName, $RoleName, $roleSettings,  $false, $null));
                         }  
                     }
                     elseif ($null -ne $PSCmdlet.MyInvocation.BoundParameters["ApplyConditionalAccessPolicyForRoleActivation"])
@@ -446,17 +476,17 @@ function Set-AzSKPIMConfiguration {
                         if($ApplyConditionalAccessPolicyForRoleActivation -eq $true)
                         {
                         #Both Conditional Access policy and MFA can not be applied simultaneously      
-                        $pimconfig.InvokeFunction($pimconfig.ConfigureRoleSettings,@($null, $SubscriptionId, $ResourceGroupName, $ResourceName, $RoleName, $ExpireEligibleAssignmentsInDays, $RequireJustificationOnActivation, $MaximumActivationDuration, $false, $true));
+                        $pimconfig.InvokeFunction($pimconfig.ConfigureRoleSettings,@($null, $SubscriptionId, $ResourceGroupName, $ResourceName, $RoleName, $roleSettings, $false, $true));
                         }  
                         else 
                         {
-                            $pimconfig.InvokeFunction($pimconfig.ConfigureRoleSettings,@($null, $SubscriptionId, $ResourceGroupName, $ResourceName, $RoleName, $ExpireEligibleAssignmentsInDays, $RequireJustificationOnActivation, $MaximumActivationDuration, $null, $false));
+                            $pimconfig.InvokeFunction($pimconfig.ConfigureRoleSettings,@($null, $SubscriptionId, $ResourceGroupName, $ResourceName, $RoleName, $roleSettings, $null, $false));
                         }  
                     }
                         
                     else 
                     {
-                        $pimconfig.InvokeFunction($pimconfig.ConfigureRoleSettings,@($null, $SubscriptionId, $ResourceGroupName, $ResourceName, $RoleName, $ExpireEligibleAssignmentsInDays, $RequireJustificationOnActivation, $MaximumActivationDuration, $false, $false))
+                        $pimconfig.InvokeFunction($pimconfig.ConfigureRoleSettings,@($null, $SubscriptionId, $ResourceGroupName, $ResourceName, $RoleName, $roleSettings, $false, $false))
                     }
                 }             
                 

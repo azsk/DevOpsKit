@@ -182,7 +182,7 @@ else {
 
 			#If controls are attested then open folder when rescan of attested controls is complete
 			$controlAttested = $false
-			if( ([FeatureFlightingManager]::GetFeatureStatus("EnableScanAfterAttestation","*"))) { 
+			 
 				#Global variable "AttestationValue" is set to true when one or more controls are attested in current scan
 				#Ignore if variable AttestationValue is not found
 				if (Get-Variable AttestationValue -Scope Global -ErrorAction Ignore){
@@ -190,7 +190,7 @@ else {
 						$controlAttested = $true
 					}
 				}
-			}
+			
 
 			if ( !$controlAttested){
 			if((-not $this.DoNotOpenOutputFolder) -and (-not [string]::IsNullOrEmpty($folderPath)))

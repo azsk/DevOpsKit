@@ -27,7 +27,7 @@
     "Tenant_Domain": "microsoft.com"
   },
   "KubernetesService": {
-    "kubernetesVersion": ["1.13.12", "1.14.8", "1.15.7"]
+    "kubernetesVersion": ["1.14.8" , "1.15.10","1.16.7"]
   },
   "APIManagement": {
     "AllowedIdentityProvider": [
@@ -90,7 +90,11 @@
           "ExtensionType": "MicrosoftMonitoringAgent",
           "Publisher": "Microsoft.EnterpriseCloud.Monitoring"
         }
-      ]
+      ],
+      "RequiredGuestConfigPolicies":{
+        "RequiredPolicyDefinitionIds" : [],
+        "RequiredPolicySetDefinitionIds" : []
+      }
     },
     "Linux": {
       "SupportedSkuList": [],
@@ -138,7 +142,11 @@
           "ExtensionType": "OmsAgentForLinux",
           "Publisher": "Microsoft.EnterpriseCloud.Monitoring"
         }
-      ]
+      ],
+      "RequiredGuestConfigPolicies":{
+        "RequiredPolicyDefinitionIds" : [],
+        "RequiredPolicySetDefinitionIds" : []
+      }
     },
     "Windows_OS_Baseline_Ids": [],
     "ASCPolicies": {
@@ -532,7 +540,7 @@
   "WhitelistedResourceGroups": [],
   "InClusterCA": {
     "AKS":{
-      "RequiredImagePath": "azsktest/akstest",
+      "RequiredImagePath": "azskteam/azsk-aks",
       "RequiredImageTag": "latest"
     }
   },

@@ -125,6 +125,9 @@ class AzSVTCommandBase: SVTCommandBase {
                     };
                     $this.PublishCustomMessage($data)
                     $response = ""
+                    if ($this.AttestationOptions.AttestationStatus -eq "ApprovedException" -and $this.AttestationOptions.IsExemptModeOn) {
+                        $response = "Y"
+                    }
                     while ($response.Trim() -ne "y" -and $response.Trim() -ne "n") {
                         if (-not [string]::IsNullOrEmpty($response)) {
                             Write-Host "Please select appropriate option."
@@ -140,7 +143,7 @@ class AzSVTCommandBase: SVTCommandBase {
                 }
                 else {
                     [MessageData] $data = [MessageData]@{
-                        Message     = "You don't have the required permissions to perform control attestation. If you'd like to perform control attestation, please request your subscription owner to grant you 'Contributor' access to the '$([ConfigurationManager]::GetAzSKConfigData().AzSKRGName)' resource group. `nNote: If your permissions were elevated recently, please run the 'DisConnect-AzAccount' command to clear the Azure cache and try again.";
+                        Message     = "You don't have the required permissions to perform control attestation. If you'd like to perform control attestation, please request your subscription owner to grant you 'Contributor' access to the '$([ConfigurationManager]::GetAzSKConfigData().AzSKRGName)' resource group. `nNote: If your permissions were elevated recently, please run the 'Disconnect-AzAccount' command to clear the Azure cache and try again.";
                         MessageType = [MessageType]::Error;
                     };
                     $this.PublishCustomMessage($data)

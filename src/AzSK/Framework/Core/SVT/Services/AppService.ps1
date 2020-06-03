@@ -298,6 +298,49 @@ class AppService: AzSVTBase
       return $controlResult;
     }
 
+	hidden [ControlResult] CheckAppServiceRootPageAuth([ControlResult] $controlResult)
+    {
+		$controlStatus = [VerificationResult]::Failed
+		$TenantId = ([ContextHelper]::GetCurrentRMContext()).Tenant.Id
+		$authString = [string]::Format("https://login.windows.net/{0}",$TenantId)
+		$redirectStatusCode = 302
+		$temp = @($this.ResourceObject.Properties.HostNames | where-object { $_.Contains('.azurewebsites.') })
+		$appURL = $temp[0]
+		$appURI = [string]::Format("https://{0}",$appURL)
+		try{
+
+			if($this.ResourceObject.Properties.state -ne "Running"){
+				$controlStatus = [VerificationResult]::Manual
+				$controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false;
+				$controlResult.AddMessage("App Service is not in running state, unable to evaluate control.");
+			}else{
+				$appResponse = Invoke-WebRequest -uri $appURI  -Method GET  -UseBasicParsing -maximumredirection 0 -ErrorAction SilentlyContinue -WarningAction SilentlyContinue
+				if($null -ne $appResponse -and [Helpers]::CheckMember($appResponse,"StatusCode")) {
+					if($appResponse.StatusCode -eq $redirectStatusCode -and $appResponse.Headers.Location.Contains($AuthString)){
+						$controlStatus = [VerificationResult]::Passed
+						$controlResult.AddMessage("Root page redirects to login page.");
+					}else{
+						$controlStatus = [VerificationResult]::Failed
+						$controlResult.AddMessage("Root page didn't redirect to login page.");
+					}
+				}else{
+					$controlStatus = [VerificationResult]::Verify
+					$controlResult.AddMessage("Please verify that AAD Authentication is configured for root page.");
+				}
+			}
+			
+		
+		}catch{
+
+			$controlStatus = [VerificationResult]::Manual
+			$controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false;
+			$controlResult.AddMessage("Please verify manually that AAD Authentication is configured for root page.");
+		}
+				
+		$controlResult.VerificationResult = $controlStatus
+		return $controlResult;
+	}
+	
     hidden [ControlResult] CheckAppServiceRemoteDebuggingConfiguration([ControlResult] $controlResult)
 	{
 		if([Helpers]::CheckMember($this.WebAppDetails,"SiteConfig"))
@@ -545,45 +588,17 @@ class AppService: AzSVTBase
 			}
 			else
 			{
-				$ResourceAppIdURI = [WebRequestHelper]::GetServiceManagementUrl()
-				$accessToken = [ContextHelper]::GetAccessToken($ResourceAppIdURI)
-				$authorisationToken = "Bearer " + $accessToken
-				$headers = @{"Authorization"=$authorisationToken;"Content-Type"="application/json"}
-				if([Helpers]::CheckMember($this.WebAppDetails,"EnabledHostNames"))
-				{
-					if((($this.WebAppDetails.EnabledHostNames | where-object { $_.Contains('scm') }) | Measure-Object).Count -eq 1)
-					{
-						$scmURL = $this.WebAppDetails.EnabledHostNames | where-object { $_.Contains('scm') }
-						$apiFunctionsUrl = [string]::Format("https://{0}/api/functions",$scmURL)
-					}
-					else
-					{
-						$temp = @($this.WebAppDetails.EnabledHostNames | where-object { $_.Contains('.azurewebsites.') })
-						$AppURL = $this.FormatURL($temp[0])
-						$apiFunctionsUrl = [string]::Format("https://{0}.scm.{1}/api/functions",$this.ResourceContext.ResourceName,$AppURL)
-					}
-			  }
-				else
-				{
-					$temp = @($this.ResourceObject.Properties.HostNames | where-object { $_.Contains('.azurewebsites.') })
-					$AppURL = $this.FormatURL($temp[0])
-					$apiFunctionsUrl = [string]::Format("https://{0}.scm.{1}/api/functions",$this.ResourceContext.ResourceName,$AppURL)
-				}
 				try
 				{
 						
 					$functionDetail = $null
 					#$apiFunctionsUrl = [string]::Format("https://{0}.scm.azurewebsites.net/api/functions",$this.ResourceContext.ResourceName)
-					if( [FeatureFlightingManager]::GetFeatureStatus("UseAzCommandForFunctionAppDetails",$($this.SubscriptionContext.SubscriptionId)) -eq $true)
+					$functionAppDetails = Get-AzResource -ResourceGroupName $this.ResourceContext.ResourceGroupName -ResourceName $this.ResourceContext.ResourceName -ResourceType 'Microsoft.Web/sites/functions' -ApiVersion '2015-08-01' -ErrorAction SilentlyContinue
+					if($null -ne $functionAppDetails -and [Helpers]::CheckMember($functionAppDetails,"Properties"))
 					{
-						$functionAppDetails = Get-AzResource -ResourceGroupName $this.ResourceContext.ResourceGroupName -ResourceName $this.ResourceContext.ResourceName -ResourceType 'Microsoft.Web/sites/functions' -ApiVersion '2015-08-01' -ErrorAction SilentlyContinue
-						if($null -ne $functionAppDetails -and [Helpers]::CheckMember($functionAppDetails,"Properties"))
-						{
-							$functionDetail = $functionAppDetails | ForEach-Object{ $_.Properties } 
-						}
-					}else{
-						$functionDetail = [WebRequestHelper]::InvokeGetWebRequest($apiFunctionsUrl, $headers)
+						$functionDetail = $functionAppDetails | ForEach-Object{ $_.Properties } 
 					}
+					
 					
 						#check if functions are present in FunctionApp	
 						if($null -ne $functionDetail -and [Helpers]::CheckMember($functionDetail,"config"))
@@ -717,42 +732,15 @@ class AppService: AzSVTBase
 		}
 		else
 		{
-		$ResourceAppIdURI = [WebRequestHelper]::GetServiceManagementUrl()
-		$accessToken = [ContextHelper]::GetAccessToken($ResourceAppIdURI)
-		$authorisationToken = "Bearer " + $accessToken
-		$headers = @{"Authorization"=$authorisationToken;"Content-Type"="application/json"}
-		if([Helpers]::CheckMember($this.WebAppDetails,"EnabledHostNames"))
-		{
-			if((($this.WebAppDetails.EnabledHostNames | where-object { $_.Contains('scm') }) | Measure-Object).Count -eq 1)
-			{
-				$scmURL = $this.WebAppDetails.EnabledHostNames | where-object { $_.Contains('scm') }
-				$apiFunctionsUrl = [string]::Format("https://{0}/api/functions",$scmURL)
-			}
-			else
-			{
-				$temp = @($this.WebAppDetails.EnabledHostNames | where-object { $_.Contains('.azurewebsites.') })
-				$AppURL = $this.FormatURL($temp[0])
-				$apiFunctionsUrl = [string]::Format("https://{0}.scm.{1}/api/functions",$this.ResourceContext.ResourceName,$AppURL)
-			}
-		}
-		else
-		{
-			$temp = @($this.ResourceObject.Properties.HostNames | where-object { $_.Contains('.azurewebsites.') })
-			$AppURL = $this.FormatURL($temp[0])
-			$apiFunctionsUrl = [string]::Format("https://{0}.scm.{1}/api/functions",$this.ResourceContext.ResourceName,$AppURL)
-		}
+		
 		$functionDetail = $null
 		#$apiFunctionsUrl = [string]::Format("https://{0}.scm.azurewebsites.net/api/functions",$this.ResourceContext.ResourceName)
-		if([FeatureFlightingManager]::GetFeatureStatus("UseAzCommandForFunctionAppDetails",$($this.SubscriptionContext.SubscriptionId)) -eq $true)
-    {
-			$functionAppDetails = Get-AzResource -ResourceGroupName $this.ResourceContext.ResourceGroupName -ResourceName $this.ResourceContext.ResourceName -ResourceType 'Microsoft.Web/sites/functions' -ApiVersion '2015-08-01' -ErrorAction SilentlyContinue
-			if($null -ne $functionAppDetails -and [Helpers]::CheckMember($functionAppDetails,"Properties"))
-			{
-				$functionDetail = $functionAppDetails | ForEach-Object{ $_.Properties } 
-			}
-    }else{
-			$functionDetail = [WebRequestHelper]::InvokeGetWebRequest($apiFunctionsUrl, $headers)
+		$functionAppDetails = Get-AzResource -ResourceGroupName $this.ResourceContext.ResourceGroupName -ResourceName $this.ResourceContext.ResourceName -ResourceType 'Microsoft.Web/sites/functions' -ApiVersion '2015-08-01' -ErrorAction SilentlyContinue
+		if($null -ne $functionAppDetails -and [Helpers]::CheckMember($functionAppDetails,"Properties"))
+		{
+			$functionDetail = $functionAppDetails | ForEach-Object{ $_.Properties } 
 		}
+    
 		#check if functions are present in FunctionApp	
 		if($null -ne $functionDetail -and [Helpers]::CheckMember($functionDetail,"config"))
 		{
