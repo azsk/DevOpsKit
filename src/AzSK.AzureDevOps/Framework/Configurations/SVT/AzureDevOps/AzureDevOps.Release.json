@@ -45,7 +45,7 @@
       "ControlSeverity": "Low",
       "Automated": "Yes",
       "MethodName": "CheckInActiveRelease",
-      "Rationale": "Each additional release having access at repositories increases the attack surface. To minimize this risk ensure that only activite and legitimate release resources present in Organization",
+      "Rationale": "Each additional release having access at repositories increases the attack surface. To minimize this risk ensure that only active and legitimate release resources are present in Organization",
       "Recommendation": "To remove inactive release pipeline follow these steps: 1.Navigate to the release pipeline. 2. Select a release pipeline. 3. Select three dots (present in right top). 4. Click on Delete.",
       "Tags": [
         "SDL",
