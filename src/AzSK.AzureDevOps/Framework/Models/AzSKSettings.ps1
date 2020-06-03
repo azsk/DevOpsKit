@@ -165,7 +165,7 @@ class AzSKSettings {
 
 					    $repoName = [Constants]::OrgPolicyRepo + $projectName;
 					    $branch = "master";
-					    if([Helpers]::CheckMember($parsedSettings, "BranchId"))
+					    if($parsedSettings.BranchId)
 						{
 							$branch = $parsedSettings.BranchId;
 						}
