@@ -90,4 +90,4 @@ class SVTMapping
 	};
 }
 
-Invoke-Expression "enum ResourceTypeName { `r`n All `r`n $([SVTMapping]::GetResourceTypeEnumItems()) }";
+Invoke-Expression "enum ResourceTypeName { `r`n All `r`n $([SVTMapping]::GetResourceTypeEnumItems())`r`n Org_Project_User `r`n Build_Release `r`n Build_Release_SvcConn_AgentPool_User `r`n}";

@@ -28,7 +28,7 @@ Add-Type -Path "$libraryPath\Microsoft.IdentityModel.Clients.ActiveDirectory.dll
 
 . $FrameworkPath\Models\AzSKConfig.ps1
 
-. $FrameworkPath\Models\AzSKSettings.ps1
+. $PSScriptRoot\Models\AzSKSettings.ps1
 
 . $FrameworkPath\Models\SVT\SVTConfig.ps1
 . $FrameworkPath\Models\SVT\SVTEvent.ps1

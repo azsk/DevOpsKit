@@ -40,7 +40,7 @@
     "UpdateToLatestVersion":  false,
     "AzSKConfigURL":  "",
     "IsAlertMonitoringEnabled":  false,
-    "SupportDL":  "azsksupext@microsoft.com",
+    "SupportDL":  "azskadosup@microsoft.com",
     "PolicyOrgName":  "org-neutral",
     "StoreComplianceSummaryInUserSubscriptions":  false,
     "SchemaTemplateURL":  "https://azsdkossep.azureedge.net/schemas/3.1803.0/",
