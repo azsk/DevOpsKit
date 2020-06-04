@@ -40,25 +40,7 @@
       "IsEnabled": false
     },
     {
-      "Name": "IsSetAzStorageBlobAvailable",
-      "Description" : "",
-      "Sources" : ["*"],
-      "EnabledForSubs": [],
-      "DisabledForSubs": [],      
-      "UnderPreview" : false,
-      "IsEnabled": true      
-    },
-    {
       "Name": "EnableAppServiceAADAuthAllowAnonymousCheck",
-      "Description" : "",
-      "Sources" : ["*"],
-      "EnabledForSubs": [],
-      "DisabledForSubs": [],      
-      "UnderPreview" : false,
-      "IsEnabled": false
-    },
-    {
-      "Name": "EnableListenerReset",
       "Description" : "",
       "Sources" : ["*"],
       "EnabledForSubs": [],
@@ -74,15 +56,6 @@
       "DisabledForSubs": [],      
       "UnderPreview" : false,
       "IsEnabled": false
-    },
-    {
-      "Name": "EnableASCPolicyOnVMCheckUsingPolicyAssessmentKey",
-      "Description": "",
-      "Sources": ["*"],
-      "EnabledForSubs": [],
-      "DisabledForSubs": [],
-      "UnderPreview": false,
-      "IsEnabled": true
     },
     {
       "Name": "EnableResourceGroupPersistentAccessCheck",
@@ -139,25 +112,7 @@
       "IsEnabled": true
     },
     {
-      "Name": "EnableCSPSubsValidation",
-      "Description": "",
-      "Sources": ["*"],
-      "EnabledForSubs": [],
-      "DisabledForSubs": [],
-      "UnderPreview": false,
-      "IsEnabled": true
-    },
-    {
       "Name": "FetchRGPIMControlStatusFromComplianceState",
-      "Description": "",
-      "Sources": ["*"],
-      "EnabledForSubs": [],
-      "DisabledForSubs": [],
-      "UnderPreview": false,
-      "IsEnabled": true
-    },
-    {
-      "Name": "EnableResourceScanStartEndTelemetry",
       "Description": "",
       "Sources": ["*"],
       "EnabledForSubs": [],
