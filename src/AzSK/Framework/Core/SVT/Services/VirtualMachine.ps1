@@ -494,8 +494,9 @@ class VirtualMachine: AzSVTBase
 				if($null -ne $installedGuestExtension -and $installedGuestExtension.ProvisioningState -eq "Succeeded"){
 					$controlStatus = [VerificationResult]::Passed
 					$controlResult.AddMessage("Required guest configuration extension '$($requiredGuestExtension)' is present in VM.");
-
-					$currentGuestExtensionVersion = $null
+					
+					# Commenting this section as we are skipping the check for Extension Version
+					<#$currentGuestExtensionVersion = $null
 					try {
 						$uri=[system.string]::Format("{0}subscriptions/{1}/resourceGroups/{2}/providers/Microsoft.Compute/virtualMachines/{3}/extensions/{4}?api-version=2018-06-01&`$expand=instanceView",$ResourceAppIdURI,$this.SubscriptionContext.SubscriptionId, $this.ResourceContext.ResourceGroupName, $this.ResourceContext.ResourceName,$requiredGuestExtension)
 						$result = [WebRequestHelper]::InvokeWebRequest([Microsoft.PowerShell.Commands.WebRequestMethod]::Get, $uri, $headers, $null, $null, $propertiesToReplace); 
@@ -504,7 +505,8 @@ class VirtualMachine: AzSVTBase
 					catch {
 						# If any exception occurs, while fetching details of Extension mark control as manual
 						# Skip check for version
-					}
+					} #>
+					
 				}else{
 					$controlStatus = [VerificationResult]::Failed
 					$controlResult.AddMessage("Required guest configuration extension '$($requiredGuestExtension)' is not present in VM.");
