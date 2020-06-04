@@ -1461,6 +1461,100 @@ class SubscriptionCore: AzSVTBase
 		return $controlResult;
 	}
 
+	hidden [ControlResult] CheckPIMCATagRGScope([ControlResult] $controlResult)
+	{
+		$resourceId =""
+		$resourceGroupIDs = @()
+		$validRoles = @();
+		$missingCAPolicyOnRoles = @();
+		$nonCompliantPIMCAPolicyTagRoles = @();
+
+		$ResourceAppIdURI = [WebRequestHelper]::GetServiceManagementUrl()
+		$accessToken = [ContextHelper]::GetAccessToken($ResourceAppIdURI)
+		$authorisationToken = "Bearer " + $accessToken
+		$headers = @{"Authorization"=$authorisationToken;"Content-Type"="application/json"}
+		
+		try
+		{
+			#Fetch details of all resourcegroups in the subscription
+			$uri=[Constants]::PIMAPIUri +"?`$filter=(type%20eq%20%27resourcegroup%27)%20and%20contains(tolower(externalId),%20%27{0}%27)&`$orderby=displayName" -f $this.SubscriptionContext.SubscriptionId.ToLower()
+			$response=[WebRequestHelper]::InvokeGetWebRequest($uri, $headers)
+			$subId=$this.SubscriptionContext.SubscriptionId;
+			$extID=$response| Where-Object{$_.externalId.split('/') -contains $subId}
+			$resourceGroupIDs=$extID.id;
+				
+			if(($resourceGroupIDs | Measure-Object).Count -gt 0 )
+			{
+				foreach($rgID in $resourceGroupIDs)
+				{
+					#Get applicable roles of RG, which will also provide role ids for role secific api call
+					$roleurl = "https://api.azrbac.mspim.azure.com/api/v2/privilegedAccess/azureResources/resources/" + $rgID + "/roleDefinitions?`$select=id,displayName,type,templateId,resourceId,externalId,subjectCount,eligibleAssignmentCount,activeAssignmentCount&`$orderby=activeAssignmentCount%20desc"
+					$roles = [WebRequestHelper]::InvokeGetWebRequest($roleurl, $headers)
+					$roles= $roles | Where-Object{$_.DisplayName -in $this.ControlSettings.CriticalPIMRoles.ResourceGroup}
+
+					foreach($role in $roles)
+					{
+						#API call to fetch existing role settings with respect to ACRS Rule
+						$url = "https://api.azrbac.mspim.azure.com/api/v2/privilegedAccess/azureResources/roleSettingsV2?`$expand=resource,roleDefinition(`$expand=resource)&`$filter=(resource/id+eq+%27$($rgID)%27)+and+(roleDefinition/id+eq+%27$($role.id)%27)"
+						$rolesettings = [WebRequestHelper]::InvokeGetWebRequest($url, $headers)
+						$CAPolicyOnRoles = ($($($rolesettings.lifeCycleManagement | Where-Object {$_.caller -eq 'EndUser' -and $_.level -eq 'Member'}).value) | Where-Object{$_.RuleIdentifier -eq 'AcrsRule'}).setting | ConvertFrom-Json
+						
+						#Create custom object to display only required information in detail logs
+						$item = New-Object psobject -Property @{
+							RoleId    			= $role.id
+							RoleName  			= $role.displayName
+							Type     			= $role.type
+							ResourceGroupName   = $rolesettings.resource.displayName
+							SubjectCount 		= $role.subjectCount
+						}
+
+						# If Conditional Access is enabled then check if correct CA policy is applied
+						if($CAPolicyOnRoles.acrsRequired)
+						{
+							$validRoles +=$item
+							if([Helpers]::CheckMember($this.ControlSettings,"CheckPIMCAPolicyTags"))
+							{
+								if([Helpers]::CheckMember($this.ControlSettings,"PIMCAPolicyTags"))
+								{
+									if($CAPolicyOnRoles.acrs -notin $this.ControlSettings.PIMCAPolicyTags)
+									{
+										# Invalid CA POlicy applied
+										$nonCompliantPIMCAPolicyTagRoles +=$item;
+									}
+								}
+							}
+						}
+						else 
+						{
+							#CA policy is not enabled
+							$missingCAPolicyOnRoles +=$item
+						}
+					}	
+				}
+			}
+
+			if(($nonCompliantPIMCAPolicyTagRoles | Measure-Object).Count -gt 0 )
+			{
+				$controlResult.VerificationResult = [VerificationResult]::Failed
+				$controlResult.AddMessage("Roles that do not have required CA policy tags $($this.ControlSetting,"PIMCAPolicyTags" -join ',') `n $($nonCompliantPIMCAPolicyTagRoles | Format-List) ");
+			}
+			elseif(($missingCAPolicyOnRoles | Measure-Object).Count -gt 0 )
+			{
+				$controlResult.VerificationResult = [VerificationResult]::Failed
+				$controlResult.AddMessage("Role with Acr required turned off `n $($missingCAPolicyOnRoles | Format-List | Out-String) ");
+			}
+			else
+			{
+				$controlResult.VerificationResult = [VerificationResult]::Passed	
+			}		
+		}
+		catch
+		{
+			$controlResult.AddMessage($_);
+			$controlResult.VerificationResult = [VerificationResult]::Manual
+		}
+		return $controlResult;
+	}
 
 	hidden [ControlResult] CheckNonAlternateAccountsinPIMAccess([ControlResult] $controlResult)
     {
