@@ -548,6 +548,7 @@ function Get-AzSKPIMConfiguration {
         
         [switch]
         [Parameter(Mandatory = $false, ParameterSetName = "ListRoleSettings", HelpMessage = "This switch is required to get existing role settings of a particular role.")]
+        [Parameter(Mandatory = $false, ParameterSetName = "ListRoleSettingsForManagementGroup", HelpMessage = "This switch is required to get existing role settings of a particular role at Management Group scope.")]
         [Alias("rset")]
 	    $ListRoleSettings,
 
@@ -563,6 +564,7 @@ function Get-AzSKPIMConfiguration {
         [Parameter(Mandatory = $true, ParameterSetName = "ListPermanentAssignmentsForManagementGroup", HelpMessage = "This switch is required to list all permanent assignment.")]
         [Parameter(Mandatory = $true, ParameterSetName = "ListPIMAssignmentsForManagementGroup", HelpMessage = "This switch is required to list all PIM eligible assignment.")]
         [Parameter(Mandatory = $true, ParameterSetName = "ListSoonToExpireAssignmentsForManagementGroup")]
+        [Parameter(Mandatory = $true, ParameterSetName = "ListRoleSettingsForManagementGroup")]
         [Alias("mgmtgrpid")]
         $ManagementGroupId,
 
@@ -613,6 +615,7 @@ function Get-AzSKPIMConfiguration {
         $RoleNames,
 
         [Parameter(Mandatory = $true, ParameterSetName = "ListRoleSettings")]
+        [Parameter(Mandatory = $true, ParameterSetName = "ListRoleSettingsForManagementGroup")]
         [ValidateNotNullOrEmpty()]
         [Alias("rln")]
         [string]
@@ -673,8 +676,15 @@ function Get-AzSKPIMConfiguration {
                     $pimconfig.InvokeFunction($pimconfig.ListSoonToExpireAssignments, @($ManagementGroupId, $null, $null, $null, $RoleNames, $ExpiringInDays))
                 }
             }
-            elseif ($PSCmdlet.ParameterSetName -eq 'ListRoleSettings'){
-                $pimconfig.InvokeFunction($pimconfig.ListRoleSettings, @($SubscriptionId, $ResourceGroupName, $ResourceName, $RoleName))
+            elseif ($PSCmdlet.ParameterSetName -eq 'ListRoleSettings' -or $PSCmdlet.ParameterSetName -eq 'ListRoleSettingsForManagementGroup'){
+                if([string]::IsNullOrEmpty($ManagementGroupId))
+                {
+                    $pimconfig.InvokeFunction($pimconfig.ListRoleSettings, @($null, $SubscriptionId, $ResourceGroupName, $ResourceName, $RoleName))
+                }
+                else
+                {
+                    $pimconfig.InvokeFunction($pimconfig.ListRoleSettings, @($ManagementGroupId, $null, $null, $null, $RoleName))
+                }
             }
 
             else {
