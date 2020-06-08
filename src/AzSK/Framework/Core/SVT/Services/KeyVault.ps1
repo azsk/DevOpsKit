@@ -346,18 +346,18 @@ class KeyVault: AzSVTBase
 		if( ($appList | Measure-Object ).Count -gt 1)
 		{
 			$controlResult.AddMessage([VerificationResult]::Verify,
-										[MessageData]::new("Validate that Azure AD Applications requires access to Key Vault. Total:" + ($appList | Measure-Object ).Count , 
+										[MessageData]::new("Validate that applications requires access to Key Vault. Total:" + ($appList | Measure-Object ).Count , 
 															$appList)); 
 		}
 		elseif( ($appList | Measure-Object ).Count -eq 1)
         {
            $controlResult.AddMessage([VerificationResult]::Passed,
-                                     "Only 1 Azure AD Application has access to Key Vault.", $appList); 
+                                     "Only 1 application has access to Key Vault.", $appList); 
         } 
 		else
         {
            $controlResult.AddMessage([VerificationResult]::Passed,
-                                     "No Azure AD Applications have access to Key Vault."); 
+                                     "No applications have access to Key Vault."); 
         } 
       
 		return $controlResult;
