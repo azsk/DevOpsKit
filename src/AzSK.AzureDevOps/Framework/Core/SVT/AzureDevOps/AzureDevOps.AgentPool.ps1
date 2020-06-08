@@ -62,14 +62,14 @@ class AgentPool: ADOSVTBase
             {
                   $agentPools = ($agentPoolsObj.fps.dataProviders.data."ms.vss-build-web.agent-pools-data-provider".taskAgentPools | Where-Object { ($_.autoProvision -eq $true -and $_.Name -eq $this.ResourceContext.resourcename) }) #| Select-Object @{Name = "Name"; Expression = {$_.Name}}
                   if (($agentPools | Measure-Object).Count -gt 0 ) {
-                    $controlResult.AddMessage([VerificationResult]::Passed,"Auto-provisioning is enabled for the $($agentPools) agent pools.");
+                    $controlResult.AddMessage([VerificationResult]::Failed,"Auto-provisioning is enabled for the $($agentPools) agent pool.");
                   }
                   else {
-                    $controlResult.AddMessage([VerificationResult]::Failed,"Auto-provisioning is not enabled for the agent pool.");
+                    $controlResult.AddMessage([VerificationResult]::Passed,"Auto-provisioning is not enabled for the agent pool.");
                    }
             }
             else {
-                $controlResult.AddMessage([VerificationResult]::Failed,"Auto-provisioning is not enabled for the agent pool.");
+                $controlResult.AddMessage([VerificationResult]::Passed,"Auto-provisioning is not enabled for the agent pool.");
             }
             $agentPoolsObj =$null;
         }

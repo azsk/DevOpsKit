@@ -11,7 +11,12 @@ class ContextHelper {
 
     hidden static [PSObject] GetCurrentContext()
     {
-        if(-not [ContextHelper]::currentContext)
+        return [ContextHelper]::GetCurrentContext($false);
+    }
+
+    hidden static [PSObject] GetCurrentContext([bool]$bRefresh)
+    {
+        if( (-not [ContextHelper]::currentContext) -or $bRefresh)
         {
             $clientId = [Constants]::DefaultClientId ;          
             $replyUri = [Constants]::DefaultReplyUri; 
@@ -19,14 +24,11 @@ class ContextHelper {
             [AuthenticationContext] $ctx = $null;
 
             $ctx = [AuthenticationContext]::new("https://login.windows.net/common");
-            if ($ctx.TokenCache.Count -gt 0)
-            {
-                [String] $homeTenant = $ctx.TokenCache.ReadItems().First().TenantId;
-                $ctx = [AuthenticationContext]::new("https://login.microsoftonline.com/" + $homeTenant);
-            }
+
             [AuthenticationResult] $result = $null;
-            
-            if ($azSKUI = Get-Variable 'AzSKADOLoginUI' -Scope Global -ErrorAction 'Ignore') {
+
+            $azSKUI = $null;
+            if ( !$bRefresh -and ($azSKUI = Get-Variable 'AzSKADOLoginUI' -Scope Global -ErrorAction 'Ignore')) {
                 if ($azSKUI.Value -eq 1) {
                     $result = $ctx.AcquireToken($azureDevOpsResourceId, $clientId, [Uri]::new($replyUri),[PromptBehavior]::Always);
                 }
@@ -37,7 +39,7 @@ class ContextHelper {
             else {
                 $result = $ctx.AcquireToken($azureDevOpsResourceId, $clientId, [Uri]::new($replyUri),[PromptBehavior]::Auto);
             }
-            
+
             [ContextHelper]::ConvertToContextObject($result)
         }
         return [ContextHelper]::currentContext
@@ -61,6 +63,11 @@ class ContextHelper {
         # TODO: Handlle login
         if([ContextHelper]::currentContext)
         {
+            #if token expiry is within 2 min, refresh.
+            if ([ContextHelper]::currentContext.TokenExpireTimeLocal -le [DateTime]::Now.AddMinutes(2))
+            {
+                [ContextHelper]::GetCurrentContext($true);
+            }
             #ConvertFrom-SecureString
             return  [ContextHelper]::currentContext.AccessToken
         }
@@ -73,17 +80,17 @@ class ContextHelper {
     hidden [SubscriptionContext] SetContext([string] $subscriptionId)
     {
         if((-not [string]::IsNullOrEmpty($subscriptionId)))
-		{
-			$SubscriptionContext = [SubscriptionContext]@{
-				SubscriptionId = $subscriptionId;
-				Scope = "/Organization/$subscriptionId";
-				SubscriptionName = $subscriptionId;
-			};
-			[ContextHelper]::GetCurrentContext()			
-		}
-		else
-		{
-			throw [SuppressedException] ("OrganizationName name [$subscriptionId] is either malformed or incorrect.")
+              {
+                     $SubscriptionContext = [SubscriptionContext]@{
+                           SubscriptionId = $subscriptionId;
+                           Scope = "/Organization/$subscriptionId";
+                           SubscriptionName = $subscriptionId;
+                     };
+                     [ContextHelper]::GetCurrentContext()                  
+              }
+              else
+              {
+                     throw [SuppressedException] ("OrganizationName name [$subscriptionId] is either malformed or incorrect.")
         }
         return $SubscriptionContext;
     }
@@ -91,17 +98,17 @@ class ContextHelper {
     hidden [SubscriptionContext] SetContext([string] $subscriptionId, [System.Security.SecureString] $PATToken)
     {
         if((-not [string]::IsNullOrEmpty($subscriptionId)))
-		{
-			$SubscriptionContext = [SubscriptionContext]@{
-				SubscriptionId = $subscriptionId;
-				Scope = "/Organization/$subscriptionId";
-				SubscriptionName = $subscriptionId;
-			};
-			[ContextHelper]::GetCurrentContext($PATToken)		
-		}
-		else
-		{
-			throw [SuppressedException] ("OrganizationName name [$subscriptionId] is either malformed or incorrect.")
+              {
+                     $SubscriptionContext = [SubscriptionContext]@{
+                           SubscriptionId = $subscriptionId;
+                           Scope = "/Organization/$subscriptionId";
+                           SubscriptionName = $subscriptionId;
+                     };
+                     [ContextHelper]::GetCurrentContext($PATToken)         
+              }
+              else
+              {
+                     throw [SuppressedException] ("OrganizationName name [$subscriptionId] is either malformed or incorrect.")
         }
         return $SubscriptionContext;
     }
@@ -117,6 +124,7 @@ class ContextHelper {
         $contextObj.Account.Id = $context.UserInfo.DisplayableId
         $contextObj.Tenant.Id = $context.TenantId 
         $contextObj.AccessToken = $context.AccessToken
+        $contextObj.TokenExpireTimeLocal = $context.ExpiresOn.LocalDateTime
         #$contextObj.AccessToken =  ConvertTo-SecureString -String $context.AccessToken -asplaintext -Force
         [ContextHelper]::currentContext = $contextObj
     }

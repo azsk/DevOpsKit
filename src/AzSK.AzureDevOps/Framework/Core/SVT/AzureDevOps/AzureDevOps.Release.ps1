@@ -92,29 +92,7 @@ class Release: ADOSVTBase
                     $varList = @();
                     $noOfCredFound = 0;     
                     $patterns = $this.ControlSettings.Patterns | where {$_.RegexCode -eq "Release"} | Select-Object -Property RegexList;
-        
-                try {
-                    $apiURL = "https://extmgmt.dev.azure.com/{0}/_apis/ExtensionManagement/InstalledExtensions/ADOScanner/ADOSecurityScanner/Data/Scopes/Default/Current/Collections/MyCollection/Documents/ControlSettings.json?api-version=5.1-preview.1" -f $($this.SubscriptionContext.SubscriptionName);
-                    $resObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL); 
-                     
-                    if($resObj -and [Helpers]::CheckMember($resObj,"ControlSettings")){
-                        $ControlSettings = $resObj.ControlSettings | ConvertFrom-Json;;
-                
-                        if( ($ControlSettings) -and ([Helpers]::CheckMember($ControlSettings,"Patterns")) ){
-            
-                            $custPatternsRegList = $ControlSettings.Patterns | where {$_.RegexCode -eq "Release"} | Select-Object -Property RegexList
-                            #$patterns.RegexList += $custPatternsRegList.RegexList;     
-                            $patterns.RegexList = [Helpers]::MergeObjects($patterns.RegexList, $custPatternsRegList.RegexList)	   
-                            #$patterns.RegexList = $patterns.RegexList | select -Unique;  
-                         }
-                         $ControlSettings = $null;
-                    }
-                    $resObj = $null;
-                    }
-                    catch {
-                        $controlResult.AddMessage($_);
-                    }
-                    
+                            
                     Get-Member -InputObject $this.ReleaseObj.variables -MemberType Properties | ForEach-Object {
                     if([Helpers]::CheckMember($this.ReleaseObj.variables.$($_.Name),"value") -and  (-not [Helpers]::CheckMember($this.ReleaseObj.variables.$($_.Name),"isSecret")))
                     {
@@ -134,10 +112,13 @@ class Release: ADOSVTBase
                         $controlResult.AddMessage([VerificationResult]::Failed,
                         "Found credentials in release definition. Variables name: $varList" );
                     }
+                    else {
+                        $controlResult.AddMessage([VerificationResult]::Passed, "No credentials found in release definition.");
+                    }
+                    $patterns = $null;
+                }
                 else {
                     $controlResult.AddMessage([VerificationResult]::Passed, "No credentials found in release definition.");
-                }
-                $patterns = $null;
                 }
             }
             catch {

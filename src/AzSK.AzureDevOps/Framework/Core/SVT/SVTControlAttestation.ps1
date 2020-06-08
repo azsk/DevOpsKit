@@ -503,7 +503,16 @@ class SVTControlAttestation
 									else
 									{
 										$controlState = $this.ComputeEffectiveControlState($controlState, $controlSeverity, $isSubscriptionScan, $controlItem, $controlResult)										
-									}									
+									}
+									# keeping here to rectify only that perticular controls state data if any
+									try {
+										if ($controlState.State -and $controlState.State.DataObject) {
+											$removeAccentCharactors = $this.RemoveAccentedCharacters(($controlState.State.DataObject | ConvertTo-Json -Depth 10))
+											$controlState.State.DataObject = ($removeAccentCharactors | ConvertFrom-Json);
+										}
+									}
+									catch {
+									}
 									$resourceControlStates +=$controlState;
 									if($this.abortProcess)
 									{
@@ -608,5 +617,17 @@ class SVTControlAttestation
 		}
 		
 		return $ValidAttestationStatesHashTable;
+	}
+
+	# https://stackoverflow.com/questions/7836670/how-remove-accents-in-powershell
+	[string] RemoveAccentedCharacters($src) {
+		$normalized = $src.Normalize( [Text.NormalizationForm]::FormD )
+		$sb = new-object Text.StringBuilder
+		$normalized.ToCharArray() | % { 
+		  if( [Globalization.CharUnicodeInfo]::GetUnicodeCategory($_) -ne [Globalization.UnicodeCategory]::NonSpacingMark) {
+			[void]$sb.Append($_)
+		  }
+		}
+	  return $sb.ToString()
 	}
 }

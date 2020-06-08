@@ -229,7 +229,7 @@ class Organization: ADOSVTBase
             $stateData.Whitelisted_Extensions += $whiteListedExtensions
             $stateData.NonWhitelisted_Extensions += $NonwhiteListedExtensions
 
-            #$controlResult.SetStateData("Installed extensions list: ", $stateData);
+            $controlResult.SetStateData("Installed extensions list: ", $stateData);
         }
         else {
             $controlResult.AddMessage([VerificationResult]::Passed, "No installed extensions found.");
