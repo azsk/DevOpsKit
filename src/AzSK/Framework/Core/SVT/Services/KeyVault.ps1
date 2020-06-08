@@ -7,6 +7,8 @@ class KeyVault: AzSVTBase
     hidden [PSObject[]] $AllEnabledSecrets = $null;
 	hidden [boolean] $HasFetchKeysPermissions=$false;
 	hidden [boolean] $HasFetchSecretsPermissions=$true;
+	hidden [PSObject[]] $AllApplicationsList = $null;
+	hidden [PSObject[]] $AADApplicationsList = $null;
 
     KeyVault([string] $subscriptionId, [SVTResource] $svtResource): 
         Base($subscriptionId, $svtResource) 
@@ -265,8 +267,17 @@ class KeyVault: AzSVTBase
     hidden [ControlResult] CheckAppAuthenticationCertificate([ControlResult] $controlResult)
     {
         try{
-              $outputList = @();
-              $appList = $this.GetAzureRmKeyVaultApplications()
+			  $outputList = @();
+			  if([FeatureFlightingManager]::GetFeatureStatus("EnableKeyVaultApplicationsFix",$($this.SubscriptionContext.SubscriptionId)) -eq $true)
+			  {
+			  		$this.GetApplicationsInAccessPolicy()
+					$appList = $this.AADApplicationsList
+			  }
+			  else
+			  {
+				  $appList = $this.GetAzureRmKeyVaultApplications()
+			  }
+			  
               $appList |
                 ForEach-Object {
                     $credentials = Get-AzADAppCredential -ApplicationId $_.ApplicationId
@@ -318,9 +329,18 @@ class KeyVault: AzSVTBase
 
    
 	hidden [ControlResult] CheckAppsSharingKeyVault([ControlResult] $controlResult)
-	{
-		$appList = $this.GetAzureRmKeyVaultApplications() 
-      
+	{		
+		if([FeatureFlightingManager]::GetFeatureStatus("EnableKeyVaultApplicationsFix",$($this.SubscriptionContext.SubscriptionId)) -eq $true)
+			  {
+				$this.GetApplicationsInAccessPolicy()
+				$appList = $this.AllApplicationsList
+			  }
+			  else
+			  {
+				$appList = $this.GetAzureRmKeyVaultApplications() 
+			  }
+		
+		
 		$controlResult.SetStateData("Key Vault sharing app list", $appList);
 
 		if( ($appList | Measure-Object ).Count -gt 1)
@@ -501,7 +521,7 @@ class KeyVault: AzSVTBase
 		return $controlResult;
    }
 
-    hidden [PSObject] GetAzureRmKeyVaultApplications()  
+   hidden [PSObject] GetAzureRmKeyVaultApplications()  
      {
         $applicationList = @();
         $this.ResourceObject.AccessPolicies  | 
@@ -516,6 +536,29 @@ class KeyVault: AzSVTBase
         }
         return $applicationList;
 }
+    hidden [void] GetApplicationsInAccessPolicy()  
+     {
+		#Fetch Application details only once if not fetched previously
+		if($null -eq $this.AllApplicationsList -or $null -eq  $this.AADApplicationsList)
+		{
+			#list of all applications including AAD applicatins, enterprise applications 
+			$this.AllApplicationsList = @()
+			$this.AADApplicationsList = @()
+			$this.ResourceObject.AccessPolicies  | 
+        	ForEach-Object { 
+            	$svcPrincipal= Get-AzADServicePrincipal -ObjectId $_.ObjectId
+				if($svcPrincipal)
+				{
+                	$application = Get-AzADApplication -ApplicationId $svcPrincipal.ApplicationId
+                	if($application){
+						$this.AADApplicationsList += $application
+					}
+					$this.AllApplicationsList += $svcPrincipal;
+            	}
+			}				        
+		}		
+	 }
+	 
 	hidden [ControlResult] CheckKeyVaultSoftDelete([ControlResult] $controlResult)
 	{
 		$isSoftDeleteEnable=$this.ResourceObject.EnableSoftDelete;
