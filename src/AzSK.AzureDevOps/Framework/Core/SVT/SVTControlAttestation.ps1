@@ -618,16 +618,4 @@ class SVTControlAttestation
 		
 		return $ValidAttestationStatesHashTable;
 	}
-
-	# https://stackoverflow.com/questions/7836670/how-remove-accents-in-powershell
-	[string] RemoveAccentedCharacters($src) {
-		$normalized = $src.Normalize( [Text.NormalizationForm]::FormD )
-		$sb = new-object Text.StringBuilder
-		$normalized.ToCharArray() | % { 
-		  if( [Globalization.CharUnicodeInfo]::GetUnicodeCategory($_) -ne [Globalization.UnicodeCategory]::NonSpacingMark) {
-			[void]$sb.Append($_)
-		  }
-		}
-	  return $sb.ToString()
-	}
 }
