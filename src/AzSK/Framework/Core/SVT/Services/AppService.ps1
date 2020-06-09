@@ -140,6 +140,8 @@ class AppService: AzSVTBase
 		{
 			$IsAllowedAuthenticationProvidersConfigured = $false;
 			$IsAllowedExternalRedirectURLsConfigured = $false;
+			$ConfiguredAuthenticationProvidersSettings = New-Object PSObject
+			$ConfiguredExternalRedirectURLs= @()
 			if([FeatureFlightingManager]::GetFeatureStatus("EnableAppServiceCustomAuth",$($this.SubscriptionContext.SubscriptionId)) -eq $true)
 			{
 				$IsAppServiceCustomAuthAllowed = $true
@@ -275,7 +277,6 @@ class AppService: AzSVTBase
 						if([Helpers]::CheckMember($this.ControlSettings,"AppService.AllowedExternalRedirectURLs"))
 						{
 							$AllowedExternalRedirectURLs = $this.ControlSettings.AppService.AllowedExternalRedirectURLs
-							$ConfiguredExternalRedirectURLs= @()
 							$IsAllowedExternalRedirectURLsConfigured = $false;
 							$ConfiguredExternalRedirectURLs = $this.AuthenticationSettings.properties.allowedExternalRedirectUrls
 				
@@ -286,15 +287,16 @@ class AppService: AzSVTBase
 									if($allowedurl -ceq $configuredURL)
 									{
 										$IsAllowedExternalRedirectURLsConfigured= $true; 
+										
 									}
 								}
 							}
 						}
-					#Check if any of the AllowedAuthenticationProviders is configured
+						#Check if any of the AllowedAuthenticationProviders is configured
 						if([Helpers]::CheckMember($this.ControlSettings,"AppService.AllowedAuthenticationProviders"))
 						{
 							$AllowedAuthenticationProviders = $this.ControlSettings.AppService.AllowedAuthenticationProviders
-							$ConfiguredAuthenticationProvidersSettings = New-Object PSObject
+							
 							ForEach($authProvider in $AllowedAuthenticationProviders){
 								if([Helpers]::CheckMember($this.AuthenticationSettings.Properties,$authProvider))
 								{
@@ -305,7 +307,7 @@ class AppService: AzSVTBase
 						}			
 					}
 				
-				if($AADEnabled)
+				if($AADEnabled -or ($IsAllowedAuthenticationProvidersConfigured -or $IsAppServiceCustomAuthAllowed))
 				{
 					if([FeatureFlightingManager]::GetFeatureStatus("EnableAppServiceAADAuthAllowAnonymousCheck",$($this.SubscriptionContext.SubscriptionId)) -eq $true)
 					{
@@ -322,9 +324,21 @@ class AppService: AzSVTBase
 								return $controlResult;
 							}
 						}
-					}													
+					}
+					if($IsAllowedAuthenticationProvidersConfigured)
+					{
+						$controlResult.AddMessage([VerificationResult]::Passed,
+											[MessageData]::new("Authentication Providers configured for " + $this.ResourceContext.ResourceName + $ConfiguredAuthenticationProvidersSettings));
+					}
+					if($IsAllowedExternalRedirectURLsConfigured)
+					{
+						$controlResult.AddMessage([VerificationResult]::Passed,
+											[MessageData]::new("External redirect URLs configured for " + $this.ResourceContext.ResourceName + $ConfiguredExternalRedirectURLs ));
+					}
+					if($AADEnabled)	{												
 					$controlResult.AddMessage([VerificationResult]::Passed,
 											[MessageData]::new("AAD Authentication for resource " + $this.ResourceContext.ResourceName + " is enabled", $aadSettings));
+					}
 				}
 				else
 				{
