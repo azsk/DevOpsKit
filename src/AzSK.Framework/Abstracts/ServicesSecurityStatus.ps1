@@ -188,19 +188,26 @@ class ServicesSecurityStatus: AzSVTCommandBase
 				try
 				{
 					$extensionSVTClassName = $svtClassName + "Ext";
-					if(-not ($extensionSVTClassName -as [type]))
+                    $extensionSVTClassFilePath = $null
+					if (-not ($extensionSVTClassName -as [type])) 
 					{
-						$extensionSVTClassFilePath = [ConfigurationManager]::LoadExtensionFile($svtClassName); 
-					}	
-					if([string]::IsNullOrWhiteSpace($extensionSVTClassFilePath))
-					{
-						$svtObject = New-Object -TypeName $svtClassName -ArgumentList $this.SubscriptionContext.SubscriptionId, $_
-					}
-					else {
-						# file has to be loaded here due to scope contraint
-						. $extensionSVTClassFilePath
-						$svtObject = New-Object -TypeName $extensionSVTClassName -ArgumentList $this.SubscriptionContext.SubscriptionId, $_
-					}
+                        $extensionSVTClassFilePath = [ConfigurationManager]::LoadExtensionFile($svtClassName); 
+						if ([string]::IsNullOrWhiteSpace($extensionSVTClassFilePath)) 
+						{
+                            $svtObject = New-Object -TypeName $svtClassName -ArgumentList $this.SubscriptionContext.SubscriptionId, $_
+                        }
+						else 
+						{
+                            # file has to be loaded here due to scope contraint
+                            Write-Warning "########## Loading extended type [$extensionSVTClassName] into session... ##########"
+                            . $extensionSVTClassFilePath
+                            $svtObject = New-Object -TypeName $extensionSVTClassName -ArgumentList $this.SubscriptionContext.SubscriptionId, $_
+                        }
+                    }   
+                    else 
+                    {
+                        $svtObject = New-Object -TypeName $extensionSVTClassName -ArgumentList $this.SubscriptionContext.SubscriptionId, $_
+                    }
 				}
 				catch
 				{
