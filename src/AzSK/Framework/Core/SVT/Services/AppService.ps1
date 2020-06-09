@@ -138,6 +138,16 @@ class AppService: AzSVTBase
 		}
 		else
 		{
+			$IsAllowedAuthenticationProvidersConfigured = $false;
+			$IsAllowedExternalRedirectURLsConfigured = $false;
+			if([FeatureFlightingManager]::GetFeatureStatus("EnableAppServiceCustomAuth",$($this.SubscriptionContext.SubscriptionId)) -eq $true)
+			{
+				$IsAppServiceCustomAuthAllowed = $true
+			}
+			else
+			{
+				$IsAppServiceCustomAuthAllowed = $true
+			}
 			#Checks if functions app present
 			if([Helpers]::CheckMember($this.ResourceObject, "Kind") -and ($this.ResourceObject.Kind -eq "functionapp"))
 			{
@@ -231,33 +241,69 @@ class AppService: AzSVTBase
 							$AADEnabled = $True;
 						}
 					}
-				}				
-
+				}	
 			
-				#Check if any non AAD authenticaion is also enabled
-				if([Helpers]::CheckMember($this.ControlSettings,"AppService.NonAADAuthProperties")){
-					$nonAadSettings = New-Object PSObject
-					$nonAADAuthEnabled = $false
-					$NonAADAuthProperties = $this.ControlSettings.AppService.NonAADAuthProperties 
-					ForEach($authProperty in 	$NonAADAuthProperties){
-						if([Helpers]::CheckMember($this.AuthenticationSettings.Properties,$authProperty)){
-							$nonAADAuthEnabled = $true
-							Add-Member -InputObject $nonAadSettings -MemberType NoteProperty -Name $authProperty -Value $this.AuthenticationSettings.Properties.$($authProperty)
-						}
-					}
-					if($nonAADAuthEnabled ){
-						if($AADEnabled)
-						{
-							$controlResult.AddMessage("AAD Authentication for resource " + $this.ResourceContext.ResourceName + " is enabled "+ $aadSettings)
-						}
-						#Fail the control if non AAD authentication is enabled, irrespective of AAD is enabled or not 
-						$controlResult.AddMessage([VerificationResult]::Failed,
-						[MessageData]::new("Authentication mechanism other than AAD is enabled for " + $this.ResourceContext.ResourceName ));
-						$controlResult.AddMessage($nonAadSettings);
-						$controlResult.SetStateData("App Service authentication settings", $nonAadSettings);
-						return $controlResult;
+			#Check if any non AAD authenticaion is also enabled
+			if([Helpers]::CheckMember($this.ControlSettings,"AppService.NonAADAuthProperties")){
+				$nonAadSettings = New-Object PSObject
+				$nonAADAuthEnabled = $false
+				$NonAADAuthProperties = $this.ControlSettings.AppService.NonAADAuthProperties 
+				ForEach($authProperty in 	$NonAADAuthProperties){
+					if([Helpers]::CheckMember($this.AuthenticationSettings.Properties,$authProperty)){
+						$nonAADAuthEnabled = $true
+						Add-Member -InputObject $nonAadSettings -MemberType NoteProperty -Name $authProperty -Value $this.AuthenticationSettings.Properties.$($authProperty)
 					}
 				}
+				if($nonAADAuthEnabled ){
+					if($AADEnabled)
+					{
+						$controlResult.AddMessage("AAD Authentication for resource " + $this.ResourceContext.ResourceName + " is enabled "+ $aadSettings)
+					}
+					#Fail the control if non AAD authentication is enabled, irrespective of AAD is enabled or not 
+					$controlResult.AddMessage([VerificationResult]::Failed,
+					[MessageData]::new("Authentication mechanism other than AAD is enabled for " + $this.ResourceContext.ResourceName ));
+					$controlResult.AddMessage($nonAadSettings);		
+
+					#TODO : Check if StateData needs to be set for AllowedAuthenticationProviders
+					$controlResult.SetStateData("App Service authentication settings", $nonAadSettings);
+					return $controlResult;
+					}	
+				}
+
+				if($IsAppServiceCustomAuthAllowed){
+					#Check if Configured ExternalRedirectURLs for app service is matching AllowedExternalRedirectURLs URL from ControlSetting
+						if([Helpers]::CheckMember($this.ControlSettings,"AppService.AllowedExternalRedirectURLs"))
+						{
+							$AllowedExternalRedirectURLs = $this.ControlSettings.AppService.AllowedExternalRedirectURLs
+							$ConfiguredExternalRedirectURLs= @()
+							$IsAllowedExternalRedirectURLsConfigured = $false;
+							$ConfiguredExternalRedirectURLs = $this.AuthenticationSettings.properties.allowedExternalRedirectUrls
+				
+							ForEach($allowedurl in $AllowedExternalRedirectURLs){
+								#check if any of the configured AuthURL match Allowed ones
+								ForEach($configuredURL in $ConfiguredExternalRedirectURLs)
+								{
+									if($allowedurl -ceq $configuredURL)
+									{
+										$IsAllowedExternalRedirectURLsConfigured= $true; 
+									}
+								}
+							}
+						}
+					#Check if any of the AllowedAuthenticationProviders is configured
+						if([Helpers]::CheckMember($this.ControlSettings,"AppService.AllowedAuthenticationProviders"))
+						{
+							$AllowedAuthenticationProviders = $this.ControlSettings.AppService.AllowedAuthenticationProviders
+							$ConfiguredAuthenticationProvidersSettings = New-Object PSObject
+							ForEach($authProvider in $AllowedAuthenticationProviders){
+								if([Helpers]::CheckMember($this.AuthenticationSettings.Properties,$authProvider))
+								{
+									$IsAllowedAuthenticationProvidersConfigured = $true
+									Add-Member -InputObject $ConfiguredAuthenticationProvidersSettings -MemberType NoteProperty -Name $authProvider -Value $this.AuthenticationSettings.Properties.$($authProvider)
+								}
+							}
+						}			
+					}
 				
 				if($AADEnabled)
 				{
@@ -276,7 +322,7 @@ class AppService: AzSVTBase
 								return $controlResult;
 							}
 						}
-					}
+					}													
 					$controlResult.AddMessage([VerificationResult]::Passed,
 											[MessageData]::new("AAD Authentication for resource " + $this.ResourceContext.ResourceName + " is enabled", $aadSettings));
 				}
@@ -295,8 +341,8 @@ class AppService: AzSVTBase
 
 		}
 
-      return $controlResult;
-    }
+	  return $controlResult;
+}
 
 	hidden [ControlResult] CheckAppServiceRootPageAuth([ControlResult] $controlResult)
     {
