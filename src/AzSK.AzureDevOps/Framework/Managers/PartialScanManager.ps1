@@ -8,7 +8,7 @@ class PartialScanManager
 	hidden [PartialScanResourceMap] $ResourceScanTrackerObj = $null
 	[PSObject] $ControlSettings;
 	hidden [ActiveStatus] $ActiveStatus = [ActiveStatus]::NotStarted;
-    hidden [string] $AzSKTempStatePath = [Constants]::ResourceTrackerLocalPath
+    hidden [string] $AzSKTempStatePath = (Join-Path $([Constants]::AzSKAppFolderPath) "TempState" | Join-Path -ChildPath "PartialScanData");
     hidden [bool] $StoreResTrackerLocally = $false;
 
 

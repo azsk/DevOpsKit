@@ -1,7 +1,7 @@
 Set-StrictMode -Version Latest
 
 $libraryPath = (Get-Item $PSScriptRoot).Parent.FullName+ "\Lib";
-$FrameworkPath = $PSScriptRoot
+$FrameworkPath =  ((Get-Item $PSScriptRoot).Parent.Parent).FullName +"\AzSK.Framework"
 Add-Type -Path "$libraryPath\Microsoft.IdentityModel.Clients.ActiveDirectory.dll"
 
 . $FrameworkPath\Models\Enums.ps1
@@ -63,7 +63,7 @@ Add-Type -Path "$libraryPath\Microsoft.IdentityModel.Clients.ActiveDirectory.dll
 . $FrameworkPath\Managers\FeatureFlightingManager.ps1
 . $PSScriptRoot\Managers\ControlStateExtension.ps1
 . $FrameworkPath\Managers\AzSKPDFExtension.ps1
-. $FrameworkPath\Managers\PartialScanManager.ps1
+. $PSScriptRoot\Managers\PartialScanManager.ps1
 
 . $FrameworkPath\Helpers\LogAnalyticsHelper.ps1
 . $FrameworkPath\Helpers\RemoteReportHelper.ps1
@@ -120,4 +120,4 @@ Add-Type -Path "$libraryPath\Microsoft.IdentityModel.Clients.ActiveDirectory.dll
 }
 
 . $PSScriptRoot\Core\SVT\SVTResourceResolver.ps1
-. $FrameworkPath\Abstracts\ServicesSecurityStatus.ps1
+. $PSScriptRoot\Abstracts\ServicesSecurityStatus.ps1
