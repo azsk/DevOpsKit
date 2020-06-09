@@ -66,6 +66,7 @@ class PartialScanManager
 
      hidden [void] GetResourceTrackerFile($subId)
     {
+		#Validating the configuration of storing resource tracker file
         if($null -ne $this.ControlSettings.PartialScan)
 		{
 			$this.StoreResTrackerLocally = [Bool]::Parse($this.ControlSettings.PartialScan.StoreResourceTrackerLocally);
@@ -97,7 +98,7 @@ class PartialScanManager
         }
     }
 
-
+	#Method called from PartialScanManger to update state of last resource scanned
 	[void] UpdateResourceStatus([string] $resourceId, [ScanState] $state)
 	{
 		$resourceValues = @();
@@ -109,6 +110,8 @@ class PartialScanManager
 			{
 				$resourceValue.ModifiedDate = [DateTime]::UtcNow;
 				$resourceValue.State = $state;
+				# Update state of last resource scanned in Tracker file
+				$this.WriteToResourceTrackerFile();
 			}
 			else
 			{
@@ -147,6 +150,7 @@ class PartialScanManager
 		}
 	}
 
+	# Method to remove obsolete Resource Tracker file
 	[void] RemovePartialScanData()
 	{
         #Use local Resource Tracker files for partial scanning
@@ -178,9 +182,9 @@ class PartialScanManager
         }
 	}
 
+	#Method to fetch all applicable resources as per input command (including those with "COMP" status in ResourceTracker file)
 	[void] CreateResourceMasterList([PSObject] $resourceIds)
 	{
-
 		if(($resourceIds | Measure-Object).Count -gt 0)
 		{
 			$resourceIdMap = @();
@@ -238,6 +242,7 @@ class PartialScanManager
         }
 	}
 
+	#Method to fetch ResourceTrackerFile as an object
 	hidden [void] GetResourceScanTrackerObject()
 	{
 		if($null -eq $this.ResourceScanTrackerObj)
