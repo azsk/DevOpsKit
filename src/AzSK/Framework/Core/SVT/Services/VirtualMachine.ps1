@@ -370,14 +370,7 @@ class VirtualMachine: AzSVTBase
 		elseif($null -ne $this.ASCSettings -and [Helpers]::CheckMember($this.ASCSettings, "properties.policyAssessments"))
 		{
 			$antimalwareSetting = $null
-			if([FeatureFlightingManager]::GetFeatureStatus("EnableASCPolicyOnVMCheckUsingPolicyAssessmentKey",$($this.SubscriptionContext.SubscriptionId)) -eq $true)
-			{
-				$antimalwareSetting = $this.ASCSettings.properties.policyAssessments | Where-Object {$_.assessmentKey -eq $this.ControlSettings.VirtualMachine.ASCPolicies.PolicyAssignment.EndpointProtectionAssessmentKey};
-			}
-			else 
-			{
-				$antimalwareSetting = $this.ASCSettings.properties.policyAssessments | Where-Object {$_.policyName -eq $this.ControlSettings.VirtualMachine.ASCPolicies.PolicyAssignment.EndpointProtection};
-			}
+			$antimalwareSetting = $this.ASCSettings.properties.policyAssessments | Where-Object {$_.assessmentKey -eq $this.ControlSettings.VirtualMachine.ASCPolicies.PolicyAssignment.EndpointProtectionAssessmentKey};
 			
 			if($null -ne $antimalwareSetting)
 			{
@@ -494,8 +487,9 @@ class VirtualMachine: AzSVTBase
 				if($null -ne $installedGuestExtension -and $installedGuestExtension.ProvisioningState -eq "Succeeded"){
 					$controlStatus = [VerificationResult]::Passed
 					$controlResult.AddMessage("Required guest configuration extension '$($requiredGuestExtension)' is present in VM.");
-
-					$currentGuestExtensionVersion = $null
+					
+					# Commenting this section as we are skipping the check for Extension Version
+					<#$currentGuestExtensionVersion = $null
 					try {
 						$uri=[system.string]::Format("{0}subscriptions/{1}/resourceGroups/{2}/providers/Microsoft.Compute/virtualMachines/{3}/extensions/{4}?api-version=2018-06-01&`$expand=instanceView",$ResourceAppIdURI,$this.SubscriptionContext.SubscriptionId, $this.ResourceContext.ResourceGroupName, $this.ResourceContext.ResourceName,$requiredGuestExtension)
 						$result = [WebRequestHelper]::InvokeWebRequest([Microsoft.PowerShell.Commands.WebRequestMethod]::Get, $uri, $headers, $null, $null, $propertiesToReplace); 
@@ -504,7 +498,8 @@ class VirtualMachine: AzSVTBase
 					catch {
 						# If any exception occurs, while fetching details of Extension mark control as manual
 						# Skip check for version
-					}
+					} #>
+					
 				}else{
 					$controlStatus = [VerificationResult]::Failed
 					$controlResult.AddMessage("Required guest configuration extension '$($requiredGuestExtension)' is not present in VM.");
@@ -862,14 +857,7 @@ class VirtualMachine: AzSVTBase
 		if($null -ne $this.ASCSettings -and [Helpers]::CheckMember($this.ASCSettings, "properties.policyAssessments"))
 		{
 			$adeSetting = $null
-			if([FeatureFlightingManager]::GetFeatureStatus("EnableASCPolicyOnVMCheckUsingPolicyAssessmentKey",$($this.SubscriptionContext.SubscriptionId)) -eq $true)
-			{
-				$adeSetting = $this.ASCSettings.properties.policyAssessments | Where-Object {$_.assessmentKey -eq $this.ControlSettings.VirtualMachine.ASCPolicies.PolicyAssignment.DiskEncryptionAssessmentKey};
-			}
-			else 
-			{
-				$adeSetting = $this.ASCSettings.properties.policyAssessments | Where-Object {$_.policyName -eq $this.ControlSettings.VirtualMachine.ASCPolicies.PolicyAssignment.DiskEncryption};
-			}
+			$adeSetting = $this.ASCSettings.properties.policyAssessments | Where-Object {$_.assessmentKey -eq $this.ControlSettings.VirtualMachine.ASCPolicies.PolicyAssignment.DiskEncryptionAssessmentKey};
 			
 			if($null -ne $adeSetting)
 			{
@@ -936,14 +924,8 @@ class VirtualMachine: AzSVTBase
 		if($null -ne $this.ASCSettings -and [Helpers]::CheckMember($this.ASCSettings, "properties.policyAssessments"))
 		{
 			$vulnSetting = $null
-			if([FeatureFlightingManager]::GetFeatureStatus("EnableASCPolicyOnVMCheckUsingPolicyAssessmentKey",$($this.SubscriptionContext.SubscriptionId)) -eq $true)
-			{
-				$vulnSetting = $this.ASCSettings.properties.policyAssessments | Where-Object {$_.assessmentKey -eq $this.ControlSettings.VirtualMachine.ASCPolicies.PolicyAssignment.VulnerabilityScanAssessmentKey};
-			}
-			else 
-			{
-				$vulnSetting = $this.ASCSettings.properties.policyAssessments | Where-Object {$_.policyName -eq $this.ControlSettings.VirtualMachine.ASCPolicies.PolicyAssignment.VulnerabilityScan};
-			}
+			$vulnSetting = $this.ASCSettings.properties.policyAssessments | Where-Object {$_.assessmentKey -eq $this.ControlSettings.VirtualMachine.ASCPolicies.PolicyAssignment.VulnerabilityScanAssessmentKey};
+			
 
 			if($null -ne $vulnSetting)
 			{
@@ -988,15 +970,8 @@ class VirtualMachine: AzSVTBase
 				if($null -ne $this.ASCSettings -and [Helpers]::CheckMember($this.ASCSettings, "properties.policyAssessments"))
 				{
 					$patchSetting = $null
-					if([FeatureFlightingManager]::GetFeatureStatus("EnableASCPolicyOnVMCheckUsingPolicyAssessmentKey",$($this.SubscriptionContext.SubscriptionId)) -eq $true)
-					{
-						$patchSetting = $this.ASCSettings.properties.policyAssessments | Where-Object {$_.assessmentKey -eq $this.ControlSettings.VirtualMachine.ASCPolicies.PolicyAssignment.OSUpdatesAssessmentKey};
-					}
-					else 
-					{
-						$patchSetting = $this.ASCSettings.properties.policyAssessments | Where-Object {$_.policyName -eq $this.ControlSettings.VirtualMachine.ASCPolicies.PolicyAssignment.OSUpdates};
-					}
-
+					$patchSetting = $this.ASCSettings.properties.policyAssessments | Where-Object {$_.assessmentKey -eq $this.ControlSettings.VirtualMachine.ASCPolicies.PolicyAssignment.OSUpdatesAssessmentKey};
+			
 					if($null -ne $patchSetting)
 					{
 						$ascPatchStatus = $patchSetting.assessmentResult;
@@ -1090,14 +1065,7 @@ class VirtualMachine: AzSVTBase
 			if($null -ne $this.ASCSettings -and [Helpers]::CheckMember($this.ASCSettings, "properties.policyAssessments"))
 			{
 				$vulnSetting = $null
-				if([FeatureFlightingManager]::GetFeatureStatus("EnableASCPolicyOnVMCheckUsingPolicyAssessmentKey",$($this.SubscriptionContext.SubscriptionId)) -eq $true)
-				{
-					$vulnSetting = $this.ASCSettings.properties.policyAssessments | Where-Object {$_.assessmentKey -eq $this.ControlSettings.VirtualMachine.ASCPolicies.PolicyAssignment.VulnerabilityScanAssessmentKey};
-				}
-				else 
-				{
-					$vulnSetting = $this.ASCSettings.properties.policyAssessments | Where-Object {$_.policyName -eq $this.ControlSettings.VirtualMachine.ASCPolicies.PolicyAssignment.VulnerabilityScan};
-				}
+				$vulnSetting = $this.ASCSettings.properties.policyAssessments | Where-Object {$_.assessmentKey -eq $this.ControlSettings.VirtualMachine.ASCPolicies.PolicyAssignment.VulnerabilityScanAssessmentKey};
 				
 				if($null -ne $vulnSetting)
 				{
