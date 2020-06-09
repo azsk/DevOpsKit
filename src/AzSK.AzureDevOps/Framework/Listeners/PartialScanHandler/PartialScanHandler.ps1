@@ -1,5 +1,5 @@
 ﻿Set-StrictMode -Version Latest 
-#Listner to write CA scan status on completion of resource scan 
+#Listener to write partial scan status on completion of resource scan 
 class PartialScanHandler: ListenerBase
 {
     hidden static [PartialScanHandler] $Instance = $null;

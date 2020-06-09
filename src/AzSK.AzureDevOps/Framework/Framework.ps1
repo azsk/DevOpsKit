@@ -102,7 +102,7 @@ Add-Type -Path "$libraryPath\Microsoft.IdentityModel.Clients.ActiveDirectory.dll
 . $FrameworkPath\Listeners\Webhook\WebhookOutput.ps1
 . $PSScriptRoot\Listeners\PartialScanHandler\PartialScanHandler.ps1
 . $FrameworkPath\Listeners\GenericListener\GenericListener.ps1
-. $FrameworkPath\Listeners\ListenerHelper.ps1
+. $PSScriptRoot\Listeners\ListenerHelper.ps1
 
 #Remaining Abstracts
 . $PSScriptRoot\Core\SVT\SVTControlAttestation.ps1

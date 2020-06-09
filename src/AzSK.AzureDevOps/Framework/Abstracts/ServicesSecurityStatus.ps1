@@ -384,10 +384,10 @@ class ServicesSecurityStatus: ADOSVTCommandBase
                 #$this.PublishCustomMessage("Running cmdlet under transactional mode. This will scan resources and store intermittent scan progress to Storage. It resume scan in next run if something breaks inbetween.", [MessageType]::Warning);
                 #Validate if active resources list already available in store
                 #If list not available in store. Get resources filtered by baseline resource types and store it storage
-                $nonScannedResourcesList = @();
-                if(($partialScanMngr.IsPartialScanInProgress($this.SubscriptionContext.SubscriptionId) -eq [ActiveStatus]::Yes)  )
+				$nonScannedResourcesList = @();
+				if(($partialScanMngr.IsPartialScanInProgress($this.SubscriptionContext.SubscriptionId) -eq [ActiveStatus]::Yes)  )
                 {
-                    $this.IsPartialCommitScanActive = $true;
+					$this.IsPartialCommitScanActive = $true;
                     $allResourcesList = $partialScanMngr.GetAllListedResources()
                     # Get list of non-scanned active resources
                     $nonScannedResourcesList = $partialScanMngr.GetNonScannedResources();
@@ -400,8 +400,8 @@ class ServicesSecurityStatus: ADOSVTCommandBase
                 }
                 else{
                     $this.IsPartialCommitScanActive = $false;
-                    $resourceIdList =  $this.Resolver.SVTResources| Where-Object {$null -ne $_.ResourceTypeMapping} | Select ResourceId | ForEach-Object {  $_.ResourceId }
-                    $partialScanMngr.CreateResourceMasterList($resourceIdList);
+					$resourceIdList =  $this.Resolver.SVTResources| Where-Object {$null -ne $_.ResourceTypeMapping} | Select ResourceId | ForEach-Object {  $_.ResourceId }
+                	$partialScanMngr.CreateResourceMasterList($resourceIdList);
                     #This should fetch full list of resources to be scanned 
                     $nonScannedResourcesList = $partialScanMngr.GetNonScannedResources();
                 }

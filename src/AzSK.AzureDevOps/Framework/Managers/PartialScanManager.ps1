@@ -266,7 +266,8 @@ class PartialScanManager
 				    }
 			    }
 
-			    $masterFilePath = Join-Path (Join-Path $this.AzSKTempStatePath $this.subId) $($this.ResourceScanTrackerFileName)
+				$masterFilePath = Join-Path (Join-Path $this.AzSKTempStatePath $this.subId) $($this.ResourceScanTrackerFileName)
+				$this.ResourceScanTrackerObj = Get-content $masterFilePath | ConvertFrom-Json
             }
             #Use Durable Resource Tracker files for partial scanning
             else
@@ -285,6 +286,7 @@ class PartialScanManager
 		if($null -ne $this.ControlSettings.PartialScan)
 		{
 			$resourceTrackerFileValidforDays = [Int32]::Parse($this.ControlSettings.PartialScan.ResourceTrackerValidforDays);
+			$this.GetResourceScanTrackerObject();
 			if($null -eq $this.ResourceScanTrackerObj)
 			{
 				return $this.ActiveStatus = [ActiveStatus]::No;
