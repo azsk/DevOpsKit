@@ -1,7 +1,7 @@
 Set-StrictMode -Version Latest
 
 $libraryPath = (Get-Item $PSScriptRoot).Parent.FullName+ "\Lib";
-$FrameworkPath =  ((Get-Item $PSScriptRoot).Parent.Parent).FullName +"\AzSK.Framework"
+$FrameworkPath = $PSScriptRoot
 Add-Type -Path "$libraryPath\Microsoft.IdentityModel.Clients.ActiveDirectory.dll"
 
 . $FrameworkPath\Models\Enums.ps1
@@ -100,7 +100,7 @@ Add-Type -Path "$libraryPath\Microsoft.IdentityModel.Clients.ActiveDirectory.dll
 . $FrameworkPath\Listeners\FixControl\WriteFixControlFiles.ps1
 . $FrameworkPath\Listeners\EventHub\EventHubOutput.ps1
 . $FrameworkPath\Listeners\Webhook\WebhookOutput.ps1
-. C:\Users\mprabhu\source\repos\DevOpsKit\src\AzSK\Framework\Listeners\CA\WriteCAStatus.ps1
+. $PSScriptRoot\Listeners\PartialScanHandler\PartialScanHandler.ps1
 . $FrameworkPath\Listeners\GenericListener\GenericListener.ps1
 . $FrameworkPath\Listeners\ListenerHelper.ps1
 

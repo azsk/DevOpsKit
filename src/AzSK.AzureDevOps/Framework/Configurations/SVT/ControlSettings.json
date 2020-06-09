@@ -1,6 +1,5 @@
 {
   "BaselineControls": {
-    "ExpiryInDays":0,
     "ResourceTypeControlIdMappingList": [
       {
         "ResourceType": "Organization",
@@ -57,6 +56,11 @@
     "ResourceTypeControlIdMappingList": [
     ]
   },
+  "PartialScan":{
+    "ResourceTrackerValidforDays":3,
+    "StoreResourceTrackerLocally": "True"
+  },
+
   "AllowAttestationResourceType": [
     "Organization",
     "Project",
