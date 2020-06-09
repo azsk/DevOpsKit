@@ -46,7 +46,6 @@ class AIOrgTelemetry: ListenerBase {
 				}else{
 				}
 				try {
-					$isResourceScanStartEndTelemetryEnabled = [FeatureFlightingManager]::GetFeatureStatus("EnableResourceScanStartEndTelemetry", $($Event.SourceArgs[0].SubscriptionContext.SubscriptionId))
 					$resourceContext = $Event.SourceArgs[0].ResourceContext
 					#specifying NA so that it is easily identifiable in app sights query
 					if([string]::IsNullOrEmpty($Event.SourceArgs[0].PartialScanIdentifier)){
@@ -56,20 +55,20 @@ class AIOrgTelemetry: ListenerBase {
 					{
 						$partialScanIdentifier = $Event.SourceArgs[0].PartialScanIdentifier
 					}
-					if ($isResourceScanStartEndTelemetryEnabled) {
-						if ($resourceContext -ne $null) {
-							$resourceDetails = @{
-								ResourceId            = $resourceContext.ResourceId
-								ResourceName          = $resourceContext.ResourceName
-								ResourceType          = $resourceContext.ResourceType
-								Location              = $resourceContext.Location
-								ResourceGroupName     = $resourceContext.ResourceGroupName
-								SubscriptionId        = $Event.SourceArgs[0].SubscriptionContext.SubscriptionId
-								PartialScanIdentifier = $partialScanIdentifier
-							}
-							[AIOrgTelemetryHelper]::TrackEvent("Resource Scan Ended", $resourceDetails, $null)
+					
+					if ($resourceContext -ne $null) {
+						$resourceDetails = @{
+							ResourceId            = $resourceContext.ResourceId
+							ResourceName          = $resourceContext.ResourceName
+							ResourceType          = $resourceContext.ResourceType
+							Location              = $resourceContext.Location
+							ResourceGroupName     = $resourceContext.ResourceGroupName
+							SubscriptionId        = $Event.SourceArgs[0].SubscriptionContext.SubscriptionId
+							PartialScanIdentifier = $partialScanIdentifier
 						}
+						[AIOrgTelemetryHelper]::TrackEvent("Resource Scan Ended", $resourceDetails, $null)
 					}
+					
 				}
 				catch {
 					$currentInstance.PublishException($_);
@@ -85,7 +84,6 @@ class AIOrgTelemetry: ListenerBase {
 		$this.RegisterEvent([SVTEvent]::EvaluationStarted, {
 			$currentInstance = [AIOrgTelemetry]::GetInstance();
 			try {
-					$isResourceScanStartEndTelemetryEnabled = [FeatureFlightingManager]::GetFeatureStatus("EnableResourceScanStartEndTelemetry", $($Event.SourceArgs[0].SubscriptionContext.SubscriptionId))
 					$resourceContext = $Event.SourceArgs[0].ResourceContext
 					#specifying NA so that it is easily identifiable in app sights query
 					if([string]::IsNullOrEmpty($Event.SourceArgs[0].PartialScanIdentifier)){
@@ -95,20 +93,19 @@ class AIOrgTelemetry: ListenerBase {
 					{
 						$partialScanIdentifier = $Event.SourceArgs[0].PartialScanIdentifier
 					}
-					if ($isResourceScanStartEndTelemetryEnabled) {
-						if ($resourceContext -ne $null) {
-							$resourceDetails = @{
-								ResourceId            = $resourceContext.ResourceId
-								ResourceName          = $resourceContext.ResourceName
-								ResourceType          = $resourceContext.ResourceType
-								Location              = $resourceContext.Location
-								ResourceGroupName     = $resourceContext.ResourceGroupName
-								SubscriptionId        = $Event.SourceArgs[0].SubscriptionContext.SubscriptionId
-								PartialScanIdentifier = $partialScanIdentifier
-							}
-							[AIOrgTelemetryHelper]::TrackEvent("Resource Scan Started", $resourceDetails, $null)
+					if ($resourceContext -ne $null) {
+						$resourceDetails = @{
+							ResourceId            = $resourceContext.ResourceId
+							ResourceName          = $resourceContext.ResourceName
+							ResourceType          = $resourceContext.ResourceType
+							Location              = $resourceContext.Location
+							ResourceGroupName     = $resourceContext.ResourceGroupName
+							SubscriptionId        = $Event.SourceArgs[0].SubscriptionContext.SubscriptionId
+							PartialScanIdentifier = $partialScanIdentifier
 						}
+						[AIOrgTelemetryHelper]::TrackEvent("Resource Scan Started", $resourceDetails, $null)
 					}
+					
 				}
 				catch {
 					$currentInstance.PublishException($_);

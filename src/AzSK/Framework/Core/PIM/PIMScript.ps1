@@ -1345,7 +1345,7 @@ class PIM: AzCommandBase {
 
                     $RequireJustificationOnActiveAssignment = $null;
                     if( [string]::IsNullOrEmpty($RoleSettingsRawInput.RequireJustificationOnActiveAssignment)){
-                        $RequireJustificationOnActiveAssignment = ($($($($existingroleSetting.lifeCycleManagement | Where-Object {$_.caller -eq 'Admin' -and $_.level -eq 'Member'}).value) | Where-Object{$_.RuleIdentifier -eq 'ExpirationRule'}).setting | ConvertFrom-Json).maximumGrantPeriodInMinutes
+                        $RequireJustificationOnActiveAssignment = ($($($($existingroleSetting.lifeCycleManagement | Where-Object {$_.caller -eq 'Admin' -and $_.level -eq 'Member'}).value) | Where-Object{$_.RuleIdentifier -eq 'JustificationRule'}).setting | ConvertFrom-Json).required
                     }
                     else{
                         $RequireJustificationOnActiveAssignment =$RoleSettingsRawInput.RequireJustificationOnActiveAssignment
@@ -1501,11 +1501,18 @@ class PIM: AzCommandBase {
     }
 
     #List exixting settings for a specific role
-    hidden [void] ListRoleSettings($SubscriptionId, $ResourceGroupName, $ResourceName, $RoleName)
+    hidden [void] ListRoleSettings( $ManagementGroupId, $SubscriptionId, $ResourceGroupName, $ResourceName, $RoleName)
     {
         $resolvedResource = $null;
         
-        $resolvedResource = $this.PIMResourceResolver($SubscriptionId, $ResourceGroupName, $ResourceName, $false)
+        if(-not([string]::IsNullOrEmpty($ManagementGroupId)))
+        {
+            $resolvedResource = $this.PIMResourceResolver($ManagementGroupId, $false);
+        }
+        else 
+        {
+            $resolvedResource = $this.PIMResourceResolver($SubscriptionId, $ResourceGroupName, $ResourceName,$false)   
+        }
 
         if (($resolvedResource | Measure-Object).Count -gt 0 -and (-not [string]::IsNullOrEmpty($resolvedResource.ResourceId))) {
           $roleforResource = @($this.ListRoles($resolvedResource.ResourceId)) | Where-Object {$_.RoleName -eq $RoleName}
@@ -1537,7 +1544,13 @@ class PIM: AzCommandBase {
                 $MFAOnActivationSetting = ($($($($existingroleSetting.lifeCycleManagement | Where-Object {$_.caller -eq 'EndUser' -and $_.level -eq 'Member'}).value) | Where-Object{$_.RuleIdentifier -eq 'MfaRule'}).setting | ConvertFrom-Json).mfaRequired
                 $ConditionalAccessSetting = ($($($($existingroleSetting.lifeCycleManagement | Where-Object {$_.caller -eq 'EndUser' -and $_.level -eq 'Member'}).value) | Where-Object{$_.RuleIdentifier -eq 'acrsRule'}).setting | ConvertFrom-Json).acrsRequired
                 
-				if($MFAOnActivationSetting -eq $true) { $MFAOnActivationSetting = "Yes"}
+                #Fetch the role settings :ExpireActiveAssignmentsInDays, RequireJustificationOnActiveAssignment, RequireMFAOnActiveAssignment
+                $ExpireActiveAssignmentsSetting = ((($($($($existingroleSetting.lifeCycleManagement | Where-Object {$_.caller -eq 'Admin' -and $_.level -eq 'Member'}).value) | Where-Object{$_.RuleIdentifier -eq 'ExpirationRule'}).setting | ConvertFrom-Json).maximumGrantPeriodInMinutes)/60)/24 
+                $JustificationOnActiveAssignmentSetting = ($($($($existingroleSetting.lifeCycleManagement | Where-Object {$_.caller -eq 'Admin' -and $_.level -eq 'Member'}).value) | Where-Object{$_.RuleIdentifier -eq 'JustificationRule'}).setting | ConvertFrom-Json).required
+                $MFAOnActiveAssignmentSetting = ($($($($existingroleSetting.lifeCycleManagement | Where-Object {$_.caller -eq 'Admin' -and $_.level -eq 'Member'}).value) | Where-Object{$_.RuleIdentifier -eq 'MfaRule'}).setting | ConvertFrom-Json).mfaRequired
+
+
+                if($MFAOnActivationSetting -eq $true) { $MFAOnActivationSetting = "Yes"}
                 else { $MFAOnActivationSetting = "No"}
                 
 				if($ConditionalAccessSetting -eq $true) { $ConditionalAccessSetting = "Yes"}
@@ -1546,12 +1559,21 @@ class PIM: AzCommandBase {
 				if($JustificationOnActivationSetting -eq $true) { $JustificationOnActivationSetting = "Yes"}
                 else { $JustificationOnActivationSetting = "No"}
 
+                if($JustificationOnActiveAssignmentSetting -eq $true) { $JustificationOnActiveAssignmentSetting = "Yes"}
+                else { $JustificationOnActiveAssignmentSetting = "No"}
+
+                if($MFAOnActiveAssignmentSetting -eq $true) { $MFAOnActiveAssignmentSetting = "Yes"}
+                else { $MFAOnActiveAssignmentSetting = "No"}
+
                 $item = New-Object psobject -Property @{
                     "Activation maximum duration (hours)" = $MaximumActivationDurationSetting
                     "Require justification on activation" =  $JustificationOnActivationSetting
                     "On activation, require Azure MFA" = $MFAOnActivationSetting
                     "On activation, require conditional access" = $ConditionalAccessSetting
                     "Expire eligible assignments after (days)" = $ExpireEligibleAssignmentsSetting
+                    "Expire active assignments after (days)" = $ExpireActiveAssignmentsSetting
+                    "Require justification on active assignment" = $JustificationOnActiveAssignmentSetting
+                    "Require Azure Multi-Factor Authentication on active assignment" = $MFAOnActiveAssignmentSetting
                 }
 
                 #Display existing role settings on host
