@@ -78,8 +78,11 @@ function Get-AzSKAzureDevOpsSecurityStatus
 		$ScanAllArtifacts,
 
 		[string] 
-		[Parameter(Mandatory = $false, HelpMessage = "Comma separated control ids to filter the security controls. e.g.: AzureDevOps_Organization_AuthN_Use_AAD_Auth, AzureDevOps_Organization_SI_Review_InActive_Users etc.")]
-		[Alias("cids")]
+		[Parameter(Mandatory = $false, ParameterSetName = "Default", HelpMessage = "Comma separated control ids to filter the security controls. e.g.: AzureDevOps_Organization_AuthN_Use_AAD_Auth, AzureDevOps_Organization_SI_Review_InActive_Users etc.")]
+		[Parameter(Mandatory = $true, ParameterSetName = "BulkAttestation", HelpMessage="Comma separated control ids to filter the security controls. e.g.: AzureDevOps_Organization_AuthN_Use_AAD_Auth, AzureDevOps_Organization_SI_Review_InActive_Users etc.")]
+		[Parameter(Mandatory = $true, ParameterSetName = "BulkAttestationClear", HelpMessage="Comma separated control ids to filter the security controls. e.g.: AzureDevOps_Organization_AuthN_Use_AAD_Auth, AzureDevOps_Organization_SI_Review_InActive_Users etc.")]
+		[Alias("BulkAttestControlId","cids","bacid")]
+		[AllowEmptyString()]
 		$ControlIds,
 
 		[switch]
@@ -111,7 +114,7 @@ function Get-AzSKAzureDevOpsSecurityStatus
 		[Alias("rtn")]
 		$ResourceTypeName = [ResourceTypeName]::All,
 
-		[switch]
+        [switch]
         [Parameter(Mandatory = $false)]
 		[Alias("upc")]
 		$UsePartialCommits,	
@@ -122,9 +125,9 @@ function Get-AzSKAzureDevOpsSecurityStatus
 		$DoNotOpenOutputFolder,
 
 		[ValidateSet("All","AlreadyAttested","NotAttested","None")]
-        [Parameter(Mandatory = $false, ParameterSetName = "Default", HelpMessage="Using this switch,  AzSK enters 'attest' mode immediately after a scan is completed. This ensures that attestation is done on the basis of the most current control statuses.")]
-        [Parameter(Mandatory = $true, ParameterSetName = "BulkAttestation", HelpMessage="Using this switch,  AzSK enters 'attest' mode immediately after a scan is completed. This ensures that attestation is done on the basis of the most current control statuses.")]
-        [Parameter(Mandatory = $true, ParameterSetName = "BulkAttestationClear", HelpMessage="Using this switch,  AzSK enters 'attest' mode immediately after a scan is completed. This ensures that attestation is done on the basis of the most current control statuses.")]
+        [Parameter(Mandatory = $false, ParameterSetName = "Default", HelpMessage="Using this switch,  AzSK enters 'attest' mode immediately after a scan is completed. This ensures that attestation is done on the basis of the most current control statuses.")]
+        [Parameter(Mandatory = $true, ParameterSetName = "BulkAttestation", HelpMessage="Using this switch,  AzSK enters 'attest' mode immediately after a scan is completed. This ensures that attestation is done on the basis of the most current control statuses.")]
+        [Parameter(Mandatory = $true, ParameterSetName = "BulkAttestationClear", HelpMessage="Using this switch,  AzSK enters 'attest' mode immediately after a scan is completed. This ensures that attestation is done on the basis of the most current control statuses.")]
 		[Alias("AttestControls","cta")]
 		$ControlsToAttest = [AttestControls]::None,
 
@@ -215,7 +218,7 @@ function Get-AzSKAzureDevOpsOrgSecurityStatus
 		Token to run scan in non-interactive mode.
 	
 	.PARAMETER DoNotOpenOutputFolder
-		Do not auto open output folder after scan completion. This parameter is used in non-interactive console.	
+		Do not auto-open output folder after scan completion. This parameter is used in non-interactive console.	
 
 	.NOTES
 	This command helps the Org Owner to verify whether their Azure DevOps Org is compliant with the security guidance or not 
@@ -236,8 +239,11 @@ function Get-AzSKAzureDevOpsOrgSecurityStatus
 		$OrganizationName,
 
 		[string] 
-		[Parameter(Mandatory = $false, HelpMessage = "Comma separated control ids to filter the security controls. e.g.: AzureDevOps_Organization_AuthN_Use_AAD_Auth, AzureDevOps_Organization_SI_Review_InActive_Users etc.")]
-		[Alias("cids")]
+		[Parameter(Mandatory = $false, ParameterSetName = "Default", HelpMessage = "Comma separated control ids to filter the security controls. e.g.: AzureDevOps_Organization_AuthN_Use_AAD_Auth, AzureDevOps_Organization_SI_Review_InActive_Users etc.")]
+		[Parameter(Mandatory = $true, ParameterSetName = "BulkAttestation", HelpMessage="Comma separated control ids to filter the security controls. e.g.: AzureDevOps_Organization_AuthN_Use_AAD_Auth, AzureDevOps_Organization_SI_Review_InActive_Users etc.")]
+		[Parameter(Mandatory = $true, ParameterSetName = "BulkAttestationClear", HelpMessage="Comma separated control ids to filter the security controls. e.g.: AzureDevOps_Organization_AuthN_Use_AAD_Auth, AzureDevOps_Organization_SI_Review_InActive_Users etc.")]
+		[Alias("BulkAttestControlId","cids","bacid")]
+		[AllowEmptyString()]
 		$ControlIds,
 
 		[switch]
@@ -266,9 +272,9 @@ function Get-AzSKAzureDevOpsOrgSecurityStatus
 		$DoNotOpenOutputFolder,
 
 		[ValidateSet("All","AlreadyAttested","NotAttested","None")]
-        [Parameter(Mandatory = $false, ParameterSetName = "Default", HelpMessage="Using this switch,  AzSK enters 'attest' mode immediately after a scan is completed. This ensures that attestation is done on the basis of the most current control statuses.")]
-        [Parameter(Mandatory = $true, ParameterSetName = "BulkAttestation", HelpMessage="Using this switch,  AzSK enters 'attest' mode immediately after a scan is completed. This ensures that attestation is done on the basis of the most current control statuses.")]
-        [Parameter(Mandatory = $true, ParameterSetName = "BulkAttestationClear", HelpMessage="Using this switch,  AzSK enters 'attest' mode immediately after a scan is completed. This ensures that attestation is done on the basis of the most current control statuses.")]
+        [Parameter(Mandatory = $false, ParameterSetName = "Default", HelpMessage="Using this switch,  AzSK enters 'attest' mode immediately after a scan is completed. This ensures that attestation is done on the basis of the most current control statuses.")]
+        [Parameter(Mandatory = $true, ParameterSetName = "BulkAttestation", HelpMessage="Using this switch,  AzSK enters 'attest' mode immediately after a scan is completed. This ensures that attestation is done on the basis of the most current control statuses.")]
+        [Parameter(Mandatory = $true, ParameterSetName = "BulkAttestationClear", HelpMessage="Using this switch,  AzSK enters 'attest' mode immediately after a scan is completed. This ensures that attestation is done on the basis of the most current control statuses.")]
 		[Alias("AttestControls","cta")]
 		$ControlsToAttest = [AttestControls]::None,
 
@@ -381,8 +387,11 @@ function Get-AzSKAzureDevOpsProjectSecurityStatus
 		$ProjectNames,
 
 		[string] 
-		[Parameter(Mandatory = $false, HelpMessage = "Comma separated control ids to filter the security controls. e.g.: AzureDevOps_Organization_AuthN_Use_AAD_Auth, AzureDevOps_Organization_SI_Review_InActive_Users etc.")]
-		[Alias("cids")]
+		[Parameter(Mandatory = $false, ParameterSetName = "Default", HelpMessage = "Comma separated control ids to filter the security controls. e.g.: AzureDevOps_Organization_AuthN_Use_AAD_Auth, AzureDevOps_Organization_SI_Review_InActive_Users etc.")]
+		[Parameter(Mandatory = $true, ParameterSetName = "BulkAttestation", HelpMessage="Comma separated control ids to filter the security controls. e.g.: AzureDevOps_Organization_AuthN_Use_AAD_Auth, AzureDevOps_Organization_SI_Review_InActive_Users etc.")]
+		[Parameter(Mandatory = $true, ParameterSetName = "BulkAttestationClear", HelpMessage="Comma separated control ids to filter the security controls. e.g.: AzureDevOps_Organization_AuthN_Use_AAD_Auth, AzureDevOps_Organization_SI_Review_InActive_Users etc.")]
+		[Alias("BulkAttestControlId","cids","bacid")]
+		[AllowEmptyString()]
 		$ControlIds,
 
 		[switch]
@@ -411,9 +420,9 @@ function Get-AzSKAzureDevOpsProjectSecurityStatus
 		$DoNotOpenOutputFolder,
 
 		[ValidateSet("All","AlreadyAttested","NotAttested","None")]
-        [Parameter(Mandatory = $false, ParameterSetName = "Default", HelpMessage="Using this switch,  AzSK enters 'attest' mode immediately after a scan is completed. This ensures that attestation is done on the basis of the most current control statuses.")]
-        [Parameter(Mandatory = $true, ParameterSetName = "BulkAttestation", HelpMessage="Using this switch,  AzSK enters 'attest' mode immediately after a scan is completed. This ensures that attestation is done on the basis of the most current control statuses.")]
-        [Parameter(Mandatory = $true, ParameterSetName = "BulkAttestationClear", HelpMessage="Using this switch,  AzSK enters 'attest' mode immediately after a scan is completed. This ensures that attestation is done on the basis of the most current control statuses.")]
+        [Parameter(Mandatory = $false, ParameterSetName = "Default", HelpMessage="Using this switch,  AzSK enters 'attest' mode immediately after a scan is completed. This ensures that attestation is done on the basis of the most current control statuses.")]
+        [Parameter(Mandatory = $true, ParameterSetName = "BulkAttestation", HelpMessage="Using this switch,  AzSK enters 'attest' mode immediately after a scan is completed. This ensures that attestation is done on the basis of the most current control statuses.")]
+        [Parameter(Mandatory = $true, ParameterSetName = "BulkAttestationClear", HelpMessage="Using this switch,  AzSK enters 'attest' mode immediately after a scan is completed. This ensures that attestation is done on the basis of the most current control statuses.")]
 		[Alias("AttestControls","cta")]
 		$ControlsToAttest = [AttestControls]::None,
 
@@ -532,8 +541,11 @@ function Get-AzSKAzureDevOpsBuildSecurityStatus
 		$BuildNames,
 
 		[string] 
-		[Parameter(Mandatory = $false, HelpMessage = "Comma separated control ids to filter the security controls. e.g.: AzureDevOps_Organization_AuthN_Use_AAD_Auth, AzureDevOps_Organization_SI_Review_InActive_Users etc.")]
-		[Alias("cids")]
+		[Parameter(Mandatory = $false, ParameterSetName = "Default", HelpMessage = "Comma separated control ids to filter the security controls. e.g.: AzureDevOps_Organization_AuthN_Use_AAD_Auth, AzureDevOps_Organization_SI_Review_InActive_Users etc.")]
+		[Parameter(Mandatory = $true, ParameterSetName = "BulkAttestation", HelpMessage="Comma separated control ids to filter the security controls. e.g.: AzureDevOps_Organization_AuthN_Use_AAD_Auth, AzureDevOps_Organization_SI_Review_InActive_Users etc.")]
+		[Parameter(Mandatory = $true, ParameterSetName = "BulkAttestationClear", HelpMessage="Comma separated control ids to filter the security controls. e.g.: AzureDevOps_Organization_AuthN_Use_AAD_Auth, AzureDevOps_Organization_SI_Review_InActive_Users etc.")]
+		[Alias("BulkAttestControlId","cids","bacid")]
+		[AllowEmptyString()]
 		$ControlIds,
 
 		[switch]
@@ -580,6 +592,15 @@ function Get-AzSKAzureDevOpsBuildSecurityStatus
 					$secStatus.Severity = $Severity;
 					$secStatus.UseBaselineControls = $UseBaselineControls;
 					$secStatus.UsePreviewBaselineControls = $UsePreviewBaselineControls;
+
+					#build the attestation options object
+				    [AttestationOptions] $attestationOptions = [AttestationOptions]::new();
+				    $attestationOptions.AttestControls = $ControlsToAttest				
+				    $attestationOptions.JustificationText = $JustificationText
+				    $attestationOptions.AttestationStatus = $AttestationStatus
+				    $attestationOptions.IsBulkClearModeOn = $BulkClear
+				    $attestationOptions.IsExemptModeOn = $AddException
+				    $secStatus.AttestationOptions = $attestationOptions;
 
 				return $secStatus.EvaluateControlStatus();
 			} 
@@ -649,8 +670,11 @@ function Get-AzSKAzureDevOpsReleaseSecurityStatus
 		$ReleaseNames,
 
 		[string] 
-		[Parameter(Mandatory = $false, HelpMessage = "Comma separated control ids to filter the security controls. e.g.: AzureDevOps_Organization_AuthN_Use_AAD_Auth, AzureDevOps_Organization_SI_Review_InActive_Users etc.")]
-		[Alias("cids")]
+		[Parameter(Mandatory = $false, ParameterSetName = "Default", HelpMessage = "Comma separated control ids to filter the security controls. e.g.: AzureDevOps_Organization_AuthN_Use_AAD_Auth, AzureDevOps_Organization_SI_Review_InActive_Users etc.")]
+		[Parameter(Mandatory = $true, ParameterSetName = "BulkAttestation", HelpMessage="Comma separated control ids to filter the security controls. e.g.: AzureDevOps_Organization_AuthN_Use_AAD_Auth, AzureDevOps_Organization_SI_Review_InActive_Users etc.")]
+		[Parameter(Mandatory = $true, ParameterSetName = "BulkAttestationClear", HelpMessage="Comma separated control ids to filter the security controls. e.g.: AzureDevOps_Organization_AuthN_Use_AAD_Auth, AzureDevOps_Organization_SI_Review_InActive_Users etc.")]
+		[Alias("BulkAttestControlId","cids","bacid")]
+		[AllowEmptyString()]
 		$ControlIds,
 
 		[switch]
@@ -696,6 +720,15 @@ function Get-AzSKAzureDevOpsReleaseSecurityStatus
 					$secStatus.Severity = $Severity;
 					$secStatus.UseBaselineControls = $UseBaselineControls;
 					$secStatus.UsePreviewBaselineControls = $UsePreviewBaselineControls;
+
+					#build the attestation options object
+				    [AttestationOptions] $attestationOptions = [AttestationOptions]::new();
+				    $attestationOptions.AttestControls = $ControlsToAttest				
+				    $attestationOptions.JustificationText = $JustificationText
+				    $attestationOptions.AttestationStatus = $AttestationStatus
+				    $attestationOptions.IsBulkClearModeOn = $BulkClear
+				    $attestationOptions.IsExemptModeOn = $AddException
+				    $secStatus.AttestationOptions = $attestationOptions;
 					
 				return $secStatus.EvaluateControlStatus();
 			}    
