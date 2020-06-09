@@ -9,6 +9,7 @@ class KeyVault: AzSVTBase
 	hidden [boolean] $HasFetchSecretsPermissions=$true;
 	hidden [PSObject[]] $AllApplicationsList = $null;
 	hidden [PSObject[]] $AADApplicationsList = $null;
+	hidden [boolean] $ErrorWhileFetchingApplicationDetails = $false;
 
     KeyVault([string] $subscriptionId, [SVTResource] $svtResource): 
         Base($subscriptionId, $svtResource) 
@@ -333,6 +334,13 @@ class KeyVault: AzSVTBase
 		if([FeatureFlightingManager]::GetFeatureStatus("EnableKeyVaultApplicationsFix",$($this.SubscriptionContext.SubscriptionId)) -eq $true)
 		{
 			$this.GetApplicationsInAccessPolicy()
+			if($this.ErrorWhileFetchingApplicationDetails)
+			{
+				# When there is exception to read   
+				$controlResult.AddMessage([VerificationResult]::Verify,
+										[MessageData]::new("Unable to fetch application details"));
+				return $controlResult
+			}
 			$appList = $this.AllApplicationsList
 			$controlResult.SetStateData("Key Vault sharing app list", ($appList| Select-Object -Property ApplicationId, DisplayName, Id, ObjectType))
 		}
@@ -537,24 +545,32 @@ class KeyVault: AzSVTBase
 }
     hidden [void] GetApplicationsInAccessPolicy()  
      {
-		#Fetch Application details only once if not fetched previously
-		if($null -eq $this.AllApplicationsList -or $null -eq  $this.AADApplicationsList)
+		try{
+			#Fetch Application details only once if not fetched previously
+			if($null -eq $this.AllApplicationsList -or $null -eq  $this.AADApplicationsList)
+			{
+				#list of all applications including AAD applicatins, enterprise applications 
+				$this.AllApplicationsList = @()
+				$this.AADApplicationsList = @()
+				$this.ResourceObject.AccessPolicies  | 
+        		ForEach-Object { 
+            		$svcPrincipal= Get-AzADServicePrincipal -ObjectId $_.ObjectId
+					if($svcPrincipal)
+					{
+                		$application = Get-AzADApplication -ApplicationId $svcPrincipal.ApplicationId
+                		if($application){
+							$this.AADApplicationsList += $application
+						}
+						$this.AllApplicationsList += $svcPrincipal
+            		}
+				}				        
+			}			
+		}
+		catch
 		{
-			#list of all applications including AAD applicatins, enterprise applications 
-			$this.AllApplicationsList = @()
-			$this.AADApplicationsList = @()
-			$this.ResourceObject.AccessPolicies  | 
-        	ForEach-Object { 
-            	$svcPrincipal= Get-AzADServicePrincipal -ObjectId $_.ObjectId
-				if($svcPrincipal)
-				{
-                	$application = Get-AzADApplication -ApplicationId $svcPrincipal.ApplicationId
-                	if($application){
-						$this.AADApplicationsList += $application
-					}
-					$this.AllApplicationsList += $svcPrincipal;
-            	}
-			}				        
+			#Unable to fetch details about service principals
+			#this is possible when scanning the control with azure powershell task , due to lack of appropraite permissions
+			$this.ErrorWhileFetchingApplicationDetails = $true
 		}		
 	 }
 	 
