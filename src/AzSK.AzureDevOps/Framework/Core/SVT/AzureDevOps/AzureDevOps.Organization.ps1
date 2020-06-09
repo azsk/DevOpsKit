@@ -266,7 +266,7 @@ class Organization: ADOSVTBase
                 $extensionList +=  ($sharedExtensions | Select-Object extensionName,displayName,@{ Name = 'publisherName'; Expression = {  $_.publisher.displayName}},@{ Name = 'version'; Expression = {  $_.versions.version}}) 
                 $controlResult.AddMessage([VerificationResult]::Verify,
                                                 "Review below shared extensions",$extensionList);  
-                #$controlResult.SetStateData("Shared extensions list: ", $extensionList);
+                $controlResult.SetStateData("Shared extensions list: ", $extensionList);
 
             }
             else {

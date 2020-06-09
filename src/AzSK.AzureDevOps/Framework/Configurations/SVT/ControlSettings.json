@@ -27,7 +27,7 @@
          "AzureDevOps_ServiceConnection_AuthZ_Dont_Use_Classic_Connections",
          "AzureDevOps_ServiceConnection_AuthZ_Disable_InheritPermissions",
          "AzureDevOps_ServiceConnection_AuthZ_Dont_Grant_All_Pipelines_Access",
-         "AzureDevOps_ServiceConnection_AuthZ_Dont_Allow_Global_SecurityGroups"
+         "AzureDevOps_ServiceConnection_AuthZ_Dont_Allow_Global_Groups"
       ]
      },
      {
@@ -153,6 +153,23 @@
   "ServiceConnection":{
     "WhitelistedGroupIdentities": [
       "Endpoint Administrators"
+    ],
+    "RestrictedGlobalGroupsForSerConn":[
+      "Microsoft IT Build Admins (msitbuildadm@microsoft.com)",
+      "Everyone Microsoft FTE",
+      "Project Collection Administrators",
+      "Project Collection Build Administrators",
+      "Project Collection Proxy Service Accounts",
+      "Project Collection Service Accounts",
+      "Project Collection Valid Users",
+      "Security Service Group",
+      "Project Administrators",
+      "Build Administrators",
+      "Release Administrators",
+      "CSEOPipelineContributors",
+      "Endpoint Creators",
+      "Contributors",
+      "Readers"
     ]
   },
   "Patterns" : [ 

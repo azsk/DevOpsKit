@@ -507,8 +507,8 @@ class SVTControlAttestation
 									# keeping here to rectify only that perticular controls state data if any
 									try {
 										if ($controlState.State -and $controlState.State.DataObject) {
-											$removeAccentCharactors = $this.RemoveAccentedCharacters(($controlState.State.DataObject | ConvertTo-Json -Depth 10))
-											$controlState.State.DataObject = ($removeAccentCharactors | ConvertFrom-Json);
+											$stateData = [Helpers]::RemoveAccentedCharacters(($controlState.State.DataObject | ConvertTo-Json -Depth 10))
+											$controlState.State.DataObject = ($stateData | ConvertFrom-Json);
 										}
 									}
 									catch {

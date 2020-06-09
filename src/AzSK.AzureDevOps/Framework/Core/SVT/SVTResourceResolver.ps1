@@ -136,7 +136,12 @@ class SVTResourceResolver: AzSKRoot {
             }
             if($this.AgentPools -eq "*") 
             {
-                $message += " ,agent pools";
+                if($message -eq ""){
+                    $message += "agent pools";
+                   }
+                   else {
+                       $message += " and agent pools";
+                   }
             }
             $this.PublishCustomMessage("Using '*' can take a long time for the scan to complete in larger projects. You may want to provide a comma-separated list of $($message).");
         }

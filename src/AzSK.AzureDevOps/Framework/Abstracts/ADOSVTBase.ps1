@@ -173,8 +173,8 @@ class ADOSVTBase: SVTBase {
 									if ($currentItem.StateManagement.CurrentStateData -and $null -ne $currentItem.StateManagement.CurrentStateData.DataObject) {
 										$currentStateDataObject = [JsonHelper]::ConvertToJsonCustom($currentItem.StateManagement.CurrentStateData.DataObject) | ConvertFrom-Json
 										try {
-										    $removeAccentCharectors = $this.RemoveAccentedCharacters(($currentStateDataObject | ConvertTo-Json -Depth 10))
-										    $currentStateDataObject = ($removeAccentCharectors | ConvertFrom-Json)
+										    $currentState = [Helpers]::RemoveAccentedCharacters(($currentStateDataObject | ConvertTo-Json -Depth 10))
+										    $currentStateDataObject = ($currentState | ConvertFrom-Json)
 										}
 										catch {
 										}
@@ -447,17 +447,4 @@ class ADOSVTBase: SVTBase {
 		
 		$this.UpdateControlStates($ControlResults);
 	}
-
-	# https://stackoverflow.com/questions/7836670/how-remove-accents-in-powershell
-	[string] RemoveAccentedCharacters($src) {
-		$normalized = $src.Normalize( [Text.NormalizationForm]::FormD )
-		$sb = new-object Text.StringBuilder
-		$normalized.ToCharArray() | % { 
-		  if( [Globalization.CharUnicodeInfo]::GetUnicodeCategory($_) -ne [Globalization.UnicodeCategory]::NonSpacingMark) {
-			[void]$sb.Append($_)
-		  }
-		}
-	  return $sb.ToString()
-    }
-
 }

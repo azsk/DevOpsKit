@@ -860,5 +860,12 @@ class Helpers {
         $sharedKey = $ResourceName+":"+$SignedString
         return $sharedKey    	
     }
+
+    # https://stackoverflow.com/questions/7836670/how-remove-accents-in-powershell
+	static [string] RemoveAccentedCharacters($accentedData) {
+
+        $normalized = $accentedData.Normalize( [Text.NormalizationForm]::FormD )
+        return ($normalized -replace '\p{M}', '');
+    }
 }
 
