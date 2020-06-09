@@ -331,17 +331,16 @@ class KeyVault: AzSVTBase
 	hidden [ControlResult] CheckAppsSharingKeyVault([ControlResult] $controlResult)
 	{		
 		if([FeatureFlightingManager]::GetFeatureStatus("EnableKeyVaultApplicationsFix",$($this.SubscriptionContext.SubscriptionId)) -eq $true)
-			  {
-				$this.GetApplicationsInAccessPolicy()
-				$appList = $this.AllApplicationsList
-			  }
-			  else
-			  {
-				$appList = $this.GetAzureRmKeyVaultApplications() 
-			  }
-		
-		
-		$controlResult.SetStateData("Key Vault sharing app list", $appList);
+		{
+			$this.GetApplicationsInAccessPolicy()
+			$appList = $this.AllApplicationsList
+			$controlResult.SetStateData("Key Vault sharing app list", ($appList| Select-Object -Property ApplicationId, DisplayName, Id, ObjectType))
+		}
+		else
+		{
+			$appList = $this.GetAzureRmKeyVaultApplications()
+			$controlResult.SetStateData("Key Vault sharing app list", $appList); 
+		}		
 
 		if( ($appList | Measure-Object ).Count -gt 1)
 		{
