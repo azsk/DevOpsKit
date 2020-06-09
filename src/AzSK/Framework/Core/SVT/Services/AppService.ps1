@@ -148,7 +148,7 @@ class AppService: AzSVTBase
 			}
 			else
 			{
-				$IsAppServiceCustomAuthAllowed = $true
+				$IsAppServiceCustomAuthAllowed = $false
 			}
 			#Checks if functions app present
 			if([Helpers]::CheckMember($this.ResourceObject, "Kind") -and ($this.ResourceObject.Kind -eq "functionapp"))
@@ -272,6 +272,7 @@ class AppService: AzSVTBase
 					}	
 				}
 
+				#Check if feature flag is enabled for AppServiceCustomAuthAllowed
 				if($IsAppServiceCustomAuthAllowed){
 					#Check if Configured ExternalRedirectURLs for app service is matching AllowedExternalRedirectURLs URL from ControlSetting
 						if([Helpers]::CheckMember($this.ControlSettings,"AppService.AllowedExternalRedirectURLs"))
@@ -286,8 +287,7 @@ class AppService: AzSVTBase
 								{
 									if($allowedurl -ceq $configuredURL)
 									{
-										$IsAllowedExternalRedirectURLsConfigured= $true; 
-										
+										$IsAllowedExternalRedirectURLsConfigured= $true; 										
 									}
 								}
 							}
@@ -296,10 +296,10 @@ class AppService: AzSVTBase
 						if([Helpers]::CheckMember($this.ControlSettings,"AppService.AllowedAuthenticationProviders"))
 						{
 							$AllowedAuthenticationProviders = $this.ControlSettings.AppService.AllowedAuthenticationProviders
-							
 							ForEach($authProvider in $AllowedAuthenticationProviders){
 								if([Helpers]::CheckMember($this.AuthenticationSettings.Properties,$authProvider))
 								{
+									#Configured Auth Providers for App Service are in AllowedAuthenticationProviders
 									$IsAllowedAuthenticationProvidersConfigured = $true
 									Add-Member -InputObject $ConfiguredAuthenticationProvidersSettings -MemberType NoteProperty -Name $authProvider -Value $this.AuthenticationSettings.Properties.$($authProvider)
 								}
@@ -325,19 +325,21 @@ class AppService: AzSVTBase
 							}
 						}
 					}
+
+					#Pass control if AAD is configured or Allowed Auth provider is configured or allowed external redirect URLs are configured
+					$controlResult.AddMessage([VerificationResult]::Passed,"")
 					if($IsAllowedAuthenticationProvidersConfigured)
 					{
-						$controlResult.AddMessage([VerificationResult]::Passed,
-											[MessageData]::new("Authentication Providers configured for " + $this.ResourceContext.ResourceName + $ConfiguredAuthenticationProvidersSettings));
+						$controlResult.AddMessage([MessageData]::new("Authentication Providers configured for " + $this.ResourceContext.ResourceName));
+						$controlResult.AddMessage([MessageData]::new($ConfiguredAuthenticationProvidersSettings));
 					}
 					if($IsAllowedExternalRedirectURLsConfigured)
 					{
-						$controlResult.AddMessage([VerificationResult]::Passed,
-											[MessageData]::new("External redirect URLs configured for " + $this.ResourceContext.ResourceName + $ConfiguredExternalRedirectURLs ));
+						$controlResult.AddMessage([MessageData]::new("External redirect URLs configured for " + $this.ResourceContext.ResourceName));
+						$controlResult.AddMessage([MessageData]::new($ConfiguredExternalRedirectURLs));
 					}
 					if($AADEnabled)	{												
-					$controlResult.AddMessage([VerificationResult]::Passed,
-											[MessageData]::new("AAD Authentication for resource " + $this.ResourceContext.ResourceName + " is enabled", $aadSettings));
+					$controlResult.AddMessage([MessageData]::new("AAD Authentication for resource " + $this.ResourceContext.ResourceName + " is enabled", $aadSettings));
 					}
 				}
 				else
