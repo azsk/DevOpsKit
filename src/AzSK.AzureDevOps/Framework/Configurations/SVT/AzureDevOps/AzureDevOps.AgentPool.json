@@ -92,6 +92,24 @@
       "Enabled": true
     },
     {
+      "ControlID": "AzureDevOps_AgentPool_AuthZ_Org_Agent_Update",
+      "Description": "<TODO>",
+      "Id": "AgentPool170",
+      "ControlSeverity": "High",
+      "Automated": "Yes",
+      "MethodName": "CheckOrgAgtUpdateSettings",
+      "Rationale": "<TODO>",
+      "Recommendation": "<TODO>",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Automated",
+        "AuthZ",
+        "RBAC"
+      ],
+      "Enabled": true
+    },
+    {
       "ControlID": "AzureDevOps_AgentPool_AuthZ_Project_Dont_Grant_All_Pipeline_Access",
       "Description": "Do not make agent pool accesible to all pipelines in the project.",
       "Id": "AgentPool160",
@@ -100,6 +118,42 @@
       "MethodName": "CheckPrjAllPipelineAccess",
       "Rationale": "By enabling the 'Grant access permission to all pipelines' the agent pool is imported in all your pipelines in the current project and is accessible there immediately.",
       "Recommendation": "Go to 'Project settings' --> 'Agent pools' --> Select the agent pool --> Security --> Disable 'Grant access permission to all pipeline'.",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Automated",
+        "AuthZ",
+        "RBAC"
+      ],
+      "Enabled": true
+    },
+    {
+      "ControlID": "AzureDevOps_AgentPool_BranchControl",
+      "Description": "<TODO>",
+      "Id": "AgentPool180",
+      "ControlSeverity": "High",
+      "Automated": "Yes",
+      "MethodName": "CheckAgentPoolBranchControl",
+      "Rationale": "<TODO>",
+      "Recommendation": "<TODO>",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Automated",
+        "AuthZ",
+        "RBAC"
+      ],
+      "Enabled": true
+    },
+    {
+      "ControlID": "AzureDevOps_AgentPool_Allow_Approvals_Approve_Their_Run",
+      "Description": "<TODO>",
+      "Id": "AgentPool190",
+      "ControlSeverity": "High",
+      "Automated": "Yes",
+      "MethodName": "CheckAgentPoolApproversApproval",
+      "Rationale": "<TODO>",
+      "Recommendation": "<TODO>",
       "Tags": [
         "SDL",
         "TCP",
