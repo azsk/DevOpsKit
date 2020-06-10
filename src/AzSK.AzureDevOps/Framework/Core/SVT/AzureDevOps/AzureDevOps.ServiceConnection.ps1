@@ -35,15 +35,10 @@ class ServiceConnection: ADOSVTBase
         if([Helpers]::CheckMember($this.ServiceEndpointsObj, "data.scopeLevel"))
         {
             #If Service connection scope is subcription and manual then only fail the control, if automatic then verify else pass
-            if($this.ServiceEndpointsObj.data.scopeLevel -eq "Subscription" -and $this.ServiceEndpointsObj.data.creationMode -ne "Automatic")
+            if($this.ServiceEndpointsObj.data.scopeLevel -eq "Subscription" )
             {
                 $controlResult.AddMessage([VerificationResult]::Failed,
                                         "Service connection is configured at subscription scope.");
-            }
-            elseif($this.ServiceEndpointsObj.data.scopeLevel -eq "Subscription" -and $this.ServiceEndpointsObj.data.creationMode -eq "Automatic")
-            {
-                $controlResult.AddMessage([VerificationResult]::Verify,
-                                        "Verify automically configured service connection access.");
             }
             else{
                 $controlResult.AddMessage([VerificationResult]::Passed,
@@ -199,7 +194,7 @@ class ServiceConnection: ADOSVTBase
         $failMsg = $null
         try
         {
-            $isBuilSerAccGroupFound = $false
+            $isBuildSvcAccGrpFound = $false
             $apiURL = "https://{0}.visualstudio.com/_apis/securityroles/scopes/distributedtask.serviceendpointrole/roleassignments/resources/{1}_{2}" -f $($this.SubscriptionContext.SubscriptionName), $($this.ProjectId),$($this.ServiceEndpointsObj.id);
             $responseObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
 
@@ -209,17 +204,17 @@ class ServiceConnection: ADOSVTBase
                 {
                     if ($identity.uniqueName -like '*Project Collection Build Service Accounts') 
                     {
-                        $isBuilSerAccGroupFound = $true;
+                        $isBuildSvcAccGrpFound = $true;
                         break;
                     }
                 }
                 #Faile the control if prj coll Buil Ser Acc Group Found added on serv conn
-                if($isBuilSerAccGroupFound -eq $true)
+                if($isBuildSvcAccGrpFound -eq $true)
                 {
-                    $controlResult.AddMessage([VerificationResult]::Failed,"Do not grant 'Project collection Build Service Account' groups access to service connections.");
+                    $controlResult.AddMessage([VerificationResult]::Failed,"Do not grant 'Project Collection Build Service Account' groups access to service connections.");
                 }
                 else{
-                    $controlResult.AddMessage([VerificationResult]::Passed,"");
+                    $controlResult.AddMessage([VerificationResult]::Passed,"'Project Collection Build Service Account' is not granted access to the service connection.");
                 }
             }
             else{

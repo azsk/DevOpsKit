@@ -504,15 +504,7 @@ class SVTControlAttestation
 									{
 										$controlState = $this.ComputeEffectiveControlState($controlState, $controlSeverity, $isSubscriptionScan, $controlItem, $controlResult)										
 									}
-									# keeping here to rectify only that perticular controls state data if any
-									try {
-										if ($controlState.State -and $controlState.State.DataObject) {
-											$stateData = [Helpers]::RemoveAccentedCharacters(($controlState.State.DataObject | ConvertTo-Json -Depth 10))
-											$controlState.State.DataObject = ($stateData | ConvertFrom-Json);
-										}
-									}
-									catch {
-									}
+									
 									$resourceControlStates +=$controlState;
 									if($this.abortProcess)
 									{

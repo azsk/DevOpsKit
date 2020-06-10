@@ -41,7 +41,7 @@ class Organization: ADOSVTBase
             $responseObj = [WebRequestHelper]::InvokePostWebRequest($apiURL,$inputbody);
         }
         catch{
-            Write-Host "Pipeline settings for the organization [$($this.SubscriptionContext.SubscriptionName)] can not be fetched."
+            #Write-Host "Pipeline settings for the organization [$($this.SubscriptionContext.SubscriptionName)] can not be fetched."
         }
         
       
@@ -54,7 +54,7 @@ class Organization: ADOSVTBase
               }
             }
             catch {
-                Write-Host "Pipeline settings for the organization [$($this.SubscriptionContext.SubscriptionName)] can not be fetched."
+                #Write-Host "Pipeline settings for the organization [$($this.SubscriptionContext.SubscriptionName)] can not be fetched."
             }
             
         }
@@ -229,7 +229,7 @@ class Organization: ADOSVTBase
             $stateData.Whitelisted_Extensions += $whiteListedExtensions
             $stateData.NonWhitelisted_Extensions += $NonwhiteListedExtensions
 
-            $controlResult.SetStateData("Installed extensions list: ", $stateData);
+           # $controlResult.SetStateData("Installed extensions list: ", $stateData);
         }
         else {
             $controlResult.AddMessage([VerificationResult]::Passed, "No installed extensions found.");
@@ -245,28 +245,23 @@ class Organization: ADOSVTBase
 
     hidden [ControlResult] ValidateSharedExtensions([ControlResult] $controlResult)
     {
-        $apiURL = "https://{0}.extmgmt.visualstudio.com/_apis/Contribution/dataProviders/query?api-version=5.0-preview.1" -f $($this.SubscriptionContext.SubscriptionName);
-        $inputbody =  '{
-                "contributionIds": [
-                "ms.vss-extmgmt-web.ems-service-context",
-                "ms.vss-extmgmt-web.manageExtensions-collection-data-provider",
-                "ms.vss-extmgmt-web.manageExtensions-collection-scopes-data-provider"
-            ]
-        }' | ConvertFrom-Json
+        $apiURL = "https://{0}.visualstudio.com/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1" -f $($this.SubscriptionContext.SubscriptionName);
+        $orgURL="https://{0}.visualstudio.com/_settings/extensions" -f $($this.SubscriptionContext.SubscriptionName);
+        $inputbody =  "{'contributionIds':['ms.vss-extmgmt-web.ext-management-hub'],'dataProviderContext':{'properties':{'sourcePage':{'url':'$orgURL','routeId':'ms.vss-admin-web.collection-admin-hub-route','routeValues':{'adminPivot':'extensions','controller':'ContributedPage','action':'Execute'}}}}}" | ConvertFrom-Json
         $responseObj = [WebRequestHelper]::InvokePostWebRequest($apiURL,$inputbody);
 
-        if([Helpers]::CheckMember($responseObj,"data") -and $responseObj.data.'ms.vss-extmgmt-web.manageExtensions-collection-data-provider')
+        if([Helpers]::CheckMember($responseObj,"dataProviders") -and $responseObj.dataProviders.'ms.vss-extmgmt-web.extensionManagmentHub-collection-data-provider')
         {
-            $sharedExtensions = $responseObj.data.'ms.vss-extmgmt-web.manageExtensions-collection-data-provider'.sharedExtensions
+            $sharedExtensions = $responseObj.dataProviders.'ms.vss-extmgmt-web.extensionManagmentHub-collection-data-provider'.sharedExtensions
 
             if(($sharedExtensions | Measure-Object).Count -gt 0)
             {
                 $controlResult.AddMessage("No. of shared installed:" + $sharedExtensions.Count)
                 $extensionList = @();
-                $extensionList +=  ($sharedExtensions | Select-Object extensionName,displayName,@{ Name = 'publisherName'; Expression = {  $_.publisher.displayName}},@{ Name = 'version'; Expression = {  $_.versions.version}}) 
+                $extensionList +=  ($sharedExtensions | Select-Object extensionName,@{ Name = 'publisherName'; Expression = {  $_.publisherName}},@{ Name = 'version'; Expression = {  $_.version}}) 
                 $controlResult.AddMessage([VerificationResult]::Verify,
                                                 "Review below shared extensions",$extensionList);  
-                $controlResult.SetStateData("Shared extensions list: ", $extensionList);
+                #$controlResult.SetStateData("Shared extensions list: ", $extensionList);
 
             }
             else {
@@ -563,7 +558,7 @@ class Organization: ADOSVTBase
             }       
        }
        else{
-            $controlResult.AddMessage([VerificationResult]::Manual, "Pipeline settings object could not be fetched due to insufficient permissions at organization scope.");
+            $controlResult.AddMessage([VerificationResult]::Manual, "Pipeline settings could not be fetched due to insufficient permissions at organization scope.");
        }
         return $controlResult
     }
@@ -582,7 +577,7 @@ class Organization: ADOSVTBase
             }       
        }
        else{
-            $controlResult.AddMessage([VerificationResult]::Manual, "Pipeline settings object could not be fetched due to insufficient permissions at organization scope.");
+            $controlResult.AddMessage([VerificationResult]::Manual, "Pipeline settings could not be fetched due to insufficient permissions at organization scope.");
         }
         return $controlResult
     }
@@ -601,7 +596,7 @@ class Organization: ADOSVTBase
             }       
        }
        else{
-             $controlResult.AddMessage([VerificationResult]::Manual, "Pipeline settings object could not be fetched due to insufficient permissions at organization scope.");
+             $controlResult.AddMessage([VerificationResult]::Manual, "Pipeline settings could not be fetched due to insufficient permissions at organization scope.");
        }       
         return $controlResult
     }

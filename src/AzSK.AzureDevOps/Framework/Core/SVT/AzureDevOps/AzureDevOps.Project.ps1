@@ -24,7 +24,7 @@ class Project: ADOSVTBase
             $responseObj = [WebRequestHelper]::InvokePostWebRequest($apiURL,$inputbody);
         }
         catch{
-            Write-Host "Pipeline settings for the project [$projectName] can not be fetched."
+            #Write-Host "Pipeline settings for the project [$projectName] can not be fetched."
         }
     
         if($responseObj){
@@ -36,7 +36,7 @@ class Project: ADOSVTBase
                     } 
                 }
                 catch {
-                    Write-Host "Pipeline settings for the project [$projectName] can not be fetched."
+                    #Write-Host "Pipeline settings for the project [$projectName] can not be fetched."
                 }   
             }
         }
@@ -76,7 +76,7 @@ class Project: ADOSVTBase
             }       
        }
        else{
-            $controlResult.AddMessage([VerificationResult]::Manual, "Pipeline settings object could not be fetched due to insufficient permissions at project scope.");
+            $controlResult.AddMessage([VerificationResult]::Manual, "Pipeline settings could not be fetched due to insufficient permissions at project scope.");
        }
         return $controlResult
     }
@@ -95,7 +95,7 @@ class Project: ADOSVTBase
             }       
        }
        else{
-            $controlResult.AddMessage([VerificationResult]::Manual, "Pipeline settings object could not be fetched due to insufficient permissions at project scope.");
+            $controlResult.AddMessage([VerificationResult]::Manual, "Pipeline settings could not be fetched due to insufficient permissions at project scope.");
        }
         return $controlResult
     }
@@ -114,7 +114,7 @@ class Project: ADOSVTBase
             }       
        }
        else{
-            $controlResult.AddMessage([VerificationResult]::Manual, "Pipeline settings object could not be fetched due to insufficient permissions at project scope.");
+            $controlResult.AddMessage([VerificationResult]::Manual, "Pipeline settings could not be fetched due to insufficient permissions at project scope.");
         }       
         return $controlResult
     }
@@ -133,7 +133,7 @@ class Project: ADOSVTBase
             }       
        }
        else{
-            $controlResult.AddMessage([VerificationResult]::Manual, "Pipeline settings object could not be fetched due to insufficient permissions at project scope.");
+            $controlResult.AddMessage([VerificationResult]::Manual, "Pipeline settings could not be fetched due to insufficient permissions at project scope.");
        }
         return $controlResult
     }

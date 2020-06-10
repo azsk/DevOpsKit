@@ -60,7 +60,7 @@ class SVTResourceResolver: AzSKRoot {
                 throw [SuppressedException] "The parameter 'ProjectNames' does not contain any string."
             }
         }
-        elseif ($ResourceTypeName -eq [ResourceTypeName]::Project) {
+        elseif ($ResourceTypeName -eq [ResourceTypeName]::Project -or $ResourceTypeName -eq [ResourceTypeName]::Org_Project_User) {
             $this.ProjectNames = "*"
         }	
 

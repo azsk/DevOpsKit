@@ -14,9 +14,9 @@ class ContextHelper {
         return [ContextHelper]::GetCurrentContext($false);
     }
 
-    hidden static [PSObject] GetCurrentContext([bool]$bRefresh)
+    hidden static [PSObject] GetCurrentContext([bool]$authNRefresh)
     {
-        if( (-not [ContextHelper]::currentContext) -or $bRefresh)
+        if( (-not [ContextHelper]::currentContext) -or $authNRefresh)
         {
             $clientId = [Constants]::DefaultClientId ;          
             $replyUri = [Constants]::DefaultReplyUri; 
@@ -28,7 +28,7 @@ class ContextHelper {
             [AuthenticationResult] $result = $null;
 
             $azSKUI = $null;
-            if ( !$bRefresh -and ($azSKUI = Get-Variable 'AzSKADOLoginUI' -Scope Global -ErrorAction 'Ignore')) {
+            if ( !$authNRefresh -and ($azSKUI = Get-Variable 'AzSKADOLoginUI' -Scope Global -ErrorAction 'Ignore')) {
                 if ($azSKUI.Value -eq 1) {
                     $result = $ctx.AcquireToken($azureDevOpsResourceId, $clientId, [Uri]::new($replyUri),[PromptBehavior]::Always);
                 }
