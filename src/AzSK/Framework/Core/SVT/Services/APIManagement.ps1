@@ -266,7 +266,8 @@ class APIManagement: AzSVTBase
 			} 
 			catch
 			{
-				$json=$null;
+				$controlResult.AddMessage([VerificationResult]::Manual,"Unable to validate identity provider setting for this control. Please verify that Azure Active Directory is used for user registration.");
+				return $controlResult;
 			}
 			$failMsg = ""
 			if($null -ne $json)
