@@ -58,7 +58,7 @@ class AgentPool: ADOSVTBase
             $agentPoolsURL = "https://dev.azure.com/{0}/_apis/distributedtask/pools?poolName={1}&api-version=5.1" -f $($this.SubscriptionContext.SubscriptionName), $this.ResourceContext.resourcename;
             $agentPoolsObj = [WebRequestHelper]::InvokeGetWebRequest($agentPoolsURL);
               
-            if (($agentPoolsObj | Measure-Object).Count -gt 0 -and $agentPoolsObj.autoProvision -eq $true) {
+            if ((($agentPoolsObj | Measure-Object).Count -gt 0) -and $agentPoolsObj.autoProvision -eq $true) {
                 $controlResult.AddMessage([VerificationResult]::Failed,"Auto-provisioning is enabled for the $($agentPoolsObj.name) agent pool.");
             }
             else {
