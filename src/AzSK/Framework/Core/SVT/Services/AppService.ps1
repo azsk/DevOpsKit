@@ -264,7 +264,7 @@ class AppService: AzSVTBase
 					#Fail the control if non AAD authentication is enabled, irrespective of AAD is enabled or not 
 					$controlResult.AddMessage([VerificationResult]::Failed,
 					[MessageData]::new("Authentication mechanism other than AAD is enabled for " + $this.ResourceContext.ResourceName ));
-					$controlResult.AddMessage($nonAadSettings);		
+					$controlResult.AddMessage($nonAadSettings);  
 
 					#TODO : Check if StateData needs to be set for AllowedAuthenticationProviders
 					$controlResult.SetStateData("App Service authentication settings", $nonAadSettings);
@@ -307,7 +307,7 @@ class AppService: AzSVTBase
 						}			
 					}
 				
-				if($AADEnabled -or ($IsAllowedAuthenticationProvidersConfigured -or $IsAppServiceCustomAuthAllowed))
+				if($AADEnabled -or ($IsAllowedAuthenticationProvidersConfigured -or $IsAllowedExternalRedirectURLsConfigured))
 				{
 					if([FeatureFlightingManager]::GetFeatureStatus("EnableAppServiceAADAuthAllowAnonymousCheck",$($this.SubscriptionContext.SubscriptionId)) -eq $true)
 					{

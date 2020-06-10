@@ -336,9 +336,9 @@ class KeyVault: AzSVTBase
 			$this.GetApplicationsInAccessPolicy()
 			if($this.ErrorWhileFetchingApplicationDetails)
 			{
-				# When there is exception to read   
+				# When there is exception to read  application details, mark control as Verify 
 				$controlResult.AddMessage([VerificationResult]::Verify,
-										[MessageData]::new("Unable to fetch application details"));
+										[MessageData]::new("Unable to fetch application details."));
 				return $controlResult
 			}
 			$appList = $this.AllApplicationsList
@@ -569,7 +569,8 @@ class KeyVault: AzSVTBase
 		catch
 		{
 			#Unable to fetch details about service principals
-			#this is possible when scanning the control with azure powershell task , due to lack of appropraite permissions
+			#this is possible when scanning the control with  powershell CICD task(VSO). If SPN used in CICD task does not have appropriate permissions, control was resulting into Error
+			#Added catch block to avoid control going to Error in such case.
 			$this.ErrorWhileFetchingApplicationDetails = $true
 		}		
 	 }
