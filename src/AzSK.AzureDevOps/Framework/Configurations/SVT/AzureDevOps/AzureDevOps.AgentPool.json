@@ -75,31 +75,13 @@
     },
     {
       "ControlID": "AzureDevOps_AgentPool_AuthZ_Org_Auto_Provisioning",
-      "Description": "Do not allow Auto-provision enables on agent pool",
+      "Description": "Do not enable Auto-provisioning for agent pools",
       "Id": "AgentPool150",
       "ControlSeverity": "High",
       "Automated": "Yes",
       "MethodName": "CheckOrgAgtAutoProvisioning",
       "Rationale": "By enabling the 'Auto-provision' the organization agent pool is imported in all your new team projects and is accessible there immediately.",
-      "Recommendation": "To enable auto-provision follow the steps given here: 1.Navigate to the Organization settings. 2. Go to Agent Pools 3. Open agent pool. 4. Select Settings. 5. Enable 'Auto-provision this agent pools in new projects'",
-      "Tags": [
-        "SDL",
-        "TCP",
-        "Automated",
-        "AuthZ",
-        "RBAC"
-      ],
-      "Enabled": true
-    },
-    {
-      "ControlID": "AzureDevOps_AgentPool_AuthZ_Org_Agent_Update",
-      "Description": "<TODO>",
-      "Id": "AgentPool170",
-      "ControlSeverity": "High",
-      "Automated": "Yes",
-      "MethodName": "CheckOrgAgtUpdateSettings",
-      "Rationale": "<TODO>",
-      "Recommendation": "<TODO>",
+      "Recommendation": "To change auto-provision settings: 1.Navigate to the Organization settings. 2. Open Agent pools. 3. Select Settings. 4. Change the settings for 'Auto-provisioning' this agent pools in new projects",
       "Tags": [
         "SDL",
         "TCP",
@@ -126,42 +108,7 @@
         "RBAC"
       ],
       "Enabled": true
-    },
-    {
-      "ControlID": "AzureDevOps_AgentPool_BranchControl",
-      "Description": "<TODO>",
-      "Id": "AgentPool180",
-      "ControlSeverity": "High",
-      "Automated": "Yes",
-      "MethodName": "CheckAgentPoolBranchControl",
-      "Rationale": "<TODO>",
-      "Recommendation": "<TODO>",
-      "Tags": [
-        "SDL",
-        "TCP",
-        "Automated",
-        "AuthZ",
-        "RBAC"
-      ],
-      "Enabled": true
-    },
-    {
-      "ControlID": "AzureDevOps_AgentPool_Allow_Approvals_Approve_Their_Run",
-      "Description": "<TODO>",
-      "Id": "AgentPool190",
-      "ControlSeverity": "High",
-      "Automated": "Yes",
-      "MethodName": "CheckAgentPoolApproversApproval",
-      "Rationale": "<TODO>",
-      "Recommendation": "<TODO>",
-      "Tags": [
-        "SDL",
-        "TCP",
-        "Automated",
-        "AuthZ",
-        "RBAC"
-      ],
-      "Enabled": true
     }
+    
   ]
 }
