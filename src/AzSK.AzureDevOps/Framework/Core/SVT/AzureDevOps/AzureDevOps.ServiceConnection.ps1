@@ -34,7 +34,6 @@ class ServiceConnection: ADOSVTBase
 	{
         if([Helpers]::CheckMember($this.ServiceEndpointsObj, "data.scopeLevel"))
         {
-            #If Service connection scope is subcription and manual then only fail the control, if automatic then verify else pass
             if($this.ServiceEndpointsObj.data.scopeLevel -eq "Subscription" )
             {
                 $controlResult.AddMessage([VerificationResult]::Failed,
