@@ -46,7 +46,7 @@
       "Automated": "No",
       "MethodName": "CheckServiceConnectionAdmins",
       "Rationale": "Accounts with admin access can install/manage extensions for Organization. Members with this access without a legitimate business reason increase the risk for Organization. By carefully reviewing and removing accounts that shouldn't be there in the first place, you can avoid attacks if those accounts are compromised.",
-      "Recommendation": "Go to Project Settings --> Pipelines --> Service Connections --> Select Servicie Connections --> Roles --> Verify connection admin and users",
+      "Recommendation": "Go to Project Settings --> Pipelines --> Service Connections --> Select Service Connection --> Select three dots on top right --> Select Security --> Under user permissions verify connection admin and users",
       "Tags": [
         "SDL",
         "TCP",
@@ -63,7 +63,7 @@
       "Automated": "No",
       "MethodName": "",
       "Rationale": "Periodic reviews of request history logs ensures that sevice connection been used from legitimate build definitions and avoid major compromise.",
-      "Recommendation": "Go to Project Settings --> Pipelines --> Service Connections --> Select Service Connections --> Usage History --> Validate connection is been used from legitimate build/release definitions only",
+      "Recommendation": "Go to Project Settings --> Pipelines --> Service Connections --> Select Service Connection --> Usage History --> Validate connection is been used from legitimate build/release definitions only",
       "Tags": [
         "SDL",
         "TCP",
@@ -97,7 +97,7 @@
       "Automated": "Yes",
       "MethodName": "CheckRBACInheritPermissions",
       "Rationale": "Service connections represent credentials of various services/repositories accessed by your project's build/release process. You should exercise fine-grained control over who can access them. Removing inherited access ensures that individuals beyond your control do not get access.",
-      "Recommendation": "To remediate this, navigate to the service connections settings page for your project -> select your service connection from the list -> select Roles from the menu -> Inheritance -> OFF.",
+      "Recommendation": "To remediate this, navigate to the service connections settings page for your project -> select your service connection from the list -> click on three dots on top right -> select Security -> In user permissions go to Inheritance -> Turn OFF Inheritance",
       "Tags": [
         "SDL",
         "TCP",
@@ -133,7 +133,7 @@
       "Automated": "Yes",
       "MethodName": "CheckBuildServiceAccountAccess",
       "Rationale": "Build service account is default identity used as part every build in project. Providing access to this common service account will expose connection details to all build definition under project.",
-      "Recommendation": "To remediate this, navigate to the service connections settings page for your project -> select your service connection from the list -> select security -> remove 'Project Collection Build Service Accounts' access from user permission.",
+      "Recommendation": "To remediate this, navigate to the service connections settings page for your project -> select your service connection from the list -> select three dots on top right -> select security -> remove 'Project Collection Build Service Accounts' access from user permission.",
       "Tags": [
         "SDL",
         "TCP",
@@ -169,7 +169,7 @@
       "Automated": "Yes",
       "MethodName": "CheckServiceConnectionForPATOrAuth",
       "Rationale": "Full scope PAT is equivalent to full account compromise. The OAuth flow creates a token that only allows source code and webhook read/write access on GitHub. The impact of losing control of a scoped OAuth token is far lower.",
-      "Recommendation": "Go to Project Settings --> Service Connections --> Select Servicie Connections --> Verify connection authentication type.",
+      "Recommendation": "Go to Project Settings --> Service Connections --> Select Service Connection --> Select Edit --> Verify connection authentication type.",
       "Tags": [
         "SDL",
         "TCP",

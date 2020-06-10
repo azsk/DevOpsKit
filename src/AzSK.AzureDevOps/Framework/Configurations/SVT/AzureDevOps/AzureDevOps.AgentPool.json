@@ -63,7 +63,7 @@
       "Automated": "Yes",
       "MethodName": "CheckInheritPermissions",
       "Rationale": "Disabling inherit permissions lets you finely control access to various operations at the agent level for different stakeholders. This ensures that you follow the principle of least privilege and provide access only to the persons that require it.",
-      "Recommendation": "To disable inheritance follow the steps given here: 1.Navigate to the agent pool. 2. Open roles. 3. Add the service lead & service owner as users with allow permissions for each permission line item. 4. Select Off under Inheritance. 5. Add users/groups to agent and provide only required access. As best practice, All teams/groups must be granted minimum required permissions on agent pool.",
+      "Recommendation": "To disable inheritance follow the steps given here: 1.Navigate to the agent pool. 2. Select Security. 3. Under User Permissions, add the service lead & service owner as users with allow permissions for each permission line item. 4. Select Off under Inheritance. 5. Add users/groups to agent and provide only required access. As best practice, all teams/groups must be granted minimum required permissions on agent pool.",
       "Tags": [
         "SDL",
         "TCP",
@@ -75,13 +75,13 @@
     },
     {
       "ControlID": "AzureDevOps_AgentPool_AuthZ_Org_Auto_Provisioning",
-      "Description": "Do not allow Auto-provision enables on agent pool",
+      "Description": "Do not enable Auto-provisioning for agent pools",
       "Id": "AgentPool150",
       "ControlSeverity": "High",
       "Automated": "Yes",
       "MethodName": "CheckOrgAgtAutoProvisioning",
-      "Rationale": "By enabling the 'Auto-provision' The organization agent pool is imported in all your new team projects and is accessible there immediately.",
-      "Recommendation": "To enable auto-provision follow the steps given here: 1.Navigate to the Organization settings. 2. Open agent pool. 3. Select Settings. 4. enable 'Auto-provision this agent pools in new projects'",
+      "Rationale": "By enabling the 'Auto-provision' the organization agent pool is imported in all your new team projects and is accessible there immediately.",
+      "Recommendation": "To change auto-provision settings: 1.Navigate to the Organization settings. 2. Open Agent pools. 3. Select Settings. 4. Change the settings for 'Auto-provisioning' this agent pools in new projects",
       "Tags": [
         "SDL",
         "TCP",
@@ -98,7 +98,7 @@
       "ControlSeverity": "High",
       "Automated": "Yes",
       "MethodName": "CheckPrjAllPipelineAccess",
-      "Rationale": "By enabling the 'Grant access permission to all pipelines' The agent pool is imported in all your pipeline in the current project and is accessible there immediately.",
+      "Rationale": "By enabling the 'Grant access permission to all pipelines' the agent pool is imported in all your pipelines in the current project and is accessible there immediately.",
       "Recommendation": "Go to 'Project settings' --> 'Agent pools' --> Select the agent pool --> Security --> Disable 'Grant access permission to all pipeline'.",
       "Tags": [
         "SDL",
@@ -109,5 +109,6 @@
       ],
       "Enabled": true
     }
+    
   ]
 }

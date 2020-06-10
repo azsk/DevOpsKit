@@ -28,7 +28,7 @@
       "Automated": "Yes",
       "MethodName": "CheckExternalUserPolicy",
       "Rationale": "Non-AD accounts (such as xyz@hotmail.com, pqr@outlook.com, etc.) present at any scope within a organization subject your assets to undue risk. These accounts are not managed to the same standards as enterprise tenant identities. They don't have multi-factor authentication enabled.",
-      "Recommendation": "Go to Organization Settings --> Policy --> Security Policies --> Turn 'Off' external guest access",
+      "Recommendation": "Go to Organization Settings --> Security --> Policies --> User Policies --> Turn 'Off' external guest access",
       "Tags": [
         "SDL",
         "TCP",
@@ -45,7 +45,7 @@
       "Automated": "Yes",
       "MethodName": "CheckPublicProjectPolicy",
       "Rationale": "Data/content in projects that have anonymous access can be downloaded by anyone on the internet without authentication. This can lead to a compromise of corporate data. ",
-      "Recommendation": "Go to Organization Settings --> Policy --> Security Policies --> Turn 'Off' allow public projects",
+      "Recommendation": "Go to Organization Settings --> Security --> Policies --> Security Policies --> Turn 'Off' allow public projects",
       "Tags": [
         "SDL",
         "TCP",
@@ -141,7 +141,7 @@
     },
     {
       "ControlID": "AzureDevOps_Organization_AuthZ_Deleted_AD_DisconnectedUser_Access",
-      "Description": "Remove access entries for users whose accounts have been deleted/disconnecte from Azure Active Directory.",
+      "Description": "Remove access entries for users whose accounts have been deleted/disconnected from Azure Active Directory.",
       "Id": "Organization190",
       "ControlSeverity": "Medium",
       "Automated": "Yes",
@@ -164,7 +164,7 @@
       "Automated": "No",
       "MethodName": "CheckRBACAccess",
       "Rationale": "Granting minimum access by leveraging RBAC feature ensures that users are granted just enough permissions to perform their tasks. This minimizes exposure of the resources in case of user/service account compromise.",
-      "Recommendation": "Go to Organization Settings --> Security --> Select team/group --> Validate Permissions",
+      "Recommendation": "Go to Organization Settings --> Permissions --> Select team/group --> Validate Permissions",
       "Tags": [
         "SDL",
         "TCP",
@@ -181,7 +181,7 @@
       "Automated": "No",
       "MethodName": "JustifyGroupMember",
       "Rationale": "Accounts that are a member of these groups without a legitimate business reason increase the risk for your Organization. By carefully reviewing and removing accounts that shouldn't be there in the first place, you can avoid attacks if those accounts are compromised.",
-      "Recommendation": "Go to Organization Settings --> Security --> Validate all group memebers",
+      "Recommendation": "Go to Organization Settings --> Permissions --> Groups --> Validate members of each group",
       "Tags": [
         "SDL",
         "TCP",
@@ -249,7 +249,7 @@
       "Automated": "Yes",
       "MethodName": "CheckProCollSerAcc",
       "Rationale": "ADO has a misleading group called Project Collection Service Accounts. By inheritance, Project Collection Service Accounts are also Project Collection Administrators. It is found that multiple build agent user accounts across Microsoft were members of Project Collection Service Accounts. An adversary that executes code in a pipeline assigned to one of these build agents can take over the entire ADO organization",
-      "Recommendation": "Go to Organization Settings --> Security --> Permission --> Project Collection Service Accounts --> Validate all the members.",
+      "Recommendation": "Go to Organization Settings --> Security --> Permissions --> Project Collection Service Accounts --> Validate all the members.",
       "Tags": [
         "SDL",
         "TCP",
