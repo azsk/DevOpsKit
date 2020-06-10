@@ -188,19 +188,32 @@ class ServicesSecurityStatus: AzSVTCommandBase
 				try
 				{
 					$extensionSVTClassName = $svtClassName + "Ext";
-					if(-not ($extensionSVTClassName -as [type]))
+                    # Resetting $extensionSVTClassFilePath to null as PS session holds the previous value
+                    $extensionSVTClassFilePath = $null
+
+                    # Checks if $extensionSVTClassName type is not loaded in memory
+					if (-not ($extensionSVTClassName -as [type])) 
 					{
-						$extensionSVTClassFilePath = [ConfigurationManager]::LoadExtensionFile($svtClassName); 
-					}	
-					if([string]::IsNullOrWhiteSpace($extensionSVTClassFilePath))
-					{
-						$svtObject = New-Object -TypeName $svtClassName -ArgumentList $this.SubscriptionContext.SubscriptionId, $_
-					}
-					else {
-						# file has to be loaded here due to scope contraint
-						. $extensionSVTClassFilePath
-						$svtObject = New-Object -TypeName $extensionSVTClassName -ArgumentList $this.SubscriptionContext.SubscriptionId, $_
-					}
+   
+                        # Looking for Extension class using configuration
+                        $extensionSVTClassFilePath = [ConfigurationManager]::LoadExtensionFile($svtClassName); 
+						if ([string]::IsNullOrWhiteSpace($extensionSVTClassFilePath)) 
+						{
+                            $svtObject = New-Object -TypeName $svtClassName -ArgumentList $this.SubscriptionContext.SubscriptionId, $_
+                        }
+						else 
+						{
+                            # Loading Extension class, if Extension class is already present
+                            Write-Warning "########## Loading extended type [$extensionSVTClassName] into session... ##########"
+                            . $extensionSVTClassFilePath
+                            $svtObject = New-Object -TypeName $extensionSVTClassName -ArgumentList $this.SubscriptionContext.SubscriptionId, $_
+                        }
+                    }   
+                    else 
+                    {
+                        # Create the instance of Extension class
+                        $svtObject = New-Object -TypeName $extensionSVTClassName -ArgumentList $this.SubscriptionContext.SubscriptionId, $_
+                    }
 				}
 				catch
 				{
