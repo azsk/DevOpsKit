@@ -63,7 +63,7 @@ Add-Type -Path "$libraryPath\Microsoft.IdentityModel.Clients.ActiveDirectory.dll
 . $FrameworkPath\Managers\FeatureFlightingManager.ps1
 . $PSScriptRoot\Managers\ControlStateExtension.ps1
 . $FrameworkPath\Managers\AzSKPDFExtension.ps1
-. $FrameworkPath\Managers\PartialScanManager.ps1
+. $PSScriptRoot\Managers\PartialScanManager.ps1
 
 . $FrameworkPath\Helpers\LogAnalyticsHelper.ps1
 . $FrameworkPath\Helpers\RemoteReportHelper.ps1
@@ -100,8 +100,9 @@ Add-Type -Path "$libraryPath\Microsoft.IdentityModel.Clients.ActiveDirectory.dll
 . $FrameworkPath\Listeners\FixControl\WriteFixControlFiles.ps1
 . $FrameworkPath\Listeners\EventHub\EventHubOutput.ps1
 . $FrameworkPath\Listeners\Webhook\WebhookOutput.ps1
+. $PSScriptRoot\Listeners\PartialScanHandler\PartialScanHandler.ps1
 . $FrameworkPath\Listeners\GenericListener\GenericListener.ps1
-. $FrameworkPath\Listeners\ListenerHelper.ps1
+. $PSScriptRoot\Listeners\ListenerHelper.ps1
 
 #Remaining Abstracts
 . $PSScriptRoot\Core\SVT\SVTControlAttestation.ps1
@@ -119,4 +120,4 @@ Add-Type -Path "$libraryPath\Microsoft.IdentityModel.Clients.ActiveDirectory.dll
 }
 
 . $PSScriptRoot\Core\SVT\SVTResourceResolver.ps1
-. $FrameworkPath\Abstracts\ServicesSecurityStatus.ps1
+. $PSScriptRoot\Abstracts\ServicesSecurityStatus.ps1
