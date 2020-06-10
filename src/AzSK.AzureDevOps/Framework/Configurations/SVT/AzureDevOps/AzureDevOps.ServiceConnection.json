@@ -97,7 +97,7 @@
       "Automated": "Yes",
       "MethodName": "CheckRBACInheritPermissions",
       "Rationale": "Service connections represent credentials of various services/repositories accessed by your project's build/release process. You should exercise fine-grained control over who can access them. Removing inherited access ensures that individuals beyond your control do not get access.",
-      "Recommendation": "To remediate this, navigate to the service connections settings page for your project -> select your service connection from the list -> click on three dots on top right -> select Security -> In user permissions go to Inheritance -> OFF.",
+      "Recommendation": "To remediate this, navigate to the service connections settings page for your project -> select your service connection from the list -> click on three dots on top right -> select Security -> In user permissions go to Inheritance -> Turn OFF Inheritance",
       "Tags": [
         "SDL",
         "TCP",
