@@ -172,12 +172,7 @@ class ADOSVTBase: SVTBase {
 								if ($null -ne $childResourceState.State.DataObject) {
 									if ($currentItem.StateManagement.CurrentStateData -and $null -ne $currentItem.StateManagement.CurrentStateData.DataObject) {
 										$currentStateDataObject = [JsonHelper]::ConvertToJsonCustom($currentItem.StateManagement.CurrentStateData.DataObject) | ConvertFrom-Json
-										try {
-										    $currentState = [Helpers]::RemoveAccentedCharacters(($currentStateDataObject | ConvertTo-Json -Depth 10))
-										    $currentStateDataObject = ($currentState | ConvertFrom-Json)
-										}
-										catch {
-										}
+										
 										try {
 											# Objects match, change result based on attestation status
 											if ($eventContext.ControlItem.AttestComparisionType -and $eventContext.ControlItem.AttestComparisionType -eq [ComparisionType]::NumLesserOrEqual) {
