@@ -188,13 +188,14 @@ class ServicesSecurityStatus: AzSVTCommandBase
 				try
 				{
 					$extensionSVTClassName = $svtClassName + "Ext";
-                    # Assigning file path as null before every iteration otherwise it will take file path from previous iteration
+                    # Resetting $extensionSVTClassFilePath to null as PS session holds the previous value
                     $extensionSVTClassFilePath = $null
 
-                    # Checks if $extensionSVTClassName type is not present already in memory
+                    # Checks if $extensionSVTClassName type is not loaded in memory
 					if (-not ($extensionSVTClassName -as [type])) 
 					{
-                        #Load Extension Type once for new Resource Group
+   
+                        # Looking for Extension class using configuration
                         $extensionSVTClassFilePath = [ConfigurationManager]::LoadExtensionFile($svtClassName); 
 						if ([string]::IsNullOrWhiteSpace($extensionSVTClassFilePath)) 
 						{
@@ -202,7 +203,7 @@ class ServicesSecurityStatus: AzSVTCommandBase
                         }
 						else 
 						{
-                            # file has to be loaded here due to scope contraint
+                            # Loading Extension class, if Extension class is already present
                             Write-Warning "########## Loading extended type [$extensionSVTClassName] into session... ##########"
                             . $extensionSVTClassFilePath
                             $svtObject = New-Object -TypeName $extensionSVTClassName -ArgumentList $this.SubscriptionContext.SubscriptionId, $_
@@ -210,6 +211,7 @@ class ServicesSecurityStatus: AzSVTCommandBase
                     }   
                     else 
                     {
+                        # Create the instance of Extension class
                         $svtObject = New-Object -TypeName $extensionSVTClassName -ArgumentList $this.SubscriptionContext.SubscriptionId, $_
                     }
 				}
