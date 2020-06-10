@@ -188,9 +188,13 @@ class ServicesSecurityStatus: AzSVTCommandBase
 				try
 				{
 					$extensionSVTClassName = $svtClassName + "Ext";
+                    # Assigning file path as null before every iteration otherwise it will take file path from previous iteration
                     $extensionSVTClassFilePath = $null
+
+                    # Checks if $extensionSVTClassName type is not present already in memory
 					if (-not ($extensionSVTClassName -as [type])) 
 					{
+                        #Load Extension Type once for new Resource Group
                         $extensionSVTClassFilePath = [ConfigurationManager]::LoadExtensionFile($svtClassName); 
 						if ([string]::IsNullOrWhiteSpace($extensionSVTClassFilePath)) 
 						{
