@@ -46,7 +46,7 @@
       "EnabledForSubs": [],
       "DisabledForSubs": [],      
       "UnderPreview" : false,
-      "IsEnabled": false
+      "IsEnabled": true
     },
     {
       "Name": "EnableResourceGroupTagTelemetry",
@@ -127,7 +127,7 @@
       "EnabledForSubs": [],
       "DisabledForSubs": [],
       "UnderPreview": false,
-      "IsEnabled": true
+      "IsEnabled": false
     },
     {
       "Name": "EnableDetailedResourceTrackerTelemetry",
