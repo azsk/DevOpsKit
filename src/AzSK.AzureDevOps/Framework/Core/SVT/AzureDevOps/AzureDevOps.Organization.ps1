@@ -261,9 +261,9 @@ class Organization: ADOSVTBase
                 $extensionList +=  ($sharedExtensions | Select-Object extensionName,publisherName,version) 
 
                 $controlResult.AddMessage([VerificationResult]::Verify,
-                                                "Review below shared extensions",$extensionList);  
-                
-
+                                                "Review below shared extensions",$extensionList); 
+                                                 
+                #$controlResult.SetStateData("Shared extensions list: ", $extensionList);                                
             }
             else {
                 $controlResult.AddMessage([VerificationResult]::Passed, "No shared extensions found.");
