@@ -157,25 +157,18 @@ class Build: ADOSVTBase
 
             if(($builds | Measure-Object).Count -gt 0 )
             {
-                $recentBuilds = @()
-                 $builds | ForEach-Object { 
-                    if($_.latestRun -ne $null -and [datetime]::Parse( $_.latestRun.queueTime) -gt (Get-Date).AddDays(-$($this.ControlSettings.Build.BuildHistoryPeriodInDays)))
-                    {
-                        $recentBuilds+=$_
-                    }
-                }
                 
-                if(($recentBuilds | Measure-Object).Count -gt 0 )
-                {
-                    $controlResult.AddMessage([VerificationResult]::Passed,
-                    "Found recent builds triggered within $($this.ControlSettings.Build.BuildHistoryPeriodInDays) days");
-                }
-                else
-                {
-                    $controlResult.AddMessage([VerificationResult]::Failed,
-                    "No recent build history found in last $($this.ControlSettings.Build.BuildHistoryPeriodInDays) days");
-                }
-                $recentBuilds = $null;
+                    if ($builds[0].latestRun -ne $null -and [datetime]::Parse( $builds[0].latestRun.queueTime) -gt (Get-Date).AddDays( - $($this.ControlSettings.Build.BuildHistoryPeriodInDays))) {
+                        $controlResult.AddMessage([VerificationResult]::Passed,
+                            "Found recent builds triggered within $($this.ControlSettings.Build.BuildHistoryPeriodInDays) days");
+                    }               
+                
+                
+                    else {
+                        $controlResult.AddMessage([VerificationResult]::Failed,
+                            "No recent build history found in last $($this.ControlSettings.Build.BuildHistoryPeriodInDays) days");
+                    }
+                
             }
             else
             {

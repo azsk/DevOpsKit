@@ -258,10 +258,10 @@ class Organization: ADOSVTBase
             {
                 $controlResult.AddMessage("No. of shared installed:" + $sharedExtensions.Count)
                 $extensionList = @();
-                $extensionList +=  ($sharedExtensions | Select-Object extensionName,@{ Name = 'publisherName'; Expression = {  $_.publisherName}},@{ Name = 'version'; Expression = {  $_.version}}) 
+                $extensionList +=  ($sharedExtensions | Select-Object extensionName,publisherName,version) 
                 $controlResult.AddMessage([VerificationResult]::Verify,
                                                 "Review below shared extensions",$extensionList);  
-                #$controlResult.SetStateData("Shared extensions list: ", $extensionList);
+                
 
             }
             else {
