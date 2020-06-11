@@ -152,7 +152,23 @@
         "ERvNet"
       ],
       "Enabled": true,
-      "PolicyDefinitionGuid": "ERvNet170"
+      "PolicyDefinitionGuid": "ERvNet170",
+      "DataObjectProperties": [
+        "AllowForwardedTraffic",
+        "AllowGatewayTransit",
+        "AllowVirtualNetworkAccess",
+        "Id",
+        "PeeringState",
+        "RemoteGateways",
+        "RemoteVirtualNetwork",
+        "RemoteVirtualNetworkAddressSpace",
+        "UseRemoteGateways"
+      ],
+      "IsAttestationDriftExpected": true,
+      "OnAttestationDrift": {
+            "ApplyToVersionsUpto" : "4.9.0",
+            "ActionOnAttestationDrift": "CheckOnlySelectPropertiesInDataObject"
+      }
     },
     {
       "ControlID": "Azure_ERvNet_NetSec_Use_Only_Internal_Load_Balancers",
