@@ -126,58 +126,30 @@ class Build: ADOSVTBase
         if($this.BuildObj)
         {
             $apiURL = "https://{0}.visualstudio.com/_apis/Contribution/HierarchyQuery/project/{1}?api-version=5.0-preview.1" -f $($this.SubscriptionContext.SubscriptionName),$($this.BuildObj.project.id);
-            $inputbody =  "{
-                'contributionIds': [
-                    'ms.vss-build-web.ci-data-provider'
-                ],
-                'dataProviderContext': {
-                    'properties': {
-                        'definitionIds': '$($this.BuildObj.id)',
-                        'definitionId': '$($this.BuildObj.id)',
-                        'view': 'buildsHistory',
-                        'hubQuery': 'true',
-                        'sourcePage': {
-                            'url': 'https://$($this.SubscriptionContext.SubscriptionName).visualstudio.com/$($this.BuildObj.project.name)/_build?definitionId=$($this.BuildObj.id)',
-                            'routeId': 'ms.vss-build-web.ci-definitions-hub-route',
-                            'routeValues': {
-                                'project': '$($this.BuildObj.project.name)',
-                                'viewname': 'definitions',
-                                'controller': 'ContributedPage',
-                                'action': 'Execute'
-                            }
-                        }
-                    }
-                }
-        }"  | ConvertFrom-Json #-f $($this.BuildObj.id),$this.SubscriptionContext.SubscriptionName,$this.BuildObj.project.name
 
+        $orgURL='https://{0}.visualstudio.com/{1}/_build?view=folders' -f $($this.SubscriptionContext.SubscriptionName),$($this.BuildObj.project.name)
+        $inputbody="{'contributionIds':['ms.vss-build-web.pipelines-data-provider'],'dataProviderContext':{'properties':{'definitionIds':'$($this.BuildObj.id)','sourcePage':{'url':'$orgURL','routeId':'ms.vss-build-web.pipelines-hub-route','routeValues':{'project':'$($this.BuildObj.project.name)','viewname':'pipelines','controller':'ContributedPage','action':'Execute'}}}}}" | ConvertFrom-Json
         $responseObj = [WebRequestHelper]::InvokePostWebRequest($apiURL,$inputbody);
 
-        if([Helpers]::CheckMember($responseObj,"dataProviders") -and $responseObj.dataProviders.'ms.vss-build-web.ci-data-provider' -and [Helpers]::CheckMember($responseObj.dataProviders.'ms.vss-build-web.ci-data-provider'.historyView,"builds") -and  $responseObj.dataProviders.'ms.vss-build-web.ci-data-provider'.historyView.builds)
+        if([Helpers]::CheckMember($responseObj,"dataProviders") -and $responseObj.dataProviders.'ms.vss-build-web.pipelines-data-provider' -and [Helpers]::CheckMember($responseObj.dataProviders.'ms.vss-build-web.pipelines-data-provider',"pipelines") -and  $responseObj.dataProviders.'ms.vss-build-web.pipelines-data-provider'.pipelines)
         {
 
-            $builds = $responseObj.dataProviders.'ms.vss-build-web.ci-data-provider'.historyView.builds
+            $builds = $responseObj.dataProviders.'ms.vss-build-web.pipelines-data-provider'.pipelines
 
             if(($builds | Measure-Object).Count -gt 0 )
             {
-                $recentBuilds = @()
-                 $builds | ForEach-Object { 
-                    if([datetime]::Parse( $_.build.queueTime) -gt (Get-Date).AddDays(-$($this.ControlSettings.Build.BuildHistoryPeriodInDays)))
-                    {
-                        $recentBuilds+=$_
-                    }
-                }
                 
-                if(($recentBuilds | Measure-Object).Count -gt 0 )
-                {
-                    $controlResult.AddMessage([VerificationResult]::Passed,
-                    "Found recent builds triggered within $($this.ControlSettings.Build.BuildHistoryPeriodInDays) days");
-                }
-                else
-                {
-                    $controlResult.AddMessage([VerificationResult]::Failed,
-                    "No recent build history found in last $($this.ControlSettings.Build.BuildHistoryPeriodInDays) days");
-                }
-                $recentBuilds = $null;
+                    if ($builds[0].latestRun -ne $null -and [datetime]::Parse( $builds[0].latestRun.queueTime) -gt (Get-Date).AddDays( - $($this.ControlSettings.Build.BuildHistoryPeriodInDays))) {
+                        $controlResult.AddMessage([VerificationResult]::Passed,
+                            "Found recent builds triggered within $($this.ControlSettings.Build.BuildHistoryPeriodInDays) days");
+                    }               
+                
+                
+                    else {
+                        $controlResult.AddMessage([VerificationResult]::Failed,
+                            "No recent build history found in last $($this.ControlSettings.Build.BuildHistoryPeriodInDays) days");
+                    }
+                
             }
             else
             {
@@ -298,7 +270,7 @@ class Build: ADOSVTBase
     hidden [ControlResult] CheckSettableAtQueueTime([ControlResult] $controlResult)
 	{
       try { 
-       
+        
         if([Helpers]::CheckMember($this.BuildObj,"variables")) 
         {
            $setablevar =@();

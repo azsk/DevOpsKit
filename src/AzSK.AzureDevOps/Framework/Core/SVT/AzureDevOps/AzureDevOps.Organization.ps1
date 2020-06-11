@@ -258,10 +258,11 @@ class Organization: ADOSVTBase
             {
                 $controlResult.AddMessage("No. of shared installed:" + $sharedExtensions.Count)
                 $extensionList = @();
-                $extensionList +=  ($sharedExtensions | Select-Object extensionName,@{ Name = 'publisherName'; Expression = {  $_.publisherName}},@{ Name = 'version'; Expression = {  $_.version}}) 
+                $extensionList +=  ($sharedExtensions | Select-Object extensionName,publisherName,version) 
+
                 $controlResult.AddMessage([VerificationResult]::Verify,
                                                 "Review below shared extensions",$extensionList);  
-                #$controlResult.SetStateData("Shared extensions list: ", $extensionList);
+                
 
             }
             else {
@@ -281,7 +282,7 @@ class Organization: ADOSVTBase
               {
                   if( [Helpers]::CheckMember($responseObj[0], 'members') -and  ($responseObj.members | Measure-Object).Count -gt 0)
                   {
-                      $controlResult.AddMessage("No. of guest identities present:" + $responseObj.members.Count)
+                      $controlResult.AddMessage("No. of guest identities present:" + ($responseObj.members | Measure-Object).Count)
                       $guestList = @();
                       $guestList +=  ($responseObj.members | Select-Object @{Name="IdentityType"; Expression = {$_.user.subjectKind}},@{Name="DisplayName"; Expression = {$_.user.displayName}}, @{Name="MailAddress"; Expression = {$_.user.mailAddress}},@{Name="AccessLevel"; Expression = {$_.accessLevel.licenseDisplayName}},@{Name="LastAccessedDate"; Expression = {$_.lastAccessedDate}})
                       $controlResult.AddMessage([VerificationResult]::Verify, "Verify below guest identities",$guestList);      
