@@ -32,9 +32,9 @@ class ServiceConnection: ADOSVTBase
 
     hidden [ControlResult] CheckServiceConnectionAccess([ControlResult] $controlResult)
 	{
-        if([Helpers]::CheckMember($this.ServiceEndpointsObj, "data.scopeLevel") )
+        if([Helpers]::CheckMember($this.ServiceEndpointsObj, "data.scopeLevel"))
         {
-            if($this.ServiceEndpointsObj.data.scopeLevel -eq "Subscription")
+            if($this.ServiceEndpointsObj.data.scopeLevel -eq "Subscription" )
             {
                 $controlResult.AddMessage([VerificationResult]::Failed,
                                         "Service connection is configured at subscription scope.");
@@ -154,50 +154,28 @@ class ServiceConnection: ADOSVTBase
         $failMsg = $null
         try
         {
-            $IsGlobalSecurityGroupPermitted = $false
             $apiURL = "https://{0}.visualstudio.com/_apis/securityroles/scopes/distributedtask.serviceendpointrole/roleassignments/resources/{1}_{2}" -f $($this.SubscriptionContext.SubscriptionName), $($this.ProjectId),$($this.ServiceEndpointsObj.id);
             $responseObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
-            $nonCompliantIdentities = @();
-            $otherIdentities = @();
+            $restrictedGroups = @();
+            $restrictedGlobalGroupsForSerConn = $this.ControlSettings.ServiceConnection.RestrictedGlobalGroupsForSerConn;
+
             if((($responseObj | Measure-Object).Count -gt 0) -and [Helpers]::CheckMember($responseObj,"identity"))
             {
-                $responseObj.identity | ForEach-Object {
-                    $identity = $_
-                    try
-                    {
-                        $apiURL = "https://vssps.dev.azure.com/e/Microsoft/_apis/Identities/{0}" -f $($identity.id)
-                        $identityObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
-                        if(($identityObj | Measure-Object).Count -gt 0 ) {
-                            $IsGroup = [Helpers]::CheckMember($identityObj,"Properties.SchemaClassName") -and ($identityObj.Properties.SchemaClassName -eq "Group")
-                            $IsGlobalSecurityGroup = [Helpers]::CheckMember($identityObj,"Properties.ScopeName") -and `
-                                                    (($identityObj.Properties.ScopeName -eq $($this.ResourceContext.ResourceGroupName)) -or ($identityObj.Properties.ScopeName -eq $($this.SubscriptionContext.SubscriptionName)))
-                            $IsWhitelisted = ($this.ControlSettings.ServiceConnection.WhitelistedGroupIdentities -contains $identityObj.Properties.Account)
-                            if($IsGroup -and $IsGlobalSecurityGroup -and (-not $IsWhitelisted))
-                            {
-                                $IsGlobalSecurityGroupPermitted = $true
-                                $nonCompliantIdentities += $identity
-                            }
-                        }
-                        $identityObj = $null;
-                    }
-                    catch
-                    {
-                        $otherIdentities += @{ ServiceConnectionName = $($this.ServiceEndpointsObj.name); Identity = $($identity)}
-                    }
-                    $identity = $null;
-                }
-                if($IsGlobalSecurityGroupPermitted -eq $true)
+                # match all the identities added on service connection with defined restricted list
+                $restrictedGroups = $responseObj.identity | Where-Object { $restrictedGlobalGroupsForSerConn -contains $_.displayName.split('\')[-1] } | select displayName
+
+                # fail the control if restricted group found on service connection
+                if($restrictedGroups)
                 {
-                    $controlResult.AddMessage([VerificationResult]::Failed,"Do not grant global security groups access to service connections. Granting elevated permissions to these groups can risk exposure of service connections to unwarranted individuals.");
-                    $controlResult.AddMessage("List of service connections granting access to global security groups:",$nonCompliantIdentities)
-                    $controlResult.SetStateData("List of service connections granting access to global security groups:",$nonCompliantIdentities)
+                    $controlResult.AddMessage([VerificationResult]::Failed,"Do not grant global groups access to service connections. Granting elevated permissions to these groups can risk exposure of service connections to unwarranted individuals.");
+                    $controlResult.AddMessage("Global groups that have access to service connection.",$restrictedGroups)
+                    $controlResult.SetStateData("Global groups that have access to service connection",$restrictedGroups)
                 }
                 else{
-                    $controlResult.AddMessage([VerificationResult]::Passed,"");
+                    $controlResult.AddMessage([VerificationResult]::Passed,"No global groups have access to service connection.");
                 }
             }
             $responseObj = $null;
-            $nonCompliantIdentities = $null;
         }
         catch {
             $failMsg = $_
@@ -210,59 +188,36 @@ class ServiceConnection: ADOSVTBase
         return $controlResult;
     }
 
-    
-
-
     hidden [ControlResult] CheckBuildServiceAccountAccess([ControlResult] $controlResult)
 	{
-        # Any identity other than teams identity needs to be verified manually as it's details cannot be retrived using API
         $failMsg = $null
         try
         {
-            $IsGlobalSecurityGroupPermitted = $false
+            $isBuildSvcAccGrpFound = $false
             $apiURL = "https://{0}.visualstudio.com/_apis/securityroles/scopes/distributedtask.serviceendpointrole/roleassignments/resources/{1}_{2}" -f $($this.SubscriptionContext.SubscriptionName), $($this.ProjectId),$($this.ServiceEndpointsObj.id);
             $responseObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
-            $nonCompliantIdentities = @();
-            $otherIdentities = @();
+
             if((($responseObj | Measure-Object).Count -gt 0) -and [Helpers]::CheckMember($responseObj,"identity"))
             {
-                $responseObj.identity | ForEach-Object {
-                    $identity = $_
-                    try
-                    {
-                        if ($responseObj.identity.uniqueName -contains 'Project Collection Build Service') {
-                             $IsGlobalSecurityGroupPermitted = $true;
-                             $nonCompliantIdentities += $identity
-                            }
-                      # $apiURL = "https://vssps.dev.azure.com/e/Microsoft/_apis/Identities/{0}" -f $($identity.id)
-                      # $identityObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
-                      # if(($identityObj | Measure-Object).Count -gt 0 ) {
-                      #     $IsGroup = [Helpers]::CheckMember($identityObj,"Properties.SchemaClassName") -and ($identityObj.Properties.SchemaClassName -eq "Group")
-                      #     $IsGlobalSecurityGroup = [Helpers]::CheckMember($identityObj,"Properties.ScopeName") -and `
-                      #                             (($identityObj.Properties.ScopeName -eq $($this.ResourceContext.ResourceGroupName)) -or ($identityObj.Properties.ScopeName -eq $($this.SubscriptionContext.SubscriptionName)))
-                      #     $IsWhitelisted = ($this.ControlSettings.ServiceConnection.WhitelistedGroupIdentities -contains $identityObj.Properties.Account)
-                      #     if($IsGroup -and $IsGlobalSecurityGroup -and (-not $IsWhitelisted))
-                      #     {
-                      #         $IsGlobalSecurityGroupPermitted = $true
-                      #         $nonCompliantIdentities += $identity
-                      #     }
-                      # }
-                    }
-                    catch
-                    {
-                        $otherIdentities += @{ ServiceConnectionName = $($this.ServiceEndpointsObj.name); Identity = $($identity)}
-                    }
-                    $identity = $null;
-                }
-                if($IsGlobalSecurityGroupPermitted -eq $true)
+                foreach ($identity in $responseObj.identity)
                 {
-                    $controlResult.AddMessage([VerificationResult]::Failed,"Do not grant global security groups access to service connections. Granting elevated permissions to these groups can risk exposure of service connections to unwarranted individuals.");
-                    $controlResult.AddMessage("List of service connections granting access to global security groups:",$nonCompliantIdentities)
-                    $controlResult.SetStateData("List of service connections granting access to global security groups:",$nonCompliantIdentities)
+                    if ($identity.uniqueName -like '*Project Collection Build Service Accounts') 
+                    {
+                        $isBuildSvcAccGrpFound = $true;
+                        break;
+                    }
+                }
+                #Faile the control if prj coll Buil Ser Acc Group Found added on serv conn
+                if($isBuildSvcAccGrpFound -eq $true)
+                {
+                    $controlResult.AddMessage([VerificationResult]::Failed,"Do not grant 'Project Collection Build Service Account' groups access to service connections.");
                 }
                 else{
-                    $controlResult.AddMessage([VerificationResult]::Passed,"");
+                    $controlResult.AddMessage([VerificationResult]::Passed,"'Project Collection Build Service Account' is not granted access to the service connection.");
                 }
+            }
+            else{
+                $controlResult.AddMessage([VerificationResult]::Passed,"'Project Collection Build Service Account' does not have access to service connection.");
             }
             $responseObj = $null;
         }

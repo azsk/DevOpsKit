@@ -6,6 +6,7 @@ class Context
     [EnvironmentDetails] $Environment = [EnvironmentDetails]::new();
     [Tenant] $Tenant = [Tenant]::new();
     [string] $AccessToken;
+    [DateTime] $TokenExpireTimeLocal;
 }
 
 class Account {

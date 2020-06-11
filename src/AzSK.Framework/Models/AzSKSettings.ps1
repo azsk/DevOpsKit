@@ -38,17 +38,7 @@ class AzSKSettings {
     hidden static [AzSKSettings] $Instance = $null;
 	hidden static [string] $FileName = "AzSKSettings.json";
 	[bool] $StoreComplianceSummaryInUserSubscriptions;	
-	static [SubscriptionContext] $SubscriptionContext
-	static [InvocationInfo] $InvocationContext
-
-	AzSKSettings()
-	{	
-	}
-    AzSKSettings([SubscriptionContext] $subscriptionContext, [InvocationInfo] $invocationContext)
-	{
-		[AzSKSettings]::SubscriptionContext = $subscriptionContext;
-		[AzSKSettings]::InvocationContext = $invocationContext;		
-	}
+	
 	hidden static SetDefaultSettings([AzSKSettings] $settings) {
 		if($null -ne  $settings -and [string]::IsNullOrWhiteSpace( $settings.AzureEnvironment))
 		{
@@ -154,21 +144,7 @@ class AzSKSettings {
 
 			#Step 3: Get the latest server settings and merge with that
 			if(-not $loadUserCopy)
-			{
-				$projectName = "";
-				$orgName = "";
-				if([AzSKSettings]::InvocationContext)
-				{
-					if([AzSKSettings]::InvocationContext.BoundParameters["ProjectNames"]){
-					  $projectName = [AzSKSettings]::InvocationContext.BoundParameters["ProjectNames"].split(',')[0];
-					  $orgName = [AzSKSettings]::SubscriptionContext.SubscriptionName;
-
-					  $repoName = [Constants]::OrgPolicyRepo + $projectName;
-			          $parsedSettings.OnlinePolicyStoreUrl = $parsedSettings.OnlinePolicyStoreUrl -f $orgName, $projectName, $repoName
-
-					}
-				}
-				
+			{	
 				[bool] $_useOnlinePolicyStore = $parsedSettings.UseOnlinePolicyStore;
 				[string] $_onlineStoreUri = $parsedSettings.OnlinePolicyStoreUrl;
 				[bool] $_enableAADAuthForOnlinePolicyStore = $parsedSettings.EnableAADAuthForOnlinePolicyStore;
