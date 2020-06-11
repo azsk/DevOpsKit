@@ -165,7 +165,7 @@ class Release: ADOSVTBase
                         'definitionId': '$($this.ReleaseObj.id)',
                         'fetchAllReleases': true,
                         'sourcePage': {
-                            'url': 'https://$($this.SubscriptionContext.SubscriptionName).visualstudio.com/AzSDKDemoRepo/_release?view=mine&definitionId=$($this.ReleaseObj.id)',
+                            'url': 'https://$($this.SubscriptionContext.SubscriptionName).visualstudio.com/$($this.ResourceContext.ResourceGroupName)/_release?_a=releases&view=mine&definitionId=$($this.ReleaseObj.id)',
                             'routeId': 'ms.vss-releaseManagement-web.hub-explorer-3-default-route',
                             'routeValues': {
                                 'project': '$($this.ResourceContext.ResourceGroupName)',
@@ -215,7 +215,7 @@ class Release: ADOSVTBase
         }
         else {
             $controlResult.AddMessage([VerificationResult]::Failed,
-                                                "No release history found. release is inactive.");
+                                                "No release history found. Release is inactive.");
         }
         $responseObj = $null;
     } 
