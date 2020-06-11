@@ -503,7 +503,8 @@ class SVTControlAttestation
 									else
 									{
 										$controlState = $this.ComputeEffectiveControlState($controlState, $controlSeverity, $isSubscriptionScan, $controlItem, $controlResult)										
-									}									
+									}
+									
 									$resourceControlStates +=$controlState;
 									if($this.abortProcess)
 									{

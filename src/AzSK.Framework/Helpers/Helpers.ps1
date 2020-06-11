@@ -860,5 +860,6 @@ class Helpers {
         $sharedKey = $ResourceName+":"+$SignedString
         return $sharedKey    	
     }
+
 }
 

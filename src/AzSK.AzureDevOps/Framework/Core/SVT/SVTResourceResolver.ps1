@@ -33,7 +33,6 @@ class SVTResourceResolver: AzSKRoot {
     SVTResourceResolver([string]$organizationName, $ProjectNames, $BuildNames, $ReleaseNames, $AgentPools, $ServiceConnectionNames, $MaxObj, $ScanAllArtifacts, $PATToken, $ResourceTypeName): Base($organizationName, $PATToken) {
         $this.MaxObjectsToScan = $MaxObj #default = 0 => scan all if "*" specified...
 
-        $this.SetallTheParamValues($organizationName, $ProjectNames, $BuildNames, $ReleaseNames, $AgentPools, $ScanAllArtifacts, $PATToken, $ResourceTypeName);
         if (-not [string]::IsNullOrEmpty($ServiceConnectionNames)) {
             $this.ServiceConnections += $this.ConvertToStringArray($ServiceConnectionNames);
 
@@ -41,10 +40,13 @@ class SVTResourceResolver: AzSKRoot {
                 throw [SuppressedException] "The parameter 'ServiceConnectionNames' does not contain any string."
             }
         }	
-
-        if ($ScanAllArtifacts) {
+        #Implicit behavior to scan all service connections if its list is not explicitly provided 
+        if ($ScanAllArtifacts -or ([string]::IsNullOrEmpty($ServiceConnectionNames) -and $ResourceTypeName -eq [ResourceTypeName]::ServiceConnection )) {
             $this.ServiceConnections = "*"
-        }        
+        }
+
+        $this.SetallTheParamValues($organizationName, $ProjectNames, $BuildNames, $ReleaseNames, $AgentPools, $ScanAllArtifacts, $PATToken, $ResourceTypeName);
+                
     }
 
     [void] SetallTheParamValues([string]$organizationName, $ProjectNames, $BuildNames, $ReleaseNames, $AgentPools, $ScanAllArtifacts, $PATToken, $ResourceTypeName) { 
@@ -57,6 +59,9 @@ class SVTResourceResolver: AzSKRoot {
             if ($this.ProjectNames.Count -eq 0) {
                 throw [SuppressedException] "The parameter 'ProjectNames' does not contain any string."
             }
+        }
+        elseif ($ResourceTypeName -eq [ResourceTypeName]::Project -or $ResourceTypeName -eq [ResourceTypeName]::Org_Project_User) {
+            $this.ProjectNames = "*"
         }	
 
         if (-not [string]::IsNullOrEmpty($BuildNames)) {
@@ -65,12 +70,18 @@ class SVTResourceResolver: AzSKRoot {
                 throw [SuppressedException] "The parameter 'BuildNames' does not contain any string."
             }
         }
+        elseif ($ResourceTypeName -eq [ResourceTypeName]::Build -or $ResourceTypeName -eq [ResourceTypeName]::Build_Release) {
+            $this.BuildNames = "*"
+        }
 
         if (-not [string]::IsNullOrEmpty($ReleaseNames)) {
             $this.ReleaseNames += $this.ConvertToStringArray($ReleaseNames);
             if ($this.ReleaseNames.Count -eq 0) {
                 throw [SuppressedException] "The parameter 'ReleaseNames' does not contain any string."
             }
+        }
+        elseif ($ResourceTypeName -eq [ResourceTypeName]::Release -or $ResourceTypeName -eq [ResourceTypeName]::Build_Release) {
+            $this.ReleaseNames = "*"
         }
 
         if (-not [string]::IsNullOrEmpty($AgentPools)) {
@@ -79,6 +90,9 @@ class SVTResourceResolver: AzSKRoot {
                 throw [SuppressedException] "The parameter 'AgentPools' does not contain any string."
             }
         }
+        elseif ($ResourceTypeName -eq [ResourceTypeName]::AgentPool) {
+            $this.AgentPools = "*"
+        }
 
         if ($ScanAllArtifacts) {
             $this.ProjectNames = "*"
@@ -86,12 +100,57 @@ class SVTResourceResolver: AzSKRoot {
             $this.ReleaseNames = "*"
             $this.AgentPools = "*"
         }  
+
+        if ($this.ProjectNames -eq "*" -or $this.BuildNames -eq "*" -or $this.ReleaseNames -eq "*" -or $this.ServiceConnections -eq "*" -or $this.AgentPools -eq "*") {
+            $message = "";
+            if($this.ProjectNames -eq "*") 
+            {
+                $message = "projects";
+            }
+            if($this.BuildNames -eq "*") 
+            {
+                if($message -ne ""){
+                  $message += " ,builds";
+                }
+                else {
+                    $message += "builds";
+                }
+            }
+            if($this.ReleaseNames -eq "*") 
+            {
+                if($message -ne ""){
+                 $message += " ,releases";
+                }
+                else {
+                    $message += "releases"; 
+                }
+            }
+            if($this.ServiceConnections -eq "*") 
+            {
+                if($message -ne ""){
+                 $message += " ,service connections";
+                }
+                else {
+                    $message += "service connections";
+                }
+            }
+            if($this.AgentPools -eq "*") 
+            {
+                if($message -eq ""){
+                    $message += "agent pools";
+                   }
+                   else {
+                       $message += " and agent pools";
+                   }
+            }
+            $this.PublishCustomMessage("Using '*' can take a long time for the scan to complete in larger projects. You may want to provide a comma-separated list of $($message).");
+        }
     }
 
     [void] LoadResourcesForScan() {
         
         #Call APIS for Organization,User/Builds/Releases/ServiceConnections 
-        if ($this.ResourceTypeName -eq [ResourceTypeName]::All -or $this.ResourceTypeName -eq [ResourceTypeName]::Organization) {
+        if ($this.ResourceTypeName -in ([ResourceTypeName]::Organization, [ResourceTypeName]::All, [ResourceTypeName]::Org_Project_User)) {
             #Checking if org name is correct 
             $apiURL = "https://dev.azure.com/{0}/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1" -f $($this.organizationName);
 
@@ -120,7 +179,7 @@ class SVTResourceResolver: AzSKRoot {
             
         }
 
-        if ($this.ResourceTypeName -eq [ResourceTypeName]::All -or $this.ResourceTypeName -eq [ResourceTypeName]::User) {
+        if ($this.ResourceTypeName -in ([ResourceTypeName]::User, [ResourceTypeName]::All, [ResourceTypeName]::Org_Project_User, [ResourceTypeName]::Build_Release_SvcConn_AgentPool_User)) {
             $svtResource = [SVTResource]::new();
             $svtResource.ResourceName = $this.organizationName;
             $svtResource.ResourceType = "AzureDevOps.User";
@@ -148,7 +207,13 @@ class SVTResourceResolver: AzSKRoot {
                 Write-Host 'Project not found: Incorrect organization or project name or you do not have neccessary permission to access the organization.' -ForegroundColor Red
                 throw;
             }
-            $projects = $responseObj | Where-Object { (($this.ProjectNames -contains $_.name) -or ($this.ProjectNames -eq "*")) } #| ForEach-Object {
+            if($this.ProjectNames -eq "*")
+            {
+                $projects = $responseObj
+            }
+            else {
+                $projects = $responseObj | Where-Object { $this.ProjectNames -contains $_.name } 
+            }
             
             $responseObj = $null;  
             Remove-Variable responseObj;
@@ -160,7 +225,7 @@ class SVTResourceResolver: AzSKRoot {
             foreach ($thisProj in $projects) 
             {
                 $projectName = $thisProj.name
-                if ($this.ResourceTypeName -eq [ResourceTypeName]::All -or $this.ResourceTypeName -eq [ResourceTypeName]::Project) {
+                if ($this.ResourceTypeName -in ([ResourceTypeName]::Project, [ResourceTypeName]::All, [ResourceTypeName]::Org_Project_User)) {
                     $svtResource = [SVTResource]::new();
                     $svtResource.ResourceName = $thisProj.name;
                     $svtResource.ResourceGroupName = $this.organizationName
@@ -175,7 +240,7 @@ class SVTResourceResolver: AzSKRoot {
                     $this.SVTResources += $svtResource
                 }
 
-                if ($this.BuildNames.Count -gt 0 -and ($this.ResourceTypeName -eq [ResourceTypeName]::All -or $this.ResourceTypeName -eq [ResourceTypeName]::Build)) {
+                if ($this.BuildNames.Count -gt 0 -and ($this.ResourceTypeName -in ([ResourceTypeName]::Build, [ResourceTypeName]::All, [ResourceTypeName]::Build_Release, [ResourceTypeName]::Build_Release_SvcConn_AgentPool_User))) {
                     if ($this.ProjectNames -ne "*") {
                         $this.PublishCustomMessage("Getting build configurations...");
                     }
@@ -233,7 +298,7 @@ class SVTResourceResolver: AzSKRoot {
                     }          
                 }
 
-                if ($this.ReleaseNames.Count -gt 0 -and ($this.ResourceTypeName -eq [ResourceTypeName]::All -or $this.ResourceTypeName -eq [ResourceTypeName]::Release)) 
+                if ($this.ReleaseNames.Count -gt 0 -and ($this.ResourceTypeName -in ([ResourceTypeName]::Release, [ResourceTypeName]::All, [ResourceTypeName]::Build_Release, [ResourceTypeName]::Build_Release_SvcConn_AgentPool_User)))
                 {
                     if ($this.ProjectNames -ne "*") {
                         $this.PublishCustomMessage("Getting release configurations...");
@@ -315,7 +380,7 @@ class SVTResourceResolver: AzSKRoot {
                     }
                 }
 
-                if ($this.ServiceConnections.Count -gt 0 -and ($this.ResourceTypeName -eq [ResourceTypeName]::All -or $this.ResourceTypeName -eq [ResourceTypeName]::ServiceConnection)) 
+                if ($this.ServiceConnections.Count -gt 0 -and ($this.ResourceTypeName -in ([ResourceTypeName]::ServiceConnection, [ResourceTypeName]::All, [ResourceTypeName]::Build_Release_SvcConn_AgentPool_User)))
                 {
                     if ($this.ProjectNames -ne "*") {
                         $this.PublishCustomMessage("Getting service endpoint configurations...");
@@ -324,15 +389,21 @@ class SVTResourceResolver: AzSKRoot {
                     $serviceEndpointURL = "https://dev.azure.com/{0}/{1}/_apis/serviceendpoint/endpoints?api-version=4.1-preview.1" -f $($this.organizationName), $($projectName);
                     $serviceEndpointObj = [WebRequestHelper]::InvokeGetWebRequest($serviceEndpointURL)
                 
-                    if (([Helpers]::CheckMember($serviceEndpointObj, "count") -and $serviceEndpointObj[0].count -gt 0) -or (($serviceEndpointObj | Measure-Object).Count -gt 0 -and [Helpers]::CheckMember($serviceEndpointObj[0], "name"))) {
+                    if (($serviceEndpointObj | Measure-Object).Count -gt 0) {
                         # Currently get only Azure Connections as all controls are applicable for same
                    
-                        $azureConnections = $serviceEndpointObj | Where-Object { ($_.type -eq "azurerm" -or $_.type -eq "azure" -or $_.type -eq "git" -or $_.type -eq "github") -and (($this.ServiceConnections -eq $_.name) -or ($this.ServiceConnections -eq "*")) } #-or $_.type -eq "git" -or $_.type -eq "git"
+                        $Connections = $null;
+                        if ($this.ServiceConnections -eq "*") {
+                            $Connections = $serviceEndpointObj | Where-Object { ($_.type -eq "azurerm" -or $_.type -eq "azure" -or $_.type -eq "git" -or $_.type -eq "github") } 
+                        }
+                        else {
+                            $Connections = $serviceEndpointObj | Where-Object { ($_.type -eq "azurerm" -or $_.type -eq "azure" -or $_.type -eq "git" -or $_.type -eq "github") -and ($this.ServiceConnections -eq $_.name) } #-or $_.type -eq "git" -or $_.type -eq "git"  
+                        }
 
                         $serviceEndpointObj = $null;
                         Remove-Variable  serviceEndpointObj;
                         $nObj = $this.MaxObjectsToScan
-                        foreach ($connectionObject in $azureConnections) {
+                        foreach ($connectionObject in $Connections) {
                             $svtResource = [SVTResource]::new();
                             $svtResource.ResourceName = $connectionObject.Name;
                             $svtResource.ResourceGroupName = $projectName;
@@ -352,12 +423,11 @@ class SVTResourceResolver: AzSKRoot {
                     }
                 }
                 
-                if ($this.AgentPools.Count -gt 0 -and ($this.ResourceTypeName -eq [ResourceTypeName]::All -or $this.ResourceTypeName -eq [ResourceTypeName]::AgentPool)) {
+                if ($this.AgentPools.Count -gt 0 -and ($this.ResourceTypeName -in ([ResourceTypeName]::AgentPool, [ResourceTypeName]::All, [ResourceTypeName]::Build_Release_SvcConn_AgentPool_User))) {
                     if ($this.ProjectNames -ne "*") {
                         $this.PublishCustomMessage("Getting agent pools configurations...");
                     }
-                    # if($this.AgentPools -eq "*")
-                    # {
+
                     $agentPoolsDefnURL = "https://{0}.visualstudio.com/{1}/_settings/agentqueues?__rt=fps&__ver=2" -f $($this.SubscriptionContext.SubscriptionName), $projectName;
                     try {
                       
@@ -365,7 +435,14 @@ class SVTResourceResolver: AzSKRoot {
                                                    
                         if (([Helpers]::CheckMember($agentPoolsDefnsObj, "fps.dataProviders.data") ) -and (($agentPoolsDefnsObj.fps.dataProviders.data."ms.vss-build-web.agent-queues-data-provider") -and $agentPoolsDefnsObj.fps.dataProviders.data."ms.vss-build-web.agent-queues-data-provider".taskAgentQueues)) {
                             $nObj = $this.MaxObjectsToScan
-                            $taskAgentQueues = $agentPoolsDefnsObj.fps.dataProviders.data."ms.vss-build-web.agent-queues-data-provider".taskAgentQueues | Where-Object { (($this.AgentPools -contains $_.name) -or ($this.AgentPools -eq "*")) } 
+                            $taskAgentQueues = $null;
+                            if ($this.AgentPools -eq "*") {
+                                $taskAgentQueues = $agentPoolsDefnsObj.fps.dataProviders.data."ms.vss-build-web.agent-queues-data-provider".taskAgentQueues;
+                            }
+                            else {
+                                $taskAgentQueues = $agentPoolsDefnsObj.fps.dataProviders.data."ms.vss-build-web.agent-queues-data-provider".taskAgentQueues | Where-Object { ($this.AgentPools -contains $_.name) } 
+                            }
+                            
                             foreach ($taq in $taskAgentQueues) {
                                 $svtResource = [SVTResource]::new();
                                 $svtResource.ResourceName = $taq.name;
@@ -385,10 +462,8 @@ class SVTResourceResolver: AzSKRoot {
                     }
                     catch {
                         Write-Warning "Insufficient Privileges. You do not have the level of access to perform the scan.";
-                        #Write-Error -Exception ([System.UnauthorizedAccessException]::new("Insufficient Privileges. You do not have the level of access necessary to perform the scan."));
                         Write-Error $_.Exception.Message;
                     }              
-                    #}
                 }
                 if (--$nProj -eq 0) { break; } #nProj is set to MaxObj before loop.
                 

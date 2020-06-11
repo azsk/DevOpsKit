@@ -41,7 +41,7 @@ class Organization: ADOSVTBase
             $responseObj = [WebRequestHelper]::InvokePostWebRequest($apiURL,$inputbody);
         }
         catch{
-            Write-Host "Pipeline settings for the organization [$($this.SubscriptionContext.SubscriptionName)] can not be fetched."
+            #Write-Host "Pipeline settings for the organization [$($this.SubscriptionContext.SubscriptionName)] can not be fetched."
         }
         
       
@@ -54,7 +54,7 @@ class Organization: ADOSVTBase
               }
             }
             catch {
-                Write-Host "Pipeline settings for the organization [$($this.SubscriptionContext.SubscriptionName)] can not be fetched."
+                #Write-Host "Pipeline settings for the organization [$($this.SubscriptionContext.SubscriptionName)] can not be fetched."
             }
             
         }
@@ -229,7 +229,7 @@ class Organization: ADOSVTBase
             $stateData.Whitelisted_Extensions += $whiteListedExtensions
             $stateData.NonWhitelisted_Extensions += $NonwhiteListedExtensions
 
-            #$controlResult.SetStateData("Installed extensions list: ", $stateData);
+           # $controlResult.SetStateData("Installed extensions list: ", $stateData);
         }
         else {
             $controlResult.AddMessage([VerificationResult]::Passed, "No installed extensions found.");
@@ -259,6 +259,7 @@ class Organization: ADOSVTBase
                 $controlResult.AddMessage("No. of shared installed:" + $sharedExtensions.Count)
                 $extensionList = @();
                 $extensionList +=  ($sharedExtensions | Select-Object extensionName,publisherName,version) 
+
                 $controlResult.AddMessage([VerificationResult]::Verify,
                                                 "Review below shared extensions",$extensionList);  
                 
@@ -558,7 +559,7 @@ class Organization: ADOSVTBase
             }       
        }
        else{
-            $controlResult.AddMessage([VerificationResult]::Manual, "Pipeline settings object could not be fetched due to insufficient permissions at organization scope.");
+            $controlResult.AddMessage([VerificationResult]::Manual, "Pipeline settings could not be fetched due to insufficient permissions at organization scope.");
        }
         return $controlResult
     }
@@ -577,7 +578,7 @@ class Organization: ADOSVTBase
             }       
        }
        else{
-            $controlResult.AddMessage([VerificationResult]::Manual, "Pipeline settings object could not be fetched due to insufficient permissions at organization scope.");
+            $controlResult.AddMessage([VerificationResult]::Manual, "Pipeline settings could not be fetched due to insufficient permissions at organization scope.");
         }
         return $controlResult
     }
@@ -596,7 +597,7 @@ class Organization: ADOSVTBase
             }       
        }
        else{
-             $controlResult.AddMessage([VerificationResult]::Manual, "Pipeline settings object could not be fetched due to insufficient permissions at organization scope.");
+             $controlResult.AddMessage([VerificationResult]::Manual, "Pipeline settings could not be fetched due to insufficient permissions at organization scope.");
        }       
         return $controlResult
     }

@@ -54,23 +54,17 @@ class AgentPool: ADOSVTBase
     hidden [ControlResult] CheckOrgAgtAutoProvisioning([ControlResult] $controlResult)
     {
         try {
-            $agentPoolsURL = "https://{0}.visualstudio.com/_settings/agentqueues?__rt=fps&__ver=2" -f $($this.SubscriptionContext.SubscriptionName);
+            #Only agent pools created from org setting has this settings..
+            $agentPoolsURL = "https://dev.azure.com/{0}/_apis/distributedtask/pools?poolName={1}&api-version=5.1" -f $($this.SubscriptionContext.SubscriptionName), $this.ResourceContext.resourcename;
             $agentPoolsObj = [WebRequestHelper]::InvokeGetWebRequest($agentPoolsURL);
               
-            $agentPools =@();
-            if([Helpers]::CheckMember($agentPoolsObj,"fps.dataProviders.data") -and $agentPoolsObj.fps.dataProviders.data."ms.vss-build-web.agent-pools-data-provider" -and ($agentPoolsObj.fps.dataProviders.data."ms.vss-build-web.agent-pools-data-provider".taskAgentPools.Count -gt 0 ))
-            {
-                  $agentPools = ($agentPoolsObj.fps.dataProviders.data."ms.vss-build-web.agent-pools-data-provider".taskAgentPools | Where-Object { ($_.autoProvision -eq $true -and $_.Name -eq $this.ResourceContext.resourcename) }) #| Select-Object @{Name = "Name"; Expression = {$_.Name}}
-                  if (($agentPools | Measure-Object).Count -gt 0 ) {
-                    $controlResult.AddMessage([VerificationResult]::Passed,"Auto-provisioning is enabled for the $($agentPools) agent pools.");
-                  }
-                  else {
-                    $controlResult.AddMessage([VerificationResult]::Failed,"Auto-provisioning is not enabled for the agent pool.");
-                   }
+            if ((($agentPoolsObj | Measure-Object).Count -gt 0) -and $agentPoolsObj.autoProvision -eq $true) {
+                $controlResult.AddMessage([VerificationResult]::Failed,"Auto-provisioning is enabled for the $($agentPoolsObj.name) agent pool.");
             }
             else {
-                $controlResult.AddMessage([VerificationResult]::Failed,"Auto-provisioning is not enabled for the agent pool.");
+                $controlResult.AddMessage([VerificationResult]::Passed,"Auto-provisioning is not enabled for the agent pool.");
             }
+
             $agentPoolsObj =$null;
         }
         catch{

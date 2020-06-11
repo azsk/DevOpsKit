@@ -1,9 +1,10 @@
 {
     "UseOnlinePolicyStore":  true,
-    "OnlinePolicyStoreUrl":  "https://{0}.visualstudio.com/{1}/_apis/git/repositories/{2}/Items?path=%2F$FileName&recursionLevel=0&includeContentMetadata=true&versionDescriptor.version=master&versionDescriptor.versionOptions=0&versionDescriptor.versionType=0&includeContent=true&resolveLfs=true?api-version=4.1-preview.1",
+    "OnlinePolicyStoreUrl":  "https://{0}.visualstudio.com/{1}/_apis/git/repositories/{2}/Items?path=%2F$FileName&recursionLevel=0&includeContentMetadata=true&versionDescriptor.version={3}&versionDescriptor.versionOptions=0&versionDescriptor.versionType=0&includeContent=true&resolveLfs=true?api-version=4.1-preview.1",
     "EnableAADAuthForOnlinePolicyStore":  false,
     "UsageTelemetryLevel":  "Anonymous",
     "LocalControlTelemetryKey":  "00000000-0000-0000-0000-000000000000",
     "LocalEnableControlTelemetry":  false,
-    "AutoUpdateCommand": "Install-Module AzSK -AllowClobber -Scope CurrentUser -Force"
+    "AutoUpdateCommand": "Install-Module AzSK -AllowClobber -Scope CurrentUser -Force",
+    "BranchId": "master"
 }

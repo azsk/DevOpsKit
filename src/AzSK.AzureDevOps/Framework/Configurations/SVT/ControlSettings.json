@@ -27,7 +27,7 @@
          "AzureDevOps_ServiceConnection_AuthZ_Dont_Use_Classic_Connections",
          "AzureDevOps_ServiceConnection_AuthZ_Disable_InheritPermissions",
          "AzureDevOps_ServiceConnection_AuthZ_Dont_Grant_All_Pipelines_Access",
-         "AzureDevOps_ServiceConnection_AuthZ_Dont_Allow_Global_SecurityGroups"
+         "AzureDevOps_ServiceConnection_AuthZ_Dont_Allow_Global_Groups"
       ]
      },
      {
@@ -56,6 +56,11 @@
     "ResourceTypeControlIdMappingList": [
     ]
   },
+  "PartialScan":{
+    "ResourceTrackerValidforDays":3,
+    "StoreResourceTrackerLocally": "True"
+  },
+
   "AllowAttestationResourceType": [
     "Organization",
     "Project",
@@ -153,16 +158,39 @@
   "ServiceConnection":{
     "WhitelistedGroupIdentities": [
       "Endpoint Administrators"
+    ],
+    "RestrictedGlobalGroupsForSerConn":[
+      "Microsoft IT Build Admins (msitbuildadm@microsoft.com)",
+      "Everyone Microsoft FTE",
+      "Project Collection Administrators",
+      "Project Collection Build Administrators",
+      "Project Collection Proxy Service Accounts",
+      "Project Collection Service Accounts",
+      "Project Collection Valid Users",
+      "Security Service Group",
+      "Project Administrators",
+      "Build Administrators",
+      "Release Administrators",
+      "CSEOPipelineContributors",
+      "Endpoint Creators",
+      "Contributors",
+      "Readers"
     ]
   },
   "Patterns" : [ 
-    {"RegexCode": "Build", "RegexList": ["^(?=[^\\d_].*?\\d)\\w(\\w|[!@#$%]){7,20}",
-                                "(?=^.{6,12}$)((?=.*\\d)(?=.*[A-Z])(?=.*[a-z])|(?=.*\\d)(?=.*[^A-Za-z0-9])(?=.*[a-z])|(?=.*[^A-Za-z0-9])(?=.*[A-Z])(?=.*[a-z])|(?=.*\\d)(?=.*[A-Z])(?=.*[^A-Za-z0-9]))^.*",
-                                "(pwd|password)\\s*=\\s*(?<pwd>('(([^'])|(''))+'|[^';]+))"
+    {"RegexCode": "Build", "RegexList": ["(?=^.{6,12}$)((?=.*\\d)(?=.*[A-Z])(?=.*[a-z])|(?=.*\\d)(?=.*[^A-Za-z0-9])(?=.*[a-z])&(?=.*[^A-Za-z0-9])(?=.*[A-Z])(?=.*[a-z])&(?=.*\\d)(?=.*[A-Z])(?=.*[^A-Za-z0-9]))^.*",
+                                "(pwd|password)\\s*=\\s*(?<pwd>('(([^'])|(''))+'|[^';]+))",
+                                "^(?=.*\\d)(?=.*[a-z])(?=.*[A-Z])(?!.*\\s).{6,18}$",
+                                "^(?=.*\\d)(?=.*[a-z])(?=.*[A-Z]).{4,8}$",
+                                "(?=^.{6,10}$)(?=.*\\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&amp;*()_+}{&quot;:;'?/&gt;.&lt;,])(?!.*\\s).*$",
+                                "(?=^.{7,20}$)(?=.*\\d)(?=.*[a-zA-Z])(?!.*\\s)[0-9a-zA-Z*$-+?_&=!%{}/'.]*$"
                                 ] },
-    {"RegexCode": "Release", "RegexList": ["^(?=[^\\d_].*?\\d)\\w(\\w|[!@#$%]){7,20}",
-                                  "(?=^.{6,12}$)((?=.*\\d)(?=.*[A-Z])(?=.*[a-z])|(?=.*\\d)(?=.*[^A-Za-z0-9])(?=.*[a-z])|(?=.*[^A-Za-z0-9])(?=.*[A-Z])(?=.*[a-z])|(?=.*\\d)(?=.*[A-Z])(?=.*[^A-Za-z0-9]))^.*",
-                                  "(pwd|password)\\s*=\\s*(?<pwd>('(([^'])|(''))+'|[^';]+))"
+    {"RegexCode": "Release", "RegexList": ["(?=^.{6,12}$)((?=.*\\d)(?=.*[A-Z])(?=.*[a-z])|(?=.*\\d)(?=.*[^A-Za-z0-9])(?=.*[a-z])&(?=.*[^A-Za-z0-9])(?=.*[A-Z])(?=.*[a-z])&(?=.*\\d)(?=.*[A-Z])(?=.*[^A-Za-z0-9]))^.*",
+                                  "(pwd|password)\\s*=\\s*(?<pwd>('(([^'])|(''))+'|[^';]+))",
+                                  "^(?=.*\\d)(?=.*[a-z])(?=.*[A-Z])(?!.*\\s).{6,18}$",
+                                  "^(?=.*\\d)(?=.*[a-z])(?=.*[A-Z]).{4,8}$",
+                                  "(?=^.{6,10}$)(?=.*\\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&amp;*()_+}{&quot;:;'?/&gt;.&lt;,])(?!.*\\s).*$",
+                                  "(?=^.{7,20}$)(?=.*\\d)(?=.*[a-zA-Z])(?!.*\\s)[0-9a-zA-Z*$-+?_&=!%{}/'.]*$"
                                   ] }                         
    ]
 }
