@@ -168,11 +168,11 @@ class ServiceConnection: ADOSVTBase
                 if($restrictedGroups)
                 {
                     $controlResult.AddMessage([VerificationResult]::Failed,"Do not grant global groups access to service connections. Granting elevated permissions to these groups can risk exposure of service connections to unwarranted individuals.");
-                    $controlResult.AddMessage("Service connection granting access to global groups:",$restrictedGroups)
-                    $controlResult.SetStateData("Service connection granting access to global groups:",$restrictedGroups)
+                    $controlResult.AddMessage("Global groups that have access to service connection.",$restrictedGroups)
+                    $controlResult.SetStateData("Global groups that have access to service connection",$restrictedGroups)
                 }
                 else{
-                    $controlResult.AddMessage([VerificationResult]::Passed,"");
+                    $controlResult.AddMessage([VerificationResult]::Passed,"No global groups have access to service connection.");
                 }
             }
             $responseObj = $null;
@@ -217,7 +217,7 @@ class ServiceConnection: ADOSVTBase
                 }
             }
             else{
-                $controlResult.AddMessage([VerificationResult]::Passed,"");
+                $controlResult.AddMessage([VerificationResult]::Passed,"'Project Collection Build Service Account' does not have access to service connection.");
             }
             $responseObj = $null;
         }

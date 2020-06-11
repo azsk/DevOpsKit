@@ -40,7 +40,7 @@ class SVTResourceResolver: AzSKRoot {
                 throw [SuppressedException] "The parameter 'ServiceConnectionNames' does not contain any string."
             }
         }	
-
+        #Implicit behavior to scan all service connections if its list is not explicitly provided 
         if ($ScanAllArtifacts -or ([string]::IsNullOrEmpty($ServiceConnectionNames) -and $ResourceTypeName -eq [ResourceTypeName]::ServiceConnection )) {
             $this.ServiceConnections = "*"
         }
