@@ -73,24 +73,24 @@
       ],
       "Enabled": true
     },
-    {
+    {	
       "ControlID": "AzureDevOps_AgentPool_AuthZ_Org_Auto_Provisioning",
-      "Description": "Do not enable Auto-provisioning for agent pools",
+      "Description": "Do not allow Auto-provision enables on agent pool",
       "Id": "AgentPool150",
       "ControlSeverity": "High",
       "Automated": "Yes",
       "MethodName": "CheckOrgAgtAutoProvisioning",
       "Rationale": "By enabling the 'Auto-provision' The organization agent pool is imported in all your new team projects and is accessible there immediately.",
-      "Recommendation": "To change auto-provision settings: 1.Navigate to the Organization settings. 2. Open Agent pools. 3. Select Settings. 4. Change the settings for 'Auto-provisioning' this agent pools in new projects'",
+      "Recommendation": "To enable auto-provision follow the steps given here: 1.Navigate to the Organization settings. 2. Open agent pool. 3. Select Settings. 4. enable 'Auto-provision this agent pools in new projects'",
       "Tags": [
-        "SDL",
-        "TCP",
-        "Automated",
-        "AuthZ",
-        "RBAC"
+      "SDL",
+      "TCP",
+      "Automated",
+      "AuthZ",
+      "RBAC"
       ],
       "Enabled": true
-    },
+      },    
     {
       "ControlID": "AzureDevOps_AgentPool_AuthZ_Project_Dont_Grant_All_Pipeline_Access",
       "Description": "Do not make agent pool accesible to all pipelines in the project.",
