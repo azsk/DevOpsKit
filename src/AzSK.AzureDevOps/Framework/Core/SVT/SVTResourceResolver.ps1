@@ -26,30 +26,16 @@ class SVTResourceResolver: AzSKRoot {
     hidden [string[]] $ReleaseNames = @();
     hidden [string[]] $AgentPools = @();
     hidden [string[]] $ServiceConnections = @();
-    SVTResourceResolver([string]$organizationName, $ProjectNames, $BuildNames, $ReleaseNames, $AgentPools, $ScanAllArtifacts, $PATToken, $ResourceTypeName): Base($organizationName, $PATToken) {
-        $this.SetallTheParamValues($organizationName, $ProjectNames, $BuildNames, $ReleaseNames, $AgentPools, $ScanAllArtifacts, $PATToken, $ResourceTypeName);
+    SVTResourceResolver([string]$organizationName, $ProjectNames, $BuildNames, $ReleaseNames, $AgentPools, $ServiceConnectionNames,  $ScanAllArtifacts, $PATToken, $ResourceTypeName): Base($organizationName, $PATToken) {
+        $this.SetallTheParamValues($organizationName, $ProjectNames, $BuildNames, $ReleaseNames, $AgentPools, $ServiceConnectionNames, $ScanAllArtifacts, $PATToken, $ResourceTypeName);
     }
 
     SVTResourceResolver([string]$organizationName, $ProjectNames, $BuildNames, $ReleaseNames, $AgentPools, $ServiceConnectionNames, $MaxObj, $ScanAllArtifacts, $PATToken, $ResourceTypeName): Base($organizationName, $PATToken) {
         $this.MaxObjectsToScan = $MaxObj #default = 0 => scan all if "*" specified...
-
-        if (-not [string]::IsNullOrEmpty($ServiceConnectionNames)) {
-            $this.ServiceConnections += $this.ConvertToStringArray($ServiceConnectionNames);
-
-            if ($this.ServiceConnections.Count -eq 0) {
-                throw [SuppressedException] "The parameter 'ServiceConnectionNames' does not contain any string."
-            }
-        }	
-        #Implicit behavior to scan all service connections if its list is not explicitly provided 
-        if ($ScanAllArtifacts -or ([string]::IsNullOrEmpty($ServiceConnectionNames) -and $ResourceTypeName -eq [ResourceTypeName]::ServiceConnection )) {
-            $this.ServiceConnections = "*"
-        }
-
-        $this.SetallTheParamValues($organizationName, $ProjectNames, $BuildNames, $ReleaseNames, $AgentPools, $ScanAllArtifacts, $PATToken, $ResourceTypeName);
-                
+        $this.SetallTheParamValues($organizationName, $ProjectNames, $BuildNames, $ReleaseNames, $AgentPools, $ServiceConnectionNames, $ScanAllArtifacts, $PATToken, $ResourceTypeName);            
     }
 
-    [void] SetallTheParamValues([string]$organizationName, $ProjectNames, $BuildNames, $ReleaseNames, $AgentPools, $ScanAllArtifacts, $PATToken, $ResourceTypeName) { 
+    [void] SetallTheParamValues([string]$organizationName, $ProjectNames, $BuildNames, $ReleaseNames, $AgentPools, $ServiceConnectionNames, $ScanAllArtifacts, $PATToken, $ResourceTypeName) { 
         $this.organizationName = $organizationName
         $this.ResourceTypeName = $ResourceTypeName
 
@@ -84,6 +70,17 @@ class SVTResourceResolver: AzSKRoot {
             $this.ReleaseNames = "*"
         }
 
+        if (-not [string]::IsNullOrEmpty($ServiceConnectionNames)) {
+            $this.ServiceConnections += $this.ConvertToStringArray($ServiceConnectionNames);
+
+            if ($this.ServiceConnections.Count -eq 0) {
+                throw [SuppressedException] "The parameter 'ServiceConnectionNames' does not contain any string."
+            }
+        }	
+        elseif ($ResourceTypeName -eq [ResourceTypeName]::ServiceConnection) {
+            $this.ServiceConnections = "*"
+        }
+
         if (-not [string]::IsNullOrEmpty($AgentPools)) {
             $this.AgentPools += $this.ConvertToStringArray($AgentPools);
             if ($this.AgentPools.Count -eq 0) {
@@ -99,10 +96,11 @@ class SVTResourceResolver: AzSKRoot {
             $this.BuildNames = "*"
             $this.ReleaseNames = "*"
             $this.AgentPools = "*"
+            $this.ServiceConnections = "*"
         }  
 
         if ($this.ProjectNames -eq "*" -or $this.BuildNames -eq "*" -or $this.ReleaseNames -eq "*" -or $this.ServiceConnections -eq "*" -or $this.AgentPools -eq "*") {            
-            $this.PublishCustomMessage("Using '*' can take a long time for the scan to complete in larger projects. You may want to provide a comma-separated list of projects, builds, releases, service connections and agent pools. `n ", [MessageType]::Warning);
+            $this.PublishCustomMessage("Using '*' can take a long time for the scan to complete in larger projects. `nYou may want to provide a comma-separated list of projects, builds, releases, service connections and agent pools. `n ", [MessageType]::Warning);
         }
     }
 
@@ -166,75 +164,51 @@ class SVTResourceResolver: AzSKRoot {
                 Write-Host 'Project not found: Incorrect organization or project name or you do not have neccessary permission to access the organization.' -ForegroundColor Red
                 throw;
             }
-            if($this.ProjectNames -eq "*")
+            if (([Helpers]::CheckMember($responseObj, "count") -and $responseObj[0].count -gt 0) -or (($responseObj | Measure-Object).Count -gt 0 -and [Helpers]::CheckMember($responseObj[0], "name")))
             {
-                $projects = $responseObj
-            }
-            else {
-                $projects = $responseObj | Where-Object { $this.ProjectNames -contains $_.name } 
-            }
-            
-            $responseObj = $null;  
-            Remove-Variable responseObj;
-            
-            $nProj = $this.MaxObjectsToScan;
-            if (!$projects) {
-                Write-Host 'No project found to perform the scan.' -ForegroundColor Red
-            }
-            foreach ($thisProj in $projects) 
-            {
-                $projectName = $thisProj.name
-                if ($this.ResourceTypeName -in ([ResourceTypeName]::Project, [ResourceTypeName]::All, [ResourceTypeName]::Org_Project_User)) {
-                    $svtResource = [SVTResource]::new();
-                    $svtResource.ResourceName = $thisProj.name;
-                    $svtResource.ResourceGroupName = $this.organizationName
-                    $svtResource.ResourceType = "AzureDevOps.Project";
-                    $svtResource.ResourceId = $thisProj.url
-                    $svtResource.ResourceTypeMapping = ([SVTMapping]::AzSKDevOpsResourceMapping |
-                        Where-Object { $_.ResourceType -eq $svtResource.ResourceType } |
-                        Select-Object -First 1)
-                
-               
-                    $svtResource.ResourceDetails = New-Object -TypeName psobject -Property @{ ResourceLink = ($svtResource.ResourceId.Replace('/_apis/projects', '') + '/_settings/') }
-                    $this.SVTResources += $svtResource
+                if($this.ProjectNames -eq "*")
+                {
+                    $projects = $responseObj
                 }
-
-                if ($this.BuildNames.Count -gt 0 -and ($this.ResourceTypeName -in ([ResourceTypeName]::Build, [ResourceTypeName]::All, [ResourceTypeName]::Build_Release, [ResourceTypeName]::Build_Release_SvcConn_AgentPool_User))) {
-                    if ($this.ProjectNames -ne "*") {
-                        $this.PublishCustomMessage("Getting build configurations...");
+                else {
+                    $projects = $responseObj | Where-Object { $this.ProjectNames -contains $_.name } 
+                }
+                
+                $responseObj = $null;  
+                Remove-Variable responseObj;
+                
+                $nProj = $this.MaxObjectsToScan;
+                if (!$projects) {
+                    Write-Host 'No project found to perform the scan.' -ForegroundColor Red
+                }
+                foreach ($thisProj in $projects) 
+                {
+                    $projectName = $thisProj.name
+                    if ($this.ResourceTypeName -in ([ResourceTypeName]::Project, [ResourceTypeName]::All, [ResourceTypeName]::Org_Project_User)) {
+                        $svtResource = [SVTResource]::new();
+                        $svtResource.ResourceName = $thisProj.name;
+                        $svtResource.ResourceGroupName = $this.organizationName
+                        $svtResource.ResourceType = "AzureDevOps.Project";
+                        $svtResource.ResourceId = $thisProj.url
+                        $svtResource.ResourceTypeMapping = ([SVTMapping]::AzSKDevOpsResourceMapping |
+                            Where-Object { $_.ResourceType -eq $svtResource.ResourceType } |
+                            Select-Object -First 1)
+                    
+                
+                        $svtResource.ResourceDetails = New-Object -TypeName psobject -Property @{ ResourceLink = ($svtResource.ResourceId.Replace('/_apis/projects', '') + '/_settings/') }
+                        $this.SVTResources += $svtResource
                     }
 
-                    if ($this.BuildNames -eq "*") {
-                        $buildDefnURL = "https://dev.azure.com/{0}/{1}/_apis/build/definitions?api-version=4.1" -f $($this.SubscriptionContext.SubscriptionName), $thisProj.name;
-                        $buildDefnsObj = [WebRequestHelper]::InvokeGetWebRequest($buildDefnURL) 
-                        if (([Helpers]::CheckMember($buildDefnsObj, "count") -and $buildDefnsObj[0].count -gt 0) -or (($buildDefnsObj | Measure-Object).Count -gt 0 -and [Helpers]::CheckMember($buildDefnsObj[0], "name"))) {
-                            $nObj = $this.MaxObjectsToScan
-                            foreach ($bldDef in $buildDefnsObj) {
-                                $svtResource = [SVTResource]::new();
-                                $svtResource.ResourceName = $bldDef.name;
-                                $svtResource.ResourceGroupName = $bldDef.project.name;
-                                $svtResource.ResourceType = "AzureDevOps.Build";
-                                $svtResource.ResourceId = $bldDef.url.split('?')[0];
-                                $svtResource.ResourceTypeMapping = ([SVTMapping]::AzSKDevOpsResourceMapping |
-                                    Where-Object { $_.ResourceType -eq $svtResource.ResourceType } |
-                                    Select-Object -First 1)
-                                $svtResource.ResourceDetails = $bldDef
-                                $link = $svtResource.ResourceId.replace('_apis/build/Definitions/', '_build?definitionId=');
-                                $svtResource.ResourceDetails | Add-Member -Name 'ResourceLink' -Type NoteProperty -Value $link;
-                                $this.SVTResources += $svtResource
-
-                                if (--$nObj -eq 0) { break; } 
-                            }
-                            $buildDefnsObj = $null;
-                            Remove-Variable buildDefnsObj;
+                    if ($this.BuildNames.Count -gt 0 -and ($this.ResourceTypeName -in ([ResourceTypeName]::Build, [ResourceTypeName]::All, [ResourceTypeName]::Build_Release, [ResourceTypeName]::Build_Release_SvcConn_AgentPool_User))) {
+                        if ($this.ProjectNames -ne "*") {
+                            $this.PublishCustomMessage("Getting build configurations...");
                         }
-                    }
-                    else {
-                        $this.BuildNames | ForEach-Object {
-                            $buildName = $_
-                            $buildDefnURL = "https://{0}.visualstudio.com/{1}/_apis/build/definitions?name={2}&api-version=5.1-preview.7" -f $($this.SubscriptionContext.SubscriptionName), $projectName, $buildName;
+
+                        if ($this.BuildNames -eq "*") {
+                            $buildDefnURL = "https://dev.azure.com/{0}/{1}/_apis/build/definitions?api-version=4.1" -f $($this.SubscriptionContext.SubscriptionName), $thisProj.name;
                             $buildDefnsObj = [WebRequestHelper]::InvokeGetWebRequest($buildDefnURL) 
                             if (([Helpers]::CheckMember($buildDefnsObj, "count") -and $buildDefnsObj[0].count -gt 0) -or (($buildDefnsObj | Measure-Object).Count -gt 0 -and [Helpers]::CheckMember($buildDefnsObj[0], "name"))) {
+                                $nObj = $this.MaxObjectsToScan
                                 foreach ($bldDef in $buildDefnsObj) {
                                     $svtResource = [SVTResource]::new();
                                     $svtResource.ResourceName = $bldDef.name;
@@ -244,189 +218,219 @@ class SVTResourceResolver: AzSKRoot {
                                     $svtResource.ResourceTypeMapping = ([SVTMapping]::AzSKDevOpsResourceMapping |
                                         Where-Object { $_.ResourceType -eq $svtResource.ResourceType } |
                                         Select-Object -First 1)
-      
+                                    $svtResource.ResourceDetails = $bldDef
                                     $link = $svtResource.ResourceId.replace('_apis/build/Definitions/', '_build?definitionId=');
-                                    $svtResource.ResourceDetails = New-Object -TypeName psobject -Property @{ ResourceLink = $link }
-                                                                                                     
+                                    $svtResource.ResourceDetails | Add-Member -Name 'ResourceLink' -Type NoteProperty -Value $link;
                                     $this.SVTResources += $svtResource
+
+                                    if (--$nObj -eq 0) { break; } 
                                 }
                                 $buildDefnsObj = $null;
                                 Remove-Variable buildDefnsObj;
                             }
                         }
-                    }          
-                }
-
-                if ($this.ReleaseNames.Count -gt 0 -and ($this.ResourceTypeName -in ([ResourceTypeName]::Release, [ResourceTypeName]::All, [ResourceTypeName]::Build_Release, [ResourceTypeName]::Build_Release_SvcConn_AgentPool_User)))
-                {
-                    if ($this.ProjectNames -ne "*") {
-                        $this.PublishCustomMessage("Getting release configurations...");
-                    }
-                    if ($this.ReleaseNames -eq "*") 
-                    {
-                        $releaseDefnURL = "https://vsrm.dev.azure.com/{0}/{1}/_apis/release/definitions?api-version=4.1-preview.3" -f $($this.SubscriptionContext.SubscriptionName), $projectName;
-                        $releaseDefnsObj = [WebRequestHelper]::InvokeGetWebRequest($releaseDefnURL);
-                        if (([Helpers]::CheckMember($releaseDefnsObj, "count") -and $releaseDefnsObj[0].count -gt 0) -or (($releaseDefnsObj | Measure-Object).Count -gt 0 -and [Helpers]::CheckMember($releaseDefnsObj[0], "name"))) {
-                            $nObj = $this.MaxObjectsToScan
-                            foreach ($relDef in $releaseDefnsObj) {
-                                $svtResource = [SVTResource]::new();
-                                $svtResource.ResourceName = $relDef.name;
-                                $svtResource.ResourceGroupName = $projectName;
-                                $svtResource.ResourceType = "AzureDevOps.Release";
-                                $svtResource.ResourceId = $relDef.url
-                                $svtResource.ResourceTypeMapping = ([SVTMapping]::AzSKDevOpsResourceMapping |
-                                    Where-Object { $_.ResourceType -eq $svtResource.ResourceType } |
-                                    Select-Object -First 1)
-
-                                $link = "https://dev.azure.com/{0}/{1}/_release?_a=releases&view=mine&definitionId={2}" -f $this.SubscriptionContext.SubscriptionName, $projectName, $svtResource.ResourceId.split('/')[-1];
-                                $svtResource.ResourceDetails = New-Object -TypeName psobject -Property @{ ResourceLink = $link }
-                                                                
-                                $this.SVTResources += $svtResource
-
-                                if (--$nObj -eq 0) { break; } 
-                            }
-                            $releaseDefnsObj = $null;
-                        }
-                    }
-                    else {
-                        try {
-                            $this.ReleaseNames | ForEach-Object {
-                                $resleaseName = $_
-                                $releaseDefnURL = "https://{0}.vsrm.visualstudio.com/_apis/Contribution/HierarchyQuery/project/{1}?api-version=5.0-preview.1" -f $($this.SubscriptionContext.SubscriptionName), $projectName;
-                                $inputbody = "{
-                                'contributionIds': [
-                                    'ms.vss-releaseManagement-web.search-definitions-data-provider'
-                                ],
-                                'dataProviderContext': {
-                                    'properties': {
-                                        'searchText': '$resleaseName',
-                                        'sourcePage': {
-                                            'routeValues': {
-                                                'project': '$projectName'
-                                            }
-                                        }
-                                    }
-                                }
-                            }" | ConvertFrom-Json
-                            
-                                $releaseDefnsObj = [WebRequestHelper]::InvokePostWebRequest($releaseDefnURL, $inputbody);
-                                if (([Helpers]::CheckMember($releaseDefnsObj, "dataProviders") -and $releaseDefnsObj.dataProviders."ms.vss-releaseManagement-web.search-definitions-data-provider") -and [Helpers]::CheckMember($releaseDefnsObj.dataProviders."ms.vss-releaseManagement-web.search-definitions-data-provider", "releaseDefinitions") ) {
-                                    $releaseDefinitions = $releaseDefnsObj.dataProviders."ms.vss-releaseManagement-web.search-definitions-data-provider".releaseDefinitions  
-                                    foreach ($relDef in $releaseDefinitions) {
+                        else {
+                            $this.BuildNames | ForEach-Object {
+                                $buildName = $_
+                                $buildDefnURL = "https://{0}.visualstudio.com/{1}/_apis/build/definitions?name={2}&api-version=5.1-preview.7" -f $($this.SubscriptionContext.SubscriptionName), $projectName, $buildName;
+                                $buildDefnsObj = [WebRequestHelper]::InvokeGetWebRequest($buildDefnURL) 
+                                if (([Helpers]::CheckMember($buildDefnsObj, "count") -and $buildDefnsObj[0].count -gt 0) -or (($buildDefnsObj | Measure-Object).Count -gt 0 -and [Helpers]::CheckMember($buildDefnsObj[0], "name"))) {
+                                    foreach ($bldDef in $buildDefnsObj) {
                                         $svtResource = [SVTResource]::new();
-                                        $svtResource.ResourceName = $relDef.name;
-                                        $svtResource.ResourceGroupName = $projectName;
-                                        $svtResource.ResourceType = "AzureDevOps.Release";
-                                        $svtResource.ResourceId = $relDef.url
+                                        $svtResource.ResourceName = $bldDef.name;
+                                        $svtResource.ResourceGroupName = $bldDef.project.name;
+                                        $svtResource.ResourceType = "AzureDevOps.Build";
+                                        $svtResource.ResourceId = $bldDef.url.split('?')[0];
                                         $svtResource.ResourceTypeMapping = ([SVTMapping]::AzSKDevOpsResourceMapping |
                                             Where-Object { $_.ResourceType -eq $svtResource.ResourceType } |
                                             Select-Object -First 1)
-
-                                        $link = "https://dev.azure.com/{0}/{1}/_release?_a=releases&view=mine&definitionId={2}" -f $this.SubscriptionContext.SubscriptionName, $projectName, $svtResource.ResourceId.split('/')[-1];
+        
+                                        $link = $svtResource.ResourceId.replace('_apis/build/Definitions/', '_build?definitionId=');
                                         $svtResource.ResourceDetails = New-Object -TypeName psobject -Property @{ ResourceLink = $link }
-                                                                    
+                                                                                                        
                                         $this.SVTResources += $svtResource
                                     }
-                                    $releaseDefinitions = $null;
+                                    $buildDefnsObj = $null;
+                                    Remove-Variable buildDefnsObj;
                                 }
-
                             }
-                        }
-                        catch {
-                            Write-Error $_.Exception.Message;
-                            Write-Error 'Insufficient Privileges. You do not have the level of access necessary to perform the scan.'
-                        }
+                        }          
                     }
-                }
 
-                if ($this.ServiceConnections.Count -gt 0 -and ($this.ResourceTypeName -in ([ResourceTypeName]::ServiceConnection, [ResourceTypeName]::All, [ResourceTypeName]::Build_Release_SvcConn_AgentPool_User)))
-                {
-                    if ($this.ProjectNames -ne "*") {
-                        $this.PublishCustomMessage("Getting service endpoint configurations...");
-                    }
-                
-                    $serviceEndpointURL = "https://dev.azure.com/{0}/{1}/_apis/serviceendpoint/endpoints?api-version=4.1-preview.1" -f $($this.organizationName), $($projectName);
-                    $serviceEndpointObj = [WebRequestHelper]::InvokeGetWebRequest($serviceEndpointURL)
-                
-                    if (([Helpers]::CheckMember($serviceEndpointObj, "count") -and $serviceEndpointObj[0].count -gt 0) -or (($serviceEndpointObj | Measure-Object).Count -gt 0 -and [Helpers]::CheckMember($serviceEndpointObj[0], "name"))) {
-                        # Currently get only Azure Connections as all controls are applicable for same
-                   
-                        $Connections = $null;
-                        if ($this.ServiceConnections -eq "*") {
-                            $Connections = $serviceEndpointObj | Where-Object { ($_.type -eq "azurerm" -or $_.type -eq "azure" -or $_.type -eq "git" -or $_.type -eq "github") } 
+                    if ($this.ReleaseNames.Count -gt 0 -and ($this.ResourceTypeName -in ([ResourceTypeName]::Release, [ResourceTypeName]::All, [ResourceTypeName]::Build_Release, [ResourceTypeName]::Build_Release_SvcConn_AgentPool_User)))
+                    {
+                        if ($this.ProjectNames -ne "*") {
+                            $this.PublishCustomMessage("Getting release configurations...");
+                        }
+                        if ($this.ReleaseNames -eq "*") 
+                        {
+                            $releaseDefnURL = "https://vsrm.dev.azure.com/{0}/{1}/_apis/release/definitions?api-version=4.1-preview.3" -f $($this.SubscriptionContext.SubscriptionName), $projectName;
+                            $releaseDefnsObj = [WebRequestHelper]::InvokeGetWebRequest($releaseDefnURL);
+                            if (([Helpers]::CheckMember($releaseDefnsObj, "count") -and $releaseDefnsObj[0].count -gt 0) -or (($releaseDefnsObj | Measure-Object).Count -gt 0 -and [Helpers]::CheckMember($releaseDefnsObj[0], "name"))) {
+                                $nObj = $this.MaxObjectsToScan
+                                foreach ($relDef in $releaseDefnsObj) {
+                                    $svtResource = [SVTResource]::new();
+                                    $svtResource.ResourceName = $relDef.name;
+                                    $svtResource.ResourceGroupName = $projectName;
+                                    $svtResource.ResourceType = "AzureDevOps.Release";
+                                    $svtResource.ResourceId = $relDef.url
+                                    $svtResource.ResourceTypeMapping = ([SVTMapping]::AzSKDevOpsResourceMapping |
+                                        Where-Object { $_.ResourceType -eq $svtResource.ResourceType } |
+                                        Select-Object -First 1)
+
+                                    $link = "https://dev.azure.com/{0}/{1}/_release?_a=releases&view=mine&definitionId={2}" -f $this.SubscriptionContext.SubscriptionName, $projectName, $svtResource.ResourceId.split('/')[-1];
+                                    $svtResource.ResourceDetails = New-Object -TypeName psobject -Property @{ ResourceLink = $link }
+                                                                    
+                                    $this.SVTResources += $svtResource
+
+                                    if (--$nObj -eq 0) { break; } 
+                                }
+                                $releaseDefnsObj = $null;
+                            }
                         }
                         else {
-                            $Connections = $serviceEndpointObj | Where-Object { ($_.type -eq "azurerm" -or $_.type -eq "azure" -or $_.type -eq "git" -or $_.type -eq "github") -and ($this.ServiceConnections -eq $_.name) } #-or $_.type -eq "git" -or $_.type -eq "git"  
-                        }
+                            try {
+                                $this.ReleaseNames | ForEach-Object {
+                                    $releaseName = $_
+                                    $releaseDefnURL = "https://{0}.vsrm.visualstudio.com/_apis/Contribution/HierarchyQuery/project/{1}?api-version=5.0-preview.1" -f $($this.SubscriptionContext.SubscriptionName), $projectName;
+                                    $inputbody = "{
+                                    'contributionIds': [
+                                        'ms.vss-releaseManagement-web.search-definitions-data-provider'
+                                    ],
+                                    'dataProviderContext': {
+                                        'properties': {
+                                            'searchText': '$releaseName',
+                                            'sourcePage': {
+                                                'routeValues': {
+                                                    'project': '$projectName'
+                                                }
+                                            }
+                                        }
+                                    }
+                                }" | ConvertFrom-Json
+                                
+                                    $releaseDefnsObj = [WebRequestHelper]::InvokePostWebRequest($releaseDefnURL, $inputbody);
+                                    if (([Helpers]::CheckMember($releaseDefnsObj, "dataProviders") -and $releaseDefnsObj.dataProviders."ms.vss-releaseManagement-web.search-definitions-data-provider") -and [Helpers]::CheckMember($releaseDefnsObj.dataProviders."ms.vss-releaseManagement-web.search-definitions-data-provider", "releaseDefinitions") ) {
+                                        $releaseDefinitions = $releaseDefnsObj.dataProviders."ms.vss-releaseManagement-web.search-definitions-data-provider".releaseDefinitions  
+                                        foreach ($relDef in $releaseDefinitions) {
+                                            $svtResource = [SVTResource]::new();
+                                            $svtResource.ResourceName = $relDef.name;
+                                            $svtResource.ResourceGroupName = $projectName;
+                                            $svtResource.ResourceType = "AzureDevOps.Release";
+                                            $svtResource.ResourceId = $relDef.url
+                                            $svtResource.ResourceTypeMapping = ([SVTMapping]::AzSKDevOpsResourceMapping |
+                                                Where-Object { $_.ResourceType -eq $svtResource.ResourceType } |
+                                                Select-Object -First 1)
 
-                        $serviceEndpointObj = $null;
-                        Remove-Variable  serviceEndpointObj;
-                        $nObj = $this.MaxObjectsToScan
-                        foreach ($connectionObject in $Connections) {
-                            $svtResource = [SVTResource]::new();
-                            $svtResource.ResourceName = $connectionObject.Name;
-                            $svtResource.ResourceGroupName = $projectName;
-                            $svtResource.ResourceType = "AzureDevOps.ServiceConnection";
-                            $svtResource.ResourceId = "Organization/$($this.organizationName)/Project/$projectName/$($connectionObject.Name)/$($connectionObject.Id)"
-                            $svtResource.ResourceTypeMapping = ([SVTMapping]::AzSKDevOpsResourceMapping |
-                                Where-Object { $_.ResourceType -eq $svtResource.ResourceType } |
-                                Select-Object -First 1)
-                        
-                            $svtResource.ResourceDetails = $connectionObject
-                        
-                            $link = "https://dev.azure.com/$($this.organizationName)/$projectName/_settings/adminservices?resourceId=$($connectionObject.Id)"; 
-                            $svtResource.ResourceDetails | Add-Member -Name 'ResourceLink' -Type NoteProperty -Value $link;
-                            $this.SVTResources += $svtResource
+                                            $link = "https://dev.azure.com/{0}/{1}/_release?_a=releases&view=mine&definitionId={2}" -f $this.SubscriptionContext.SubscriptionName, $projectName, $svtResource.ResourceId.split('/')[-1];
+                                            $svtResource.ResourceDetails = New-Object -TypeName psobject -Property @{ ResourceLink = $link }
+                                                                        
+                                            $this.SVTResources += $svtResource
+                                        }
+                                        $releaseDefinitions = $null;
+                                    }
 
-                            if (--$nObj -eq 0) { break; }
+                                }
+                            }
+                            catch {
+                                Write-Error $_.Exception.Message;
+                                Write-Error 'Insufficient Privileges. You do not have the level of access necessary to perform the scan.'
+                            }
                         }
                     }
-                }
-                
-                if ($this.AgentPools.Count -gt 0 -and ($this.ResourceTypeName -in ([ResourceTypeName]::AgentPool, [ResourceTypeName]::All, [ResourceTypeName]::Build_Release_SvcConn_AgentPool_User))) {
-                    if ($this.ProjectNames -ne "*") {
-                        $this.PublishCustomMessage("Getting agent pools configurations...");
-                    }
 
-                    $agentPoolsDefnURL = "https://{0}.visualstudio.com/{1}/_settings/agentqueues?__rt=fps&__ver=2" -f $($this.SubscriptionContext.SubscriptionName), $projectName;
-                    try {
-                      
-                        $agentPoolsDefnsObj = [WebRequestHelper]::InvokeGetWebRequest($agentPoolsDefnURL);
-                                                   
-                        if (([Helpers]::CheckMember($agentPoolsDefnsObj, "fps.dataProviders.data") ) -and (($agentPoolsDefnsObj.fps.dataProviders.data."ms.vss-build-web.agent-queues-data-provider") -and $agentPoolsDefnsObj.fps.dataProviders.data."ms.vss-build-web.agent-queues-data-provider".taskAgentQueues)) {
-                            $nObj = $this.MaxObjectsToScan
-                            $taskAgentQueues = $null;
-                            if ($this.AgentPools -eq "*") {
-                                $taskAgentQueues = $agentPoolsDefnsObj.fps.dataProviders.data."ms.vss-build-web.agent-queues-data-provider".taskAgentQueues;
+                    if ($this.ServiceConnections.Count -gt 0 -and ($this.ResourceTypeName -in ([ResourceTypeName]::ServiceConnection, [ResourceTypeName]::All, [ResourceTypeName]::Build_Release_SvcConn_AgentPool_User)))
+                    {
+                        if ($this.ProjectNames -ne "*") {
+                            $this.PublishCustomMessage("Getting service endpoint configurations...");
+                        }
+                    
+                        # Here we are fetching all the svc conns in the project and then filtering out. But in build & release we fetch them individually unless '*' is used for fetching all of them.
+                        $serviceEndpointURL = "https://dev.azure.com/{0}/{1}/_apis/serviceendpoint/endpoints?api-version=4.1-preview.1" -f $($this.organizationName), $($projectName);
+                        $serviceEndpointObj = [WebRequestHelper]::InvokeGetWebRequest($serviceEndpointURL)
+                    
+                        if (([Helpers]::CheckMember($serviceEndpointObj, "count") -and $serviceEndpointObj[0].count -gt 0) -or (($serviceEndpointObj | Measure-Object).Count -gt 0 -and [Helpers]::CheckMember($serviceEndpointObj[0], "name"))) {
+                            # Currently get only Azure Connections as all controls are applicable for same
+                    
+                            $Connections = $null;
+                            if ($this.ServiceConnections -eq "*") {
+                                $Connections = $serviceEndpointObj | Where-Object { ($_.type -eq "azurerm" -or $_.type -eq "azure" -or $_.type -eq "git" -or $_.type -eq "github") } 
                             }
                             else {
-                                $taskAgentQueues = $agentPoolsDefnsObj.fps.dataProviders.data."ms.vss-build-web.agent-queues-data-provider".taskAgentQueues | Where-Object { ($this.AgentPools -contains $_.name) } 
+                                $Connections = $serviceEndpointObj | Where-Object { ($_.type -eq "azurerm" -or $_.type -eq "azure" -or $_.type -eq "git" -or $_.type -eq "github") -and ($this.ServiceConnections -eq $_.name) }  
                             }
-                            
-                            foreach ($taq in $taskAgentQueues) {
+
+                            $serviceEndpointObj = $null;
+                            Remove-Variable  serviceEndpointObj;
+                            $nObj = $this.MaxObjectsToScan
+                            foreach ($connectionObject in $Connections) {
                                 $svtResource = [SVTResource]::new();
-                                $svtResource.ResourceName = $taq.name;
+                                $svtResource.ResourceName = $connectionObject.Name;
                                 $svtResource.ResourceGroupName = $projectName;
-                                $svtResource.ResourceType = "AzureDevOps.AgentPool";
-                                $svtResource.ResourceId = "https://{0}.visualstudio.com/_apis/securityroles/scopes/distributedtask.agentqueuerole/roleassignments/resources/{1}_{2}" -f $($this.SubscriptionContext.SubscriptionName), $($taq.projectId), $taq.id   
+                                $svtResource.ResourceType = "AzureDevOps.ServiceConnection";
+                                $svtResource.ResourceId = "Organization/$($this.organizationName)/Project/$projectName/$($connectionObject.Name)/$($connectionObject.Id)"
                                 $svtResource.ResourceTypeMapping = ([SVTMapping]::AzSKDevOpsResourceMapping |
                                     Where-Object { $_.ResourceType -eq $svtResource.ResourceType } |
                                     Select-Object -First 1)
+                            
+                                $svtResource.ResourceDetails = $connectionObject
+                            
+                                $link = "https://dev.azure.com/$($this.organizationName)/$projectName/_settings/adminservices?resourceId=$($connectionObject.Id)"; 
+                                $svtResource.ResourceDetails | Add-Member -Name 'ResourceLink' -Type NoteProperty -Value $link;
                                 $this.SVTResources += $svtResource
 
                                 if (--$nObj -eq 0) { break; }
                             }
-                            $taskAgentQueues = $null;
-                            Remove-Variable taskAgentQueues;
                         }
                     }
-                    catch {
-                        Write-Warning "Insufficient Privileges. You do not have the level of access to perform the scan.";
-                        Write-Error $_.Exception.Message;
-                    }              
+                    
+                    if ($this.AgentPools.Count -gt 0 -and ($this.ResourceTypeName -in ([ResourceTypeName]::AgentPool, [ResourceTypeName]::All, [ResourceTypeName]::Build_Release_SvcConn_AgentPool_User))) {
+                        if ($this.ProjectNames -ne "*") {
+                            $this.PublishCustomMessage("Getting agent pools configurations...");
+                        }
+                        # Here we are fetching all the agent pools in the project and then filtering out. But in build & release we fetch them individually unless '*' is used for fetching all of them.
+                        $agentPoolsDefnURL = "https://{0}.visualstudio.com/{1}/_settings/agentqueues?__rt=fps&__ver=2" -f $($this.SubscriptionContext.SubscriptionName), $projectName;
+                        try {
+                        
+                            $agentPoolsDefnsObj = [WebRequestHelper]::InvokeGetWebRequest($agentPoolsDefnURL);
+                            
+                            #Here the return obj for agent pool is different than prj, build, release & svc conns. Also, Azure Pipelines agent pool will always be a part of org and project. We can't delete it.
+                            if (([Helpers]::CheckMember($agentPoolsDefnsObj, "fps.dataProviders.data") ) -and (($agentPoolsDefnsObj.fps.dataProviders.data."ms.vss-build-web.agent-queues-data-provider") -and $agentPoolsDefnsObj.fps.dataProviders.data."ms.vss-build-web.agent-queues-data-provider".taskAgentQueues)) {
+                                $nObj = $this.MaxObjectsToScan
+                                $taskAgentQueues = $null;
+                                if ($this.AgentPools -eq "*") {
+                                    # We need to filter out legacy agent pools (Hosted, Hosted VS 2017 etc.) as they are not visible to user on the portal. As a result, they won't be able to remediate their respective controls
+                                    $taskAgentQueues = $agentPoolsDefnsObj.fps.dataProviders.data."ms.vss-build-web.agent-queues-data-provider".taskAgentQueues | where-object{$_.pool.isLegacy -eq $false};
+                                }
+                                else {
+                                    $taskAgentQueues = $agentPoolsDefnsObj.fps.dataProviders.data."ms.vss-build-web.agent-queues-data-provider".taskAgentQueues | Where-Object {($_.pool.isLegacy -eq $false) -and ($this.AgentPools -contains $_.name) } 
+                                }
+                                
+                                foreach ($taq in $taskAgentQueues) {
+                                    $svtResource = [SVTResource]::new();
+                                    $svtResource.ResourceName = $taq.name;
+                                    $svtResource.ResourceGroupName = $projectName;
+                                    $svtResource.ResourceType = "AzureDevOps.AgentPool";
+                                    $svtResource.ResourceId = "https://{0}.visualstudio.com/_apis/securityroles/scopes/distributedtask.agentqueuerole/roleassignments/resources/{1}_{2}" -f $($this.SubscriptionContext.SubscriptionName), $($taq.projectId), $taq.id   
+                                    $svtResource.ResourceTypeMapping = ([SVTMapping]::AzSKDevOpsResourceMapping |
+                                        Where-Object { $_.ResourceType -eq $svtResource.ResourceType } |
+                                        Select-Object -First 1)
+                                    $this.SVTResources += $svtResource
+
+                                    if (--$nObj -eq 0) { break; }
+                                }
+                                $taskAgentQueues = $null;
+                                Remove-Variable taskAgentQueues;
+                            }
+                        }
+                        catch {
+                            Write-Warning "Insufficient Privileges. You do not have the level of access to perform the scan.";
+                            Write-Error $_.Exception.Message;
+                        }              
+                    }
+                    if (--$nProj -eq 0) { break; } #nProj is set to MaxObj before loop.
+                    
                 }
-                if (--$nProj -eq 0) { break; } #nProj is set to MaxObj before loop.
-                
             }
         }
         $this.SVTResourcesFoundCount = $this.SVTResources.Count
