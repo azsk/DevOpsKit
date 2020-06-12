@@ -245,8 +245,6 @@ class PartialScanManager
 	#Method to fetch ResourceTrackerFile as an object
 	hidden [void] GetResourceScanTrackerObject()
 	{
-		if($null -eq $this.ResourceScanTrackerObj)
-		{
             if ($null -eq $this.ScanPendingForResources -and ![string]::isnullorwhitespace($this.subId))
 			{
 				 $this.GetResourceTrackerFile($this.subId);
@@ -279,15 +277,11 @@ class PartialScanManager
             {
                 Write-Host ("Durable resource tracker files are not supported by partial scan currently.") -ForegroundColor red
             }
-		}
 	}
 
 	[ActiveStatus] IsPartialScanInProgress($subId)
 	{
-		if($null -eq $this.ScanPendingForResources)
-		{
-		 $this.GetResourceTrackerFile($subId);
-		}
+		$this.GetResourceTrackerFile($subId);
 		if($null -ne $this.ControlSettings.PartialScan)
 		{
 			$resourceTrackerFileValidforDays = [Int32]::Parse($this.ControlSettings.PartialScan.ResourceTrackerValidforDays);
