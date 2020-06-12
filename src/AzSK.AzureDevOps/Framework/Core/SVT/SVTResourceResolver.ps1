@@ -101,49 +101,8 @@ class SVTResourceResolver: AzSKRoot {
             $this.AgentPools = "*"
         }  
 
-        if ($this.ProjectNames -eq "*" -or $this.BuildNames -eq "*" -or $this.ReleaseNames -eq "*" -or $this.ServiceConnections -eq "*" -or $this.AgentPools -eq "*") {
-            $message = "";
-            if($this.ProjectNames -eq "*") 
-            {
-                $message = "projects";
-            }
-            if($this.BuildNames -eq "*") 
-            {
-                if($message -ne ""){
-                  $message += ", builds";
-                }
-                else {
-                    $message += "builds";
-                }
-            }
-            if($this.ReleaseNames -eq "*") 
-            {
-                if($message -ne ""){
-                 $message += ", releases";
-                }
-                else {
-                    $message += "releases"; 
-                }
-            }
-            if($this.ServiceConnections -eq "*") 
-            {
-                if($message -ne ""){
-                 $message += ", service connections";
-                }
-                else {
-                    $message += "service connections";
-                }
-            }
-            if($this.AgentPools -eq "*") 
-            {
-                if($message -eq ""){
-                    $message += "agent pools";
-                   }
-                   else {
-                       $message += " and agent pools";
-                   }
-            }
-            $this.PublishCustomMessage("Using '*' can take a long time for the scan to complete in larger projects. You may want to provide a comma-separated list of $($message). `n ", [MessageType]::Warning);
+        if ($this.ProjectNames -eq "*" -or $this.BuildNames -eq "*" -or $this.ReleaseNames -eq "*" -or $this.ServiceConnections -eq "*" -or $this.AgentPools -eq "*") {            
+            $this.PublishCustomMessage("Using '*' can take a long time for the scan to complete in larger projects. You may want to provide a comma-separated list of projects, builds, releases, service connections and agent pools. `n ", [MessageType]::Warning);
         }
     }
 
