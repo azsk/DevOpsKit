@@ -26,7 +26,7 @@
       "Description": "Service Connection should not be provided access at subscription level",
       "Id": "ServiceConnection120",
       "ControlSeverity": "High",
-      "Automated": "Yes",
+      "Automated": "No",
       "MethodName": "CheckServiceConnectionAccess",
       "Rationale": "Just like AD-based service accounts, SPNs have a single credential and most scenarios that use them cannot support multi-factor authentication. As a result, adding SPNs to a subscription in 'Owners' or 'Contributors' roles is risky.",
       "Recommendation": "Make sure you add SPN at the specific permission scope and role required for your scenario. For example, sometimes 'Contributor' access at 'Resource Group' scope might work. Exact permission will vary based on your use case. If you want to remove the SPN, run command Remove-AzRoleAssignment -ObjectId '{objectId}' -Scope '{scope}' -RoleDefinitionName '{role definition name}'. Run 'Get-Help Remove-AzRoleAssignment -full' for more help.",
