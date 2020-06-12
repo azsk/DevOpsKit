@@ -110,7 +110,7 @@ class SVTResourceResolver: AzSKRoot {
             if($this.BuildNames -eq "*") 
             {
                 if($message -ne ""){
-                  $message += " ,builds";
+                  $message += ", builds";
                 }
                 else {
                     $message += "builds";
@@ -119,7 +119,7 @@ class SVTResourceResolver: AzSKRoot {
             if($this.ReleaseNames -eq "*") 
             {
                 if($message -ne ""){
-                 $message += " ,releases";
+                 $message += ", releases";
                 }
                 else {
                     $message += "releases"; 
@@ -128,7 +128,7 @@ class SVTResourceResolver: AzSKRoot {
             if($this.ServiceConnections -eq "*") 
             {
                 if($message -ne ""){
-                 $message += " ,service connections";
+                 $message += ", service connections";
                 }
                 else {
                     $message += "service connections";
@@ -143,7 +143,7 @@ class SVTResourceResolver: AzSKRoot {
                        $message += " and agent pools";
                    }
             }
-            $this.PublishCustomMessage("Using '*' can take a long time for the scan to complete in larger projects. You may want to provide a comma-separated list of $($message).");
+            $this.PublishCustomMessage("Using '*' can take a long time for the scan to complete in larger projects. You may want to provide a comma-separated list of $($message). `n ", [MessageType]::Warning);
         }
     }
 
@@ -389,7 +389,7 @@ class SVTResourceResolver: AzSKRoot {
                     $serviceEndpointURL = "https://dev.azure.com/{0}/{1}/_apis/serviceendpoint/endpoints?api-version=4.1-preview.1" -f $($this.organizationName), $($projectName);
                     $serviceEndpointObj = [WebRequestHelper]::InvokeGetWebRequest($serviceEndpointURL)
                 
-                    if (($serviceEndpointObj | Measure-Object).Count -gt 0) {
+                    if (([Helpers]::CheckMember($serviceEndpointObj, "count") -and $serviceEndpointObj[0].count -gt 0) -or (($serviceEndpointObj | Measure-Object).Count -gt 0 -and [Helpers]::CheckMember($serviceEndpointObj[0], "name"))) {
                         # Currently get only Azure Connections as all controls are applicable for same
                    
                         $Connections = $null;
@@ -408,13 +408,14 @@ class SVTResourceResolver: AzSKRoot {
                             $svtResource.ResourceName = $connectionObject.Name;
                             $svtResource.ResourceGroupName = $projectName;
                             $svtResource.ResourceType = "AzureDevOps.ServiceConnection";
-                            $svtResource.ResourceId = "Organization/$($this.organizationName)/Project/$projectName/$($connectionObject.Name)"
+                            $svtResource.ResourceId = "Organization/$($this.organizationName)/Project/$projectName/$($connectionObject.Name)/$($connectionObject.Id)"
                             $svtResource.ResourceTypeMapping = ([SVTMapping]::AzSKDevOpsResourceMapping |
                                 Where-Object { $_.ResourceType -eq $svtResource.ResourceType } |
                                 Select-Object -First 1)
                         
                             $svtResource.ResourceDetails = $connectionObject
-                            $link = $svtResource.ResourceId.Replace('Organization', 'https://dev.azure.com').Replace('Project/', '').Replace( $connectionObject.Name, "_settings/adminservices?resourceId=$($svtResource.ResourceDetails.id)") ;
+                        
+                            $link = "https://dev.azure.com/$($this.organizationName)/$projectName/_settings/adminservices?resourceId=$($connectionObject.Id)"; 
                             $svtResource.ResourceDetails | Add-Member -Name 'ResourceLink' -Type NoteProperty -Value $link;
                             $this.SVTResources += $svtResource
 

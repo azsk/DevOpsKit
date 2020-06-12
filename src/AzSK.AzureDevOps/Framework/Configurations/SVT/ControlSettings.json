@@ -17,7 +17,7 @@
      {
       "ResourceType": "Project",
       "ControlIds": [
-        "AzureDevOps_Project_AuthZ_Set_Visibility_Private",
+        "AzureDevOps_Project_AuthZ_Set_Visibility_Private_Or_Enterprise",
         "AzureDevOps_Project_AuthZ_Limit_Job_Scope_To_Current_Project"
       ]
      },

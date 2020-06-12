@@ -60,15 +60,15 @@ class ContextHelper {
 
     static [string] GetAccessToken()
     {
-        # TODO: Handlle login
         if([ContextHelper]::currentContext)
         {
+            # Validate if token is PAT using lenght (PAT has lengh of 52), if PAT dont go to refresh login session.
+            #TODO: Change code to find token type supplied PAT or login session token
             #if token expiry is within 2 min, refresh.
-            if ([ContextHelper]::currentContext.TokenExpireTimeLocal -le [DateTime]::Now.AddMinutes(2))
+            if ([ContextHelper]::currentContext.AccessToken.length -ne 52 -and [ContextHelper]::currentContext.TokenExpireTimeLocal -le [DateTime]::Now.AddMinutes(2))
             {
                 [ContextHelper]::GetCurrentContext($true);
             }
-            #ConvertFrom-SecureString
             return  [ContextHelper]::currentContext.AccessToken
         }
         else
