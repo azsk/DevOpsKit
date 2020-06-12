@@ -309,7 +309,7 @@ function Get-AzSKAzureDevOpsOrgSecurityStatus
 	{
 	try 
 		{
-			$resolver = [SVTResourceResolver]::new($OrganizationName,$null,$null,$null,$null,$null,$PATToken,[ResourceTypeName]::Organization);
+			$resolver = [SVTResourceResolver]::new($OrganizationName,$null,$null,$null,$null,$null,$null,$PATToken,[ResourceTypeName]::Organization);
 			$secStatus = [ServicesSecurityStatus]::new($OrganizationName, $PSCmdlet.MyInvocation, $resolver);
 			if ($secStatus) 
 			{		
@@ -457,7 +457,7 @@ function Get-AzSKAzureDevOpsProjectSecurityStatus
 	{
 	try 
 		{
-			$resolver = [SVTResourceResolver]::new($OrganizationName,$ProjectNames,$null,$null,$null,$null,$PATToken,[ResourceTypeName]::Project);
+			$resolver = [SVTResourceResolver]::new($OrganizationName,$ProjectNames,$null,$null,$null,$null,$null,$PATToken,[ResourceTypeName]::Project);
 			$secStatus = [ServicesSecurityStatus]::new($OrganizationName, $PSCmdlet.MyInvocation, $resolver);
 			if ($secStatus) 
 			{		
@@ -584,7 +584,7 @@ function Get-AzSKAzureDevOpsBuildSecurityStatus
 	{
 	try 
 		{
-			$resolver = [SVTResourceResolver]::new($OrganizationName,$ProjectNames,$BuildNames,$null,$null,$null,$PATToken,[ResourceTypeName]::Build);
+			$resolver = [SVTResourceResolver]::new($OrganizationName,$ProjectNames,$BuildNames,$null,$null,$null,$null,$PATToken,[ResourceTypeName]::Build);
 			$secStatus = [ServicesSecurityStatus]::new($OrganizationName, $PSCmdlet.MyInvocation, $resolver);
 			if ($secStatus) 
 			{		
@@ -592,15 +592,6 @@ function Get-AzSKAzureDevOpsBuildSecurityStatus
 					$secStatus.Severity = $Severity;
 					$secStatus.UseBaselineControls = $UseBaselineControls;
 					$secStatus.UsePreviewBaselineControls = $UsePreviewBaselineControls;
-
-					#build the attestation options object
-				    [AttestationOptions] $attestationOptions = [AttestationOptions]::new();
-				    $attestationOptions.AttestControls = $ControlsToAttest				
-				    $attestationOptions.JustificationText = $JustificationText
-				    $attestationOptions.AttestationStatus = $AttestationStatus
-				    $attestationOptions.IsBulkClearModeOn = $BulkClear
-				    $attestationOptions.IsExemptModeOn = $AddException
-				    $secStatus.AttestationOptions = $attestationOptions;
 
 				return $secStatus.EvaluateControlStatus();
 			} 
@@ -712,7 +703,7 @@ function Get-AzSKAzureDevOpsReleaseSecurityStatus
 	{
 	try 
 		{
-			$resolver = [SVTResourceResolver]::new($OrganizationName,$ProjectNames,$null,$ReleaseNames,$null,$null,$PATToken,[ResourceTypeName]::Release);
+			$resolver = [SVTResourceResolver]::new($OrganizationName,$ProjectNames,$null,$ReleaseNames,$null,$null,$null,$PATToken,[ResourceTypeName]::Release);
 			$secStatus = [ServicesSecurityStatus]::new($OrganizationName, $PSCmdlet.MyInvocation, $resolver);
 			if ($secStatus) 
 			{		
@@ -720,15 +711,6 @@ function Get-AzSKAzureDevOpsReleaseSecurityStatus
 					$secStatus.Severity = $Severity;
 					$secStatus.UseBaselineControls = $UseBaselineControls;
 					$secStatus.UsePreviewBaselineControls = $UsePreviewBaselineControls;
-
-					#build the attestation options object
-				    [AttestationOptions] $attestationOptions = [AttestationOptions]::new();
-				    $attestationOptions.AttestControls = $ControlsToAttest				
-				    $attestationOptions.JustificationText = $JustificationText
-				    $attestationOptions.AttestationStatus = $AttestationStatus
-				    $attestationOptions.IsBulkClearModeOn = $BulkClear
-				    $attestationOptions.IsExemptModeOn = $AddException
-				    $secStatus.AttestationOptions = $attestationOptions;
 					
 				return $secStatus.EvaluateControlStatus();
 			}    
