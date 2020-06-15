@@ -503,6 +503,8 @@ class PIM: AzCommandBase {
         {
             if (($assignments | Measure-Object).Count -gt 0 ) {
                 $matchingAssignment = $assignments | Where-Object { $_.OriginalId -in $resource.ExternalId -and $_.RoleName -eq $roleName -and $_.AssignmentState -eq 'Eligible' }
+                $matchingAssignment = $matchingAssignment | select -Unique
+                
                 if (($matchingAssignment | Measure-Object).Count -gt 0) {
                     $this.PublishCustomMessage("Requesting activation of your [$($matchingAssignment.RoleName)] role on [$($matchingAssignment.ResourceName)]... ", [MessageType]::Info);
                     $resourceId = $matchingAssignment.ResourceId
