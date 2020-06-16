@@ -197,3 +197,6 @@ ModelManifest.xml
 /src/AzSK.sln
 /src/AzSK.Debug
 /src/AzSK/AzSK.sln
+
+# Python Bytecode Caches
+**/__pycache__/
