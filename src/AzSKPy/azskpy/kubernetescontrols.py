@@ -31,23 +31,21 @@ class AKSBootstrap:
 				"service_accounts": []
 			}
 			try:
-				# TODO: Add LATEST_KUBERNETES_VERSION in env from configmap and pods_allowed_namespaces & service_accounts_allowed_namespaces to azsk-config configmap
+				# TODO: Add LATEST_KUBERNETES_VERSION, PODS_ALLOWED_NAMESPACES, SERVICE_ACCOUNTS_ALLOWED_NAMESPACES, TRUSTWORTHY_IMAGE_SOURCES to env from configmap ( Deployment Manifest )
+				# Intended values given below
+				'''
+				self.resources['pods_allowed_namespaces'] = set(["azsk-scanner", "gatekeeper-system", "kube-node-lease", "kube-public", "kube-system", "kured"])
+				self.resources['service_accounts_allowed_namespaces'] = set(["azsk-scanner", "gatekeeper-system", "kube-node-lease", "kube-public", "kube-system", "kured"])
+				self.resources['trustworthy_image_sources'] = set(['k8s.gcr.io','microsoft','mcr.microsoft.com','azskteam'])
+				'''
+
 				config.load_incluster_config()
 
 				v1 = client.CoreV1Api()
 
-				self.resources['pods_allowed_namespaces'] = set(["azsk-scanner", "gatekeeper-system", "kube-node-lease", "kube-public", "kube-system", "kured"])
-				self.resources['service_accounts_allowed_namespaces'] = set(["azsk-scanner", "gatekeeper-system", "kube-node-lease", "kube-public", "kube-system", "kured"])
-				self.resources['trustworthy_image_sources'] = set(['k8s.gcr.io','microsoft','mcr.microsoft.com','azskteam'])
-
-				# TODO: ConfigMap does not work with arrays. Alternative?
-				'''config_map_response = v1.list_config_map_for_all_namespaces()
-				config_maps = list(filter(lambda x: x.metadata.namespace == 'azsk-scanner' and x.metadata.name == 'azsk-config', config_map_response.items))
-
-				if len(config_maps) > 0:
-					self.resources['pods_allowed_namespaces'] = set(config_maps[0]['data']['PODS_ALLOWED_NAMESPACES'])
-					self.resources['service_accounts_allowed_namespaces'] = set(config_maps[0]['data']['SERVICE_ACCOUNTS_ALLOWED_NAMESPACES'])
-					self.resources['trustworthy_image_sources'] = set(config_maps[0]['data']['TRUSTWORTHY_IMAGE_SOURCES'])'''
+				self.resources['pods_allowed_namespaces'] = set(os.environ.get("PODS_ALLOWED_NAMESPACES", "").split(","))
+				self.resources['service_accounts_allowed_namespaces'] = set(os.environ.get("SERVICE_ACCOUNTS_ALLOWED_NAMESPACES", "").split(","))
+				self.resources['trustworthy_image_sources'] = set(os.environ.get("TRUSTWORTHY_IMAGE_SOURCES", "").split(","))
 
 				pod_response = v1.list_pod_for_all_namespaces(watch=False)
 				pods = list(filter(lambda x: x.metadata.namespace not in self.resources['pods_allowed_namespaces'], pod_response.items))
