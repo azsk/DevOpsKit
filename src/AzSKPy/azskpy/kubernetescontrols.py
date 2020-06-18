@@ -802,3 +802,24 @@ class CheckFirewallForEgressTraffic(AKSBaseControlTest):
 		self.detailed_logs["type"] = "recommendations"
 		self.detailed_logs["desc"] = self.desc + "\nBy default, AKS clusters have unrestricted outbound (egress) internet access. To increase the security of your AKS cluster, it is recommended to use Azure Firewall.\nFor more information, please refer : https://docs.microsoft.com/en-us/azure/aks/limit-egress-traffic"
 		return ("Verify")
+
+
+@fail_with_manual
+class CheckClusterEvents(AKSBaseControlTest):
+	name = "Review_Cluster_Events"
+
+	def __init__(self):
+		super().__init__()
+		self.desc = ("Cluster events must be reviewed periodically")
+
+	@fail_with_manual
+	def test(self):
+		try:
+			v1coreApi = client.CoreV1Api()
+			event_response = v1coreApi.list_event_for_all_namespaces()
+			self.detailed_logs["type"] = "event_logs"
+			self.detailed_logs["desc"] = "\nFollowing event(s) have occured inside the cluster:"
+			self.detailed_logs["logs"] = [{ "involved_object": event.involved_object.kind + "/" + event.involved_object.name, "message": event.message, "reason": event.reason, "type": event.type } for event in event_response.items]
+			return ("Verify")
+		except:
+			return ("Manual")
