@@ -770,7 +770,7 @@ class CheckCertificateRotation(AKSBaseControlTest):
 	@fail_with_manual
 	def test(self):
 		self.detailed_logs["type"] = "recommendations"
-		self.detailed_logs["desc"] = self.desc + "\nThis has to be done for security and policy reasons. This is consequential in cases of role assignment changes and can be used as a means to invalidate existing certificates.\nFor more information, please refer : https://docs.microsoft.com/en-us/azure/aks/certificate-rotation"
+		self.detailed_logs["desc"] = self.desc + "\nThis has to be done for security and policy reasons. This is consequential in cases of role assignment changes and can be used as a means to invalidate existing certificates.\nFor more information, please refer: https://docs.microsoft.com/en-us/azure/aks/certificate-rotation"
 		return ("Verify")
 
 
@@ -785,7 +785,7 @@ class CheckAppArmorSeccomp(AKSBaseControlTest):
 	@fail_with_manual
 	def test(self):
 		self.detailed_logs["type"] = "recommendations"
-		self.detailed_logs["desc"] = self.desc + "\nSecurity modules like apparmor or seccomp provide a more granular control of container actions. You create AppArmor profiles that restrict actions such as read, write, or execute, or system functions such as mounting filesystems. Seccomp is also a Linux kernel security module, and is natively supported by the Docker runtime used by AKS nodes. With seccomp, the process calls that containers can perform are limited.\nFor more information, please refer : https://docs.microsoft.com/en-us/azure/aks/operator-best-practices-cluster-security#secure-container-access-to-resources"
+		self.detailed_logs["desc"] = self.desc + "\nSecurity modules like apparmor or seccomp provide a more granular control of container actions. You create AppArmor profiles that restrict actions such as read, write, or execute, or system functions such as mounting filesystems. Seccomp is also a Linux kernel security module, and is natively supported by the Docker runtime used by AKS nodes. With seccomp, the process calls that containers can perform are limited.\nFor more information, please refer: https://docs.microsoft.com/en-us/azure/aks/operator-best-practices-cluster-security#secure-container-access-to-resources"
 		return ("Verify")
 
 
@@ -800,7 +800,7 @@ class CheckFirewallForEgressTraffic(AKSBaseControlTest):
 	@fail_with_manual
 	def test(self):
 		self.detailed_logs["type"] = "recommendations"
-		self.detailed_logs["desc"] = self.desc + "\nBy default, AKS clusters have unrestricted outbound (egress) internet access. To increase the security of your AKS cluster, it is recommended to use Azure Firewall.\nFor more information, please refer : https://docs.microsoft.com/en-us/azure/aks/limit-egress-traffic"
+		self.detailed_logs["desc"] = self.desc + "\nBy default, AKS clusters have unrestricted outbound (egress) internet access. To increase the security of your AKS cluster, it is recommended to use Azure Firewall.\nFor more information, please refer: https://docs.microsoft.com/en-us/azure/aks/limit-egress-traffic"
 		return ("Verify")
 
 
@@ -821,5 +821,42 @@ class CheckClusterEvents(AKSBaseControlTest):
 			self.detailed_logs["desc"] = "\nFollowing event(s) have occured inside the cluster:"
 			self.detailed_logs["logs"] = [{ "involved_object": event.involved_object.kind + "/" + event.involved_object.name, "message": event.message, "reason": event.reason, "type": event.type } for event in event_response.items]
 			return ("Verify")
+		except:
+			return ("Manual")
+
+
+@fail_with_manual
+class CheckHTTPSIngress(AKSBaseControlTest):
+	name = "Enforce_HTTPS_Ingress"
+
+	def __init__(self):
+		super().__init__()
+		self.desc = ("HTTPS Ingress should be enforced for all open service endpoints of the cluster")
+
+	@fail_with_manual
+	def test(self):
+		try:
+			v1networkingBeta1Api = client.NetworkingV1beta1Api()
+			ingress_response = v1networkingBeta1Api.list_ingress_for_all_namespaces()
+			if len(ingress_response.items) > 0:
+				non_compliant_ingresses = []
+				for ingress in ingress_response.items:
+					try:
+						if ingress.metadata.annotations['kubernetes.io/ingress.allow-http'] != "false" or len(ingress.spec.tls) == 0:
+							non_compliant_ingresses.append(ingress.metadata.name)
+					except:
+						non_compliant_ingresses.append(ingress.metadata.name)
+
+				if len(non_compliant_ingresses) > 0:
+					self.detailed_logs["type"] = "non_compliant_ingresses"
+					self.detailed_logs["desc"] = self.desc + "\nFor further information, please refer: https://docs.microsoft.com/en-us/azure/aks/ingress-tls\nFollowing ingress controller(s) do not have https enforced:"
+					self.detailed_logs["logs"] = non_compliant_ingresses
+					return ("Failed")
+				else:
+					return ("Success")
+			else:
+				self.detailed_logs["type"] = "recommendations"
+				self.detailed_logs["desc"] = self.desc + "\nFor further information, please refer: https://docs.microsoft.com/en-us/azure/aks/ingress-tls"
+				return ("Failed")
 		except:
 			return ("Manual")

@@ -328,6 +328,7 @@ class AKSControlTester:
 						 CheckDefaultNamespaceResources,
 						 CheckResourcesWithSecrets,
 						 CheckKubernetesVersion,
+						 CheckHTTPSIngress,
 						 CheckExternalServices,
 						 CheckMountedImages,
 						 CheckForKured,
@@ -485,6 +486,12 @@ class AKSControlTester:
 				print("   {0: <50}{1: <25}{2: <25}{3: <50}".format("Object", "Reason", "Type", "Message"))
 				for indx, x in df.iterrows():
 					print("{0: <3}{1: <50}{2: <25}{3: <25}{4: <50}".format(indx + 1, x["involved_object"], x["reason"], x["type"], x["message"]))
+				self.line()
+			elif detailed_logs_item["type"] == "non_compliant_ingresses":
+				detailed_log_printed = True
+				print("{0} : {1}".format(detailed_logs_item['control_id'], detailed_logs_item['desc']))
+				for ingress in detailed_logs_item["logs"]:
+					print(ingress)
 				self.line()
 
 		if (not detailed_log_printed):
