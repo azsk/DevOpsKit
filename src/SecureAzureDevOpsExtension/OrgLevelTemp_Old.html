@@ -73,8 +73,11 @@
 				VSS.getService(VSS.ServiceIds.ExtensionData).then(function (dataService) {
 					// Get all document under the collection                 
 					dataService.getDocuments("MyCollection").then(function (docs) {
+					
 						var sel = document.getElementById('resultVersion');
 						var datelist= [];
+						var formatdatelist = [];
+						var dateindex = 0; 
 						for (var i = 0; i < docs.length; i++) {
 							if (docs[i].id.indexOf(context.project.name) !== -1) {
 								
@@ -82,15 +85,28 @@
 								opt.innerHTML = docs[i].id;
 								opt.value = docs[i].id;
 								sel.appendChild(opt);
-							}
-							try {
-								datelist.push(docs[i].id.split("BuildId")[1].split('_')[2]);
+								try {
+								if(docs[i].id.includes("BuildId")){
+								    datelist.push(docs[i].id.split("BuildId")[1].split('_')[2]);
+								}
+								else{
+									datelist.push(docs[i].id.split("ReleaseId")[1].split('_')[2]);
+								}
+
+								var date = datelist[dateindex].split('-')
+                                formatdatelist.push( (date[2]+"-"+date[1]+"-"+date[0] + " " + date[3]+":"+date[4]+":"+date[5]))
+								dateindex = dateindex + 1;
+
 								} catch (error) {
 									
 								}
+							}
 						}
-						datelist.sort(); 
-						var lastresultdate = datelist[datelist.length -1];
+						//datelist.sort(); 
+						formatdatelist.sort(sortFunction);
+						//var lastresultdate = datelist[datelist.length -1];
+						var lastdates = formatdatelist[formatdatelist.length-1].split(" ");
+						var lastresultdate = (lastdates[0].split("-")[2]+"-"+lastdates[0].split("-")[1]+"-"+lastdates[0].split("-")[0])+"-"+lastdates[1].replace(":","-").replace(":","-");
                         var lastresult ='';
 						for (var i = 0; i < docs.length; i++) {
                             if (docs[i].id.indexOf(lastresultdate) != -1) {
@@ -120,11 +136,11 @@
 			VSS.notifyLoadSucceeded();
 		});
 
-		function sortFunction(a, b) {  
-                var dateA = new Date(a.date)
-                var dateB = new Date(b.date)
-                return dateA > dateB ? 1 : -1;  
-         };  
+		function sortFunction(a,b){  
+                 var dateA = new Date(a)
+                 var dateB = new Date(b)
+                 return dateA > dateB ? 1 : -1;  
+        };  
 		// Get data service handle promise
 		function delay(ms) { // takes amount of milliseconds
 			// returns a new promise

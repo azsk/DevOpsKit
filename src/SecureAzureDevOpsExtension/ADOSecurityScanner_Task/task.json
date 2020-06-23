@@ -8,11 +8,11 @@
   "visibility": [
     "Build"
   ],
-  "author": "ADOScanner",
+  "author": "azsdktm",
   "version": {
     "Major": 1,
     "Minor": 0,
-    "Patch": 34
+    "Patch": 41
   },
   "demands": [
   ],
@@ -39,9 +39,21 @@
       "name": "ProjectNames",
       "type": "string",
       "label": "Project Names",
-      "defaultValue": "*",
+      "defaultValue": "",
       "required": true,
       "helpMarkDown": "Comma-separated list of projects against which Security Verification should be run."
+    },
+    {
+      "name": "ScanFilter",
+      "type": "radio",
+      "label": "Select resources to scan",
+      "required": true,
+      "defaultValue": "Org_Project_User",
+      "options": {
+        "Org_Project_User": "Scan Organization and Project configuration controls only",
+        "BuildReleaseSvcConnAgentPoolUser": "Scan build/release/service connection/agent pool controls only",
+        "All": "Scan both"
+      }
     },
     {
       "name": "BuildNames",
@@ -49,7 +61,8 @@
       "label": "Build Names",
       "defaultValue": "",
       "required": false,
-      "helpMarkDown": "Comma-separated list of builds against which Security Verification Tests (SVTs) should be run or use '*' to scan all builds."
+      "helpMarkDown": "Comma-separated list of builds against which Security Verification Tests (SVTs) should be run or use '*' to scan all builds.",
+      "visibleRule": "ScanFilter = BuildReleaseSvcConnAgentPoolUser || ScanFilter = All"
     },
     {
       "name": "ReleaseNames",
@@ -57,7 +70,8 @@
       "label": "Release Names",
       "defaultValue": "",
       "required": false,
-      "helpMarkDown": "Comma-separated list of releases against which Security Verification Tests (SVTs) should be run or use '*' to scan all releases."
+      "helpMarkDown": "Comma-separated list of releases against which Security Verification Tests (SVTs) should be run or use '*' to scan all releases.",
+      "visibleRule": "ScanFilter = BuildReleaseSvcConnAgentPoolUser || ScanFilter = All"
     },
     {
       "name": "ServiceConnectionNames",
@@ -65,7 +79,8 @@
       "label": "Service Connection Names",
       "defaultValue": "",
       "required": false,
-      "helpMarkDown": "Comma-separated list of service connections against which Security Verification Tests (SVTs) should be run or use '*' to scan all service connections."
+      "helpMarkDown": "Comma-separated list of service connections against which Security Verification Tests (SVTs) should be run or use '*' to scan all service connections.",
+      "visibleRule": "ScanFilter = BuildReleaseSvcConnAgentPoolUser || ScanFilter = All"
     },
     {
       "name": "AgentPoolNames",
@@ -73,7 +88,8 @@
       "label": "Agent Pool Names",
       "defaultValue": "",
       "required": false,
-      "helpMarkDown": "Comma-separated list of agent pools against which Security Verification Tests (SVTs) should be run or use '*' to scan all agent pools."
+      "helpMarkDown": "Comma-separated list of agent pools against which Security Verification Tests (SVTs) should be run or use '*' to scan all agent pools.",
+      "visibleRule": "ScanFilter = BuildReleaseSvcConnAgentPoolUser || ScanFilter = All"
     },
     {
       "name": "isBaseline",
@@ -82,6 +98,14 @@
       "defaultValue": true,
       "required": false,
       "helpMarkDown": ""
+    },
+    {
+      "name": "EnableOMSLogging",
+      "type": "boolean",
+      "label": "Send events to Log Analytics",
+      "defaultValue": "false",
+      "helpMarkDown": "Enable this option to publish SVT evaluation results to a Log Analytics Workspace (specified via environment variables).",
+      "required": false
     }
   ],
   "execution": {
