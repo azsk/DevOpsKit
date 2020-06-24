@@ -280,8 +280,7 @@ class SecurityCenter: AzSKRoot
 			$policyLocation = $null
 
 			#Get existing Policysetting to check if Location parameter is available (since policies set via Portal have an extra Location parameter)
-            if( ([FeatureFlightingManager]::GetFeatureStatus("AddPolicyAssignmentsLocation","*"))) {
-				try{
+            	try{
 					$policySettingsUri = $ResourceAppIdURI + "subscriptions/$($this.SubscriptionContext.SubscriptionId)/providers/Microsoft.Authorization/policyAssignments$([SecurityCenterHelper]::ApiVersionLatest)";
 					$existingsettings = [WebRequestHelper]::InvokeWebRequest([Microsoft.PowerShell.Commands.WebRequestMethod]::Get, $policySettingsUri, $null )
 					$scInitiative = [ConfigurationManager]::GetAzSKConfigData().AzSKSecurityCenterInitiativeName
@@ -297,17 +296,14 @@ class SecurityCenter: AzSKRoot
 				catch{
 					#eat exception, do not break existing flow
 				}
-			}
-
+			
 			$policySettingsUri = $ResourceAppIdURI + "subscriptions/$($this.SubscriptionContext.SubscriptionId)/providers/Microsoft.Authorization/policyAssignments/SecurityCenterBuiltIn$([SecurityCenterHelper]::ApiVersionLatest)";
 			$body = $this.PolicyObject.policySettings | ConvertTo-Json -Depth 10
 			$body = $body.Replace("{0}",$this.SubscriptionContext.SubscriptionId) | ConvertFrom-Json;
 
 			#If Location parameter is present in policy then append the property in the request body
-            if( ([FeatureFlightingManager]::GetFeatureStatus("AddPolicyAssignmentsLocation","*"))) {
-				if ($null -ne $policyLocation) {
-					$body | Add-Member -Name "Location" -value $policyLocation -MemberType NoteProperty
-				}
+            if ($null -ne $policyLocation) {
+				$body | Add-Member -Name "Location" -value $policyLocation -MemberType NoteProperty
 			}
 			
 		  	[WebRequestHelper]::InvokeWebRequest([Microsoft.PowerShell.Commands.WebRequestMethod]::Put, $policySettingsUri, $body);
@@ -348,13 +344,12 @@ class SecurityCenter: AzSKRoot
 						$body | Add-Member -NotePropertyName properties -NotePropertyValue $_.properties
 
 						#If Location parameter is present in policy then append the property in the request body
-						if( ([FeatureFlightingManager]::GetFeatureStatus("AddPolicyAssignmentsLocation","*"))) {
-							if($body.properties.policyDefinitionId -match $scInitiative) {
-								if ($null -ne $policyLocation) {
-									$body | Add-Member -NotePropertyName Location -NotePropertyValue $policyLocation
-								}
+						if($body.properties.policyDefinitionId -match $scInitiative) {
+							if ($null -ne $policyLocation) {
+								$body | Add-Member -NotePropertyName Location -NotePropertyValue $policyLocation
 							}
 						}
+						
 
 						[WebRequestHelper]::InvokeWebRequest([Microsoft.PowerShell.Commands.WebRequestMethod]::Put, $policySettingsUri, $body);
 					}
