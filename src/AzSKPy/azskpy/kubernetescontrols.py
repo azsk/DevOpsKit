@@ -270,7 +270,7 @@ class CheckClusterPodIdentity(AKSBaseControlTest):
 				component_nmi = True
 
 		if component_mic and component_nmi:
-			result = "Verify"
+			result = "Verify" # Even if nmi and mic services are running, each pod also needs to be binded with this identity
 
 		return result
 
@@ -455,11 +455,11 @@ class CheckKubernetesVersion(AKSBaseControlTest):
 
 @fail_with_manual
 class CheckForKured(AKSBaseControlTest):
-	name = "Use_Reboot_Daemon"
+	name = "Deploy_Reboot_Daemon"
 
 	def __init__(self):
 		super().__init__()
-		self.desc = ("Kured must be installed to check if reboots are required for OS updates")
+		self.desc = ("Kured should be installed to ensure non-disruptive reboots for OS updates")
 
 	@fail_with_manual
 	def test(self):
@@ -480,7 +480,7 @@ class CheckResourcesLimitsAndRequests(AKSBaseControlTest):
 
 	def __init__(self):
 		super().__init__()
-		self.desc = ("Pod resource limits and requests must be set")
+		self.desc = ("Pod resource limits and requests must be set to prevent starvation")
 
 	@fail_with_manual
 	def test(self):
@@ -529,11 +529,11 @@ class CheckResourcesLimitsAndRequests(AKSBaseControlTest):
 
 @fail_with_manual
 class CheckStorageClassReclaimPolicy(AKSBaseControlTest):
-	name = "Storage_Class_Reclaim_Policy"
+	name = "Review_Storage_Reclaim_Policy"
 
 	def __init__(self):
 		super().__init__()
-		self.desc = ("Storage class reclaim policy should typically not default to delete")
+		self.desc = ("Storage class reclaim policy should be set as 'Retain'")
 
 	@fail_with_manual
 	def test(self):
@@ -704,11 +704,11 @@ class CheckRoleBindings(AKSBaseControlTest):
 
 @fail_with_manual
 class CheckMountedImages(AKSBaseControlTest):
-	name = "Review_Mounted_Images_Source"
+	name = "Deploy_Images_From_Trusted_Source"
 
 	def __init__(self):
 		super().__init__()
-		self.desc = ("Container images deployed in cluster must be from a trustworthy source")
+		self.desc = ("Container images must be deployed from a trustworthy source")
 
 	@fail_with_manual
 	def test(self):
@@ -771,7 +771,7 @@ class CheckCertificateRotation(AKSBaseControlTest):
 	def test(self):
 		self.detailed_logs["type"] = "recommendations"
 		self.detailed_logs["desc"] = self.desc + "\nThis has to be done for security and policy reasons. This is consequential in cases of role assignment changes and can be used as a means to invalidate existing certificates.\nFor more information, please refer: https://docs.microsoft.com/en-us/azure/aks/certificate-rotation"
-		return ("Verify")
+		return ("Manual")
 
 
 @fail_with_manual
@@ -780,13 +780,13 @@ class CheckAppArmorSeccomp(AKSBaseControlTest):
 
 	def __init__(self):
 		super().__init__()
-		self.desc = ("Security modules should be used to limit actions containers can perform")
+		self.desc = ("Security modules should be used to limit container's actions")
 
 	@fail_with_manual
 	def test(self):
 		self.detailed_logs["type"] = "recommendations"
 		self.detailed_logs["desc"] = self.desc + "\nSecurity modules like apparmor or seccomp provide a more granular control of container actions. You create AppArmor profiles that restrict actions such as read, write, or execute, or system functions such as mounting filesystems. Seccomp is also a Linux kernel security module, and is natively supported by the Docker runtime used by AKS nodes. With seccomp, the process calls that containers can perform are limited.\nFor more information, please refer: https://docs.microsoft.com/en-us/azure/aks/operator-best-practices-cluster-security#secure-container-access-to-resources"
-		return ("Verify")
+		return ("Manual")
 
 
 @fail_with_manual
@@ -801,7 +801,7 @@ class CheckFirewallForEgressTraffic(AKSBaseControlTest):
 	def test(self):
 		self.detailed_logs["type"] = "recommendations"
 		self.detailed_logs["desc"] = self.desc + "\nBy default, AKS clusters have unrestricted outbound (egress) internet access. To increase the security of your AKS cluster, it is recommended to use Azure Firewall.\nFor more information, please refer: https://docs.microsoft.com/en-us/azure/aks/limit-egress-traffic"
-		return ("Verify")
+		return ("Manual")
 
 
 @fail_with_manual

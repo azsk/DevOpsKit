@@ -452,11 +452,11 @@ class AKSControlTester:
 			elif detailed_logs_item["type"] == "missing_resource_limits_requests_pods":
 				detailed_log_printed = True
 				print("{0} : {1}".format(detailed_logs_item['control_id'], detailed_logs_item['desc']))
-				print("   {0: <25}{1: <50}{2: <25}{3: <50}".format("Namespace", "Pod", "Container", "Issue"))
+				print("   {0: <25}{1: <40}{2: <25}{3: <30}".format("Namespace", "Pod", "Container", "Issue"))
 				indx = 1
 				for check_data in detailed_logs_item["logs"]:
 					for check in check_data["checks"]:
-						print("{0: <3}{1: <25}{2: <50}{3: <25}{4: <50}".format(indx, check_data["namespace"], check_data["pod_name"], check_data["container"], check))
+						print("{0: <3}{1: <25}{2: <40}{3: <25}{4: <30}".format(indx, check_data["namespace"], check_data["pod_name"], check_data["container"], check))
 						indx += 1
 				self.line()
 			elif detailed_logs_item["type"] == "container_images":
@@ -483,9 +483,9 @@ class AKSControlTester:
 				detailed_log_printed = True
 				print("{0} : {1}".format(detailed_logs_item['control_id'], detailed_logs_item['desc']))
 				df = pd.DataFrame(list(detailed_logs_item["logs"]))
-				print("   {0: <50}{1: <25}{2: <25}{3: <50}".format("Object", "Reason", "Type", "Message"))
+				print("   {0: <50}{1: <20}{2: <20}{3: <40}".format("Object", "Reason", "Type", "Message"))
 				for indx, x in df.iterrows():
-					print("{0: <3}{1: <50}{2: <25}{3: <25}{4: <50}".format(indx + 1, x["involved_object"], x["reason"], x["type"], x["message"]))
+					print("{0: <3}{1: <50}{2: <20}{3: <20}{4: <40}".format(indx + 1, x["involved_object"], x["reason"], x["type"], x["message"]))
 				self.line()
 			elif detailed_logs_item["type"] == "non_compliant_ingresses":
 				detailed_log_printed = True
