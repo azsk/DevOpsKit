@@ -11,6 +11,7 @@ class PartialScanManager
     hidden [string] $AzSKTempStatePath = (Join-Path $([Constants]::AzSKAppFolderPath) "TempState" | Join-Path -ChildPath "PartialScanData");
 	hidden [bool] $StoreResTrackerLocally = $false;
 	hidden [string] $scanSource = $null;
+    hidden [bool] $isRTFAlreadyAvailable = $false;
 
 
 	hidden static [PartialScanManager] $Instance = $null;
@@ -88,20 +89,15 @@ class PartialScanManager
 					try {
 						$webRequestResult = Invoke-RestMethod -Uri $uri -Method Get -ContentType "application/json" -Headers @{Authorization=("Basic {0}" -f $base64AuthInfo)}
 						$this.ScanPendingForResources = $webRequestResult.value | ConvertFrom-Json
+                        $this.isRTFAlreadyAvailable = $true;
 						write-host "Get request ran successfully"
 					}
 					catch
 					{
 						write-host "error in Get request from extension storage :  $uri"
-						# $body = @{"id" = "ResourceTrackerFile"; "Project" = $this.subId; } | ConvertTo-Json
-						# $uri = [Constants]::TestStorageUri -f $this.subId, $this.subId, "ResourceTrackerFile"  
-						# try {
-						# 	$webRequestResult = Invoke-WebRequest -Uri $uri -Method Put -ContentType "application/json" -Headers @{Authorization = ("Basic {0}" -f $base64AuthInfo) } -Body $body	
-						# }
-						# catch {	
-						# 	Write-Host "Error: Could not configure host storage for resource tracker file of org-specific controls" -ForegroundColor Red
-						# }
-					}		
+                        $this.ScanPendingForResources = $null
+                        $this.isRTFAlreadyAvailable = $false;
+					}	
 			    }
 			}
 		}
@@ -117,18 +113,7 @@ class PartialScanManager
                         $this.ScanPendingForResources = Get-Content (Join-Path (Join-Path $this.AzSKTempStatePath $this.subId) $this.ResourceScanTrackerFileName) -Raw
 				    }
 			    }
-                else{
-                    if(Test-Path (Join-Path $this.AzSKTempStatePath $this.ResourceScanTrackerFileName))	
-			            {
-                            $this.ScanPendingForResources = Get-Content (Join-Path $this.AzSKTempStatePath $this.ResourceScanTrackerFileName) -Raw
-				        }
-                }
 			}
-        }
-        #Use Durable Resource Tracker files for partial scanning
-        else
-        {
-             Write-Host ("Durable resource tracker files are not supported by partial scan currently.") -ForegroundColor red
         }
     }
 
@@ -144,8 +129,13 @@ class PartialScanManager
 			{
 				$resourceValue.ModifiedDate = [DateTime]::UtcNow;
 				$resourceValue.State = $state;
-				# Update state of last resource scanned in Tracker file
-				$this.WriteToResourceTrackerFile();
+
+                # Post result to RTF for last resource scan. This is required as we are updating RTF only when a resource scan starts and not when it ends
+                $IsLastResourceScan = ($this.ResourceScanTrackerObj.ResourceMapTable | Where-Object {$_.State -eq [ScanState]::INIT} |  Measure-Object).Count -eq 0
+                if ($IsLastResourceScan -eq $true)
+                {
+				    $this.WriteToResourceTrackerFile();
+                }
 			}
 			else
 			{
@@ -197,11 +187,10 @@ class PartialScanManager
 				$uri = [Constants]::TestStorageUri -f $this.subId, $this.subId, "ResourceTrackerFile"  
 
 				try {
-					if ($this.ScanPendingForResources -ne $null){
+					if ($this.ResourceScanTrackerObj.ResourceMapTable -ne $null){
 						$webRequestResult = Invoke-WebRequest -Uri $uri -Method Delete -ContentType "application/json" -Headers @{Authorization = ("Basic {0}" -f $base64AuthInfo) } 
 						$this.ResourceScanTrackerObj = $null
 						write-host "Resource tracker removed successfully"
-
 					}
 				}
 				catch {
@@ -231,11 +220,6 @@ class PartialScanManager
 			    $masterFilePath = Join-Path $this.AzSKTempStatePath $($this.ResourceScanTrackerFileName)	
 			    $this.ResourceScanTrackerObj = $null
 		    }
-        }
-        #Use Durable Resource Tracker files for partial scanning
-        else
-        {
-             Write-Host ("Durable resource tracker files are not supported by partial scan currently.");
         }
 	}
 
@@ -279,16 +263,18 @@ class PartialScanManager
 					$rmContext = [ContextHelper]::GetCurrentContext();
 					$user = "";
 					$base64AuthInfo = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(("{0}:{1}" -f $user,$rmContext.AccessToken)))
-					$scanObject = $this.ResourceScanTrackerObj | ConvertTo-Json
+					$scanObject = $this.ResourceScanTrackerObj.ResourceMapTable | ConvertTo-Json
 					$body = @{"id" = "ResourceTrackerFile"; "value"= $scanObject;} | ConvertTo-Json
 					$uri = [Constants]::TestStorageUri -f $this.subId, $this.subId, "ResourceTrackerFile"  
 
 					try {
-						if ($this.ScanPendingForResources -ne $null){
+						if ($this.isRTFAlreadyAvailable -eq $true){
+                            $this.isRTFAlreadyAvailable = $false;
 							$webRequestResult = Invoke-WebRequest -Uri $uri -Method Delete -ContentType "application/json" -Headers @{Authorization = ("Basic {0}" -f $base64AuthInfo) }
 						}
 						$webRequestResult = Invoke-WebRequest -Uri $uri -Method Put -ContentType "application/json" -Headers @{Authorization = ("Basic {0}" -f $base64AuthInfo) } -Body $body 
 						write-host "Resource tracker updated successfully"
+                        $this.isRTFAlreadyAvailable = $true;
 					}
 					catch
 					{
@@ -318,21 +304,11 @@ class PartialScanManager
 			        [JsonHelper]::ConvertToJsonCustom($this.ResourceScanTrackerObj) | Out-File $masterFilePath -Force
 		        }
         }
-        #Use Durable Resource Tracker files for partial scanning
-        else
-        {
-            #Do Nothing
-            # Write-Host ("Durable resource tracker files are not supported by partial scan currently.3");
-        }
 	}
 
 	#Method to fetch ResourceTrackerFile as an object
 	hidden [void] GetResourceScanTrackerObject()
 	{
-            if ($null -eq $this.ScanPendingForResources -and ![string]::isnullorwhitespace($this.subId))
-			{
-				 $this.GetResourceTrackerFile($this.subId);
-			}
             if($null -eq $this.ScanPendingForResources)
 			{
 				return;
@@ -341,7 +317,7 @@ class PartialScanManager
 			{
 				if(![string]::isnullorwhitespace($this.ScanPendingForResources))
 				{
-					$this.ResourceScanTrackerObj = $this.ScanPendingForResources	
+					$this.ResourceScanTrackerObj = $this.ScanPendingForResources 
 				}
 			}
             elseif ($this.StoreResTrackerLocally) 
@@ -361,11 +337,6 @@ class PartialScanManager
 
 				$masterFilePath = Join-Path (Join-Path $this.AzSKTempStatePath $this.subId) $($this.ResourceScanTrackerFileName)
 				$this.ResourceScanTrackerObj = Get-content $masterFilePath | ConvertFrom-Json
-            }
-            #Use Durable Resource Tracker files for partial scanning
-            else
-            {
-                Write-Host ("Durable resource tracker files are not supported by partial scan currently.") -ForegroundColor red
             }
 	}
 
