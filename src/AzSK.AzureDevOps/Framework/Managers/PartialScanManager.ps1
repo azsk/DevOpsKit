@@ -246,7 +246,18 @@ class PartialScanManager
 				CreatedDate = [DateTime]::UtcNow;
 				ResourceMapTable = $resourceIdMap;
 			}
-			$this.ResourceScanTrackerObj = $masterControlBlob;
+
+			if ($this.ScanPendingForResources -ne $null){
+                $this.ResourceScanTrackerObj = [PartialScanResourceMap]@{
+				    Id = $this.ScanPendingForResources.Id;
+				    CreatedDate = $this.ScanPendingForResources.CreatedDate;
+				    ResourceMapTable = $this.ScanPendingForResources.ResourceMapTable.value;
+			    }
+            }
+            else{
+                $this.ResourceScanTrackerObj = $masterControlBlob;
+            }
+
 			$this.WriteToResourceTrackerFile();
 			$this.ActiveStatus = [ActiveStatus]::Yes;
 		}
@@ -263,7 +274,7 @@ class PartialScanManager
 					$rmContext = [ContextHelper]::GetCurrentContext();
 					$user = "";
 					$base64AuthInfo = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(("{0}:{1}" -f $user,$rmContext.AccessToken)))
-					$scanObject = $this.ResourceScanTrackerObj.ResourceMapTable | ConvertTo-Json
+					$scanObject = $this.ResourceScanTrackerObj | ConvertTo-Json
 					$body = @{"id" = "ResourceTrackerFile"; "value"= $scanObject;} | ConvertTo-Json
 					$uri = [Constants]::TestStorageUri -f $this.subId, $this.subId, "ResourceTrackerFile"  
 
@@ -317,7 +328,11 @@ class PartialScanManager
 			{
 				if(![string]::isnullorwhitespace($this.ScanPendingForResources))
 				{
-					$this.ResourceScanTrackerObj = $this.ScanPendingForResources 
+					$this.ResourceScanTrackerObj = [PartialScanResourceMap]@{
+				        Id = $this.ScanPendingForResources.Id;
+				        CreatedDate = $this.ScanPendingForResources.CreatedDate;
+				        ResourceMapTable = $this.ScanPendingForResources.ResourceMapTable.value;
+			        }
 				}
 			}
             elseif ($this.StoreResTrackerLocally) 
@@ -355,6 +370,7 @@ class PartialScanManager
 			if($this.ResourceScanTrackerObj.CreatedDate.AddDays($resourceTrackerFileValidforDays) -lt [DateTime]::UtcNow -or $shouldStopScanning)
 			{
 				$this.RemovePartialScanData();
+				$this.ScanPendingForResources = $null;
 				return $this.ActiveStatus = [ActiveStatus]::No;
 
 			}
@@ -363,6 +379,7 @@ class PartialScanManager
 		}
 		else
 		{
+			$this.ScanPendingForResources = $null;
 			return $this.ActiveStatus = [ActiveStatus]::No;
 
 		}
