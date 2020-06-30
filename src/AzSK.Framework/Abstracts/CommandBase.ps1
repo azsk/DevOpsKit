@@ -130,7 +130,74 @@ class CommandBase: AzSKRoot {
 				@{"TimeTakenInMs" = $sw.ElapsedMilliseconds; "SuccessCount" = 0},
 				$this.InvocationContext);
             $this.CommandError($_.Exception.InnerException.ErrorRecord);
-        }
+		}
+		
+		$ActiveBugs=@()
+		$ResolvedBugs=@()
+		$NewBugs=@()
+		
+
+		if($this.InvocationContext.BoundParameters["AutoBugLog"]){
+			$methodResult | ForEach-Object{
+				$result=$_;
+				if($result.ControlResults[0].VerificationResult -eq "Failed" -or $result.ControlResults[0].VerificationResult -eq "Verify"){
+					$result.ControlResults[0].Messages | ForEach-Object{
+						if($_.Message -eq "Active Bug"){
+							
+							$ActiveBugs+= [PSCustomObject]@{
+								'Feature Name'=$result.FeatureName
+								'Resource Name'=$result.ResourceContext.ResourceName
+								'Control'=$result.ControlItem.ControlID
+								'Severity'=$result.ControlItem.ControlSeverity
+								'Url'=$_.DataObject
+							}
+							
+							
+						}
+						if($_.Message -eq "Resolved Bug"){
+							
+							$ResolvedBugs+= [PSCustomObject]@{
+								'Feature Name'=$result.FeatureName
+								'Resource Name'=$result.ResourceContext.ResourceName
+								'Control'=$result.ControlItem.ControlID
+								'Severity'=$result.ControlItem.ControlSeverity
+								'Url'=$_.DataObject
+							}
+							
+							
+						}
+						if($_.Message -eq "New Bug"){
+							
+							$NewBugs+= [PSCustomObject]@{
+								'Feature Name'=$result.FeatureName
+								'Resource Name'=$result.ResourceContext.ResourceName
+								'Control'=$result.ControlItem.ControlID
+								'Severity'=$result.ControlItem.ControlSeverity
+								'Url'=$_.DataObject
+							}
+							
+							
+						}
+					}
+				}
+			}
+		}
+
+		
+		$folderPath = $this.GetOutputFolderPath();
+		$filePath=$folderPath+"\Bug_WorkItems.txt"
+		if($NewBugs){
+			Add-Content $filePath -Value "`nThe following bugs have been logged: "
+			Add-Content $filePath -Value ([Helpers]::ConvertObjectToString($NewBugs, $false))
+		}
+		if($ResolvedBugs){
+			Add-Content $filePath -Value "`nThe following bugs had been resolved before, but have now been activated again: "
+			Add-Content $filePath -Value ([Helpers]::ConvertObjectToString($ResolvedBugs, $false))
+		}
+		if($ActiveBugs){
+			Add-Content $filePath -Value "`nThe following bugs are still active: "
+			Add-Content $filePath -Value ([Helpers]::ConvertObjectToString($ActiveBugs, $false))
+		}
 
 		# Publish command complete events
         $this.CommandCompleted($methodResult);

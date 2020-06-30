@@ -192,5 +192,8 @@
                                   "(?=^.{6,10}$)(?=.*\\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&amp;*()_+}{&quot;:;'?/&gt;.&lt;,])(?!.*\\s).*$",
                                   "(?=^.{7,20}$)(?=.*\\d)(?=.*[a-zA-Z])(?!.*\\s)[0-9a-zA-Z*$-+?_&=!%{}/'.]*$"
                                   ] }                         
-   ]
+   ],
+   "BugLogAreaPath":"Root",
+   "BugLogIterationPath":"Root",
+   "ResolvedBugLogBehaviour":"Update Existing"
 }

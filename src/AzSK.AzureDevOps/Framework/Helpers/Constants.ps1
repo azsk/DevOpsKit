@@ -15,6 +15,14 @@ class Constants
 "        d) If the control status says 'Manual', it means that AzSK.AzureDevOps (currently) does not cover the control via automation OR AzSK.AzureDevOps is not able to fetch the data. You need to manually implement/verify it.`r`n" +
 "`r`nNote: The 'Recommendation' column in the CSV file provides basic (generic) guidance that can help you fix a failed control. You can also use standard Azure product documentation. You should carefully consider the implications of making the required change in the context of your application. `r`n"
 
+	static [string] $BugLogMsg="** Next steps for bug logs ** `r`n"+
+"Look at the individual bug logs in the bug workitem file. `r`n"+
+"	a) If the control has passed, no bugs have been logged.`r`n"+
+"	b) If the log says 'New Bug', it means that the control has failed or needs to be verified and has been logged in your work items. Look at the output in the LOG file, to get more details about the bug work item. `r`n"+
+"	c) If the log says 'Active Bug', it means that the control has failed or needs to be verified and a bug had already been logged in your workitems and has not been resolved yet. Look at the output in the LOG file, to get more details about the bug work item. `r`n "+
+"	d) If the log says 'Resolved Bug', it means that the bug had previously been logged and had been resolved, however the control has yet again failed or needs to be verified. The bug has either been activated again, or a new bug has been logged, depending upon your control settings.Look at the output in the LOG file, to get more details about the bug work item. `r`n"
+
+
     static [string] $RemediationMsgForARMChekcer = "** Next steps **`r`n" + 
 "Look at the individual control evaluation status in the CSV file.`r`n" +
 "        a) If the control has passed, no action is necessary.`r`n" +

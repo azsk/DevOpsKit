@@ -155,7 +155,25 @@ function Get-AzSKAzureDevOpsSecurityStatus
 		[Parameter(HelpMessage="Project name to store attestation details for organization-specific controls.")]
 		[ValidateNotNullOrEmpty()]
 		[Alias("atp")]
-		$AttestationHostProjectName
+		$AttestationHostProjectName,
+
+		[ValidateSet("All","BaselineControls","PreviewBaselineControls")]
+		[Parameter(Mandatory = $false)]
+		[Alias("abl")]
+		
+		[string] $AutoBugLog="All",
+
+		
+
+		[string]
+		[Parameter(Mandatory=$false)]
+		[Alias("apt")]
+		$AreaPath,
+
+		[string]
+		[Parameter(Mandatory=$false)]
+		[Alias("ipt")]
+		$IterationPath
 
 	)
 	Begin
@@ -296,7 +314,24 @@ function Get-AzSKAzureDevOpsOrgSecurityStatus
 		[switch]
         [Parameter(Mandatory = $false)]
 		[Alias("aex")]
-		$AddException
+		$AddException,
+
+		[ValidateSet("All","BaselineControls","PreviewBaselineControls")]
+		[Parameter(Mandatory = $false)]
+		[Alias("abl")]
+		$AutoBugLog,
+
+		
+
+		[string]
+		[Parameter(Mandatory=$false)]
+		[Alias("apt")]
+		$AreaPath,
+
+		[string]
+		[Parameter(Mandatory=$false)]
+		[Alias("ipt")]
+		$IterationPath
 
 	)
 	Begin
@@ -444,7 +479,24 @@ function Get-AzSKAzureDevOpsProjectSecurityStatus
 		[switch]
         [Parameter(Mandatory = $false)]
 		[Alias("aex")]
-		$AddException
+		$AddException,
+
+		[ValidateSet("All","BaselineControls","PreviewBaselineControls")]
+		[Parameter(Mandatory = $false)]
+		[Alias("abl")]
+		$AutoBugLog,
+
+		
+
+		[string]
+		[Parameter(Mandatory=$false)]
+		[Alias("apt")]
+		$AreaPath,
+
+		[string]
+		[Parameter(Mandatory=$false)]
+		[Alias("ipt")]
+		$IterationPath
 
 	)
 	Begin
@@ -571,7 +623,24 @@ function Get-AzSKAzureDevOpsBuildSecurityStatus
 		[switch]
         [Parameter(Mandatory = $false)]
 		[Alias("dnof")]
-		$DoNotOpenOutputFolder
+		$DoNotOpenOutputFolder,
+
+		[ValidateSet("All","BaselineControls","PreviewBaselineControls")]
+		[Parameter(Mandatory = $false)]
+		[Alias("abl")]
+		$AutoBugLog,
+
+		
+
+		[string]
+		[Parameter(Mandatory=$false)]
+		[Alias("apt")]
+		$AreaPath,
+
+		[string]
+		[Parameter(Mandatory=$false)]
+		[Alias("ipt")]
+		$IterationPath
 
 	)
 	Begin
@@ -691,7 +760,24 @@ function Get-AzSKAzureDevOpsReleaseSecurityStatus
 		[switch]
         [Parameter(Mandatory = $false)]
 		[Alias("dnof")]
-		$DoNotOpenOutputFolder
+		$DoNotOpenOutputFolder,
+
+		[ValidateSet("All","BaselineControls","PreviewBaselineControls")]
+		[Parameter(Mandatory = $false)]
+		[Alias("abl")]
+		$AutoBugLog,
+
+		
+
+		[string]
+		[Parameter(Mandatory=$false)]
+		[Alias("apt")]
+		$AreaPath,
+
+		[string]
+		[Parameter(Mandatory=$false)]
+		[Alias("ipt")]
+		$IterationPath
 
 	)
 	Begin
