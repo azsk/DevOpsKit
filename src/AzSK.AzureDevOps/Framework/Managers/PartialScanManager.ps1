@@ -85,7 +85,17 @@ class PartialScanManager
 					$rmContext = [ContextHelper]::GetCurrentContext();
 					$user = "";
 					$base64AuthInfo = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(("{0}:{1}" -f $user,$rmContext.AccessToken)))
-					$uri = [Constants]::TestStorageUri -f $this.subId, $this.subId, "ResourceTrackerFile"
+                    $uri= "";
+
+                    if (Test-Path env:partialScanURI)
+                    {
+                        $uri = $env:partialScanURI
+                    }
+                    else {
+					    $uri = [Constants]::TestStorageUri -f $this.subId, $this.subId, "ResourceTrackerFile"
+                    }
+                    Write-Host "1"
+                    Write-Host $uri
 					try {
 						$webRequestResult = Invoke-RestMethod -Uri $uri -Method Get -ContentType "application/json" -Headers @{Authorization=("Basic {0}" -f $base64AuthInfo)}
 						$this.ScanPendingForResources = $webRequestResult.value | ConvertFrom-Json
@@ -184,7 +194,18 @@ class PartialScanManager
 				$rmContext = [ContextHelper]::GetCurrentContext();
 				$user = "";
 				$base64AuthInfo = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(("{0}:{1}" -f $user,$rmContext.AccessToken)))
-				$uri = [Constants]::TestStorageUri -f $this.subId, $this.subId, "ResourceTrackerFile"  
+                $uri ="";
+
+                if (Test-Path env:partialScanURI)
+                    {
+                        $uri = $env:partialScanURI
+                    }
+                else {
+					$uri = [Constants]::TestStorageUri -f $this.subId, $this.subId, "ResourceTrackerFile"
+                }
+                Write-Host "2"
+                Write-Host $uri
+
 
 				try {
 					if ($this.ResourceScanTrackerObj.ResourceMapTable -ne $null){
@@ -273,9 +294,21 @@ class PartialScanManager
 				{
 					$rmContext = [ContextHelper]::GetCurrentContext();
 					$user = "";
+                    $uri = "";
 					$base64AuthInfo = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(("{0}:{1}" -f $user,$rmContext.AccessToken)))
 					$scanObject = $this.ResourceScanTrackerObj | ConvertTo-Json
 					$body = @{"id" = "ResourceTrackerFile"; "value"= $scanObject;} | ConvertTo-Json
+
+                    if (Test-Path env:partialScanURI)
+                    {
+                        $uri = $env:partialScanURI
+                    }
+                    else {
+					    $uri = [Constants]::TestStorageUri -f $this.subId, $this.subId, "ResourceTrackerFile"
+                    }
+                    Write-Host "3"
+                    Write-Host $uri
+
 					$uri = [Constants]::TestStorageUri -f $this.subId, $this.subId, "ResourceTrackerFile"  
 
 					try {
