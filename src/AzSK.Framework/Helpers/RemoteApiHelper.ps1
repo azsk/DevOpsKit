@@ -48,15 +48,19 @@ class RemoteApiHelper {
     
     hidden static [psobject] GetContent($uri, $content, $type) 
     {
-        $url = [RemoteApiHelper]::ApiBaseEndpoint + $uri;
         $accessToken = [RemoteApiHelper]::GetAccessToken()
-            $result = Invoke-WebRequest -Uri $url `
-                -Method POST `
-                -Body $content `
-                -ContentType $type `
-                -Headers @{"Authorization" = "Bearer $accessToken"} `
-                -UseBasicParsing
-                
+        $uri = "http://localhost:5000/api" + $uri
+        $result = Invoke-WebRequest -Uri $uri -Method Post -Body $('{}'| ConvertTo-Json) -ContentType $type -Headers @{"Authorization" = "Bearer $accessToken"} -UseBasicParsing #$([RemoteApiHelper]::ApiBaseEndpoint + $uri)
+        
+        
+        #$url = [RemoteApiHelper]::ApiBaseEndpoint + $uri;
+        #$accessToken = [RemoteApiHelper]::GetAccessToken()
+        #    $result = Invoke-WebRequest -Uri $url `
+        #        -Method POST `
+        #        -Body $content `
+        #        -ContentType $type `
+        #        -Headers @{"Authorization" = "Bearer $accessToken"} `
+        #        -UseBasicParsing
             return $result.Content
               
     }
@@ -106,6 +110,10 @@ class RemoteApiHelper {
     }
     static [PSObject] GetComplianceSnapshot([string] $parameters){
 		return([RemoteApiHelper]::GetJsonContent("/compliancedata", $parameters) )	
+    }
+
+    static [PSObject] GetSPNList() {
+        return([RemoteApiHelper]::GetJsonContent("/scanresults/SPNList", ""))
     }
     
     static [void] PostASCTelemetry($ASCTelemetryData)

@@ -49,7 +49,7 @@ function Get-AzSKInfo
 	#>
 	Param(
 		[Parameter(Mandatory = $false)]
-		[ValidateSet("SubscriptionInfo", "ControlInfo", "HostInfo" , "AttestationInfo", "ComplianceInfo")] 
+		[ValidateSet("SubscriptionInfo", "ControlInfo", "HostInfo" , "AttestationInfo", "ComplianceInfo","SPNInfo")] 
 		[Alias("it")]
 		$InfoType,
 
@@ -215,6 +215,14 @@ function Get-AzSKInfo
 									return $complianceInfo.InvokeFunction($complianceInfo.GetComplianceInfo, @($UseBaselineControls, $UsePreviewBaselineControls));
 						}
 						
+					}
+					SPNInfo 
+					{
+						$SPNInfo = [SPNInfo]::new($SubscriptionId, $PSCmdlet.MyInvocation);
+						if ($SPNInfo) 
+						{
+							return $SPNInfo.InvokeFunction($SPNInfo.GetSPNInfo);
+						}
 					}
 					Default
 					{
