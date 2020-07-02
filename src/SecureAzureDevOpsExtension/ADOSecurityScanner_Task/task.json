@@ -31,7 +31,7 @@
       "name": "OrgName",
       "type": "string",
       "label": "Organization Name",
-      "defaultValue": "",
+      "defaultValue": "$(System.CollectionUri)",
       "required": true,
       "helpMarkDown": "Org name for which scan needs to be performed."
     },
@@ -39,7 +39,7 @@
       "name": "ProjectNames",
       "type": "string",
       "label": "Project Names",
-      "defaultValue": "",
+      "defaultValue": "$(System.TeamProject)",
       "required": true,
       "helpMarkDown": "Comma-separated list of projects against which Security Verification should be run."
     },
