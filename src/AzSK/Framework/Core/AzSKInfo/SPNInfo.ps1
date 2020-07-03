@@ -21,48 +21,66 @@ class SPNInfo: CommandBase
 		$NotInCAUsedSPNApplicationId = $this.GetUnusedSPN($CAUsedSPNApplicationId,$ownedSPNDetails);
         
         $this.PublishCustomMessage("`r`nSPN used in CA`r`n" + [Constants]::SingleDashLine, [MessageType]::Default)
-        $this.PublishCustomMessage($($CAUsedSPNApplicationId | Format-Table @{Label = "SPNDisplayName"; Expression = { $_.displayName } },@{Label = "ApplicationId"; Expression = { $_.appId }} | Out-String), [MessageType]::Default)
+        $this.PublishCustomMessage($($CAUsedSPNApplicationId | Format-Table @{Label = "SPNDisplayName"; Expression = { $_.displayName } },@{Label = "ApplicationId"; Expression = { $_.appId }} -AutoSize -Wrap | Out-String), [MessageType]::Default)
 
         $this.PublishCustomMessage("`r`nSPN not used in CA`r`n" + [Constants]::SingleDashLine, [MessageType]::Default)
-        $this.PublishCustomMessage($($NotInCAUsedSPNApplicationId | Format-Table @{Label = "SPNDisplayName"; Expression = { $_.displayName } },@{Label = "ApplicationId"; Expression = { $_.appId }} | Out-String), [MessageType]::Default);
+        $this.PublishCustomMessage($($NotInCAUsedSPNApplicationId | Format-Table @{Label = "SPNDisplayName"; Expression = { $_.displayName } },@{Label = "ApplicationId"; Expression = { $_.appId }} -AutoSize -Wrap | Out-String), [MessageType]::Default);
         
     }
 
 	[PSObject] GetOwnedSPNList()
 	{
 		$ownedSPNDetails = @();
-		$accessToken = Get-AzSKAccessToken -ResourceAppIdURI "https://graph.microsoft.com";
-		$validatedUri = 'https://graph.microsoft.com/v1.0/me/ownedObjects';
-		$access = invoke-webrequest -Uri $validatedUri -Headers @{"Authorization" = "Bearer $accessToken"} -method Get -ContentType "application/json" -UseBasicParsing
-		$access_content = $access.Content | convertfrom-json;
-		
-		$ownedSPNDetails = $access_content.value | Select-Object -Property displayName,appId -Unique
-
-		return ($ownedSPNDetails);
-
+		$result = ""
+		try
+        {
+            $accessToken = Get-AzSKAccessToken -ResourceAppIdURI "https://graph.microsoft.com";
+		    $validatedUri = 'https://graph.microsoft.com/v1.0/me/ownedObjects';
+		    $result = invoke-webrequest -Uri $validatedUri -Headers @{"Authorization" = "Bearer $accessToken"} -method Get -ContentType "application/json" -UseBasicParsing
+		    if($null -ne $result -and $result.StatusCode -eq 200)
+            {
+                $result_content = $result.Content | convertfrom-json;
+    		    $ownedSPNDetails = $result_content.value | Select-Object -Property displayName,appId -Unique
+    		    return ($ownedSPNDetails);
+            }
+            else
+            {
+                return ($null)
+            }
+        }
+        catch 
+        {
+            throw $_
+        }
 	} 
 
 	[PSObject] GetSPNApplicationId($SPNApplicationId)
 	{
 		$TelemetrySPNApplicationId = @();
-		$SPNApplicationId = $SPNApplicationId | convertfrom-json;
-        foreach ($item in $SPNApplicationId.tables.rows) 
-        {
-        	$TelemetrySPNApplicationId += $item;
-        }
+		if($null -ne  $SPNApplicationId)
+		{
+			$SPNApplicationId = $SPNApplicationId | convertfrom-json;
+			foreach ($item in $SPNApplicationId.tables.rows) 
+			{
+				$TelemetrySPNApplicationId += $item;
+			}
+		}
 		return ($TelemetrySPNApplicationId);
 	} 
 
 	[PSObject] GetUsedSPN($ownedSPNDetails,$TelemetrySPNApplicationId)
 	{
 		$CAUsedSPNApplicationId = @();
-		foreach ($SPNId in $ownedSPNDetails) 
+		if($null -ne $ownedSPNDetails)
 		{
-			if($SPNId.appId -in $TelemetrySPNApplicationId)
+			foreach ($SPNId in $ownedSPNDetails) 
 			{
-				$CAUsedSPNApplicationId += $SPNId;
+				if($SPNId.appId -in $TelemetrySPNApplicationId)
+				{
+					$CAUsedSPNApplicationId += $SPNId;
+				}
+				
 			}
-			
 		}
 		return ($CAUsedSPNApplicationId);
 	}
@@ -70,13 +88,16 @@ class SPNInfo: CommandBase
 	[PSObject] GetUnusedSPN($CAUsedSPNApplicationId,$ownedSPNDetails)
 	{
 		$NotInCAUsedSPNApplicationId = @();
-		foreach ($SPNId in $ownedSPNDetails) 
+		if($null -ne $ownedSPNDetails)
 		{
-            if($SPNId.appId -notin $CAUsedSPNApplicationId)
+			foreach ($SPNId in $ownedSPNDetails) 
 			{
-				$NotInCAUsedSPNApplicationId += $SPNId;
+				if($SPNId.appId -notin $CAUsedSPNApplicationId)
+				{
+					$NotInCAUsedSPNApplicationId += $SPNId;
+				}
+				
 			}
-			
 		}
 		return ($NotInCAUsedSPNApplicationId);
 	}
