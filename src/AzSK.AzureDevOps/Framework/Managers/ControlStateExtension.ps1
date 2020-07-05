@@ -60,7 +60,7 @@ class ControlStateExtension
 	      	$this.HasControlStateWritePermissions = 0
 	      }
 	}
-	
+
 	hidden [bool] ComputeControlStateIndexer()
 	{
 		try {
@@ -249,6 +249,16 @@ class ControlStateExtension
 				#merge with the exiting if found
 				$persistedControlStates = $this.GetPersistedControlStates("$hash.json");
 				$finalControlStates = $this.MergeControlStates($persistedControlStates, $finalControlStates);
+				$finalControl = @();
+				foreach ($controls in $finalControlStates) {
+					if ($controls.state.DataObject -and !($controls.state.DataObject -is [string])) {
+                        $stateData = $controls.state.DataObject | ConvertTo-Json -Depth 10
+						$encodedStateData =[Convert]::ToBase64String([System.Text.Encoding]::Unicode.GetBytes($stateData))
+						$controls.state.DataObject = $encodedStateData;
+					}
+					$finalControl += $controls;
+				}
+				$finalControlStates = $finalControl;
 				$this.UpdateControlIndexer($id, $finalControlStates, $false);
 				
 			}
@@ -444,6 +454,20 @@ class ControlStateExtension
 		   $uri = [Constants]::GetAttRepoStorageUri -f $this.SubscriptionContext.subscriptionid, $projectName, [Constants]::AttestationRepo, $fileName, $branchName 
 		   $webRequestResult = Invoke-RestMethod -Uri $uri -Method Get -ContentType "application/json" -Headers @{Authorization=("Basic {0}" -f $base64AuthInfo)}
            if ($webRequestResult) {
+			if($fileName -ne $this.IndexerBlobName)
+			{   
+			    #convert back state data from encoded string
+			    $attestationData = @();
+				foreach ($controls in $webRequestResult) 
+				{
+			    	if($controls.State.DataObject -is [string])
+			        {
+			        	$controls.State.DataObject = [System.Text.Encoding]::Unicode.GetString([System.Convert]::FromBase64String($controls.State.DataObject)) | ConvertFrom-Json
+			        }
+			    	$attestationData += $controls;
+			    }
+			    $webRequestResult = $attestationData;
+		    }
 			return $webRequestResult
 		   }
 		   return $null;
