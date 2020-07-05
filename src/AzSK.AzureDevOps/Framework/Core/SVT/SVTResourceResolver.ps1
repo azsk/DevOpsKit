@@ -26,18 +26,24 @@ class SVTResourceResolver: AzSKRoot {
     hidden [string[]] $ReleaseNames = @();
     hidden [string[]] $AgentPools = @();
     hidden [string[]] $ServiceConnections = @();
-    SVTResourceResolver([string]$organizationName, $ProjectNames, $BuildNames, $ReleaseNames, $AgentPools, $ServiceConnectionNames,  $ScanAllArtifacts, $PATToken, $ResourceTypeName): Base($organizationName, $PATToken) {
-        $this.SetallTheParamValues($organizationName, $ProjectNames, $BuildNames, $ReleaseNames, $AgentPools, $ServiceConnectionNames, $ScanAllArtifacts, $PATToken, $ResourceTypeName);
+    hidden [PSObject] $ControlSettings; 
+    [bool] $allowLongRunningScan = $false
+    [bool] $isAllowLongRunningScanInPolicy = $true
+    [int] $longRunningScanCheckPoint = 1000;
+    
+    SVTResourceResolver([string]$organizationName, $ProjectNames, $BuildNames, $ReleaseNames, $AgentPools, $ServiceConnectionNames,  $ScanAllArtifacts, $PATToken, $ResourceTypeName, $AllowLongRunningScan): Base($organizationName, $PATToken) {
+        $this.SetallTheParamValues($organizationName, $ProjectNames, $BuildNames, $ReleaseNames, $AgentPools, $ServiceConnectionNames, $ScanAllArtifacts, $PATToken, $ResourceTypeName, $AllowLongRunningScan);
     }
 
-    SVTResourceResolver([string]$organizationName, $ProjectNames, $BuildNames, $ReleaseNames, $AgentPools, $ServiceConnectionNames, $MaxObj, $ScanAllArtifacts, $PATToken, $ResourceTypeName): Base($organizationName, $PATToken) {
+    SVTResourceResolver([string]$organizationName, $ProjectNames, $BuildNames, $ReleaseNames, $AgentPools, $ServiceConnectionNames, $MaxObj, $ScanAllArtifacts, $PATToken, $ResourceTypeName, $AllowLongRunningScan): Base($organizationName, $PATToken) {
         $this.MaxObjectsToScan = $MaxObj #default = 0 => scan all if "*" specified...
-        $this.SetallTheParamValues($organizationName, $ProjectNames, $BuildNames, $ReleaseNames, $AgentPools, $ServiceConnectionNames, $ScanAllArtifacts, $PATToken, $ResourceTypeName);            
+        $this.SetallTheParamValues($organizationName, $ProjectNames, $BuildNames, $ReleaseNames, $AgentPools, $ServiceConnectionNames, $ScanAllArtifacts, $PATToken, $ResourceTypeName, $AllowLongRunningScan);            
     }
 
-    [void] SetallTheParamValues([string]$organizationName, $ProjectNames, $BuildNames, $ReleaseNames, $AgentPools, $ServiceConnectionNames, $ScanAllArtifacts, $PATToken, $ResourceTypeName) { 
+    [void] SetallTheParamValues([string]$organizationName, $ProjectNames, $BuildNames, $ReleaseNames, $AgentPools, $ServiceConnectionNames, $ScanAllArtifacts, $PATToken, $ResourceTypeName, $AllowLongRunningScan) { 
         $this.organizationName = $organizationName
         $this.ResourceTypeName = $ResourceTypeName
+        $this.allowLongRunningScan = $AllowLongRunningScan
 
         if (-not [string]::IsNullOrEmpty($ProjectNames)) {
             $this.ProjectNames += $this.ConvertToStringArray($ProjectNames);
@@ -91,8 +97,14 @@ class SVTResourceResolver: AzSKRoot {
             $this.AgentPools = "*"
         }
 
-        if ($ScanAllArtifacts) {
+        if (-not [string]::IsNullOrEmpty($ResourceTypeName) -and $ResourceTypeName -ne "All" -and ([string]::IsNullOrEmpty($ProjectNames))) {
             $this.ProjectNames = "*"
+        }
+
+        if ($ScanAllArtifacts) {
+            if ([string]::IsNullOrEmpty($ProjectNames)) {
+                $this.ProjectNames = "*"
+            }
             $this.BuildNames = "*"
             $this.ReleaseNames = "*"
             $this.AgentPools = "*"
@@ -101,7 +113,14 @@ class SVTResourceResolver: AzSKRoot {
 
         if ($this.ProjectNames -eq "*" -or $this.BuildNames -eq "*" -or $this.ReleaseNames -eq "*" -or $this.ServiceConnections -eq "*" -or $this.AgentPools -eq "*") {            
             $this.PublishCustomMessage("Using '*' can take a long time for the scan to complete in larger projects. `nYou may want to provide a comma-separated list of projects, builds, releases, service connections and agent pools. `n ", [MessageType]::Warning);
-        }
+            
+            if (!$this.ControlSettings) {
+                $this.ControlSettings = [ConfigurationManager]::LoadServerConfigFile("ControlSettings.json");
+            }
+            #fetch controlsettibgs for entire organization scan is not allow or not
+            $this.isAllowLongRunningScanInPolicy = $this.ControlSettings.IsAllowLongRunningScan; 
+            $this.longRunningScanCheckPoint = $this.ControlSettings.LongRunningScanCheckPoint;       
+            }
     }
 
     [void] LoadResourcesForScan() {
@@ -121,7 +140,7 @@ class SVTResourceResolver: AzSKRoot {
                 Write-Host 'Organization not found: Incorrect organization name or you do not have neccessary permission to access the organization.' -ForegroundColor Red
                 throw;
             }
-           
+
             #Select Org/User by default...
             $svtResource = [SVTResource]::new();
             $svtResource.ResourceName = $this.organizationName;
@@ -133,7 +152,6 @@ class SVTResourceResolver: AzSKRoot {
 
             $svtResource.ResourceDetails = New-Object -TypeName psobject -Property @{ ResourceLink = $svtResource.ResourceId.Replace('Organization', 'https://dev.azure.com') + "_settings/"; }
             $this.SVTResources += $svtResource
-            
         }
 
         if ($this.ResourceTypeName -in ([ResourceTypeName]::User, [ResourceTypeName]::All, [ResourceTypeName]::Org_Project_User, [ResourceTypeName]::Build_Release_SvcConn_AgentPool_User)) {
@@ -154,8 +172,8 @@ class SVTResourceResolver: AzSKRoot {
             $this.PublishCustomMessage("Querying api for resources to be scanned. This may take a while...");
 
             $this.PublishCustomMessage("Getting project configurations...");
-
-            $apiURL = "https://dev.azure.com/{0}/_apis/projects?api-version=4.1" -f $($this.SubscriptionContext.SubscriptionName);
+            #TODO: By default api return only 100 projects. Added $top=500 to fetch first 500 projects.
+            $apiURL = 'https://dev.azure.com/{0}/_apis/projects?$top=500&api-version=5.1' -f $($this.SubscriptionContext.SubscriptionName);
             $responseObj = "";
             try { 
                 $responseObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL) ;
@@ -184,7 +202,8 @@ class SVTResourceResolver: AzSKRoot {
                 foreach ($thisProj in $projects) 
                 {
                     $projectName = $thisProj.name
-                    if ($this.ResourceTypeName -in ([ResourceTypeName]::Project, [ResourceTypeName]::All, [ResourceTypeName]::Org_Project_User)) {
+                    if ($this.ResourceTypeName -in ([ResourceTypeName]::Project, [ResourceTypeName]::All, [ResourceTypeName]::Org_Project_User)) 
+                    {
                         $svtResource = [SVTResource]::new();
                         $svtResource.ResourceName = $thisProj.name;
                         $svtResource.ResourceGroupName = $this.organizationName
@@ -255,6 +274,19 @@ class SVTResourceResolver: AzSKRoot {
                                 }
                             }
                         }          
+                    }
+                    if ($this.SVTResources.count -gt $this.longRunningScanCheckPoint) {
+                        if (!$this.isAllowLongRunningScanInPolicy) {
+                            Write-Host "Scan my take a long time to complete in larger projects. To short scan provide a comma-separated list of projects, builds, releases, service connections and agent pools." -ForegroundColor Red;
+                            $this.SVTResources = $null
+                            return;
+                        }
+                        elseif(!$this.allowLongRunningScan)
+                        {
+                            Write-Host "Scan my take a long time to complete in larger projects. To short scan provide a comma-separated list of projects, builds, releases, service connections and agent pools. `nIf you want to run the same scan use parameter 'AllowLongRunningScan' in the command." -ForegroundColor Red;
+                            $this.SVTResources = $null
+                            return;
+                        }
                     }
 
                     if ($this.ReleaseNames.Count -gt 0 -and ($this.ResourceTypeName -in ([ResourceTypeName]::Release, [ResourceTypeName]::All, [ResourceTypeName]::Build_Release, [ResourceTypeName]::Build_Release_SvcConn_AgentPool_User)))
@@ -339,6 +371,20 @@ class SVTResourceResolver: AzSKRoot {
                         }
                     }
 
+                    if ($this.SVTResources.count -gt $this.longRunningScanCheckPoint) {
+                        if (!$this.isAllowLongRunningScanInPolicy) {
+                            Write-Host "Scan my take a long time to complete in larger projects. To short scan provide a comma-separated list of projects, builds, releases, service connections and agent pools." -ForegroundColor Red;
+                            $this.SVTResources = $null
+                            return;
+                        }
+                        elseif(!$this.allowLongRunningScan)
+                        {
+                            Write-Host "Scan my take a long time to complete in larger projects. To short scan provide a comma-separated list of projects, builds, releases, service connections and agent pools. `nIf you want to run the same scan use parameter 'AllowLongRunningScan' in the command." -ForegroundColor Red;
+                            $this.SVTResources = $null
+                            return;
+                        }
+                    }
+
                     if ($this.ServiceConnections.Count -gt 0 -and ($this.ResourceTypeName -in ([ResourceTypeName]::ServiceConnection, [ResourceTypeName]::All, [ResourceTypeName]::Build_Release_SvcConn_AgentPool_User)))
                     {
                         if ($this.ProjectNames -ne "*") {
@@ -383,8 +429,23 @@ class SVTResourceResolver: AzSKRoot {
                             }
                         }
                     }
+
+                    if ($this.SVTResources.count -gt $this.longRunningScanCheckPoint) {
+                        if (!$this.isAllowLongRunningScanInPolicy) {
+                            Write-Host "Scan my take a long time to complete in larger projects. To short scan provide a comma-separated list of projects, builds, releases, service connections and agent pools." -ForegroundColor Red;
+                            $this.SVTResources = $null
+                            return;
+                        }
+                        elseif(!$this.allowLongRunningScan)
+                        {
+                            Write-Host "Scan my take a long time to complete in larger projects. To short scan provide a comma-separated list of projects, builds, releases, service connections and agent pools. `nIf you want to run the same scan use parameter 'AllowLongRunningScan' in the command." -ForegroundColor Red;
+                            $this.SVTResources = $null
+                            return;
+                        }
+                    }
                     
-                    if ($this.AgentPools.Count -gt 0 -and ($this.ResourceTypeName -in ([ResourceTypeName]::AgentPool, [ResourceTypeName]::All, [ResourceTypeName]::Build_Release_SvcConn_AgentPool_User))) {
+                    if ($this.AgentPools.Count -gt 0 -and ($this.ResourceTypeName -in ([ResourceTypeName]::AgentPool, [ResourceTypeName]::All, [ResourceTypeName]::Build_Release_SvcConn_AgentPool_User))) 
+                    {
                         if ($this.ProjectNames -ne "*") {
                             $this.PublishCustomMessage("Getting agent pools configurations...");
                         }
@@ -427,6 +488,19 @@ class SVTResourceResolver: AzSKRoot {
                             Write-Warning "Insufficient Privileges. You do not have the level of access to perform the scan.";
                             Write-Error $_.Exception.Message;
                         }              
+                    }
+                    if ($this.SVTResources.count -gt $this.longRunningScanCheckPoint) {
+                        if (!$this.isAllowLongRunningScanInPolicy) {
+                            Write-Host "Scan my take a long time to complete in larger projects. To short scan provide a comma-separated list of projects, builds, releases, service connections and agent pools." -ForegroundColor Red;
+                            $this.SVTResources = $null
+                            return;
+                        }
+                        elseif(!$this.allowLongRunningScan)
+                        {
+                            Write-Host "Scan my take a long time to complete in larger projects. To short scan provide a comma-separated list of projects, builds, releases, service connections and agent pools. `nIf you want to run the same scan use parameter 'AllowLongRunningScan' in the command." -ForegroundColor Red;
+                            $this.SVTResources = $null
+                            return;
+                        }
                     }
                     if (--$nProj -eq 0) { break; } #nProj is set to MaxObj before loop.
                     

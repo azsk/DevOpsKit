@@ -55,6 +55,7 @@ class Constants
 	   static [string] $CICDShortLink = "https://aka.ms/devopskit/cicd"
 
 	#Constants for SVTs
+	static [string] $ParentFolder = "Org_"
     static [string] $ModuleStartHeading = [Constants]::DoubleDashLine +
     "`r`nStarting analysis: [FeatureName: {0}] [ParentGroupName: {1}] [ResourceName: {2}] `r`n" + [Constants]::SingleDashLine
 	 static [string] $ModuleStartHeadingSub = [Constants]::DoubleDashLine +
@@ -98,6 +99,7 @@ class Constants
 	static [string] $AttestationBranch = "master"; 
 	static [string] $OrgPolicyRepo = "ADOScanner_Policy_"; 
 	static [string] $OrgAttPrjExtFile = "Org_Config"; 
+	#static [string] $AttestedControlsScanMsg = "You are almost done...we will perform a quick scan of controls attested within the last 24 hrs so that the backend will get the latest control status."
 
 	static [string] $StorageAccountPreName= "azsk"
 	static [string] $AzSKAppFolderPath = [Environment]::GetFolderPath('LocalApplicationData') + "/Microsoft/" + [Constants]::AzSKModuleName

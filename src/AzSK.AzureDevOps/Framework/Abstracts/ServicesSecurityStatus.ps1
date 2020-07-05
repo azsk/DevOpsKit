@@ -13,6 +13,9 @@ class ServicesSecurityStatus: ADOSVTCommandBase
 
 		$this.Resolver = $resolver;
 		$this.Resolver.LoadResourcesForScan();
+		if (!$this.Resolver.SVTResources) {
+			return;
+		}
 		$this.UsePartialCommits = $invocationContext.BoundParameters["UsePartialCommits"];
 
 		#BaseLineControlFilter with control ids
@@ -270,6 +273,39 @@ class ServicesSecurityStatus: ADOSVTCommandBase
 		}
 	}
 
+	hidden [SVTEventContext[]] ScanAttestedControls()
+	{
+		[ControlStateExtension] $ControlStateExt = [ControlStateExtension]::new($this.SubscriptionContext, $this.InvocationContext);
+		$ControlStateExt.UniqueRunId = $this.ControlStateExt.UniqueRunId;
+		$ControlStateExt.Initialize($false);
+		#$ControlStateExt.ComputeControlStateIndexer();
+		foreach ($items in $this.Resolver.SVTResources) {
+			$resourceType = $null;
+			$projectName = $null;
+			if ($items.ResourceType -ne "AzureDevOps.Organization") {
+				
+				if ($items.ResourceType -eq "AzureDevOps.Project") {
+					$projectName = $items.ResourceName
+					$resourceType = "Project";
+				}
+				else {
+					$projectName = $items.ResourceGroupName
+					$resourceType = $items.ResourceType
+				}
+			}
+			else {
+				$resourceType = "Organization";
+			}
+			$ControlStateExt.RescanComputeControlStateIndexer($projectName, $resourceType);
+		}
+		
+		$resourcesAttestedinCurrentScan = @()
+		if(($null -ne $ControlStateExt.ControlStateIndexer) -and ([Helpers]::CheckMember($ControlStateExt.ControlStateIndexer, "ResourceId")))
+		{
+			$resourcesAttestedinCurrentScan = $this.Resolver.SVTResources | Where-Object {$ControlStateExt.ControlStateIndexer.ResourceId -contains $_.ResourceId}
+		}
+		return $this.RunForAllResources("RescanAndPostAttestationData",$false,$resourcesAttestedinCurrentScan)
+	}
 
 	#BaseLine Control Filter Function
 	[void] BaselineFilterCheck()
