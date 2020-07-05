@@ -143,6 +143,7 @@ Class LogAnalyticsHelper{
 				}
 			}
 
+			$out.Env = [AzSKSettings]::GetInstance().GetScanSource();
 			$out.Reference=$eventContext.Metadata.Reference
 			$out.ControlStatus=$ControlResult.VerificationResult.ToString()
 			$out.ActualVerificationResult=$ControlResult.ActualVerificationResult.ToString()
