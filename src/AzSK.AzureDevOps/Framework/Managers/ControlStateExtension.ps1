@@ -250,11 +250,20 @@ class ControlStateExtension
 				$persistedControlStates = $this.GetPersistedControlStates("$hash.json");
 				$finalControlStates = $this.MergeControlStates($persistedControlStates, $finalControlStates);
 				$finalControl = @();
+				#convert state data object to encoded string
 				foreach ($controls in $finalControlStates) {
-					if ($controls.state.DataObject -and !($controls.state.DataObject -is [string])) {
-                        $stateData = $controls.state.DataObject | ConvertTo-Json -Depth 10
-						$encodedStateData =[Convert]::ToBase64String([System.Text.Encoding]::Unicode.GetBytes($stateData))
-						$controls.state.DataObject = $encodedStateData;
+					if ($controls.state.DataObject -and !($controls.state.DataObject -is [string]) ) {
+						try {
+							#when dataobject is empty it comes like {} and null check does not work it alwasys count 1
+							if ($controls.state.DataObject.count -gt 0) {
+								$stateData = $controls.state.DataObject | ConvertTo-Json -Depth 10
+								$encodedStateData =[Convert]::ToBase64String([System.Text.Encoding]::Unicode.GetBytes($stateData))
+								$controls.state.DataObject = $encodedStateData;
+							}
+						}
+						catch {
+							#eat the exception
+						}
 					}
 					$finalControl += $controls;
 				}
