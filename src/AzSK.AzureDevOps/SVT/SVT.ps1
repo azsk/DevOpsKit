@@ -592,7 +592,13 @@ function Get-AzSKAzureDevOpsBuildSecurityStatus
 		[switch]
         [Parameter(Mandatory = $false)]
 		[Alias("dnof")]
-		$DoNotOpenOutputFolder
+		$DoNotOpenOutputFolder,
+
+		[switch]
+		[Parameter(HelpMessage="Allow long running scan.")]
+		[Alias("als")]
+		$AllowLongRunningScan
+
 
 	)
 	Begin
@@ -605,16 +611,18 @@ function Get-AzSKAzureDevOpsBuildSecurityStatus
 	{
 	try 
 		{
-			$resolver = [SVTResourceResolver]::new($OrganizationName,$ProjectNames,$BuildNames,$null,$null,$null,$null,$PATToken,[ResourceTypeName]::Build);
+			$resolver = [SVTResourceResolver]::new($OrganizationName,$ProjectNames,$BuildNames,$null,$null,$null,$null,$PATToken,[ResourceTypeName]::Build, $AllowLongRunningScan);
 			$secStatus = [ServicesSecurityStatus]::new($OrganizationName, $PSCmdlet.MyInvocation, $resolver);
 			if ($secStatus) 
-			{		
+			{	
+				if ($null -ne $secStatus.Resolver.SVTResources) {	
 				$secStatus.ControlIdString = $ControlIds;
 					$secStatus.Severity = $Severity;
 					$secStatus.UseBaselineControls = $UseBaselineControls;
 					$secStatus.UsePreviewBaselineControls = $UsePreviewBaselineControls;
 
 				return $secStatus.EvaluateControlStatus();
+				}
 			} 
 		}
 		catch 
@@ -712,7 +720,13 @@ function Get-AzSKAzureDevOpsReleaseSecurityStatus
 		[switch]
         [Parameter(Mandatory = $false)]
 		[Alias("dnof")]
-		$DoNotOpenOutputFolder
+		$DoNotOpenOutputFolder,
+
+		[switch]
+		[Parameter(HelpMessage="Allow long running scan.")]
+		[Alias("als")]
+		$AllowLongRunningScan
+
 
 	)
 	Begin
@@ -724,16 +738,18 @@ function Get-AzSKAzureDevOpsReleaseSecurityStatus
 	{
 	try 
 		{
-			$resolver = [SVTResourceResolver]::new($OrganizationName,$ProjectNames,$null,$ReleaseNames,$null,$null,$null,$PATToken,[ResourceTypeName]::Release);
+			$resolver = [SVTResourceResolver]::new($OrganizationName,$ProjectNames,$null,$ReleaseNames,$null,$null,$null,$PATToken,[ResourceTypeName]::Release, $AllowLongRunningScan);
 			$secStatus = [ServicesSecurityStatus]::new($OrganizationName, $PSCmdlet.MyInvocation, $resolver);
 			if ($secStatus) 
-			{		
+			{	
+				if ($null -ne $secStatus.Resolver.SVTResources) {		
 				$secStatus.ControlIdString = $ControlIds;
 					$secStatus.Severity = $Severity;
 					$secStatus.UseBaselineControls = $UseBaselineControls;
 					$secStatus.UsePreviewBaselineControls = $UsePreviewBaselineControls;
 					
 				return $secStatus.EvaluateControlStatus();
+				}
 			}    
 		}
 		catch 
