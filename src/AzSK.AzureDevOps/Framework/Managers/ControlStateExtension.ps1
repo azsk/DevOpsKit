@@ -252,6 +252,7 @@ class ControlStateExtension
 				$finalControl = @();
 				#convert state data object to encoded string
 				foreach ($controls in $finalControlStates) {
+					# checking If state.DataObject is not empty and dataobject is not encode string, if control is already attested it will have encoded string
 					if ($controls.state.DataObject -and !($controls.state.DataObject -is [string]) ) {
 						try {
 							#when dataobject is empty it comes like {} and null check does not work it alwasys count 1
