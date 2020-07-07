@@ -531,6 +531,8 @@ class WritePsConsole: FileOutputBase
 		}
 	}
 
+	#function to print metrics summary for all kinds of bugs encountered
+
 	hidden [void] PrintBugSummaryData($event){
 		[PSCustomObject[]] $summary = @();
 		$event.SourceArgs | ForEach-Object {

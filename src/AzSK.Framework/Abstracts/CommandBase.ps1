@@ -132,43 +132,39 @@ class CommandBase: AzSKRoot {
             $this.CommandError($_.Exception.InnerException.ErrorRecord);
 		}
 		
-		$ActiveBugs=@()
-		$ResolvedBugs=@()
-		$NewBugs=@()
-		
 
+		#create a JSON for bugs
+
+		$ActiveBugs=@{ActiveBugs=@()}
+		$ResolvedBugs=@{ResolvedBugs=@()}
+		$NewBugs=@{NewBugs=@()}
 		if($this.InvocationContext.BoundParameters["AutoBugLog"]){
 			$methodResult | ForEach-Object{
 				$result=$_;
 				if($result.ControlResults[0].VerificationResult -eq "Failed" -or $result.ControlResults[0].VerificationResult -eq "Verify"){
 					$result.ControlResults[0].Messages | ForEach-Object{
-						if($_.Message -eq "Active Bug"){
-							
-							$ActiveBugs+= [PSCustomObject]@{
+						if($_.Message -eq "Active Bug"){							
+							$ActiveBugs.ActiveBugs+= [PSCustomObject]@{
 								'Feature Name'=$result.FeatureName
 								'Resource Name'=$result.ResourceContext.ResourceName
 								'Control'=$result.ControlItem.ControlID
 								'Severity'=$result.ControlItem.ControlSeverity
 								'Url'=$_.DataObject
-							}
-							
+							}						
 							
 						}
 						if($_.Message -eq "Resolved Bug"){
-							
-							$ResolvedBugs+= [PSCustomObject]@{
+							$ResolvedBugs.ResolvedBugs+= [PSCustomObject]@{
 								'Feature Name'=$result.FeatureName
 								'Resource Name'=$result.ResourceContext.ResourceName
 								'Control'=$result.ControlItem.ControlID
 								'Severity'=$result.ControlItem.ControlSeverity
 								'Url'=$_.DataObject
-							}
-							
+							}						
 							
 						}
 						if($_.Message -eq "New Bug"){
-							
-							$NewBugs+= [PSCustomObject]@{
+							$NewBugs.NewBugs+= [PSCustomObject]@{
 								'Feature Name'=$result.FeatureName
 								'Resource Name'=$result.ResourceContext.ResourceName
 								'Control'=$result.ControlItem.ControlID
@@ -185,20 +181,21 @@ class CommandBase: AzSKRoot {
 
 		
 		$folderPath = $this.GetOutputFolderPath();
-		$filePath=$folderPath+"\Bug_WorkItems.txt"
-		if($NewBugs){
-			Add-Content $filePath -Value "`nThe following bugs have been logged: "
-			Add-Content $filePath -Value ([Helpers]::ConvertObjectToString($NewBugs, $false))
+		$filePath=$folderPath+"\Bug_WorkItems.json"
+		$combinedJson=$null;
+		if($NewBugs.NewBugs){
+			$combinedJson=$NewBugs
 		}
-		if($ResolvedBugs){
-			Add-Content $filePath -Value "`nThe following bugs had been resolved before, but have now been activated again: "
-			Add-Content $filePath -Value ([Helpers]::ConvertObjectToString($ResolvedBugs, $false))
+		if($ResolvedBugs.ResolvedBugs){
+			$combinedJson+=$ResolvedBugs
 		}
-		if($ActiveBugs){
-			Add-Content $filePath -Value "`nThe following bugs are still active: "
-			Add-Content $filePath -Value ([Helpers]::ConvertObjectToString($ActiveBugs, $false))
+		if($ActiveBugs.ActiveBugs){
+			$combinedJson+=$ActiveBugs
 		}
-
+		if($combinedJson){
+		Add-Content $filePath -Value ($combinedJson | ConvertTo-Json)
+		}
+		
 		# Publish command complete events
         $this.CommandCompleted($methodResult);
 		[AIOrgTelemetryHelper]::TrackCommandExecution("Command Completed",
@@ -251,6 +248,8 @@ class CommandBase: AzSKRoot {
         return $folderPath;
 	}
 	#EndRegion
+
+	
 
 	
 	# Function to get output log folder from WriteFolder listener 

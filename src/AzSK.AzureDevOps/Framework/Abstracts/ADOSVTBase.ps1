@@ -90,13 +90,12 @@ class ADOSVTBase: SVTBase {
 					$resourceType = $this.ResourceContext.ResourceTypeName
 				}
 				#Fetch control state for organization only if project is configured for org spesific control attestation (Check for Organization only, for other resource go inside without project check).
-				if($resourceType -ne "Organization" -or $this.ControlStateExt.GetProject())
-				{
-				$resourceStates = $this.ControlStateExt.GetControlState($this.ResourceId, $resourceType, $this.ResourceContext.ResourceName, $this.ResourceContext.ResourceGroupName)
-				if ($null -ne $resourceStates) {
-					$this.ResourceState += $resourceStates
+				if ($resourceType -ne "Organization" -or $this.ControlStateExt.GetProject()) {
+					$resourceStates = $this.ControlStateExt.GetControlState($this.ResourceId, $resourceType, $this.ResourceContext.ResourceName, $this.ResourceContext.ResourceGroupName)
+					if ($null -ne $resourceStates) {
+						$this.ResourceState += $resourceStates
+					}
 				}
-			    }
 				else {
 					return $null;
 				}				
@@ -441,299 +440,284 @@ class ADOSVTBase: SVTBase {
 		}
 		
 		$this.UpdateControlStates($ControlResults);
-
-		if($this.ControlStateExt.InvocationContext.BoundParameters["AutoBugLog"]-and $this.CheckValidLog($ControlResults[0] ) ){
-			#-and $this.CheckValidLog($ControlResults[0]
-			#$r=$this.ControlStateExt.isMember("vssgp.Uy0xLTktMTU1MTM3NDI0NS0zOTk3MDI3NTMzLTcxODcyODc2OS0yOTE4MDQ2NDUzLTIyNzk3MDM4MzUtMC0wLTAtMC0x")
-			
-			
-			if($this.CheckValidPath($this.ControlStateExt.InvocationContext.BoundParameters["AreaPath"],$this.ControlStateExt.InvocationContext.BoundParameters["IterationPath"],$ControlResults[0])){
-			$this.AutoLogBug($ControlResults,$this.ControlStateExt.InvocationContext.BoundParameters["AutoBugLog"])
+		#check if autobuglog flag is provided and if the logging behaviour is valid for the current resource type
+		if ($this.ControlStateExt.InvocationContext.BoundParameters["AutoBugLog"] -and $this.CheckValidLog($ControlResults[0])) {
+			#check if area and iteration path are valid, if not skip the bug logging for this resource
+			if ($this.ControlStateExt.CheckValidPath()) {
+				$this.AutoLogBug($ControlResults, $this.ControlStateExt.InvocationContext.BoundParameters["AutoBugLog"])
 			}
-			}
+		}
 	}
 
-	hidden [bool] CheckValidPath([string] $AreaPath,[string] $IterationPath,[SVTEventContext []] $ControlResult){
-		$pathurl="https://dev.azure.com/{0}/{1}/_apis/wit/wiql?api-version=5.1" 
-		$ProjectName=$null
-
-		if($ControlResult.FeatureName -eq "Organization"){
-			$ProjectName=$this.ControlStateExt.GetProject()
-		}
-		elseif($this.ResourceContext.ResourceTypeName -eq "Project"){
-			$ProjectName=$this.ResourceContext.ResourceName
-		}
-		else{
-			$ProjectName=$this.ResourceContext.ResourceGroupName
-		}
-		$pathurl="https://dev.azure.com/{0}/{1}/_apis/wit/wiql?api-version=5.1" -f $($this.SubscriptionContext.SubscriptionName), $ProjectName
-		
-		if(!$AreaPath){
-			if($this.ControlSettings.BugLogAreaPath -eq "Root"){
-				$AreaPath=$ProjectName
-			}
-			else{
-				$AreaPath=$this.ControlSettings.BugLogAreaPath
-			}
-		}
-		if(!$IterationPath){
-			if($this.ControlSettings.BugLogIterationPath -eq "Root"){
-				$IterationPath=$ProjectName
-			}
-			else{
-				$IterationPath=$this.ControlSettings.BugLogIterationPath
-			}
-		}
-		$AreaPath=$AreaPath.Replace("\","\\")
-		$IterationPath=$IterationPath.Replace("\","\\")
-		$WIQL_query="Select [System.AreaPath], [System.IterationPath] From WorkItems WHERE [System.AreaPath]='$AreaPath' AND [System.IterationPath]='$IterationPath'"
-		$body = @{ query = $WIQL_query }
-		$bodyJson = @($body) | ConvertTo-Json
-		
-		try{
-			$header = $this.GetAuthHeaderFromUriPatch($pathurl)
-			$response = Invoke-RestMethod -Uri $pathurl -headers $header -Method Post -ContentType "application/json" -Body $bodyJson
-			
-		}
-		catch{
-			Write-Host "`nCould not log bug. Check your Area and Iteration Path" -ForegroundColor Red
-			return $false;
-			
-		}
-		
-
-		
-
-		return $true
-	}
-
-	hidden [void] AutoLogBug([SVTEventContext[]] $ControlResults,$flag){
+	#function to log bugs in ADO
 	
+	hidden [void] AutoLogBug([SVTEventContext[]] $ControlResults, [string] $BugLogParameterValue) {
+		#Obtain the project name according to the current resource type
+		$ProjectName = $this.ControlStateExt.GetProject()
 
-		$ControlResults | ForEach-Object {
+		#Obtain project id that will be used by hash based searching of work item
+		$ProjectId = $null
+		if ($this.ResourceContext.ResourceTypeName -eq "Project" -or $this.ResourceContext.ResourceTypeName -eq "Organization" -or $this.ResourceContext.ResourceTypeName -eq "ServiceConnection" -or $this.ResourceContext.ResourceTypeName -eq "Release") {
+			$apiURL = "https://dev.azure.com/{0}/_apis/projects/{1}?api-version=5.0" -f $($this.SubscriptionContext.SubscriptionName), $($ProjectName);
+			$projectObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
+			$ProjectId = $projectObj.id
+		}
+		if ($this.ResourceContext.ResourceTypeName -eq "AgentPool") {
+			$ProjectId = ($ControlResults[0].ResourceContext.ResourceId -split ("resources/"))[1].Split("_")[0]
+		}
+		elseif ($this.ResourceContext.ResourceTypeName -eq "Build") {
+			$ProjectId = ($ControlResults[0].ResourceContext.ResourceId -split ("com/"))[1].Split("/")[0]
+		}
+
+		#Obtain the assignee for the current resource, will be same for all the control failures for this particular resource
+		$AssignedTo = $this.GetAssignee($ControlResults[0].ResourceContext.ResourceTypeName, $ControlResults[0].ResourceContext.ResourceName)
+		
+		#Obtain area and iteration paths
+		if ($this.ControlStateExt.InvocationContext.BoundParameters["AreaPath"] -ne $null) {
+			$AreaPath = $this.ControlStateExt.InvocationContext.BoundParameters["AreaPath"]
+		}
+		else {
+			if ($this.ControlSettings.BugLogAreaPath -eq "Root") {
+				$AreaPath = $ProjectName
+			}
+			else {
+				$AreaPath = $this.ControlSettings.BugLogAreaPath
+			}
+		}
+		if ($this.ControlStateExt.InvocationContext.BoundParameters["IterationPath"] -ne $null) {
+			$IterationPath = $this.ControlStateExt.InvocationContext.BoundParameters["IterationPath"]
+		}
+		else {
+			if ($this.ControlSettings.BugLogIterationPath -eq "Root") {
+				$IterationPath = $ProjectName
+			}
+			else {
+				$IterationPath = $this.ControlSettings.BugLogIterationPath
+			}
+		}
+		$AreaPath = $AreaPath.Replace("\", "\\")
+		$IterationPath = $IterationPath.Replace("\", "\\")
+
+		
+		#Loop through all the control results for the current resource
+		$ControlResults | ForEach-Object {			
 					
 			$control = $_;
-			if($flag -eq "All"){
-				$check=$true
+
+			#filter controls on basis of whether they are baseline or not depending on the value given in autobuglog flag
+			if ($BugLogParameterValue -eq "All") {
+				$check = $true
 			}
-			elseif ($flag -eq "BaselineControls") {
-				$check=$this.CheckBaselineControl($control.ControlItem.ControlID)				
+			elseif ($BugLogParameterValue -eq "BaselineControls") {
+				$check = $this.CheckBaselineControl($control.ControlItem.ControlID)				
 			}
-			else{
-				$check=$this.CheckPreviewBaselineControl($control.ControlItem.ControlID)
+			else {
+				$check = $this.CheckPreviewBaselineControl($control.ControlItem.ControlID)
 			}
 			
 			
-			if (($control.ControlResults[0].VerificationResult -eq "Failed" -or $control.ControlResults[0].VerificationResult -eq "Verify") -and $check){
-				$ProjectName=""
+			if (($control.ControlResults[0].VerificationResult -eq "Failed" -or $control.ControlResults[0].VerificationResult -eq "Verify") -and $check) {
 				
-				if($this.ResourceContext.ResourceTypeName -eq "Project"){
-					$ProjectName=$this.ResourceContext.ResourceName
+				#compute hash of control Id and resource Id	
+				$hash = $this.GetHash($control.ControlItem.Id, $control.ResourceContext.ResourceId)
+				$workItem = $this.GetWorkItemByHash($hash, $ProjectName, $ProjectId)
+				if ($workItem[0].results.count -eq 1) {
+					$this.FindActiveAndResolvedBugs($ProjectName,$control,$workItem,$AssignedTo)
+				}
+				else{		
 
-				}
-				elseif($this.ResourceContext.ResourceTypeName -eq "Organization"){
-					$ProjectName=$this.ControlStateExt.GetProject()
-					#$ProjectName="JuhiProject"
-				}
-				else{
-					$ProjectName=$this.ResourceContext.ResourceGroupName
-
-				}
-				
 
 				$this.PublishCustomMessage([Constants]::SingleDashLine + "`nDetermining bugs to log...`n");
-				$Title="[ADOScanner] Control failure - {0} for resource {1} {2}"
-				$Description="Control failure - {3} for resource {4} {5} </br></br> <b>Failure Details: </b> {0} </br></br> <b> Control Result: </b> {6} </br> </br> <b> Rationale:</b> {1} </br></br> <b> Recommendation:</b> {2}"
-				
-				
-				$Title=$Title.Replace("{0}",$control.ControlItem.ControlID)
-				$Title=$Title.Replace("{1}",$control.ResourceContext.ResourceTypeName)
-				$Title=$Title.Replace("{2}",$control.ResourceContext.ResourceName)
-				
-				$Description=$Description.Replace("{0}",$control.ControlItem.Description)
-				$Description=$Description.Replace("{1}",$control.ControlItem.Rationale)
-				$Description=$Description.Replace("{2}",$control.ControlItem.Recommendation)
-				$Description=$Description.Replace("{3}",$control.ControlItem.ControlID)
-				$Description=$Description.Replace("{4}",$control.ResourceContext.ResourceTypeName)
-				$Description=$Description.Replace("{5}",$control.ResourceContext.ResourceName)
-				$Description=$Description.Replace("{6}",$control.ControlResults[0].VerificationResult)
-				if($this.LogMessage($control)){
-					$Description+="<hr></br><b>Some other details for your reference</b> </br><hr> {7} "
-					$log=$this.LogMessage($control).Replace("\","\\")
-					$Description=$Description.Replace("{7}",$log)
-				}
-				
-				$History = "Default History"
-				$Severity=$this.GetSeverity($control.ControlItem.ControlSeverity)
-				$AssignedTo = $this.GetAssignee($control.ResourceContext.ResourceTypeName,$control.ResourceContext.ResourceName)
-				
-				if($this.ControlStateExt.InvocationContext.BoundParameters["AreaPath"] -ne $null){
-					$AreaPath=$this.ControlStateExt.InvocationContext.BoundParameters["AreaPath"]
-				}
-				else{
-					if($this.ControlSettings.BugLogAreaPath -eq "Root"){
-						$AreaPath=$ProjectName
-					}
-					else{
-						$AreaPath=$this.ControlSettings.BugLogAreaPath
-					}
-				}
-				if($this.ControlStateExt.InvocationContext.BoundParameters["IterationPath"] -ne $null){
-					$IterationPath=$this.ControlStateExt.InvocationContext.BoundParameters["IterationPath"]
-				}
-				else{
-					if($this.ControlSettings.BugLogIterationPath -eq "Root"){
-						$IterationPath=$ProjectName
-					}
-					else{
-						$IterationPath=$this.ControlSettings.BugLogIterationPath
-					}
-				}
-				$AreaPath=$AreaPath.Replace("\","\\")
-				$IterationPath=$IterationPath.Replace("\","\\")
-				$RepoSteps="abs"
 
+				#filling the bug template
+				$Title = "[ADOScanner] Control failure - {0} for resource {1} {2}"
+				$Description = "Control failure - {3} for resource {4} {5} </br></br> <b>Failure Details: </b> {0} </br></br> <b> Control Result: </b> {6} </br> </br> <b> Rationale:</b> {1} </br></br> <b> Recommendation:</b> {2}"
+			
+				$Title = $Title.Replace("{0}", $control.ControlItem.ControlID)
+				$Title = $Title.Replace("{1}", $control.ResourceContext.ResourceTypeName)
+				$Title = $Title.Replace("{2}", $control.ResourceContext.ResourceName)
 				
+				$Description = $Description.Replace("{0}", $control.ControlItem.Description)
+				$Description = $Description.Replace("{1}", $control.ControlItem.Rationale)
+				$Description = $Description.Replace("{2}", $control.ControlItem.Recommendation)
+				$Description = $Description.Replace("{3}", $control.ControlItem.ControlID)
+				$Description = $Description.Replace("{4}", $control.ResourceContext.ResourceTypeName)
+				$Description = $Description.Replace("{5}", $control.ResourceContext.ResourceName)
+				$Description = $Description.Replace("{6}", $control.ControlResults[0].VerificationResult)
+				$Description = $Description.Replace("'", "\'")
 				
+				#check and append any detailed log and state data for the control failure
+				if ($this.LogMessage($control)) {
+					$Description += "<hr></br><b>Some other details for your reference</b> </br><hr> {7} "
+					$log = $this.LogMessage($control).Replace("\", "\\")
+					$Description = $Description.Replace("{7}", $log)
+					
+				}				
+				
+				$Severity = $this.GetSeverity($control.ControlItem.ControlSeverity)		
+					
+				
+				#function to attempt bug logging
+				$this.AddWorkItem($Title, $Description, $AssignedTo, $AreaPath, $IterationPath, $Severity, $ProjectName, $control, $hash, $ProjectId)
 
-				$this.AddWorkItem($Title, $Description, $History, $AssignedTo, $AreaPath, $IterationPath, $RepoSteps,$Severity,$ProjectName,$control)
-				#$control.ControlResults.AddMessage("Auto bug logging",$this.LogMessage($control))
-
+			}
 		}
-	}
+		}
 
 	}
 
-	hidden [string] LogMessage([SVTEventContext[]] $ControlResult){
-	$log=""
-		$Messages=$ControlResult.ControlResults[0].Messages
+	#function to check any detailed log and state data for the control failure
+	hidden [string] LogMessage([SVTEventContext[]] $ControlResult) {
+		$log = ""
+		$Messages = $ControlResult.ControlResults[0].Messages
 
 		$Messages | ForEach-Object {
-			if($_.Message){
-				$log+="<b>$($_.Message)</b> </br></br>"
+			if ($_.Message) {
+				$log += "<b>$($_.Message)</b> </br></br>"
 			}
-			if($_.DataObject){
-				$log+="<hr>"
+			if ($_.DataObject) {
+				$log += "<hr>"
 
-					$logs=[Helpers]::ConvertObjectToString($_,$false)
-					$logs=$logs.Replace("`"","'")
+				$stateData = [Helpers]::ConvertObjectToString($_, $false)
+				$stateData = $stateData.Replace("@{", "@{</br>")
+				$stateData = $stateData.Replace("@(", "@(</br>")
+				$stateData = $stateData.Replace(";", ";</br>")
+				$stateData = $stateData.Replace("},", "</br>},</br>")
+				$stateData = $stateData.Replace(");", "</br>});</br>")
 					
-					$log+= "$($logs) </br></br>"
-					
-					
-					
+				$log += "$($stateData) </br></br>"	
 					
 				
 			}
 		}
-		$log.Replace("\","\\")
+		$log = $log.Replace("\", "\\")	
 
 		return $log
 	}
 
-	hidden [bool] CheckValidLog([SVTEventContext[]] $ControlResult){
-		switch -regex ($ControlResult.FeatureName){
+
+	#function to check if the bug can be logged for the current resource type
+	hidden [bool] CheckValidLog([SVTEventContext[]] $ControlResult) {
+		switch -regex ($ControlResult.FeatureName) {
 			'Organization' {
-				if(!($this.GetHostProject($ControlResult))){
+				if (!($this.GetHostProject($ControlResult))) {
 					return $false
 				}				
 			}
 			'Project' {
-				if(!$this.ControlStateExt.GetControlStatePermission($ControlResult.FeatureName,$ControlResult.ResourceContext.ResourceName)){
-					Write-Host "`nYou do not have permissions to log bugs. Make sure you are a Project Admin" -ForegroundColor Red
+				if (!$this.ControlStateExt.GetControlStatePermission($ControlResult.FeatureName, $ControlResult.ResourceContext.ResourceName)) {
+					Write-Host "`nAuto Bug Logging denied due to insufficient permission. Make sure you are a Project Admin. " -ForegroundColor Red
 					return $false
 				}
-			}
-			'AgentPool'{
-				return $true
 			}
 		}
 		return $true
 	}
 
-	hidden [string] GetHostProject([SVTEventContext[]] $ControlResult){
-		$Project=$null
-		if ($this.InvocationContext.BoundParameters["AttestationHostProjectName"]) 
-		        	{
-		        		if($this.ControlStateExt.GetControlStatePermission("Organization", ""))
-		        		{ 
-		        			$this.ControlStateExt.SetProjectInExtForOrg()	
-		        		}
-		        		else {
-							Write-Host "Error: Could not configure host project for organization controls auto bug log.`nThis may be because: `n  (a) You may not have correct privilege (requires 'Project Collection Administrator').`n  (b) You are logged in using PAT (which is not supported for this currently)." -ForegroundColor Red
-							return $Project
-		        		}
-					}
-					if(!$this.ControlStateExt.GetControlStatePermission("Resource", "microsoftit") )
-					{
-					  Write-Host "Error: Auto bug logging denied.`nThis may be because: `n  (a) You are attempting to log bugs for areas you do not have RBAC permission to.`n  (b) You are logged in using PAT (currently not supported for organization and project control's bug logging)." -ForegroundColor Red
-					  return $Project
+
+	#function to retrive the attestation host project for organization level control failures
+	hidden [string] GetHostProject([SVTEventContext[]] $ControlResult) {
+		$Project = $null
+		if ($this.InvocationContext.BoundParameters["AttestationHostProjectName"]) {
+			if ($this.ControlStateExt.GetControlStatePermission("Organization", "")) { 
+				$this.ControlStateExt.SetProjectInExtForOrg()	
+			}
+			else {
+				Write-Host "Error: Could not configure host project for organization controls auto bug log.`nThis may be because: `n  (a) You may not have correct privilege (requires 'Project Collection Administrator').`n  (b) You are logged in using PAT (which is not supported for this currently)." -ForegroundColor Red
+				return $Project
+			}
+		}
+		if (!$this.ControlStateExt.GetControlStatePermission("Resource", "microsoftit") ) {
+			Write-Host "Error: Auto bug logging denied.`nThis may be because: `n  (a) You are attempting to log bugs for areas you do not have RBAC permission to.`n  (b) You are logged in using PAT (currently not supported for organization and project control's bug logging)." -ForegroundColor Red
+			return $Project
 					  
-					}
-					if(!$this.ControlStateExt.GetProject())
-				    { 
-						Write-Host "`nNo project defined to store bugs for organization-specific controls." -ForegroundColor Red
-						Write-Host "Use the '-AttestationHostProjectName' parameter with this command to configure the project that will host bug logging details for organization level controls.`nRun 'Get-Help -Name Get-AzSKAzureDevOpsSecurityStatus -Full' for more info." -ForegroundColor Yellow
-						return $Project
-					}
-					$Project=$this.ControlStateExt.GetProject()
-					return $Project
+		}
+		if (!$this.ControlStateExt.GetProject()) { 
+			Write-Host "`nNo project defined to store bugs for organization-specific controls." -ForegroundColor Red
+			Write-Host "Use the '-AttestationHostProjectName' parameter with this command to configure the project that will host bug logging details for organization level controls.`nRun 'Get-Help -Name Get-AzSKAzureDevOpsSecurityStatus -Full' for more info." -ForegroundColor Yellow
+			return $Project
+		}
+		$Project = $this.ControlStateExt.GetProject()
+		return $Project
 
 
 	}
 
-	hidden [string] GetAssignee([string] $ResourceType,[string] $resourceName){
+	#function to retrieve the person to whom the bug will be assigned
 
-		$Assignee="";
+	hidden [string] GetAssignee([string] $ResourceType, [string] $resourceName) {
+
+		$Assignee = "";
 		switch -regex ($ResourceType) {
+			#assign to the creator of service connection
 			'ServiceConnection' {
-				$Assignee=$this.ResourceContext.ResourceDetails.createdBy.uniqueName
+				$Assignee = $this.ResourceContext.ResourceDetails.createdBy.uniqueName
+			}
+			#assign to the creator of agent pool
+			'AgentPool' {
+				$apiurl = "https://dev.azure.com/{0}/_apis/distributedtask/pools?poolName={1}&api-version=5.1" -f $($this.SubscriptionContext.SubscriptionName), $resourceName
+				try {
+					$response = [WebRequestHelper]::InvokeGetWebRequest($apiurl)
+					$Assignee = $response.createdBy.uniqueName
+	
+				}
+				catch {
+					$Assignee = [ContextHelper]::GetCurrentSessionUser();
+				}
 
 			}
-			'AgentPool'{
-				$apiurl="https://dev.azure.com/{0}/_apis/distributedtask/pools?poolName={1}&api-version=5.1" -f $($this.SubscriptionContext.SubscriptionName), $resourceName
-				$response=[WebRequestHelper]::InvokeGetWebRequest($apiurl)
-				$Assignee=$response.createdBy.uniqueName
+			#assign to the person who recently triggered the build pipeline, or if the pipeline is empty assign it to the creator
+			'Build' {
+				$definitionId = ($this.ResourceContext.ResourceDetails.ResourceLink -split "=")[1]
 
+				try {
+					$apiurl = "https://dev.azure.com/{0}/{1}/_apis/build/builds?definitions={2}&api-version=5.1" -f $($this.SubscriptionContext.SubscriptionName), $this.ResourceContext.ResourceGroupName , $definitionId;
+				
+					$response = [WebRequestHelper]::InvokeGetWebRequest($apiurl)
+	
+					if ([Helpers]::CheckMember($response, "requestedBy")) {
+						$Assignee = $response[0].requestedBy.uniqueName
+					}
+					else {
+						$apiurl = "https://dev.azure.com/{0}/{1}/_apis/build/definitions/{2}?api-version=5.1" -f $($this.SubscriptionContext.SubscriptionName), $this.ResourceContext.ResourceGroupName , $definitionId;
+						$response = [WebRequestHelper]::InvokeGetWebRequest($apiurl)
+						$Assignee = $response.authoredBy.uniqueName
+					}
+				}
+				catch {
+					$Assignee = [ContextHelper]::GetCurrentSessionUser();
+				}	
+				
 			}
-			'Build'{
-				$definitionId=($this.ResourceContext.ResourceDetails.ResourceLink -split "=")[1]
-				$apiurl="https://dev.azure.com/{0}/{1}/_apis/build/builds?definitions={2}&api-version=5.1" -f $($this.SubscriptionContext.SubscriptionName), $this.ResourceContext.ResourceGroupName ,$definitionId;
-				$response=[WebRequestHelper]::InvokeGetWebRequest($apiurl)
-
-				if([Helpers]::CheckMember($response,"requestedBy")){
-					$Assignee=$response[0].requestedBy.uniqueName
+			#assign to the person who recently triggered the release pipeline, or if the pipeline is empty assign it to the creator
+			'Release' {
+				$definitionId = ($this.ResourceContext.ResourceId -split "definitions/")[1]
+				try {
+					$apiurl = "https://vsrm.dev.azure.com/{0}/{1}/_apis/release/releases?definitionId={2}&api-version=5.1" -f $($this.SubscriptionContext.SubscriptionName), $this.ResourceContext.ResourceGroupName , $definitionId;
+					$response = [WebRequestHelper]::InvokeGetWebRequest($apiurl)
+	
+					if ([Helpers]::CheckMember($response, "modifiedBy")) {
+						$Assignee = $response[0].modifiedBy.uniqueName
+					}
+					
+					else {
+						$apiurl = "https://vsrm.dev.azure.com/{0}/{1}/_apis/release/definitions/{2}?&api-version=5.1" -f $($this.SubscriptionContext.SubscriptionName), $this.ResourceContext.ResourceGroupName , $definitionId;
+						$response = [WebRequestHelper]::InvokeGetWebRequest($apiurl)
+						$Assignee = $response.createdBy.uniqueName
+					}
+				}
+				catch {
+					$Assignee = [ContextHelper]::GetCurrentSessionUser();
 				}
 				
-				else{
-					$apiurl="https://dev.azure.com/{0}/{1}/_apis/build/definitions/{2}?api-version=5.1" -f $($this.SubscriptionContext.SubscriptionName), $this.ResourceContext.ResourceGroupName ,$definitionId;
-					$response=[WebRequestHelper]::InvokeGetWebRequest($apiurl)
-					$Assignee=$response.authoredBy.uniqueName
-				}
 
 
 			}
-			'Release'{
-				$definitionId=($this.ResourceContext.ResourceId -split "definitions/")[1]
-				$apiurl="https://vsrm.dev.azure.com/{0}/{1}/_apis/release/releases?definitionId={2}&api-version=5.1" -f $($this.SubscriptionContext.SubscriptionName), $this.ResourceContext.ResourceGroupName ,$definitionId;
-				$response=[WebRequestHelper]::InvokeGetWebRequest($apiurl)
-
-				if([Helpers]::CheckMember($response,"modifiedBy")){
-					$Assignee=$response[0].modifiedBy.uniqueName
-				}
-				
-				else{
-					$apiurl="https://vsrm.dev.azure.com/{0}/{1}/_apis/release/definitions/{2}?&api-version=5.1" -f $($this.SubscriptionContext.SubscriptionName), $this.ResourceContext.ResourceGroupName ,$definitionId;
-					$response=[WebRequestHelper]::InvokeGetWebRequest($apiurl)
-					$Assignee=$response.createdBy.uniqueName
-				}
-
-
-			}
-			'Organization'{
+			#assign to the person running the scan
+			'Organization' {
 				$Assignee = [ContextHelper]::GetCurrentSessionUser();
 			}
-			'Project'{
+			'Project' {
 				$Assignee = [ContextHelper]::GetCurrentSessionUser();
 
 			}
@@ -742,20 +726,21 @@ class ADOSVTBase: SVTBase {
 
 	}
 
-	hidden [string] GetSeverity([string] $ControlSeverity){
-		$Severity=""
+	#function to map severity of the control item
+	hidden [string] GetSeverity([string] $ControlSeverity) {
+		$Severity = ""
 		switch -regex ($ControlSeverity) {
-			'Critical'{
-				$Severity="1 - Critical"
+			'Critical' {
+				$Severity = "1 - Critical"
 			}
 			'High' {
-				$Severity="2 - High"
+				$Severity = "2 - High"
 			}
-			'Medium'{
-				$Severity="3 - Medium"
+			'Medium' {
+				$Severity = "3 - Medium"
 			}
-			'Low'{
-				$Severity="4 - Low"
+			'Low' {
+				$Severity = "4 - Low"
 			}
 
 		}
@@ -763,156 +748,224 @@ class ADOSVTBase: SVTBase {
 		return $Severity
 	}
 
-	hidden [void] AddWorkItem([string] $Title, [string] $Description, [string] $History, [string] $AssignedTo, [string] $AreaPath, [string] $IterationPath, [string] $RepoSteps,[string]$Severity,[string]$ProjectName,[SVTEventContext[]] $control )
-    {
-		$workItem=$this.GetWorkItem($Title,$ProjectName)
-        if (!$workItem) {
-			$apiurl='https://dev.azure.com/{0}/{1}/_apis/wit/workitems/$bug?api-version=5.1' -f $($this.SubscriptionContext.SubscriptionName), $ProjectName;
+	#function to find active bugs and reactivate resolved bugs
+	hidden [void] FindActiveAndResolvedBugs([string]$ProjectName, [SVTEventContext[]] $control, [object] $workItem, [string] $AssignedTo){
+		
+		
+			$state = ($workItem[0].results.values.fields | where { $_.name -eq "State" })
+			$id = ($workItem[0].results.values.fields | where { $_.name -eq "ID" }).value
+
+			$bugUrl = "https://{0}.visualstudio.com/{1}/_workitems/edit/{2}" -f $($this.SubscriptionContext.SubscriptionName), $ProjectName , $id
 
 			
-            
-			$post=@"
+			if ($state.value -eq "Resolved") {
+				$url = "https://dev.azure.com/{0}/{1}/_apis/wit/workitems/{2}?api-version=5.1" -f $($this.SubscriptionContext.SubscriptionName), $ProjectName, $id
+				$body = @"
 
+				[
+				{
+				  'op': 'add',
+				  'path': '/fields/System.State',
+				  'from': null,
+				  'value': 'Active'
+				},
+				{
+				 "op":"add",
+				 "path":"/fields/Microsoft.VSTS.Common.ResolvedReason",
+				 "value":""
+				},
+				{
+					'op':'add',
+					'path':'/fields/System.AssignedTo',
+					'from': null,
+					'value':'$AssignedTo'
+				}
+				]
+"@
+					$header = $this.GetAuthHeaderFromUriPatch($url)
+					
+				try {
+					$responseObj = Invoke-RestMethod -Uri $url -Method Patch -ContentType "application/json-patch+json ; charset=utf-8" -Headers $header -Body $body
+					$control.ControlResults.AddMessage("Resolved Bug", $bugUrl)
+
+				}
+				catch {
+					if ($_.ErrorDetails.Message -like '*System.AssignedTo*') {
+						$body = $body | ConvertFrom-Json
+						$body[2].value = "";
+						$body = $body | ConvertTo-Json
+						try {
+							$responseObj = Invoke-RestMethod -Uri $url -Method Post -ContentType "application/json-patch+json ; charset=utf-8" -Headers $header -Body $body
+							$bugUrl = "https://{0}.visualstudio.com/_workitems/edit/{1}" -f $($this.SubscriptionContext.SubscriptionName), $responseObj.id
+							$control.ControlResults.AddMessage("Resolved Bug", $bugUrl)
+						}
+						catch {
+							Write-Host "Could not reactivate the bug" -ForegroundColor Red
+						}
+					}
+					else{
+						Write-Host "Could not reactivate the bug" -ForegroundColor Red
+
+					}
+				}
+
+
+			}
+			else {
+				$control.ControlResults.AddMessage("Active Bug", $bugUrl)
+			}
+		
+	}
+
+	#function to log new bugs, find active and resolved bugs
+
+	hidden [void] AddWorkItem([string] $Title, [string] $Description, [string] $AssignedTo, [string] $AreaPath, [string] $IterationPath, [string]$Severity, [string]$ProjectName, [SVTEventContext[]] $control, [string] $hash, [string] $ProjectId ) {
+		
+		
+		#logging new bugs
+		
+			$apiurl = 'https://dev.azure.com/{0}/{1}/_apis/wit/workitems/$bug?api-version=5.1' -f $($this.SubscriptionContext.SubscriptionName), $ProjectName;
+
+			$hashString = "ADOScanID: " + $hash.Substring(0, 12)
+            
+			$post = @"
 			[
 				{
-				  "op": "add",
-				  "path": "/fields/System.Title",
-				  "from": null,
-				  "value": "$Title"
+				  'op': 'add',
+				  'path': '/fields/System.Title',
+				  'from': null,
+				  'value': '$Title'
 				},
 				{
-				  "op": "add",
-				  "path": "/fields/Microsoft.VSTS.TCM.ReproSteps",
-				  "from": null,
-				  "value": "$Description"
+				  'op': 'add',
+				  'path': '/fields/Microsoft.VSTS.TCM.ReproSteps',
+				  'from': null,
+				  'value': '$Description'
 				},
 				{
-					"op":"add",
-					"path":"/fields/Microsoft.VSTS.Common.Severity",
-					"from": null,
-					"value":"$Severity"
+					'op':'add',
+					'path':'/fields/Microsoft.VSTS.Common.Severity',
+					'from': null,
+					'value':'$Severity'
 				},
 				{
-					"op":"add",
-					"path":"/fields/System.AssignedTo",
-					"from": null,
-					"value":"$AssignedTo"
+					'op':'add',
+					'path':'/fields/System.AreaPath',
+					'from': null,
+					'value':'$AreaPath'
 				},
 				{
-					"op":"add",
-					"path":"/fields/System.AreaPath",
-					"from": null,
-					"value":"$AreaPath"
+					'op':'add',
+					'path':'/fields/System.IterationPath',
+					'from': null,
+					'value':'$IterationPath'
 				},
 				{
-					"op":"add",
-					"path":"/fields/System.IterationPath",
-					"from": null,
-					"value":"$IterationPath"
+					'op':'add',
+					'path':'/fields/System.Tags',
+					'from': null,
+					'value':'$hashString'
+				},
+				{
+					'op':'add',
+					'path':'/fields/System.AssignedTo',
+					'from': null,
+					'value':'$AssignedTo'
 				}
 			  ]
 "@
 
-				
-            
-            try{
-                $header = $this.GetAuthHeaderFromUriPatch($apiurl)
-				$responseObj =  Invoke-RestMethod -Uri $apiurl -Method Post -ContentType "application/json-patch+json ; charset=utf-8" -Headers $header -Body $post
-				#$responseObj = [WebRequestHelper]::InvokePostWebRequest($apiurl,$post);
-				$control.ControlResults.AddMessage("New Bug",$responseObj.url)
-				$this.PublishCustomMessage("`nBug has been logged with title: "+ $Title + "`n");
-            }
-            catch{
-                Write-Host $_;
-            }
-		}
-		else{
-			$url=$workItem
-			$response=[WebRequestHelper]::InvokeGetWebRequest($url);
-			if($response[0].fields.'System.State' -eq "Resolved"){
-				$url="https://dev.azure.com/{0}/{1}/_apis/wit/workitems/{2}?api-version=5.1" -f $($this.SubscriptionContext.SubscriptionName), $ProjectName, $response[0].id
-				$body=@"
-				[
-				{
-				  "op": "add",
-				  "path": "/fields/System.State",
-				  "from": null,
-				  "value": "Active"
-				}
-				]
+			<#,
+			  {
+				  'op':'add',
+				  'path':'/fields/System.AssignedTo',
+				  'from': null,
+				  'value':'$AssignedTo'
+			  }#>
+			$responseObj = $null
+			$header = $this.GetAuthHeaderFromUriPatch($apiurl)
 
-"@
-				try{
-					$header = $this.GetAuthHeaderFromUriPatch($url)
-					$responseObj =  Invoke-RestMethod -Uri $url -Method Patch -ContentType "application/json-patch+json ; charset=utf-8" -Headers $header -Body $body
-					#$responseObj = [WebRequestHelper]::InvokePostWebRequest($apiurl,$post);
-					$control.ControlResults.AddMessage("Resolved Bug",$url)
-
-					$this.PublishCustomMessage("`nBug has been logged with title: "+ $Title + "`n");
-				}
-				catch{
-					Write-Host $_;
-				}
-
-
+			try {
+				$responseObj = Invoke-RestMethod -Uri $apiurl -Method Post -ContentType "application/json-patch+json ; charset=utf-8" -Headers $header -Body $post
+				$bugUrl = "https://{0}.visualstudio.com/_workitems/edit/{1}" -f $($this.SubscriptionContext.SubscriptionName), $responseObj.id
+				$control.ControlResults.AddMessage("New Bug", $bugUrl)
+				$this.PublishCustomMessage("`nLogged a new bug `n");
 			}
-			else{
-				$control.ControlResults.AddMessage("Active Bug",$url)
+			catch {
+				#handle assignee users who are not part of org any more
+				if ($_.ErrorDetails.Message -like '*System.AssignedTo*') {
+					$post = $post | ConvertFrom-Json
+					$post[6].value = "";
+					$post = $post | ConvertTo-Json
+					try {
+						$responseObj = Invoke-RestMethod -Uri $apiurl -Method Post -ContentType "application/json-patch+json ; charset=utf-8" -Headers $header -Body $post
+						$bugUrl = "https://{0}.visualstudio.com/_workitems/edit/{1}" -f $($this.SubscriptionContext.SubscriptionName), $responseObj.id
+						$control.ControlResults.AddMessage("New Bug", $bugUrl)
+						$this.PublishCustomMessage("`nLogged a new bug `n");
+					}
+					catch {
+						Write-Host "Could not log the bug" -ForegroundColor Red
+					}
+
+
+				}
+				#handle the case wherein due to global search area/ iteration paths from different projects passed the checkvalidpath function
+				elseif ($_.ErrorDetails.Message -like '*Invalid Area/Iteration id*') {
+					Write-Host "Please verify the area and iteration path. They should belong to the same Project area." -ForegroundColor Red
+				}
+				else{
+					Write-Host "Could not log the bug" -ForegroundColor Red
+				}
 			}
+		
+		
+	}
 
+	#function to search for existing bugs based on the hash
 
+	hidden [object] GetWorkItemByHash([string] $hash, [string] $ProjectName, [string] $ProjectId) {
+		
+		$url = "https://{0}.almsearch.visualstudio.com/{1}/_apis/search/workItemQueryResults?api-version=5.1-preview" -f $($this.SubscriptionContext.SubscriptionName), $ProjectName;
 
+		if ($this.ControlSettings.ResolvedBugLogBehaviour -ne "ReactiveOldBug") {
+			$body = '{"searchText":"{0}","skipResults":0,"takeResults":25,"sortOptions":[],"summarizedHitCountsNeeded":true,"searchFilters":{"Projects":["{1}"],"Work Item Types":["Bug"],"States":["New,"Active"]},"filters":[],"includeSuggestions":false}' | ConvertFrom-Json
 		}
+		else {
+			$body = '{"searchText":"{0}","skipResults":0,"takeResults":25,"sortOptions":[],"summarizedHitCountsNeeded":true,"searchFilters":{"Projects":["{1}"],"Work Item Types":["Bug"],"States":["Active","New","Resolved"]},"filters":[],"includeSuggestions":false}' | ConvertFrom-Json
+		}
+		$body.searchText = "Tags:ADOScanID: " + $hash.Substring(0, 12)
+		$body.searchFilters.Projects = $ProjectName
+
+		$response = [WebRequestHelper]:: InvokePostWebRequest($url, $body)
+		
+		return  $response
+
 	}
 	
 
-    hidden [string] GetWorkItem([string] $Title,[string] $ProjectName)
-    {
-		$apiurl='https://dev.azure.com/{0}/{1}/_apis/wit/wiql?api-version=5.1' -f $($this.SubscriptionContext.SubscriptionName), $ProjectName;
-		$result=$null
-		try{
-			if($this.ControlSettings.ResolvedBugLogBehaviour -ne "Update Existing"){
-				$WIQL_query = "Select [System.Id], [System.Title], [System.State] From WorkItems Where [System.WorkItemType] = 'Bug' AND [System.Title] EVER '"+ $Title +"' AND ([State] = 'New' OR [State] = 'Active') AND [System.TeamProject] ='"+ $ProjectName +"'"
-			}
-			else{
-            $WIQL_query = "Select [System.Id], [System.Title], [System.State] From WorkItems Where [System.WorkItemType] = 'Bug' AND [System.Title] EVER '"+ $Title +"' AND ([State] = 'New' OR [State] = 'Active' OR [State]='Resolved') AND [System.TeamProject] ='"+ $ProjectName +"'"
-			}
-			$body = @{ query = $WIQL_query }
-            $bodyJson = @($body) | ConvertTo-Json
+	hidden [string] GetHash([string] $ControlId, [string] $ResourceId) {
+		$hashString = $null
+		$stringToHash = "#{0}#{1}"
+		$stringToHash = $stringToHash.Replace("{0}", $ControlId)
+		$stringToHash = $stringToHash.Replace("{1}", $ResourceId)
+		$hashString=[Helpers]::ComputeHash($stringToHash)
+		return $hashString
+	}
 
-            $header = $this.GetAuthHeaderFromUriPatch($apiurl)
-            $response = Invoke-RestMethod -Uri $apiurl -headers $header -Method Post -ContentType "application/json" -Body $bodyJson
-			#$response= [WebRequestHelper]::InvokePostWebRequest($apiurl,$bodyJson);
-			if ($response -and $response.workItems.Count -gt 0) {
-				$result=$response.workItems[0].url
-                return $result;
-            }
-            else {
-				
-                return $result;
-            }
-        }
-        catch{
-            Write-Host $_;
-            return $result;
-        }
-        
-    }
+	
 
-    hidden [Hashtable] GetAuthHeaderFromUriPatch([string] $uri)
-    {
-        [System.Uri] $validatedUri = $null;
-        if([System.Uri]::TryCreate($uri, [System.UriKind]::Absolute, [ref] $validatedUri))
-        {
+	hidden [Hashtable] GetAuthHeaderFromUriPatch([string] $uri) {
+		[System.Uri] $validatedUri = $null;
+		if ([System.Uri]::TryCreate($uri, [System.UriKind]::Absolute, [ref] $validatedUri)) {
 
-            $token = [ContextHelper]::GetAccessToken($validatedUri.GetLeftPart([System.UriPartial]::Authority));
+			$token = [ContextHelper]::GetAccessToken($validatedUri.GetLeftPart([System.UriPartial]::Authority));
 
-            $user = ""
-            $base64AuthInfo = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(("{0}:{1}" -f $user,$token)))
-            return @{
-                "Authorization"= ("Basic " + $base64AuthInfo)
-            };
-        }
-        return @{};
-    }
+			$user = ""
+			$base64AuthInfo = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(("{0}:{1}" -f $user, $token)))
+			return @{
+				"Authorization" = ("Basic " + $base64AuthInfo)
+			};
+		}
+		return @{};
+	}
 }

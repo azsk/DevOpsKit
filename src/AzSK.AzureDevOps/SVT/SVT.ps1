@@ -159,11 +159,8 @@ function Get-AzSKAzureDevOpsSecurityStatus
 
 		[ValidateSet("All","BaselineControls","PreviewBaselineControls")]
 		[Parameter(Mandatory = $false)]
-		[Alias("abl")]
-		
-		[string] $AutoBugLog="All",
-
-		
+		[Alias("abl")]		
+		[string] $AutoBugLog="All",		
 
 		[string]
 		[Parameter(Mandatory=$false)]
@@ -325,12 +322,12 @@ function Get-AzSKAzureDevOpsOrgSecurityStatus
 
 		[string]
 		[Parameter(Mandatory=$false)]
-		[Alias("apt")]
+		[Alias("arp")]
 		$AreaPath,
 
 		[string]
 		[Parameter(Mandatory=$false)]
-		[Alias("ipt")]
+		[Alias("itp")]
 		$IterationPath
 
 	)
@@ -490,12 +487,12 @@ function Get-AzSKAzureDevOpsProjectSecurityStatus
 
 		[string]
 		[Parameter(Mandatory=$false)]
-		[Alias("apt")]
+		[Alias("arp")]
 		$AreaPath,
 
 		[string]
 		[Parameter(Mandatory=$false)]
-		[Alias("ipt")]
+		[Alias("itp")]
 		$IterationPath
 
 	)
@@ -634,12 +631,12 @@ function Get-AzSKAzureDevOpsBuildSecurityStatus
 
 		[string]
 		[Parameter(Mandatory=$false)]
-		[Alias("apt")]
+		[Alias("arp")]
 		$AreaPath,
 
 		[string]
 		[Parameter(Mandatory=$false)]
-		[Alias("ipt")]
+		[Alias("itp")]
 		$IterationPath
 
 	)
@@ -771,12 +768,12 @@ function Get-AzSKAzureDevOpsReleaseSecurityStatus
 
 		[string]
 		[Parameter(Mandatory=$false)]
-		[Alias("apt")]
+		[Alias("arp")]
 		$AreaPath,
 
 		[string]
 		[Parameter(Mandatory=$false)]
-		[Alias("ipt")]
+		[Alias("itp")]
 		$IterationPath
 
 	)
