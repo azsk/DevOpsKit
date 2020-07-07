@@ -13,18 +13,43 @@ class SPNInfo: CommandBase
 	GetSPNInfo()
 	{
         $this.PublishCustomMessage([Constants]::DoubleDashLine + "`r`nFetching SPN Details...`r`n" + [Constants]::DoubleDashLine);
-		$this.PublishCustomMessage("`r`nSPN Info`r`n" + [Constants]::SingleDashLine, [MessageType]::Default)
-		$SPNList = [RemoteApiHelper]::GetSPNList();
-		$TelemetrySPNApplicationId = $this.GetSPNApplicationId($SPNList);
-		$ownedSPNDetails = $this.GetOwnedSPNList();
-		$CAUsedSPNApplicationId = $this.GetUsedSPN($ownedSPNDetails,$TelemetrySPNApplicationId);
-		$NotInCAUsedSPNApplicationId = $this.GetUnusedSPN($CAUsedSPNApplicationId,$ownedSPNDetails);
+		$this.PublishCustomMessage("`r`nSPNs Info`r`n" + [Constants]::SingleDashLine, [MessageType]::Default)
+		#Get all owned SPNs
+        $ownedSPNDetails = $this.GetOwnedSPNList();
+		#Get SPNs start with AzSK_CA
+        $ownedSPNs = $this.GetOwnedSPNStartWithAzSK($ownedSPNDetails); #if owned spn is 0 then no need to make api call at backend
+		#Get HttpsResponse which conrain CA used SPNs
         
-        $this.PublishCustomMessage("`r`nSPN used in CA`r`n" + [Constants]::SingleDashLine, [MessageType]::Default)
-        $this.PublishCustomMessage($($CAUsedSPNApplicationId | Format-Table @{Label = "SPNDisplayName"; Expression = { $_.displayName } },@{Label = "ApplicationId"; Expression = { $_.appId }} -AutoSize -Wrap | Out-String), [MessageType]::Default)
-
-        $this.PublishCustomMessage("`r`nSPN not used in CA`r`n" + [Constants]::SingleDashLine, [MessageType]::Default)
-        $this.PublishCustomMessage($($NotInCAUsedSPNApplicationId | Format-Table @{Label = "SPNDisplayName"; Expression = { $_.displayName } },@{Label = "ApplicationId"; Expression = { $_.appId }} -AutoSize -Wrap | Out-String), [MessageType]::Default);
+        if($ownedSPNs.count -ne 0 -and $ownedSPNs -ne $null)
+        {
+            $SPNs = [RemoteApiHelper]::GetSPNList($ownedSPNs.appId);# sendSPNs start with AzSK,SPNList[CAUsedSPN]
+		    #Get CAUsedSPNs
+		    $usedSPNs = $this.GetUsedSPNs($SPNs);
+		    #Get Not in CA Used SPNs
+		    $notInUsedSPNs = $this.GetUnusedSPNs($usedSPNs,$ownedSPNs);
+        
+            #$this.PublishCustomMessage("`r`nSPN used in CA`r`n`n" + [Constants]::SingleDashLine, [MessageType]::Default)
+        
+            $this.PublishCustomMessage("`r`nSPN used in CA`r`n`n" + [Constants]::SingleDashLine, [MessageType]::Default)
+                
+            if($usedSPNs.count -le 1)
+            {
+                $this.PublishCustomMessage("Count : 0", [MessageType]::Default);
+            }
+            else
+            {
+                $this.PublishCustomMessage($($usedSPNs | Format-Table @{Label = "SPNApplicationId"; Expression = { $_.appId } },@{Label = "SubscriptionId"; Expression = { $_.subscriptionId }} -AutoSize -Wrap | Out-String), [MessageType]::Default)
+            }
+        
+            $this.PublishCustomMessage([Constants]::DoubleDashLine, [MessageType]::Default);
+        
+            $this.PublishCustomMessage("`r`nSPN not used in CA`r`n`n" + [Constants]::SingleDashLine, [MessageType]::Default)
+            $this.PublishCustomMessage($($NotInUsedSPNs | Format-Table @{Label = "ApplicationId"; Expression = { $_.appId }},@{Label = "SPNDisplayName"; Expression = { $_.displayName } } -AutoSize | Out-String), [MessageType]::Default);
+        }
+        else
+        {
+            $this.PublishCustomMessage("`r`nNo Owned SPNs found`r`n" + [Constants]::SingleDashLine, [MessageType]::Default)
+        }
         
     }
 
@@ -40,12 +65,12 @@ class SPNInfo: CommandBase
 		    if($null -ne $result -and $result.StatusCode -eq 200)
             {
                 $result_content = $result.Content | convertfrom-json;
-    		    $ownedSPNDetails = $result_content.value | Select-Object -Property displayName,appId -Unique
+    		    $ownedSPNDetails = $result_content.value | Select-Object -Property displayName,appId -Unique 
     		    return ($ownedSPNDetails);
             }
             else
             {
-                return ($null)
+                return ($null)#[Throw message]
             }
         }
         catch 
@@ -54,51 +79,52 @@ class SPNInfo: CommandBase
         }
 	} 
 
-	[PSObject] GetSPNApplicationId($SPNApplicationId)
+	[PSObject] GetUsedSPNs($SPNApplicationId)
 	{
 		$TelemetrySPNApplicationId = @();
 		if($null -ne  $SPNApplicationId)
 		{
 			$SPNApplicationId = $SPNApplicationId | convertfrom-json;
-			foreach ($item in $SPNApplicationId.tables.rows) 
+			foreach ($item in $SPNApplicationId) 
 			{
 				$TelemetrySPNApplicationId += $item;
 			}
 		}
 		return ($TelemetrySPNApplicationId);
-	} 
-
-	[PSObject] GetUsedSPN($ownedSPNDetails,$TelemetrySPNApplicationId)
-	{
-		$CAUsedSPNApplicationId = @();
-		if($null -ne $ownedSPNDetails)
-		{
-			foreach ($SPNId in $ownedSPNDetails) 
-			{
-				if($SPNId.appId -in $TelemetrySPNApplicationId)
-				{
-					$CAUsedSPNApplicationId += $SPNId;
-				}
-				
-			}
-		}
-		return ($CAUsedSPNApplicationId);
 	}
 
-	[PSObject] GetUnusedSPN($CAUsedSPNApplicationId,$ownedSPNDetails)
+
+	[PSObject] GetOwnedSPNStartWithAzSK($ownedSPNDetails)
 	{
-		$NotInCAUsedSPNApplicationId = @();
-		if($null -ne $ownedSPNDetails)
+		$OwnedSPNUsedInCA = @();
+		if($null -ne  $ownedSPNDetails)
 		{
-			foreach ($SPNId in $ownedSPNDetails) 
+			foreach ($ownedSPN in $ownedSPNDetails) 
 			{
-				if($SPNId.appId -notin $CAUsedSPNApplicationId)
+				if($ownedSPN.displayName -like 'AzSK_CA*')
 				{
-					$NotInCAUsedSPNApplicationId += $SPNId;
+					$OwnedSPNUsedInCA += $ownedSPN;
+				}
+			}
+		}
+		return ($OwnedSPNUsedInCA);
+	} 
+
+	
+	[PSObject] GetUnusedSPNs($usedSPNs,$ownedSPNs)
+	{
+		$NotInCAUsedSPNs = @();
+		if($null -ne $ownedSPNs)
+		{
+			foreach ($SPNId in $ownedSPNs) 
+			{
+				if($SPNId -notin $usedSPNs)
+				{
+					$NotInCAUsedSPNs += $SPNId;
 				}
 				
 			}
 		}
-		return ($NotInCAUsedSPNApplicationId);
+		return ($NotInCAUsedSPNs);
 	}
 }

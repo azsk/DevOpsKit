@@ -13,12 +13,16 @@ class RemoteApiHelper {
     {
             try {
                 $accessToken = [RemoteApiHelper]::GetAccessToken()
-                $result = Invoke-WebRequest -Uri $([RemoteApiHelper]::ApiBaseEndpoint + $uri) `
-                    -Method Post `
-                    -Body $content `
-                    -ContentType $type `
-                    -Headers @{"Authorization" = "Bearer $accessToken"} `
-                    -UseBasicParsing
+                $uri = "http://localhost:5000/api" + $uri
+                $result = Invoke-WebRequest -Uri $uri -Method Post -Headers @{"Authorization" = "Bearer $accessToken"} -ContentType "application/json" -Body ($content | ConvertTo-Json) -UseBasicParsing #$([RemoteApiHelper]::ApiBaseEndpoint + $uri)
+                #$result = Invoke-WebRequest -Uri $($uri) `  #[RemoteApiHelper]::ApiBaseEndpoint + $uri
+
+                #$result = Invoke-WebRequest -Uri $($uri) `
+                #    -Method Post `
+                #    -Body $content `
+                #    -ContentType $type `
+                #    -Headers @{"Authorization" = "Bearer $accessToken"} `
+                #    -UseBasicParsing
                 return $result
             }
             catch {
@@ -48,27 +52,22 @@ class RemoteApiHelper {
     
     hidden static [psobject] GetContent($uri, $content, $type) 
     {
+        
+        $url = [RemoteApiHelper]::ApiBaseEndpoint + $uri;
         $accessToken = [RemoteApiHelper]::GetAccessToken()
-        $uri = "http://localhost:5000/api" + $uri
-        $result = Invoke-WebRequest -Uri $uri -Method Post -Body $('{}'| ConvertTo-Json) -ContentType $type -Headers @{"Authorization" = "Bearer $accessToken"} -UseBasicParsing #$([RemoteApiHelper]::ApiBaseEndpoint + $uri)
-        
-        
-        #$url = [RemoteApiHelper]::ApiBaseEndpoint + $uri;
-        #$accessToken = [RemoteApiHelper]::GetAccessToken()
-        #    $result = Invoke-WebRequest -Uri $url `
-        #        -Method POST `
-        #        -Body $content `
-        #        -ContentType $type `
-        #        -Headers @{"Authorization" = "Bearer $accessToken"} `
-        #        -UseBasicParsing
+            $result = Invoke-WebRequest -Uri $url `
+                -Method POST `
+                -Body $content `
+                -ContentType $type `
+                -Headers @{"Authorization" = "Bearer $accessToken"} `
+                -UseBasicParsing
             return $result.Content
               
     }
 
-
     hidden static [psobject] PostJsonContent($uri, $obj) {
-        $postContent = [JsonHelper]::ConvertToJsonCustomCompressed($obj)
-        return [RemoteApiHelper]::PostContent($uri, $postContent, "application/json")
+        #$postContent = [JsonHelper]::ConvertToJsonCustomCompressed($obj)
+        return [RemoteApiHelper]::PostContent($uri, $obj, "application/json")
     }
     hidden static [psobject] GetJsonContent($uri, $obj) {
         $postContent = [JsonHelper]::ConvertToJsonCustomCompressed($obj)
@@ -112,8 +111,8 @@ class RemoteApiHelper {
 		return([RemoteApiHelper]::GetJsonContent("/compliancedata", $parameters) )	
     }
 
-    static [PSObject] GetSPNList() {
-        return([RemoteApiHelper]::GetJsonContent("/scanresults/SPNList", ""))
+    static [PSObject] GetSPNList([PSObject] $ownedSPNDetails) {
+        return([RemoteApiHelper]::PostJsonContent("/scanresults/SPNList", $ownedSPNDetails))
     }
     
     static [void] PostASCTelemetry($ASCTelemetryData)
