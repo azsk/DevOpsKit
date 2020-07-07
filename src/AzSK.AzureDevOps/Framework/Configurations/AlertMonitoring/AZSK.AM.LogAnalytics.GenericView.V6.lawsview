@@ -277,7 +277,7 @@
                                     },
                                     "Header": {
                                         "Title": "Security Status across Project Components by type",
-                                        "Subtitle": "AzSK Resource Security Compliance "
+                                        "Subtitle": "AzSK.AzureDevOps Resource Security Compliance "
                                     },
                                     "Donut": {
                                         "Query": "AzSK_ADO_CL | where TimeGenerated > ago(3d) | where ${Baseline} and ${PreviewBaseline} and ${ResourceType} and ${Severity} | where FeatureName_s != \"Organization\" and FeatureName_s != \"Project\" | extend ControlStatus = iff(ControlStatus_s == \"Passed\", \"Passed\",\"Failed\") | summarize arg_max(TimeGenerated, *) by SubscriptionName_s, ResourceId, ControlId_s | summarize AggregatedValue = count() by ControlStatus | sort by AggregatedValue desc",
