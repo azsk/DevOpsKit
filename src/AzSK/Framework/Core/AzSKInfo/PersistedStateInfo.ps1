@@ -35,6 +35,11 @@ class PersistedStateInfo: AzCommandBase
 				$this.PublishCustomMessage("NOTE: This feature is currently disabled in your environment. Please contact the cloud security team for your org.", [MessageType]::Warning);	
 				return $messages;
 			} 
+			if([FeatureFlightingManager]::GetFeatureStatus("DisableComplianceState",$($this.SubscriptionContext.SubscriptionId)) -ne $true)
+			{
+				$this.PublishCustomMessage("NOTE: This feature is not currently supported.", [MessageType]::Warning);	
+				return $messages;
+			}
 			#Check for file path exist
 			if(-not (Test-Path -path $filePath))
 			{  
@@ -102,7 +107,7 @@ class PersistedStateInfo: AzCommandBase
 
 					if(($UpdatedPersistedControls | Measure-Object).Count -gt 0)
 					{
-						$complianceReportHelper.SetLocalSubscriptionScanReport($UpdatedPersistedControls);
+						$complianceReportHelper.SetLocalSubscriptionScanReport($UpdatedPersistedControls);												
 					}
 				}
 			}

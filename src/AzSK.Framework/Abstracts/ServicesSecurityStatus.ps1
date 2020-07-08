@@ -242,25 +242,28 @@ class ServicesSecurityStatus: AzSVTCommandBase
 
 				if($this.IsLocalComplianceStoreEnabled -and ($currentResourceResults | Measure-Object).Count -gt 0)
 				{	
+					if([FeatureFlightingManager]::GetFeatureStatus("DisableComplianceState",$($this.SubscriptionContext.SubscriptionId)) -ne $true)
+					{
 					# Persist scan data to subscription
-					try 
-					{
-						if($null -eq $this.ComplianceReportHelper)
+						try 
 						{
-							$this.ComplianceReportHelper = [ComplianceReportHelper]::new($this.SubscriptionContext, $this.GetCurrentModuleVersion())
+							if($null -eq $this.ComplianceReportHelper)
+							{
+								$this.ComplianceReportHelper = [ComplianceReportHelper]::new($this.SubscriptionContext, $this.GetCurrentModuleVersion())
+							}
+							if($this.ComplianceReportHelper.HaveRequiredPermissions())
+							{
+								$this.ComplianceReportHelper.StoreComplianceDataInUserSubscription($currentResourceResults)
+							}
+							else
+							{
+								$this.IsLocalComplianceStoreEnabled = $false;
+							}
 						}
-						if($this.ComplianceReportHelper.HaveRequiredPermissions())
+						catch 
 						{
-							$this.ComplianceReportHelper.StoreComplianceDataInUserSubscription($currentResourceResults)
+							$this.PublishException($_);
 						}
-						else
-						{
-							$this.IsLocalComplianceStoreEnabled = $false;
-						}
-					}
-					catch 
-					{
-						$this.PublishException($_);
 					}
 
 				}
