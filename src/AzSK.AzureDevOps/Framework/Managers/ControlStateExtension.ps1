@@ -25,8 +25,7 @@ class ControlStateExtension
 	hidden [PSObject] $AttestationBody;
 	[bool] $IsPersistedControlStates = $false;
 	[bool] $IsExceptionCheckingControlStateIndexerPresent = $false
-	[bool] $checkValidPathFlag=$true;
-	[bool] $isPathValid=$true;
+	
 
 
 	ControlStateExtension([SubscriptionContext] $subscriptionContext, [InvocationInfo] $invocationContext)
@@ -36,61 +35,6 @@ class ControlStateExtension
 		
 		$this.ControlSettings = [ConfigurationManager]::LoadServerConfigFile("ControlSettings.json");	
 		$this.AttestationBody = [ConfigurationManager]::LoadServerConfigFile("ADOAttestation.json");
-	}
-
-
-	hidden [bool] CheckValidPath(){
-		
-		if($this.checkValidPathFlag){
-		
-		
-		$ProjectName=$this.GetProject()
-		$pathurl="https://dev.azure.com/{0}/{1}/_apis/wit/wiql?api-version=5.1" -f $($this.SubscriptionContext.SubscriptionName), $ProjectName
-		$AreaPath=$this.InvocationContext.BoundParameters['AreaPath'];
-		$IterationPath=$this.InvocationContext.BoundParameters['IterationPath'];
-		if(!$AreaPath){
-			if($this.ControlSettings.BugLogAreaPath -eq "RootProjectPath"){
-				$AreaPath=$ProjectName
-			}
-			else{
-				$AreaPath=$this.ControlSettings.BugLogAreaPath
-			}
-		}
-		if(!$IterationPath){
-			if($this.ControlSettings.BugLogIterationPath -eq "RootProjectPath"){
-				$IterationPath=$ProjectName
-			}
-			else{
-				$IterationPath=$this.ControlSettings.BugLogIterationPath
-			}
-		}
-		$AreaPath=$AreaPath.Replace("\","\\")
-		$IterationPath=$IterationPath.Replace("\","\\")
-		$WIQL_query="Select [System.AreaPath], [System.IterationPath] From WorkItems WHERE [System.AreaPath]='$AreaPath' AND [System.IterationPath]='$IterationPath' AND [System.TeamProject] = '$ProjectName'"
-		$body = @{ query = $WIQL_query }
-		$bodyJson = @($body) | ConvertTo-Json
-		
-		try{
-			#$header = $this.GetAuthHeaderFromUriPatch($pathurl)
-			$response=[WebRequestHelper]::InvokePostWebRequest($pathurl,$body)
-			$this.checkValidPathFlag=$false
-			$this.isPathValid=$true;
-			return $true;
-			#$response = Invoke-RestMethod -Uri $pathurl -headers $header -Method Post -ContentType "application/json" -Body $bodyJson
-			
-		}
-		catch{
-			Write-Host "`nCould not log bug. Verify that the area and iteration path are correct." -ForegroundColor Red
-			$this.checkValidPathFlag=$false;
-			$this.isPathValid=$false
-			
-						
-		}
-		
-	}
-		
-
-		return ($this.checkValidPathFlag -or $this.isPathValid)
 	}
 
 	hidden [void] Initialize([bool] $CreateResourcesIfNotExists)

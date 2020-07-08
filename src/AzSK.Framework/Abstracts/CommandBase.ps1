@@ -133,69 +133,12 @@ class CommandBase: AzSKRoot {
 		}
 		
 
-		#create a JSON for bugs
-
-		$ActiveBugs=@{ActiveBugs=@()}
-		$ResolvedBugs=@{ResolvedBugs=@()}
-		$NewBugs=@{NewBugs=@()}
-		if($this.InvocationContext.BoundParameters["AutoBugLog"]){
-			$methodResult | ForEach-Object{
-				$result=$_;
-				if($result.ControlResults[0].VerificationResult -eq "Failed" -or $result.ControlResults[0].VerificationResult -eq "Verify"){
-					$result.ControlResults[0].Messages | ForEach-Object{
-						if($_.Message -eq "Active Bug"){							
-							$ActiveBugs.ActiveBugs+= [PSCustomObject]@{
-								'Feature Name'=$result.FeatureName
-								'Resource Name'=$result.ResourceContext.ResourceName
-								'Control'=$result.ControlItem.ControlID
-								'Severity'=$result.ControlItem.ControlSeverity
-								'Url'=$_.DataObject
-							}						
-							
-						}
-						if($_.Message -eq "Resolved Bug"){
-							$ResolvedBugs.ResolvedBugs+= [PSCustomObject]@{
-								'Feature Name'=$result.FeatureName
-								'Resource Name'=$result.ResourceContext.ResourceName
-								'Control'=$result.ControlItem.ControlID
-								'Severity'=$result.ControlItem.ControlSeverity
-								'Url'=$_.DataObject
-							}						
-							
-						}
-						if($_.Message -eq "New Bug"){
-							$NewBugs.NewBugs+= [PSCustomObject]@{
-								'Feature Name'=$result.FeatureName
-								'Resource Name'=$result.ResourceContext.ResourceName
-								'Control'=$result.ControlItem.ControlID
-								'Severity'=$result.ControlItem.ControlSeverity
-								'Url'=$_.DataObject
-							}
-							
-							
-						}
-					}
-				}
-			}
-		}
-
 		
 		$folderPath = $this.GetOutputFolderPath();
-		$filePath=$folderPath+"\Bug_WorkItems.json"
-		$combinedJson=$null;
-		if($NewBugs.NewBugs){
-			$combinedJson=$NewBugs
+		#if bug logging is enabled and path is valid, create the JSON file for bugs
+		if($this.InvocationContext.BoundParameters["AutoBugLog"] -and [BugLogPathManager]::GetIsPathValid()){
+			[PublishToJSON]::new($methodResult,$folderPath)
 		}
-		if($ResolvedBugs.ResolvedBugs){
-			$combinedJson+=$ResolvedBugs
-		}
-		if($ActiveBugs.ActiveBugs){
-			$combinedJson+=$ActiveBugs
-		}
-		if($combinedJson){
-		Add-Content $filePath -Value ($combinedJson | ConvertTo-Json)
-		}
-		
 		# Publish command complete events
         $this.CommandCompleted($methodResult);
 		[AIOrgTelemetryHelper]::TrackCommandExecution("Command Completed",
@@ -204,7 +147,6 @@ class CommandBase: AzSKRoot {
 			$this.InvocationContext)
         $this.PostCommandCompletedAction($methodResult);
 
-        $folderPath = $this.GetOutputFolderPath();
 
 		# <TODO Framework: Move PDF generation method based on listener>
         #Generate PDF report

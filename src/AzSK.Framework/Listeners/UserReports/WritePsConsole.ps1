@@ -247,9 +247,12 @@ class WritePsConsole: FileOutputBase
 						#$currentInstance.WriteMessage([Constants]::AttestationReadMsg + [ConfigurationManager]::GetAzSKConfigData().AzSKRGName, [MessageType]::Info)
 						
 					}
-					if($currentInstance.InvocationContext.BoundParameters["AutoBugLog"]){
+
+					#if bug logging is enabled and the path is valid, print a summary all all bugs encountered
+					if($currentInstance.InvocationContext.BoundParameters["AutoBugLog"] -and [BugLogPathManager]::GetIsPathValid()){
 						$currentInstance.WriteMessage([Constants]::SingleDashLine, [MessageType]::Info)
 						$currentInstance.PrintBugSummaryData($Event);
+						$currentInstance.WriteMessage("A summary of the bugs logged has been written to the following file: $([WriteFolderPath]::GetInstance().FolderPath)\BugSummary.Json", [MessageType]::Info)
 					}
 					$currentInstance.WriteMessage([Constants]::SingleDashLine, [MessageType]::Info)
 				}
@@ -535,6 +538,9 @@ class WritePsConsole: FileOutputBase
 
 	hidden [void] PrintBugSummaryData($event){
 		[PSCustomObject[]] $summary = @();
+
+		#gather all control results that have failed/verify as their control result
+		#obtain their control severities
 		$event.SourceArgs | ForEach-Object {
 			$item = $_
 			if ($item -and $item.ControlResults -and ($item.ControlResults[0].VerificationResult -eq "Failed" -or $item.ControlResults[0].VerificationResult -eq "Verify"))
@@ -551,6 +557,8 @@ class WritePsConsole: FileOutputBase
 				};
 			}
 		};
+
+		#if such bugs were found, print a summary table
 
 		if($summary.Count -ne 0)
 		{

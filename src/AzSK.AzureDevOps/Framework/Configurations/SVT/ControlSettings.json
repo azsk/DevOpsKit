@@ -193,7 +193,9 @@
                                   "(?=^.{7,20}$)(?=.*\\d)(?=.*[a-zA-Z])(?!.*\\s)[0-9a-zA-Z*$-+?_&=!%{}/'.]*$"
                                   ] }                         
    ],
-   "BugLogAreaPath":"Root",
-   "BugLogIterationPath":"Root",
-   "ResolvedBugLogBehaviour":"Update Existing"
+   "BugLogging":{
+   "BugLogAreaPath":"RootDefaultProject",
+   "BugLogIterationPath":"RootDefaultProject",
+   "ResolvedBugLogBehaviour":"ReactiveOldBug"
+   }
 }

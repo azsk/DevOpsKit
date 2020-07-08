@@ -1,0 +1,43 @@
+[
+    {
+        "op": "add",
+        "path": "/fields/System.Title",
+        "from": null,
+        "value": "{0}"
+    },
+    {
+        "op": "add",
+        "path": "/fields/Microsoft.VSTS.TCM.ReproSteps",
+        "from": null,
+        "value": "{1}"
+    },
+    {
+        "op": "add",
+        "path": "/fields/Microsoft.VSTS.Common.Severity",
+        "from": null,
+        "value": "{2}"
+    },
+    {
+        "op": "add",
+        "path": "/fields/System.AreaPath",
+        "from": null,
+        "value": "{3}"
+    },
+    {
+        "op": "add",
+        "path": "/fields/System.IterationPath",
+        "from": null,
+        "value": "{4}"
+    },
+    {
+        "op": "add",
+        "path": "/fields/System.Tags",
+        "from": null,
+        "value": "{5}"
+    },
+    {
+        "op": "add",
+        "path": "/fields/System.AssignedTo",
+        "value": "{6}"
+    }
+]
