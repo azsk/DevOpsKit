@@ -95,10 +95,7 @@
           ],
           "Enabled": true,
           "DataObjectProperties": [
-             "PublicIpAllocationMethod",
-             "IpConfiguration",
-             "Id",
-             "DnsSettings"
+             "Id"
           ]
        },
        {
