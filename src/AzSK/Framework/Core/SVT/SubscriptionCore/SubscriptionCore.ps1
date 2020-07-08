@@ -1812,7 +1812,8 @@ class SubscriptionCore: AzSVTBase
 					{
 						#Get RoleAssignments from PIM API 
 						$url=[string]::Format([Constants]::PIMAPIUri +"/{0}/roleAssignments?`$expand=subject,roleDefinition(`$expand=resource)", $resourceID)
-						$responseContent=[WebRequestHelper]::InvokeGetWebRequest($url, $headers)
+						#NextLink handled in the web request
+                        $responseContent = [WebRequestHelper]::InvokeWebRequest('Get', $url, $headers, $null, [string]::Empty, @{} )
 						foreach ($roleAssignment in $responseContent)
 						{
 							$item= New-Object TelemetryRBAC 
@@ -1899,7 +1900,8 @@ class SubscriptionCore: AzSVTBase
 							}
 							#Get RoleAssignments from PIM API 
 							$url=[string]::Format([Constants]::PIMAPIUri +"/{0}/roleAssignments?`$expand=subject,roleDefinition(`$expand=resource)", $resourceID)
-							$responseContent=[WebRequestHelper]::InvokeGetWebRequest($url, $headers)
+							#NextLink handled in the web request
+                            $responseContent = [WebRequestHelper]::InvokeWebRequest('Get', $url, $headers, $null, [string]::Empty, @{} )
 							foreach ($roleAssignment in $responseContent)
 							{
 								$item= New-Object TelemetryRBAC 
