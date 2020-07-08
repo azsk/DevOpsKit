@@ -80,6 +80,11 @@ class WebRequestHelper {
 		return "https://management.core.windows.net/"
 	}
 
+	hidden static [string] GetUserSPNsUrl()
+	{
+		return "https://graph.microsoft.com";
+	}
+
 	hidden static [Hashtable] GetAuthHeaderFromUri([string] $uri)
 	{
 		[System.Uri] $validatedUri = $null;
