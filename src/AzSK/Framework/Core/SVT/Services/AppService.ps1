@@ -345,7 +345,7 @@ class AppService: AzSVTBase
 				else
 				{
 					$controlResult.AddMessage([VerificationResult]::Verify,
-											[MessageData]::new("Verify that AAD Authentication for resource " + $this.ResourceContext.ResourceName + " is enabled", $aadSettings));
+											[MessageData]::new("Verify that AAD Authentication for resource " + $this.ResourceContext.ResourceName + " is enabled"));
 					$controlResult.SetStateData("App Service AAD settings", $aadSettings);
 				}				
 			}
