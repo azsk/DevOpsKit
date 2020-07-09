@@ -146,7 +146,7 @@ class PolicySetup: AzCommandBase
 			$this.MonitoringDashboardLocation = $this.ResourceGroupLocation
 		}
 		
-		$this.FolderPath = Join-Path $([System.Environment]::GetFolderPath("Desktop")) ($prefix + "-Policy");
+		$this.FolderPath = Join-Path $([System.Environment]::GetFolderPath([System.Environment+SpecialFolder]::Desktop, [System.Environment+SpecialFolderOption]::DoNotVerify)) ($prefix + "-Policy");
 		if(-not [string]::IsNullOrWhiteSpace($localPolicyFolderPath))
 		{
 			try
