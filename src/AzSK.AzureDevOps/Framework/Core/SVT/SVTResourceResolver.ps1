@@ -27,7 +27,9 @@ class SVTResourceResolver: AzSKRoot {
     hidden [string[]] $AgentPools = @();
     hidden [string[]] $ServiceConnections = @();
     hidden [PSObject] $ControlSettings; 
+    #Local variable for longrunningscan for command parameter
     [bool] $allowLongRunningScan = $false
+    #Local variables for longrunningscan for controlsettings variables
     [bool] $isAllowLongRunningScanInPolicy = $true
     [int] $longRunningScanCheckPoint = 1000;
     
@@ -217,21 +219,10 @@ class SVTResourceResolver: AzSKRoot {
                         $svtResource.ResourceDetails = New-Object -TypeName psobject -Property @{ ResourceLink = ($svtResource.ResourceId.Replace('/_apis/projects', '') + '/_settings/') }
                         $this.SVTResources += $svtResource
                     }
-
-                    if ($this.SVTResources.count -gt $this.longRunningScanCheckPoint) {
-                        if (!$this.isAllowLongRunningScanInPolicy) {
-                            Write-Host "Scans involving larger number of project components is prohibited in your project." -ForegroundColor Red;
-                            Write-Host "It can take a long time for the scan to complete in larger projects. You may want to provide a comma-separated list of projects, builds, releases, service connections and agent pools." -ForegroundColor Yellow;
-                            $this.SVTResources = $null
-                            return;
-                        }
-                        elseif(!$this.allowLongRunningScan)
-                        {
-                            Write-Host "You are trying to scan large number of resources in your project. In order to run the same scan use the 'AllowLongRunningScan' flag in the scan command." -ForegroundColor Red;
-                            Write-Host "It can take a long time for the scan to complete in larger projects. You may want to provide a comma-separated list of projects, builds, releases, service connections and agent pools." -ForegroundColor Yellow;
-                            $this.SVTResources = $null
-                            return;
-                        }
+                    #check if long running scan allowed or not.
+                    if(!$this.isAllowLonRunningScanCheck())
+                    {
+                        return;
                     }
 
                     if ($this.BuildNames.Count -gt 0 -and ($this.ResourceTypeName -in ([ResourceTypeName]::Build, [ResourceTypeName]::All, [ResourceTypeName]::Build_Release, [ResourceTypeName]::Build_Release_SvcConn_AgentPool_User))) {
@@ -291,22 +282,11 @@ class SVTResourceResolver: AzSKRoot {
                             }
                         }          
                     }
-                    if ($this.SVTResources.count -gt $this.longRunningScanCheckPoint) {
-                        if (!$this.isAllowLongRunningScanInPolicy) {
-                            Write-Host "Scans involving larger number of project components is prohibited in your project." -ForegroundColor Red;
-                            Write-Host "It can take a long time for the scan to complete in larger projects. You may want to provide a comma-separated list of projects, builds, releases, service connections and agent pools." -ForegroundColor Yellow;
-                            $this.SVTResources = $null
-                            return;
-                        }
-                        elseif(!$this.allowLongRunningScan)
-                        {
-                            Write-Host "You are trying to scan large number of resources in your project. In order to run the same scan use the 'AllowLongRunningScan' flag in the scan command." -ForegroundColor Red;
-                            Write-Host "It can take a long time for the scan to complete in larger projects. You may want to provide a comma-separated list of projects, builds, releases, service connections and agent pools." -ForegroundColor Yellow;
-                            $this.SVTResources = $null
-                            return;
-                        }
+                    #check if long running scan allowed or not.
+                    if(!$this.isAllowLonRunningScanCheck())
+                    {
+                        return;
                     }
-
                     if ($this.ReleaseNames.Count -gt 0 -and ($this.ResourceTypeName -in ([ResourceTypeName]::Release, [ResourceTypeName]::All, [ResourceTypeName]::Build_Release, [ResourceTypeName]::Build_Release_SvcConn_AgentPool_User)))
                     {
                         if ($this.ProjectNames -ne "*") {
@@ -383,26 +363,15 @@ class SVTResourceResolver: AzSKRoot {
                                 }
                             }
                             catch {
-                                Write-Error $_.Exception.Message;
-                                Write-Error 'Insufficient Privileges. You do not have the level of access necessary to perform the scan.'
+                                #Write-Error $_.Exception.Message;
+                                Write-Warning "Release pipelines for the project [$($projectName)] could not be fetched.";
                             }
                         }
                     }
-
-                    if ($this.SVTResources.count -gt $this.longRunningScanCheckPoint) {
-                        if (!$this.isAllowLongRunningScanInPolicy) {
-                            Write-Host "Scans involving larger number of project components is prohibited in your project." -ForegroundColor Red;
-                            Write-Host "It can take a long time for the scan to complete in larger projects. You may want to provide a comma-separated list of projects, builds, releases, service connections and agent pools." -ForegroundColor Yellow;
-                            $this.SVTResources = $null
-                            return;
-                        }
-                        elseif(!$this.allowLongRunningScan)
-                        {
-                            Write-Host "You are trying to scan large number of resources in your project. In order to run the same scan use the 'AllowLongRunningScan' flag in the scan command." -ForegroundColor Red;
-                            Write-Host "It can take a long time for the scan to complete in larger projects. You may want to provide a comma-separated list of projects, builds, releases, service connections and agent pools." -ForegroundColor Yellow;
-                            $this.SVTResources = $null
-                            return;
-                        }
+                    #check if long running scan allowed or not.
+                    if(!$this.isAllowLonRunningScanCheck())
+                    {
+                        return;
                     }
 
                     if ($this.ServiceConnections.Count -gt 0 -and ($this.ResourceTypeName -in ([ResourceTypeName]::ServiceConnection, [ResourceTypeName]::All, [ResourceTypeName]::Build_Release_SvcConn_AgentPool_User)))
@@ -449,23 +418,11 @@ class SVTResourceResolver: AzSKRoot {
                             }
                         }
                     }
-
-                    if ($this.SVTResources.count -gt $this.longRunningScanCheckPoint) {
-                        if (!$this.isAllowLongRunningScanInPolicy) {
-                            Write-Host "Scans involving larger number of project components is prohibited in your project." -ForegroundColor Red;
-                            Write-Host "It can take a long time for the scan to complete in larger projects. You may want to provide a comma-separated list of projects, builds, releases, service connections and agent pools." -ForegroundColor Yellow;
-                            $this.SVTResources = $null
-                            return;
-                        }
-                        elseif(!$this.allowLongRunningScan)
-                        {
-                            Write-Host "You are trying to scan large number of resources in your project. In order to run the same scan use the 'AllowLongRunningScan' flag in the scan command." -ForegroundColor Red;
-                            Write-Host "It can take a long time for the scan to complete in larger projects. You may want to provide a comma-separated list of projects, builds, releases, service connections and agent pools." -ForegroundColor Yellow;
-                            $this.SVTResources = $null
-                            return;
-                        }
-                    }
-                    
+                    #check if long running scan allowed or not.
+                    if(!$this.isAllowLonRunningScanCheck())
+                    {
+                        return;
+                    }                    
                     if ($this.AgentPools.Count -gt 0 -and ($this.ResourceTypeName -in ([ResourceTypeName]::AgentPool, [ResourceTypeName]::All, [ResourceTypeName]::Build_Release_SvcConn_AgentPool_User))) 
                     {
                         if ($this.ProjectNames -ne "*") {
@@ -507,24 +464,13 @@ class SVTResourceResolver: AzSKRoot {
                             }
                         }
                         catch {
-                            Write-Warning "Insufficient Privileges. You do not have the level of access to perform the scan.";
-                            Write-Error $_.Exception.Message;
+                            Write-Warning "Agent pools for the project [$($projectName)] could not be fetched.";
                         }              
                     }
-                    if ($this.SVTResources.count -gt $this.longRunningScanCheckPoint) {
-                        if (!$this.isAllowLongRunningScanInPolicy) {
-                            Write-Host "Scans involving larger number of project components is prohibited in your project." -ForegroundColor Red;
-                            Write-Host "It can take a long time for the scan to complete in larger projects. You may want to provide a comma-separated list of projects, builds, releases, service connections and agent pools." -ForegroundColor Yellow;
-                            $this.SVTResources = $null
-                            return;
-                        }
-                        elseif(!$this.allowLongRunningScan)
-                        {
-                            Write-Host "You are trying to scan large number of resources in your project. In order to run the same scan use the 'AllowLongRunningScan' flag in the scan command." -ForegroundColor Red;
-                            Write-Host "It can take a long time for the scan to complete in larger projects. You may want to provide a comma-separated list of projects, builds, releases, service connections and agent pools." -ForegroundColor Yellow;
-                            $this.SVTResources = $null
-                            return;
-                        }
+                    #check if long running scan allowed or not.
+                    if(!$this.isAllowLonRunningScanCheck())
+                    {
+                        return;
                     }
                     if (--$nProj -eq 0) { break; } #nProj is set to MaxObj before loop.
                     
@@ -532,5 +478,24 @@ class SVTResourceResolver: AzSKRoot {
             }
         }
         $this.SVTResourcesFoundCount = $this.SVTResources.Count
+    }
+
+    [bool] isAllowLonRunningScanCheck()
+    {
+        if ($this.SVTResources.count -gt $this.longRunningScanCheckPoint) 
+        {
+            if (!$this.isAllowLongRunningScanInPolicy) {
+                Write-Host ([Constants]::LongRunningScanStopByPolicyMsg) -ForegroundColor Yellow;
+                $this.SVTResources = $null
+                return $false;
+            }
+            elseif(!$this.allowLongRunningScan)
+            {
+                Write-Host ([Constants]::LongRunningScanStopMsg -f $this.longRunningScanCheckPoint) -ForegroundColor Yellow;
+                $this.SVTResources = $null
+                return $false;
+            }
+        }
+        return $true;
     }
 }

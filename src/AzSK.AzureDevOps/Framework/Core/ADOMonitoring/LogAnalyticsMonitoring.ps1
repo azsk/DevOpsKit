@@ -65,7 +65,7 @@ class LogAnalyticsMonitoring #: CommandBase
 			Write-Host "`rCompleted setting up AzSK.AzureDevOps Monitoring solution pack.`r" -ForegroundColor Green
 			Write-Host "----------------------------------------------------------------" -ForegroundColor Green
 			Write-Host "WARNING: `r`nNote: `r`n1) The blades of the Log Analytics view created by this command will start populating only after AzSK.AzureDevOps scan events become available in the corresponding Log Analytics workspace.`nTo understand how to send AzSK.AzureDevOps events to a Log Analytics workspace see https://aka.ms/adoscanner/oms.`r`n" -ForegroundColor Yellow		
-			Write-Host "WARNING: `r`n2) The Log Analytics view installed contains a basic set of queries over ADO ecurity scanner kit scan events. Please feel free to customize them once you get familiar with the queries.`r`nWe also periodically publish updated/richer queries at: https://aka.ms/adoscanner/omsqueries. `r`n" -ForegroundColor Yellow
+			Write-Host "WARNING: `r`n2) The Log Analytics view installed contains a basic set of queries over ADO security scanner kit scan events. Please feel free to customize them once you get familiar with the queries.`r`nWe also periodically publish updated/richer queries at: https://aka.ms/adoscanner/omsqueries. `r`n" -ForegroundColor Yellow
 		
 		}
 		if ($userInput -eq "n")
