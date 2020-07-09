@@ -219,15 +219,6 @@
       "DisabledForSubs": [],
       "UnderPreview": false,
       "IsEnabled": true
-    },
-    {
-      "Name": "DisableComplianceState",
-      "Description": "",
-      "Sources": ["*"],
-      "EnabledForSubs": [],
-      "DisabledForSubs": [],
-      "UnderPreview": false,
-      "IsEnabled": true
     }
   ]
 }

@@ -22,7 +22,7 @@ class ComplianceInfo: AzCommandBase {
         $ComplianceReportData = $null
         if ($ComplianceRptHelper.HaveRequiredPermissions() -and -not($UseBaselineControls -or $UsePreviewBaselineControls)) {
             $ComplianceReportData = $ComplianceRptHelper.GetSubscriptionComplianceReport();
-			
+            			
         }	
         else {
             $selectColumns = New-Object System.Collections.ArrayList;
@@ -71,8 +71,13 @@ class ComplianceInfo: AzCommandBase {
         if (-not $azskConfig.StoreComplianceSummaryInUserSubscriptions -and -not $settingStoreComplianceSummaryInUserSubscriptions) {
             $this.PublishCustomMessage("NOTE: This feature is currently disabled in your environment. Please contact the cloud security team for your org. ", [MessageType]::Warning);	
             return;
-        }		
-
+        }
+        # if IsComplianceStateCachingEnabled is false, return message indicating Compliance state table caching is disabled by default	
+        if(!$this.IsComplianceStateCachingEnabled)
+        {
+            $this.PublishCustomMessage([Constants]::ComplianceInfoCachingDisabled, [MessageType]::Warning);	
+            return;
+        }
         $this.PublishCustomMessage([Constants]::DoubleDashLine, [MessageType]::Default);
         $this.PublishCustomMessage("`r`nFetching compliance info for subscription [" + $this.SubscriptionId + "] ...", [MessageType]::Default);
         $this.PublishCustomMessage([Constants]::SingleDashLine, [MessageType]::Default);

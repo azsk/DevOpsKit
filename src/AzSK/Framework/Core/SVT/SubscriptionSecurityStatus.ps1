@@ -80,9 +80,11 @@ class SubscriptionSecurityStatus: AzSVTCommandBase
 		}
 
 		#save result into local compliance report
-		if($this.IsLocalComplianceStoreEnabled -and ($result | Measure-Object).Count -gt 0)
+		# Changes for compliance table dependency removal
+		# if IsComplianceStateCachingEnabled is false, do not persist scan result in compliance state table
+		if($this.IsComplianceStateCachingEnabled)
 		{
-			if([FeatureFlightingManager]::GetFeatureStatus("DisableComplianceState",$($this.SubscriptionContext.SubscriptionId)) -ne $true)
+			if($this.IsLocalComplianceStoreEnabled -and ($result | Measure-Object).Count -gt 0)
 			{
 				# Persist scan data to subscription
 				try 
