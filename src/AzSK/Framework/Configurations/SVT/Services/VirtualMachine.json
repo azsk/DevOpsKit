@@ -95,11 +95,12 @@
           ],
           "Enabled": true,
           "DataObjectProperties": [
-             "PublicIpAllocationMethod",
-             "IpConfiguration",
-             "Id",
-             "DnsSettings"
-          ]
+             "Id"
+          ],
+          "OnAttestationDrift": {
+            "ApplyToVersionsUpto": "4.10.0",
+            "ActionOnAttestationDrift": "RespectExistingAttestationExpiryPeriod"
+        }
        },
        {
           "ControlID": "Azure_VirtualMachine_DP_Enable_Disk_Encryption",
