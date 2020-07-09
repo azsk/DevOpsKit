@@ -185,15 +185,6 @@
       "IsEnabled": true
     },
     {
-      "Name": "AddPolicyAssignmentsLocation",
-      "Description": "",
-      "Sources": ["*"],
-      "EnabledForSubs": [],
-      "DisabledForSubs": [],
-      "UnderPreview": false,
-      "IsEnabled": true
-    },
-    {
       "Name": "EnableAnonymouscheckforADLGen2",
       "Description": "",
       "Sources": ["*"],
