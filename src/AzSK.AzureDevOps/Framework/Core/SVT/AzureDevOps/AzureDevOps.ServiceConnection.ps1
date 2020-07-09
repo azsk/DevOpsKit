@@ -41,19 +41,33 @@ class ServiceConnection: ADOSVTBase
             try {
                 $responseObj = [WebRequestHelper]::InvokePostWebRequest($apiURL,$inputbody); 
                 
-                if([Helpers]::CheckMember($responseObj, "dataProviders") -and $responseObj.dataProviders, "ms.vss-serviceEndpoints-web.service-endpoints-details-data-provider" -and [Helpers]::CheckMember($responseObj.dataProviders."ms.vss-serviceEndpoints-web.service-endpoints-details-data-provider", "serviceEndpoint") ) 
+                if([Helpers]::CheckMember($responseObj, "dataProviders") -and $responseObj.dataProviders."ms.vss-serviceEndpoints-web.service-endpoints-details-data-provider" -and [Helpers]::CheckMember($responseObj.dataProviders."ms.vss-serviceEndpoints-web.service-endpoints-details-data-provider", "serviceEndpoint") ) 
                 {
-                    if([Helpers]::CheckMember($responseObj.dataProviders.'ms.vss-serviceEndpoints-web.service-endpoints-details-data-provider'.serviceEndpoint, "data.scopeLevel") -and [Helpers]::CheckMember($responseObj.dataProviders.'ms.vss-serviceEndpoints-web.service-endpoints-details-data-provider'.serviceEndpoint.data, "creationMode"))
+                    $serviceEndPoint = $responseObj.dataProviders."ms.vss-serviceEndpoints-web.service-endpoints-details-data-provider".serviceEndpoint
+                    if([Helpers]::CheckMember($serviceEndPoint, "data.scopeLevel") -and ([Helpers]::CheckMember($serviceEndPoint.data, "creationMode") -or $serviceEndPoint.data.scopeLevel -eq "AzureMLWorkspace"  -or $serviceEndPoint.authorization.scheme -eq "PublishProfile" ))
                     {
                         #If Service connection scope is subcription, creation mode is automatic and no resource group is defined then only fail the control, else pass (scop peroperty comes, only if resource is set)
-                        if($responseObj.dataProviders.'ms.vss-serviceEndpoints-web.service-endpoints-details-data-provider'.serviceEndpoint.data.scopeLevel -eq "Subscription" -and $responseObj.dataProviders.'ms.vss-serviceEndpoints-web.service-endpoints-details-data-provider'.serviceEndpoint.data.creationMode -eq "Automatic" -and !([Helpers]::CheckMember($responseObj.dataProviders.'ms.vss-serviceEndpoints-web.service-endpoints-details-data-provider'.serviceEndpoint.authorization.parameters,"scope")))
+                        if($serviceEndPoint.data.scopeLevel -eq "Subscription" -and $serviceEndPoint.data.creationMode -eq "Automatic" -and !([Helpers]::CheckMember($serviceEndPoint.authorization.parameters,"scope") ) )
                         {
                             $controlResult.AddMessage([VerificationResult]::Failed,
-                                                    "Service connection is configured at subscription scope.");
+                                                    "Service connection is configured in [$($serviceEndPoint.data.subscriptionName)] at subscription scope.");
                         }
                         else{
-                            $controlResult.AddMessage([VerificationResult]::Passed,
-                                                    "Service connection is configured at resource group scope.");
+                            $message = "Service connection is configured in [$($serviceEndPoint.data.subscriptionName)] at [{0}] scope.";
+                            if ($serviceEndPoint.data.scopeLevel -eq "AzureMLWorkspace") 
+                            {
+                                $message =  $message -f $serviceEndPoint.data.mlWorkspaceName
+                            }
+                            elseif ($serviceEndPoint.authorization.scheme -eq "PublishProfile") {
+                                $message =  $message -f $serviceEndPoint.data.resourceId.split('/')[-1]
+                            }
+                            elseif ([Helpers]::CheckMember($serviceEndPoint.authorization.parameters, "scope")) {
+                                $message =  $message -f $serviceEndPoint.authorization.parameters.scope.split('/')[-1]
+                            }
+                            else {
+                                $message = "Service connection is not configured at subbscription level."
+                            }
+                            $controlResult.AddMessage([VerificationResult]::Passed, $message);
                         }
                     }
                     else  # if creation mode is manual and type is other (eg. managed identity) then verify the control
