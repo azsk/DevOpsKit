@@ -29,9 +29,10 @@
         "PrivateIpAddress"
       ],
       "PolicyDefinitionGuid": "ERvNet110",
+      "IsAttestationDriftExpected": true,
       "OnAttestationDrift": {
         "ApplyToVersionsUpto": "4.10.0",
-        "ActionOnAttestationDrift": "RespectExistingAttestationExpiryPeriod"
+        "ActionOnAttestationDrift": "CheckIfSubset"
     }
     },
     {
@@ -74,9 +75,10 @@
         "EnableIPForwarding"
       ],
       "PolicyDefinitionGuid": "ERvNet130",
+      "IsAttestationDriftExpected": true,
       "OnAttestationDrift": {
         "ApplyToVersionsUpto": "4.10.0",
-        "ActionOnAttestationDrift": "RespectExistingAttestationExpiryPeriod"
+        "ActionOnAttestationDrift": "CheckIfSubset"
     }
     },
     {
