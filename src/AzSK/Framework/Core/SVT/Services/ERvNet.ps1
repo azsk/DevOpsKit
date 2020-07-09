@@ -461,6 +461,7 @@ class ERvNet : SVTIaasBase
 		$controlSettings = $this.LoadServerConfigFile("Subscription.ARMPolicies.json");
         $output = @()
         $missingPolicies = @()
+        $configuredPolicies = @()
         $subscriptionId = $this.SubscriptionContext.SubscriptionId 
         $resourceGroupName = $this.ResourceContext.ResourceGroupName
         if($null -ne $controlSettings -and [Helpers]::CheckMember($controlSettings,"Policies"))
@@ -482,31 +483,35 @@ class ERvNet : SVTIaasBase
 
             if(($sdoPolicies | Measure-Object).Count -gt 0)
             {
-                $configuredPolicies = Get-AzPolicyAssignment -IncludeDescendent
-                $sdoPolicies | ForEach-Object{
-                    Set-Variable -Name pol -Scope Local -Value $_
-                    Set-Variable -Name policyDefinitionName -Scope Local -Value $_.policyDefinitionName
-                    Set-Variable -Name tags -Scope Local -Value $_.tags
-                    $policyScope =  ( $_.scope -replace "subscriptionId",$subscriptionId ) -replace "resourceGroupName" , $resourceGroupName
-                      
-                    $foundPolicies = [array]($configuredPolicies | Where-Object {$_.Name -like $policyDefinitionName -and $_.properties.scope -eq $policyScope})
-                
-                    if($null -ne $foundPolicies)
-                    {
-                        if($foundPolicies.Length -gt 0)
+                $configuredPolicies = Get-AzPolicyAssignment -IncludeDescendent -ErrorAction SilentlyContinue
+                if($null -ne $configuredPolicies -and ($configuredPolicies | Measure-Object).Count -gt 0){
+                    $sdoPolicies | ForEach-Object{
+                        Set-Variable -Name pol -Scope Local -Value $_
+                        Set-Variable -Name policyDefinitionName -Scope Local -Value $_.policyDefinitionName
+                        Set-Variable -Name tags -Scope Local -Value $_.tags
+                        $policyScope =  ( $_.scope -replace "subscriptionId",$subscriptionId ) -replace "resourceGroupName" , $resourceGroupName
+                          
+                        $foundPolicies = [array]($configuredPolicies | Where-Object {$_.Name -like $policyDefinitionName -and $_.properties.scope -eq $policyScope -and $_.properties.enforcementMode -eq "Default"})
+                    
+                        if($null -ne $foundPolicies)
                         {
-                            $output += $pol
+                            if($foundPolicies.Length -gt 0)
+                            {
+                                $output += $pol
+                            }
+                            else{
+                                $missingPolicies += $pol
+                            }
                         }
                         else{
                             $missingPolicies += $pol
                         }
+                        
                     }
-                    else{
-                        $missingPolicies += $pol
-                    }
-                    
+                }else{
+                    $missingPolicies += $sdoPolicies
                 }
-
+                
             }
             else
             {
