@@ -10,7 +10,9 @@ class SVTBase: AzSKRoot
 	hidden [string] $ResourceId = ""
     [ResourceContext] $ResourceContext = $null;
     hidden [SVTConfig] $SVTConfig
-    hidden [PSObject] $ControlSettings
+	hidden [PSObject] $ControlSettings
+	
+	hidden [ControlStateExtension] $ControlStateExt;
 	
 	hidden [ControlState[]] $ResourceState;
 	hidden [ControlState[]] $DirtyResourceStates;
@@ -40,7 +42,7 @@ class SVTBase: AzSKRoot
 
 	}
 	SVTBase([string] $subscriptionId, [SVTResource] $svtResource):
-	Base($subscriptionId)
+	Base($subscriptionId, [SVTResource] $svtResource)
 	{		
 		$this.CreateInstance($svtResource);
 	}
@@ -299,6 +301,43 @@ class SVTBase: AzSKRoot
         return $resourceSecurityResult;
 	}
 
+	[SVTEventContext[]] RescanAndPostAttestationData()
+    {
+		[SVTEventContext[]] $resourceScanResult = @();
+		[SVTEventContext[]] $stateResult = @();
+		[ControlItem[]] $controlsToBeEvaluated = @();
+
+		$this.PostTelemetry();
+		#Publish event to display host message to indicate start of resource scan 
+		$this.EvaluationStarted();	
+		#Fetch attested controls list from Blob
+		$stateResult = $this.GetControlsStateResult($true)
+		If (($stateResult | Measure-Object).Count -gt 0 )
+		{
+			#Get controls list which were attested in last 24 hours
+			$attestedControlsinBlob = $stateResult | Where-Object {$_.ControlResults.StateManagement.AttestedStateData.AttestedDate -gt ((Get-Date).AddDays(-1))}
+			if (($attestedControlsinBlob | Measure-Object).Count -gt 0 )
+			{
+				$attestedControlsinBlob | ForEach-Object {
+					$controlsToBeEvaluated += $_.ControlItem
+				};
+				$this.ApplicableControls = @($controlsToBeEvaluated);
+				$resourceScanResult += $this.GetAutomatedSecurityStatus();
+				$resourceScanResult += $this.GetManualSecurityStatus();
+
+				$this.PostEvaluationCompleted($resourceScanResult);
+				$this.EvaluationCompleted($resourceScanResult);
+			}
+			else {
+				Write-Host "No attested control found.`n$([Constants]::SingleDashLine)" 
+			}
+		}
+		else {
+			Write-Host "No attested control found.`n$([Constants]::SingleDashLine)" 
+		}
+         return $resourceScanResult;
+	}
+
 	[SVTEventContext[]] ComputeApplicableControlsWithContext()
     {
         [SVTEventContext[]] $contexts = @();
@@ -342,6 +381,28 @@ class SVTBase: AzSKRoot
 			$this.PublishCustomData($customData);		
 		}
 	}
+
+	[SVTEventContext[]] FetchStateOfAllControls()
+    {
+        [SVTEventContext[]] $resourceSecurityResult = @();
+        if (-not $this.ValidateMaintenanceState()) {
+			if($this.GetApplicableControls().Count -eq 0)
+			{
+				$this.PublishCustomMessage("No security controls match the input criteria specified", [MessageType]::Warning);
+			}
+			else
+			{
+				$this.EvaluationStarted();
+				$resourceSecurityResult += $this.GetControlsStateResult();
+				if(($resourceSecurityResult | Measure-Object).Count -gt 0)
+				{
+					$this.EvaluationCompleted($resourceSecurityResult);
+				}
+			}
+        }
+        return $resourceSecurityResult;
+	}
+
 
 	[ControlItem[]] ApplyServiceFilters([ControlItem[]] $controls)
 	{
@@ -486,7 +547,7 @@ class SVTBase: AzSKRoot
 
 				$arg.ControlResults += $control
 				
-				$this.InvokeExtensionMethod($arg);
+				$this.PostProcessData($arg);
 
                 $manualControlsResult += $arg;
             }
@@ -511,6 +572,34 @@ class SVTBase: AzSKRoot
 				if($null -ne $eventContext -and $eventcontext.ControlResults.Length -gt 0)
 				{
 					$automatedControlsResult += $eventContext;
+				}
+            };
+        }
+        catch
+        {
+            $this.EvaluationError($_);
+        }
+
+        return $automatedControlsResult;
+	}
+
+	hidden [SVTEventContext[]] GetControlsStateResult($isRescan = $false)
+    {
+        [SVTEventContext[]] $automatedControlsResult = @();
+		$this.DirtyResourceStates = @();
+        try
+        {
+            $this.GetApplicableControls() |
+            ForEach-Object {
+                $eventContext = $this.FetchControlState($_, $isRescan);
+				#filter controls if there is no state found
+				if($eventContext)
+				{
+					$eventContext.ControlResults = $eventContext.ControlResults | Where-Object{$_.AttestationStatus -ne [AttestationStatus]::None}
+					if($eventContext.ControlResults)
+					{
+						$automatedControlsResult += $eventContext;
+					}
 				}
             };
         }

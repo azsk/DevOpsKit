@@ -332,8 +332,8 @@ class SVTControlAttestation
 	
 	[void] StartControlAttestation()
 	{
-	
-		
+	    #Set flag to to run rescan
+		$Global:AttestationValue = $false
 		try
 		{
 			#user provided justification text would be available only in bulk attestation mode.
@@ -528,6 +528,8 @@ class SVTControlAttestation
 					{
 						if(($resourceControlStates | Measure-Object).Count -gt 0)
 						{
+							#Set flag to to run rescan
+							$Global:AttestationValue = $true
 							Write-Host "Attestation summary for this resource:" -ForegroundColor Cyan
 							$output = @()
 							$resourceControlStates | ForEach-Object {
