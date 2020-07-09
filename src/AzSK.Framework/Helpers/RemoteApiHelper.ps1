@@ -13,9 +13,7 @@ class RemoteApiHelper {
     {
             try {
                 $accessToken = [RemoteApiHelper]::GetAccessToken()
-                $uri = ([RemoteApiHelper]::ApiBaseEndpoint + $uri) #"http://localhost:5000/api" + $uri #
-
-                $result = Invoke-WebRequest -Uri $($uri) `
+                $result = Invoke-WebRequest -Uri $([RemoteApiHelper]::ApiBaseEndpoint + $uri) `
                     -Method Post `
                     -Body $content `
                     -ContentType $type `
@@ -109,8 +107,8 @@ class RemoteApiHelper {
 		return([RemoteApiHelper]::GetJsonContent("/compliancedata", $parameters) )	
     }
 
-    static [PSObject] GetSPNList([PSObject] $ownedSPNDetails) {
-        return([RemoteApiHelper]::PostJsonContent("/scanresults/SPNList", $ownedSPNDetails))
+    static [PSObject] FetchUsedSPNList([PSObject] $ownedSPNDetails) {
+        return([RemoteApiHelper]::PostJsonContent("/inventory/SPNList", $ownedSPNDetails))
     }
     
     static [void] PostASCTelemetry($ASCTelemetryData)

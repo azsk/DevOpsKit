@@ -80,9 +80,9 @@ class WebRequestHelper {
 		return "https://management.core.windows.net/"
 	}
 
-	hidden static [string] GetUserSPNsUrl()
+	hidden static [string] GetADGraphURL()
 	{
-		return "https://graph.microsoft.com";
+		return "https://graph.microsoft.com/";
 	}
 
 	hidden static [Hashtable] GetAuthHeaderFromUri([string] $uri)
