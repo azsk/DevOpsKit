@@ -548,6 +548,9 @@
       "RequiredImageTag": "latest"
     }
   },
+  "PublicIpAddresses": {
+    "EnablePublicIpResource": "false"
+   },
   "MaxResourceInventoryObjectsCount": 20000,
   "AlernateAccountRegularExpressionForOrg": ""
 }
