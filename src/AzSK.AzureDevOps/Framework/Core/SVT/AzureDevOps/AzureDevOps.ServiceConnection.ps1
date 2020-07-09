@@ -83,8 +83,8 @@ class ServiceConnection: ADOSVTBase
                 }
             }
             catch {
-                $controlResult.AddMessage([VerificationResult]::Manual,
-                                                "Service connection details not found. Verify service connection amnually.");
+                $controlResult.AddMessage([VerificationResult]::Error,
+                                                "Service connection details not found. Verify service connection manually.");
             }
         }
         else {
