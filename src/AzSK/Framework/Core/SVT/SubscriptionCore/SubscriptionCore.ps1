@@ -1095,99 +1095,82 @@ class SubscriptionCore: AzSVTBase
 	}
 	
 	hidden [ControlResult] CheckMandatoryTags([ControlResult] $controlResult)
-	{
-					#Check if mandatory tags list present
-			if([Helpers]::CheckMember($this.ControlSettings,"MandatoryTags") -and ($this.ControlSettings.MandatoryTags | Measure-Object).Count -ne 0)
+	{	
+		#Check if mandatory tags list present
+		if([Helpers]::CheckMember($this.ControlSettings,"MandatoryTags") -and ($this.ControlSettings.MandatoryTags | Measure-Object).Count -ne 0)
+		{
+			$EnvTagDetails = $this.ControlSettings.MandatoryTags[0];
+			$whitelistedResourceGroupsRegex = [System.Collections.ArrayList]::new()
+			if ([Helpers]::CheckMember($this.ControlSettings,"WhitelistedResourceGroups") -and ($this.ControlSettings.WhitelistedResourceGroups | Measure-Object).Count -ne 0) 
 			{
-				$whitelistedResourceGroupsRegex = [System.Collections.ArrayList]::new()
-				if ([Helpers]::CheckMember($this.ControlSettings,"WhitelistedResourceGroups") -and ($this.ControlSettings.WhitelistedResourceGroups | Measure-Object).Count -ne 0) 
+				$whitelistedResourceGroupsRegex = $this.ControlSettings.WhitelistedResourceGroups						
+			}
+			$whitelistedResourceGroupsRegex = (('^' + (($whitelistedResourceGroupsRegex |foreach {[regex]::escape($_)}) –join '|') + '$')) -replace '[\\]',''
+			$resourceGroups = Get-AzResourceGroup | Where-Object {$_.ResourceGroupName -inotmatch $whitelistedResourceGroupsRegex}
+
+				if(($resourceGroups | Measure-Object).Count -gt 0)
 				{
-					$whitelistedResourceGroupsRegex = $this.ControlSettings.WhitelistedResourceGroups						
+								$rgTagStatus = $true
+								$controlResult.AddMessage("`nTotal number of RGs:" + ($resourceGroups | Measure-Object).Count)									
+																							
+												$controlResult.AddMessage("`nPolicy Requirement: `n`tTag: '$($EnvTagDetails.Name)' `n`tScope: '$($EnvTagDetails.Scope)' `n`tExpected Values: '$($EnvTagDetails.Values)' `n`tExpected Type: '$($EnvTagDetails.Type)'")
+
+												#Step1 Validate if tag present on RG                                        
+												$rgListwithoutTags = $resourceGroups | Where-Object { [string]::IsNullOrWhiteSpace($_.Tags) -or (-not ($_.Tags.Keys -icontains $EnvTagDetails.Name))}
+												
+												if(($rgListwithoutTags | Measure-Object).Count -gt 0)
+												{
+													$rgTagStatus = $false
+													$controlResult.AddMessage("`nTotal number of RGs without Tag: " + ($rgListwithoutTags | Measure-Object).Count, ($rgListwithoutTags | Select-Object ResourceGroupName | ForEach-Object {$_.ResourceGroupName}))
+												}
+												
+												$rgListwithDuplicateTags = $resourceGroups | Where-Object { (-not [string]::IsNullOrWhiteSpace($_.Tags)) -and (($_.Tags.Keys -match "\b$($EnvTagDetails.Name)\b") | Measure-Object).Count -gt 1 }
+												
+												if(($rgListwithDuplicateTags | Measure-Object).Count -gt 0)
+												{
+													$rgTagStatus = $false
+													$controlResult.AddMessage("`nTotal number of RGs with duplicate Tag(multiple Tags with same name): " + ($rgListwithDuplicateTags | Measure-Object).Count, ($rgListwithDuplicateTags | Select-Object ResourceGroupName | ForEach-Object {$_.ResourceGroupName}))
+												}
+
+												$rgListwithTags = $resourceGroups | Where-Object { (-not [string]::IsNullOrWhiteSpace($_.Tags)) -and (($_.Tags.Keys -match "\b$($EnvTagDetails.Name)\b") | Measure-Object).Count -eq 1 }
+												
+												if(($rgListwithTags| Measure-Object).Count -gt 0)
+												{
+													if($EnvTagDetails.Values -notcontains "*") 
+													{
+														#Validate if expected tag value is present 
+														$rgListwithoutTagValue = $rgListwithTags | Where-Object { $_.Tags[$_.Tags.Keys -match "\b$($EnvTagDetails.Name)\b"] -inotin $EnvTagDetails.Values} #$rgListwithTags | Where-Object { $_.Tags | Where-Object { $_.GetEnumerator() | Where-Object { $_.Key -eq $tagObject.Name -and $_.Value -notin $tagObject.Values}}}
+															if(($rgListwithoutTagValue | Measure-Object).Count -gt 0)
+															{
+																$rgTagStatus = $false
+																$controlResult.AddMessage("`nTotal number of RGs without expected value : " + ($rgListwithoutTagValue | Measure-Object).Count, ($rgListwithoutTagValue | Select-Object ResourceGroupName | ForEach-Object {$_.ResourceGroupName}))
+															}
+													}
+																
+												}
+												$controlResult.AddMessage([Constants]::UnderScoreLineLine)
+								
+								
+								if(-not $rgTagStatus)
+								{
+									$controlResult.AddMessage([VerificationResult]::Failed, "Resource group(s) failed to comply with mandatory tags." )
+								}
+								else
+								{
+									$controlResult.AddMessage([VerificationResult]::Passed, "Resource group(s) comply with mandatory tags." )
+								}                                                              
 				}
-				$whitelistedResourceGroupsRegex = (('^' + (($whitelistedResourceGroupsRegex |foreach {[regex]::escape($_)}) –join '|') + '$')) -replace '[\\]',''
-				$resourceGroups = Get-AzResourceGroup | Where-Object {$_.ResourceGroupName -inotmatch $whitelistedResourceGroupsRegex}
+				else
+				{
+					$controlResult.AddMessage([VerificationResult]::Passed,"No resource group(s) found" )
+				}
+		}
+		else
+		{
+			$controlResult.AddMessage([VerificationResult]::Passed,"No mandatory tags required" )
+		}
 
-					if(($resourceGroups | Measure-Object).Count -gt 0)
-					{
-									$rgTagStatus = $true
-									$controlResult.AddMessage("`nTotal number of RGs:" + ($resourceGroups | Measure-Object).Count)
-									$this.ControlSettings.MandatoryTags | ForEach-Object {
-													$tagObject = $_
-													
-													$controlResult.AddMessage("`nPolicy Requirement: `n`tTag: '$($tagObject.Name)' `n`tScope: '$($tagObject.Scope)' `n`tExpected Values: '$($tagObject.Values)' `n`tExpected Type: '$($tagObject.Type)'")
-
-													#Step1 Validate if tag present on RG                                        
-													$rgListwithoutTags = $resourceGroups | Where-Object { [string]::IsNullOrWhiteSpace($_.Tags) -or (-not ($_.Tags.Keys -icontains $tagObject.Name))}
-													
-													if(($rgListwithoutTags | Measure-Object).Count -gt 0)
-													{
-																	$rgTagStatus = $false
-																	$controlResult.AddMessage("`nTotal number of RGs without Tag: " + ($rgListwithoutTags | Measure-Object).Count, ($rgListwithoutTags | Select-Object ResourceGroupName | ForEach-Object {$_.ResourceGroupName}))
-													}
-													
-													$rgListwithDuplicateTags = $resourceGroups | Where-Object { (-not [string]::IsNullOrWhiteSpace($_.Tags)) -and (($_.Tags.Keys -match "\b$($tagObject.Name)\b") | Measure-Object).Count -gt 1 }
-													
-													if(($rgListwithDuplicateTags | Measure-Object).Count -gt 0)
-													{
-																	$rgTagStatus = $false
-																	$controlResult.AddMessage("`nTotal number of RGs with duplicate Tag(multiple Tags with same name): " + ($rgListwithDuplicateTags | Measure-Object).Count, ($rgListwithDuplicateTags | Select-Object ResourceGroupName | ForEach-Object {$_.ResourceGroupName}))
-													}
-
-													$rgListwithTags = $resourceGroups | Where-Object { (-not [string]::IsNullOrWhiteSpace($_.Tags)) -and (($_.Tags.Keys -match "\b$($tagObject.Name)\b") | Measure-Object).Count -eq 1 }
-													
-													if(($rgListwithTags| Measure-Object).Count -gt 0)
-													{
-																	if($tagObject.Values -notcontains "*")
-																	{
-																					#Validate if expected tag value is present 
-																					$rgListwithoutTagValue = $rgListwithTags | Where-Object { $_.Tags[$_.Tags.Keys -match "\b$($tagObject.Name)\b"] -inotin $tagObject.Values} #$rgListwithTags | Where-Object { $_.Tags | Where-Object { $_.GetEnumerator() | Where-Object { $_.Key -eq $tagObject.Name -and $_.Value -notin $tagObject.Values}}}
-																					if(($rgListwithoutTagValue | Measure-Object).Count -gt 0)
-																					{
-																									$rgTagStatus = $false
-																									$controlResult.AddMessage("`nTotal number of RGs without expected value : " + ($rgListwithoutTagValue | Measure-Object).Count, ($rgListwithoutTagValue | Select-Object ResourceGroupName | ForEach-Object {$_.ResourceGroupName}))
-																					}
-																	}
-
-																	#Validate tag value type
-																	if($tagObject.ValidateTagValueType -and ($rgListwithTags| Measure-Object).Count -gt 0)
-																	{     
-																					switch($tagObject.Type)
-																					{
-																									("Guid") {  
-																													$emptyGuid = [Guid]::Empty 
-																													$RGListWithoutExpectedTypeValue = $rgListwithTags | Where-Object { (-not [Guid]::TryParse($_.Tags[$_.Tags.Keys -match "\b$($tagObject.Name)\b"], [ref] $emptyGuid))} #$rgListwithTags | Where-Object { $_.Tags | Where-Object { $_.GetEnumerator() | Where-Object {$_.Key -eq $tagObject.Name -and (-not [Guid]::TryParse($_.Value, [ref] $emptyGuid))}}}
-																													if(($RGListWithoutExpectedTypeValue | Measure-Object).Count -gt 0)
-																													{
-																																	$rgTagStatus = $false
-																																	$controlResult.AddMessage("`nTotal number of RGs without expected value type: " + ($RGListWithoutExpectedTypeValue | Measure-Object).Count,($RGListWithoutExpectedTypeValue | Select-Object ResourceGroupName | foreach {$_.ResourceGroupName}))
-																													}
-																									}
-																					}
-																	}
-													}
-													$controlResult.AddMessage([Constants]::UnderScoreLineLine)
-									}
-									
-									if(-not $rgTagStatus)
-									{
-													$controlResult.AddMessage([VerificationResult]::Failed, "Resource group(s) failed to comply with mandatory tags." )
-									}
-									else
-									{
-													$controlResult.AddMessage([VerificationResult]::Passed, "Resource group(s) comply with mandatory tags." )
-									}                                                              
-					}
-					else
-					{
-									$controlResult.AddMessage([VerificationResult]::Passed,"No resource group(s) found" )
-					}
-			}
-			else
-			{
-							$controlResult.AddMessage([VerificationResult]::Passed,"No mandatory tags required" )
-			}
-
-			return $controlResult
+		return $controlResult
 	}
 
 
