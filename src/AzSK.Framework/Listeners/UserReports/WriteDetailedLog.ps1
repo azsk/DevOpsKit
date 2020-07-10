@@ -34,12 +34,17 @@ class WriteDetailedLog: FileOutputBase
             {
 				if($Event.SourceArgs.IsResource())
 				{
-					$currentInstance.SetFilePath($Event.SourceArgs.SubscriptionContext, $Event.SourceArgs.ResourceContext.ResourceGroupName, ($Event.SourceArgs.FeatureName + ".LOG"));            
+					#To separate project log files and place project.log files inside the project folders
+					$parentFolder = $Event.SourceArgs.ResourceContext.ResourceGroupName;
+					if ($Event.SourceArgs.FeatureName -eq "Project") {
+						$parentFolder = $Event.SourceArgs.ResourceContext.ResourceName
+					}
+					$currentInstance.SetFilePath($Event.SourceArgs.SubscriptionContext, $parentFolder, ($Event.SourceArgs.FeatureName + ".LOG"));            
 					$startHeading = ([Constants]::ModuleStartHeading -f $Event.SourceArgs.FeatureName, $Event.SourceArgs.ResourceContext.ResourceGroupName, $Event.SourceArgs.ResourceContext.ResourceName);
 				}
 				else
 				{
-					$currentInstance.SetFilePath($Event.SourceArgs.SubscriptionContext, $Event.SourceArgs.SubscriptionContext.SubscriptionName, ($Event.SourceArgs.FeatureName + ".LOG"));            
+					$currentInstance.SetFilePath($Event.SourceArgs.SubscriptionContext, $Event.SourceArgs.SubscriptionContext.SubscriptionName, ($Event.SourceArgs.FeatureName + ".LOG"));                       
 					$startHeading = ([Constants]::ModuleStartHeadingSub -f $Event.SourceArgs.FeatureName, $Event.SourceArgs.SubscriptionContext.SubscriptionName, $Event.SourceArgs.SubscriptionContext.SubscriptionId);
 				}
 				$currentInstance.AddOutputLog($startHeading);
