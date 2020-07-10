@@ -13,6 +13,9 @@ class ServicesSecurityStatus: ADOSVTCommandBase
 
 		$this.Resolver = $resolver;
 		$this.Resolver.LoadResourcesForScan();
+		if (!$this.Resolver.SVTResources) {
+			return;
+		}
 		$this.UsePartialCommits = $invocationContext.BoundParameters["UsePartialCommits"];
 
 		#BaseLineControlFilter with control ids

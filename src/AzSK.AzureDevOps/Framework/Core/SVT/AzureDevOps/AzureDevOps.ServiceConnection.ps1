@@ -32,23 +32,65 @@ class ServiceConnection: ADOSVTBase
 
     hidden [ControlResult] CheckServiceConnectionAccess([ControlResult] $controlResult)
 	{
-        if([Helpers]::CheckMember($this.ServiceEndpointsObj, "data.scopeLevel"))
+        if ($this.ServiceEndpointsObj.type -eq "azurerm") 
         {
-            if($this.ServiceEndpointsObj.data.scopeLevel -eq "Subscription" )
-            {
-                $controlResult.AddMessage([VerificationResult]::Failed,
-                                        "Service connection is configured at subscription scope.");
+            $apiURL = "https://{0}.visualstudio.com/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1" -f $($this.SubscriptionContext.SubscriptionName)
+            $sourcePageUrl = "https://{0}.visualstudio.com/{1}/_settings/adminservices" -f $($this.SubscriptionContext.SubscriptionName), $this.ResourceContext.ResourceGroupName;
+            $inputbody = "{'contributionIds':['ms.vss-serviceEndpoints-web.service-endpoints-details-data-provider'],'dataProviderContext':{'properties':{'serviceEndpointId':'$($this.ServiceEndpointsObj.id)','projectId':'$($this.projectId)','sourcePage':{'url':'$($sourcePageUrl)','routeId':'ms.vss-admin-web.project-admin-hub-route','routeValues':{'project':'$($this.ResourceContext.ResourceGroupName)','adminPivot':'adminservices','controller':'ContributedPage','action':'Execute'}}}}}" | ConvertFrom-Json
+             
+            try {
+                $responseObj = [WebRequestHelper]::InvokePostWebRequest($apiURL,$inputbody); 
+                
+                if([Helpers]::CheckMember($responseObj, "dataProviders") -and $responseObj.dataProviders."ms.vss-serviceEndpoints-web.service-endpoints-details-data-provider" -and [Helpers]::CheckMember($responseObj.dataProviders."ms.vss-serviceEndpoints-web.service-endpoints-details-data-provider", "serviceEndpoint") ) 
+                {
+                    $serviceEndPoint = $responseObj.dataProviders."ms.vss-serviceEndpoints-web.service-endpoints-details-data-provider".serviceEndpoint
+                    if([Helpers]::CheckMember($serviceEndPoint, "data.scopeLevel") -and ([Helpers]::CheckMember($serviceEndPoint.data, "creationMode") -or $serviceEndPoint.data.scopeLevel -eq "AzureMLWorkspace"  -or $serviceEndPoint.authorization.scheme -eq "PublishProfile" ))
+                    {
+                        #If Service connection scope is subcription, creation mode is automatic and no resource group is defined then only fail the control, else pass (scop peroperty comes, only if resource is set)
+                        if($serviceEndPoint.data.scopeLevel -eq "Subscription" -and $serviceEndPoint.data.creationMode -eq "Automatic" -and !([Helpers]::CheckMember($serviceEndPoint.authorization.parameters,"scope") ) )
+                        {
+                            $controlResult.AddMessage([VerificationResult]::Failed,
+                                                    "Service connection is configured in [$($serviceEndPoint.data.subscriptionName)] at subscription scope.");
+                        }
+                        else{
+                            $message = "Service connection is configured in [$($serviceEndPoint.data.subscriptionName)] at [{0}] scope.";
+                            if ($serviceEndPoint.data.scopeLevel -eq "AzureMLWorkspace") 
+                            {
+                                $message =  $message -f $serviceEndPoint.data.mlWorkspaceName
+                            }
+                            elseif ($serviceEndPoint.authorization.scheme -eq "PublishProfile") {
+                                $message =  $message -f $serviceEndPoint.data.resourceId.split('/')[-1]
+                            }
+                            elseif ([Helpers]::CheckMember($serviceEndPoint.authorization.parameters, "scope")) {
+                                $message =  $message -f $serviceEndPoint.authorization.parameters.scope.split('/')[-1]
+                            }
+                            else {
+                                $message = "Service connection is not configured at subbscription level."
+                            }
+                            $controlResult.AddMessage([VerificationResult]::Passed, $message);
+                        }
+                    }
+                    else  # if creation mode is manual and type is other (eg. managed identity) then verify the control
+                    {
+                        $controlResult.AddMessage([VerificationResult]::Verify,
+                                                "Verify configured service connection access.");
+                    }
+                }
+                else
+                {
+                    $controlResult.AddMessage([VerificationResult]::Verify,
+                                                "Service connection details not found. Verify connection access is configured at resource group scope.");
+                }
             }
-            else{
-                $controlResult.AddMessage([VerificationResult]::Passed,
-                                        "Service connection is configured at resource group scope.");
+            catch {
+                $controlResult.AddMessage([VerificationResult]::Error,
+                                                "Service connection details not found. Verify service connection manually.");
             }
         }
-        else
-        {
-            $controlResult.AddMessage([VerificationResult]::Verify,
-                                        "Service connection details not found. Verify connection access is configured at resource group scope.");
+        else {
+            $controlResult.AddMessage([VerificationResult]::Passed);
         }
+        
         return $controlResult;
     }
 
