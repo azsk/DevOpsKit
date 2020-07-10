@@ -10,7 +10,7 @@
       "ControlSeverity": "High",
       "Automated": "Yes",
       "MethodName": "CheckAADConfiguration",
-      "Rationale": "Using the native enterprise directory for authentication ensures that there is a built-in high level of assurance in the user identity established for subsequent access control.All enterprise organizations are automatically associated with their enterprise directory (xxx.onmicrosoft.com) and users in the native directory are trusted for authentication to enterprise organizations.",
+      "Rationale": "Using the native enterprise directory for authentication ensures that there is a built-in high level of assurance in the user identity established for subsequent access control. All enterprise organizations are automatically associated with their enterprise directory (xxx.onmicrosoft.com) and users in the native directory are trusted for authentication to enterprise organizations.",
       "Recommendation": "Refer: https://docs.microsoft.com/en-us/azure/devops/organizations/accounts/connect-organization-to-azure-ad?view=azure-devops#connect-your-organization-to-azure-ad",
       "Tags": [
         "SDL",
