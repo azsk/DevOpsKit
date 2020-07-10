@@ -113,7 +113,7 @@ class Organization: ADOSVTBase
             $apiURL = "https://dev.azure.com/{0}/_settings/organizationAad?__rt=fps&__ver=2" -f $($this.SubscriptionContext.SubscriptionName);
             $responseObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
             
-            if(([Helpers]::CheckMember($responseObj[0],"fps.dataProviders.data") ) -and  (($responseObj.fps.dataProviders.data."ms.vss-admin-web.organization-admin-aad-data-provider") -and $responseObj.fps.dataProviders.data."ms.vss-admin-web.organization-admin-aad-data-provider".orgnizationTenantData) -and (-not [string]::IsNullOrWhiteSpace($responseObj.fps.dataProviders.data."ms.vss-admin-web.organization-admin-aad-data-provider".orgnizationTenantData.domain)))
+            if(([Helpers]::CheckMember($responseObj[0],"fps.dataProviders.data") ) -and  (($responseObj[0].fps.dataProviders.data."ms.vss-admin-web.organization-admin-aad-data-provider") -and $responseObj[0].fps.dataProviders.data."ms.vss-admin-web.organization-admin-aad-data-provider".orgnizationTenantData) -and (-not [string]::IsNullOrWhiteSpace($responseObj[0].fps.dataProviders.data."ms.vss-admin-web.organization-admin-aad-data-provider".orgnizationTenantData.domain)))
             {
                 $controlResult.AddMessage([VerificationResult]::Passed, "Organization is configured with [$($responseObj.fps.dataProviders.data.'ms.vss-admin-web.organization-admin-aad-data-provider'.orgnizationTenantData.displayName)] directory.");
             }
@@ -206,12 +206,12 @@ class Organization: ADOSVTBase
             }
             else
             {
-                $controlResult.AddMessage([VerificationResult]::Error, "There was an error accessing the public project security policies.");
+                $controlResult.AddMessage([VerificationResult]::Error, "Could not fetch the public project security policies.");
             }  
         }
         else
         {
-            $controlResult.AddMessage([VerificationResult]::Error, "There was an error accessing the organization security policies.");
+            $controlResult.AddMessage([VerificationResult]::Error, "Could not fetch the organization security policies.");
         }  
         return $controlResult
     }
@@ -228,7 +228,7 @@ class Organization: ADOSVTBase
             if(($responseObj | Measure-Object).Count -gt 0 ) #includes both custom installed and built in extensions.
             {
                 $extensionList = $responseObj | Select-Object extensionName,publisherId,publisherName,version,flags # 'flags' is not available in every extension. It is visible only for built in extensions. Hence this appends 'flags' to trimmed objects.
-                $extensionList = $extensionList | Where-Object {$_.flags -notlike "*builtin*" } # to filter out extensions that are built and are not visible on portal.
+                $extensionList = $extensionList | Where-Object {$_.flags -notlike "*builtin*" } # to filter out extensions that are built in and are not visible on portal.
                 $extCount = ($extensionList | Measure-Object ).Count;
 
                 if($extCount -gt 0)
@@ -296,8 +296,7 @@ class Organization: ADOSVTBase
                     $extensionList = @();
                     $extensionList +=  ($sharedExtensions | Select-Object extensionName,publisherId,publisherName,version) 
 
-                    $controlResult.AddMessage([VerificationResult]::Verify,
-                                                    "Review the below list of shared extensions : ",$extensionList); 
+                    $controlResult.AddMessage([VerificationResult]::Verify, "Review the below list of shared extensions : ",$extensionList); 
                                                     
                     $controlResult.SetStateData("List of shared extensions : ", $extensionList);                                
                 }
@@ -662,7 +661,7 @@ class Organization: ADOSVTBase
             }       
        }
        else{
-             $controlResult.AddMessage([VerificationResult]::Error, "There was an error accessing the organization pipeline settings.");
+             $controlResult.AddMessage([VerificationResult]::Error, "Could not fetch the organization pipeline settings.");
        }       
         return $controlResult
     }
