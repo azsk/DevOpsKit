@@ -263,7 +263,7 @@ class Organization: ADOSVTBase
                 $controlResult.AddMessage([VerificationResult]::Verify,
                                                 "Review below shared extensions",$extensionList); 
                                                  
-                #$controlResult.SetStateData("Shared extensions list: ", $extensionList);                                
+              #  $controlResult.SetStateData("Shared extensions list: ", $extensionList);                                
             }
             else {
                 $controlResult.AddMessage([VerificationResult]::Passed, "No shared extensions found.");

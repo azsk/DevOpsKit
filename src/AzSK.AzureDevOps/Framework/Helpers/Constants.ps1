@@ -55,6 +55,7 @@ class Constants
 	   static [string] $CICDShortLink = "https://aka.ms/devopskit/cicd"
 
 	#Constants for SVTs
+	static [string] $ParentFolder = "Org_"
     static [string] $ModuleStartHeading = [Constants]::DoubleDashLine +
     "`r`nStarting analysis: [FeatureName: {0}] [ParentGroupName: {1}] [ResourceName: {2}] `r`n" + [Constants]::SingleDashLine
 	 static [string] $ModuleStartHeadingSub = [Constants]::DoubleDashLine +
@@ -98,6 +99,9 @@ class Constants
 	static [string] $AttestationBranch = "master"; 
 	static [string] $OrgPolicyRepo = "ADOScanner_Policy_"; 
 	static [string] $OrgAttPrjExtFile = "Org_Config"; 
+	#static [string] $AttestedControlsScanMsg = "You are almost done...we will perform a quick scan of controls attested within the last 24 hrs so that the backend will get the latest control status."
+	static [string] $LongRunningScanStopMsg = "`nThe set of parameters provided would result in scanning a large number of objects (> {0}). `nIf this is not what you intended, use a parameter set that would narrow down your target set. `nIf you would still like to scan all objects, rerun this command with the '-AllowLongRunningScan' switch.";
+	static [string] $LongRunningScanStopByPolicyMsg = "`nScans involving larger number of project components is prohibited in your project by project administrator. `nContact project administrator to allow long running scan by setting flag 'IsAllowLongRunningScan' true.";
 
 	static [string] $StorageAccountPreName= "azsk"
 	static [string] $AzSKAppFolderPath = [Environment]::GetFolderPath('LocalApplicationData') + "/Microsoft/" + [Constants]::AzSKModuleName

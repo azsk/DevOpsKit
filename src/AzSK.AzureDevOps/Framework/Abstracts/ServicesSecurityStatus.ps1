@@ -13,6 +13,9 @@ class ServicesSecurityStatus: ADOSVTCommandBase
 
 		$this.Resolver = $resolver;
 		$this.Resolver.LoadResourcesForScan();
+		if (!$this.Resolver.SVTResources) {
+			return;
+		}
 		$this.UsePartialCommits = $invocationContext.BoundParameters["UsePartialCommits"];
 
 		#BaseLineControlFilter with control ids
@@ -269,7 +272,6 @@ class ServicesSecurityStatus: ADOSVTCommandBase
 			$this.PublishAzSKRootEvent([AzSKRootEvent]::UnsupportedResources, $nonAutomatedResources);
 		}
 	}
-
 
 	#BaseLine Control Filter Function
 	[void] BaselineFilterCheck()

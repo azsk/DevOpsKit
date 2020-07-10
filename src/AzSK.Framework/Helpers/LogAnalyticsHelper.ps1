@@ -143,6 +143,7 @@ Class LogAnalyticsHelper{
 				}
 			}
 
+			$out.Env = [AzSKSettings]::GetInstance().GetScanSource();
 			$out.Reference=$eventContext.Metadata.Reference
 			$out.ControlStatus=$ControlResult.VerificationResult.ToString()
 			$out.ActualVerificationResult=$ControlResult.ActualVerificationResult.ToString()
@@ -165,7 +166,7 @@ Class LogAnalyticsHelper{
 			$out.IsLatestPSModule = $ControlResult.CurrentSessionContext.IsLatestPSModule
 			$out.PolicyOrgName = $AzSKContext.PolicyOrgName
 			$out.IsControlInGrace = $ControlResult.IsControlInGrace
-			$out.ScannedBy=[ContextHelper]::GetCurrentContext().Account
+			$out.ScannedBy=[ContextHelper]::GetCurrentSessionUser()
 			#mapping the attestation properties
 			if($null -ne $ControlResult -and $null -ne $ControlResult.StateManagement -and $null -ne $ControlResult.StateManagement.AttestedStateData)
 			{
