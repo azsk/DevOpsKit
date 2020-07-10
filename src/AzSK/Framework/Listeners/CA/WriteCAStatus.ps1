@@ -67,8 +67,8 @@ class WriteCAStatus: ListenerBase
                     $complianceReportHelper = [ComplianceReportHelper]::GetInstance($props.SubscriptionContext, $version); 
                     $complianceData = $null;
                     # Changes for compliance table dependency removal
-				    # if IsComplianceStateCachingEnabled is false, do not persist/fetch scan result in compliance state table
-                    if($complianceReportHelper.IsComplianceStateCachingEnabled)
+				    # if IsLocalComplianceStoreEnabled is false, do not persist/fetch scan result in compliance state table
+                    if($complianceReportHelper.IsLocalComplianceStoreEnabled)
                     {
                         if($complianceReportHelper.HaveRequiredPermissions())
                         {
@@ -168,9 +168,9 @@ class WriteCAStatus: ListenerBase
                 {
                     $ResourceControlsData = $CustomObjectData.Value;
                     # Changes for compliance table dependency removal
-				    # if IsComplianceStateCachingEnabled is false, do not persist/fetch scan result in compliance state table
+				    # if IsLocalComplianceStoreEnabled is false, do not persist/fetch scan result in compliance state table
                     $complianceReportHelper = [ComplianceReportHelper]::GetInstance($props.SubscriptionContext, $currentInstance.InvocationContext.MyCommand.Version); 
-                    if($complianceReportHelper.IsComplianceStateCachingEnabled)
+                    if($complianceReportHelper.IsLocalComplianceStoreEnabled)
                     {
                         if($null -ne $ResourceControlsData.ResourceContext -and ($ResourceControlsData.Controls | Measure-Object).Count -gt 0)
                         {

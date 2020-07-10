@@ -137,8 +137,8 @@ class SVTCommandBase: AzCommandBase {
         # ToDo: Assumption: usercomment will only work when storage report feature flag is enable
         $resourceId = $svtObject.ResourceId; 
         # Changes for compliance table dependency removal
-				# if IsComplianceStateCachingEnabled is false, do not fetch scan result from compliance state table
-        if($this.IsComplianceStateCachingEnabled)
+				# if IsLocalComplianceStoreEnabled is false, do not fetch scan result from compliance state table
+        if($this.IsLocalComplianceStoreEnabled)
 		{
             $svtObject.ComplianceStateData = $this.FetchComplianceStateData($resourceId);
         }

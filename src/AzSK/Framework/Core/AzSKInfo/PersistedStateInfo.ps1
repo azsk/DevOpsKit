@@ -35,8 +35,8 @@ class PersistedStateInfo: AzCommandBase
 				$this.PublishCustomMessage("NOTE: This feature is currently disabled in your environment. Please contact the cloud security team for your org.", [MessageType]::Warning);	
 				return $messages;
 			} 
-			# if IsComplianceStateCachingEnabled is false, return message indicating Compliance state table caching is disabled by default	
-			if(!$this.IsComplianceStateCachingEnabled)
+			# if IsLocalComplianceStoreEnabled is false, return message indicating Compliance state table caching is disabled by default	
+			if(!$this.IsLocalComplianceStoreEnabled)
         	{
             	$this.PublishCustomMessage([Constants]::ComplianceInfoCachingDisabled, [MessageType]::Warning);	
             	return $messages;
