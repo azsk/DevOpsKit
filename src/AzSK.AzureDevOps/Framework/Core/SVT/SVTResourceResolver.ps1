@@ -105,7 +105,10 @@ class SVTResourceResolver: AzSKRoot {
         #}
 
         if ($ScanAllArtifacts) {
-            $this.ProjectNames = "*"
+            #ScanAllArtifacts should scan all artifacts within the targeted projects (if provided explicitly)
+            if ([string]::IsNullOrEmpty($ProjectNames)) {
+                $this.ProjectNames = "*"
+            }
             $this.BuildNames = "*"
             $this.ReleaseNames = "*"
             $this.AgentPools = "*"
