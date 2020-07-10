@@ -99,11 +99,10 @@ class SVTResourceResolver: AzSKRoot {
             $this.AgentPools = "*"
         }
 
-        # If project not supplied and ResourceTypeName supplied of project component, it should assign * to project and scan that resource.
-        #eg: Get-AzSKAzureDevOpsSecurityStatus -OrganizationName "OrgName" -ResourceTypeName Build/Release/AgentPool/ServiceConnection
-        if (-not [string]::IsNullOrEmpty($ResourceTypeName) -and $ResourceTypeName -ne "All" -and ([string]::IsNullOrEmpty($ProjectNames))) {
-            $this.ProjectNames = "*"
-        }
+        #User should always provide project name (comma separated list or '*') to scan builds in an org. Else no controls will be scanned if -rtn is 'Build'
+        #if (-not [string]::IsNullOrEmpty($ResourceTypeName) -and $ResourceTypeName -ne "All" -and ([string]::IsNullOrEmpty($ProjectNames))) {
+        #    $this.ProjectNames = "*"
+        #}
 
         if ($ScanAllArtifacts) {
             $this.ProjectNames = "*"
@@ -220,7 +219,7 @@ class SVTResourceResolver: AzSKRoot {
                         $this.SVTResources += $svtResource
                     }
                     #check if long running scan allowed or not.
-                    if(!$this.isAllowLonRunningScanCheck())
+                    if(!$this.isAllowLongRunningScanCheck())
                     {
                         return;
                     }
@@ -283,7 +282,7 @@ class SVTResourceResolver: AzSKRoot {
                         }          
                     }
                     #check if long running scan allowed or not.
-                    if(!$this.isAllowLonRunningScanCheck())
+                    if(!$this.isAllowLongRunningScanCheck())
                     {
                         return;
                     }
@@ -369,7 +368,7 @@ class SVTResourceResolver: AzSKRoot {
                         }
                     }
                     #check if long running scan allowed or not.
-                    if(!$this.isAllowLonRunningScanCheck())
+                    if(!$this.isAllowLongRunningScanCheck())
                     {
                         return;
                     }
@@ -419,7 +418,7 @@ class SVTResourceResolver: AzSKRoot {
                         }
                     }
                     #check if long running scan allowed or not.
-                    if(!$this.isAllowLonRunningScanCheck())
+                    if(!$this.isAllowLongRunningScanCheck())
                     {
                         return;
                     }                    
@@ -468,7 +467,7 @@ class SVTResourceResolver: AzSKRoot {
                         }              
                     }
                     #check if long running scan allowed or not.
-                    if(!$this.isAllowLonRunningScanCheck())
+                    if(!$this.isAllowLongRunningScanCheck())
                     {
                         return;
                     }
@@ -480,7 +479,7 @@ class SVTResourceResolver: AzSKRoot {
         $this.SVTResourcesFoundCount = $this.SVTResources.Count
     }
 
-    [bool] isAllowLonRunningScanCheck()
+    [bool] isAllowLongRunningScanCheck()
     {
         if ($this.SVTResources.count -gt $this.longRunningScanCheckPoint) 
         {
