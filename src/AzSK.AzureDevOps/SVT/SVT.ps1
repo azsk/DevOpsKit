@@ -171,7 +171,7 @@ function Get-AzSKAzureDevOpsSecurityStatus
 		[string]
 		[Parameter(Mandatory=$false)]
 		[Alias("ipt")]
-		$IterationPath
+		$IterationPath,
 
 		[switch]
 		[Parameter(HelpMessage="Allow long running scan.")]
@@ -340,7 +340,7 @@ function Get-AzSKAzureDevOpsOrgSecurityStatus
 		[string]
 		[Parameter(Mandatory=$false)]
 		[Alias("itp")]
-		$IterationPath
+		$IterationPath,
 
 		[switch]
 		[Parameter(HelpMessage = "Allow long running scan.")]
@@ -513,7 +513,7 @@ function Get-AzSKAzureDevOpsProjectSecurityStatus
 		[string]
 		[Parameter(Mandatory=$false)]
 		[Alias("itp")]
-		$IterationPath
+		$IterationPath,
 
 		[switch]
 		[Parameter(HelpMessage="Allow long running scan.")]
@@ -665,7 +665,7 @@ function Get-AzSKAzureDevOpsBuildSecurityStatus
 		[string]
 		[Parameter(Mandatory=$false)]
 		[Alias("itp")]
-		$IterationPath
+		$IterationPath,
 
 		[switch]
 		[Parameter(HelpMessage="Allow long running scan.")]
@@ -811,7 +811,7 @@ function Get-AzSKAzureDevOpsReleaseSecurityStatus
 		[string]
 		[Parameter(Mandatory=$false)]
 		[Alias("itp")]
-		$IterationPath
+		$IterationPath,
 
 		[switch]
 		[Parameter(HelpMessage="Allow long running scan.")]
