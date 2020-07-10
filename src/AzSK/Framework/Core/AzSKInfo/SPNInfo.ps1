@@ -56,19 +56,27 @@ class SPNInfo: CommandBase
 					}
 					
 					$this.PublishCustomMessage("`r`nSPN(s) owned by you which are currently being used by CA:`r`n",[MessageType]::Default)
+					#Adding blank line
+					write-host ""
 						
 					if(($usedSPNs | Measure-Object).Count -eq 0)
 					{
 						$this.PublishCustomMessage("`r`n`r`nCurrently there is no SPN owned by you, which is being used by CA.", [MessageType]::Warning);
+						#Adding blank line
+						write-host ""
 					}
 					else
 					{
 						$this.PublishCustomMessage($($usedSPNs | Format-Table @{Label = "ApplicationId"; Expression = { $_.appId } }, @{Label = "ApplicationDisplayName"; Expression = { $_.displayName } },@{Label = "SubscriptionId"; Expression = { $_.subscriptionId }},@{Label = "SubscriptionName"; Expression = { $_.subscriptionName } } -AutoSize -Wrap | Out-String), [MessageType]::Default)
+						#Adding blank line
+						write-host ""
 					}
 			
 					$this.PublishCustomMessage([Constants]::SingleDashLine, [MessageType]::Default);
 			
 					$this.PublishCustomMessage("`r`nSPN(s) owned by you which have not been used by CA in last 7 days:`r`n",[MessageType]::Default)
+					#Adding blank line
+					write-host ""
 					$this.PublishCustomMessage($($NotInUsedSPNs | Format-Table @{Label = "ApplicationId"; Expression = { $_.appId }},@{Label = "ApplicationDisplayName"; Expression = { $_.displayName } } -AutoSize | Out-String), [MessageType]::Default);
 				}
 				else
