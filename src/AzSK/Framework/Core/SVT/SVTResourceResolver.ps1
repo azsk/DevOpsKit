@@ -234,11 +234,16 @@ class SVTResourceResolver: AzSKRoot
 				}
 
 				#filtering IPAddress resource
-				if($ControlSettings.PublicIpAddresses.EnablePublicIpResource -ne "true")
+				if([Helpers]::CheckMember($ControlSettings,"PublicIpAddresses") `
+						-and [Helpers]::CheckMember($ControlSettings.PublicIpAddresses,"EnablePublicIpResource"))
 				{
+					if($ControlSettings.PublicIpAddresses.EnablePublicIpResource -ne "true")
+				 {
 					$filter = ($this.SVTResources | Where-Object { $_.ResourceType -ne 'Microsoft.Network/publicIPAddresses'});
 					$this.SVTResources = $filter;
+				 }
 				}
+				
 			}
 			$this.SVTResourcesFoundCount = ($this.SVTResources | Measure-Object).Count
 				
