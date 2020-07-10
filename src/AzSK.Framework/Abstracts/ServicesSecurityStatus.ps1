@@ -241,11 +241,9 @@ class ServicesSecurityStatus: AzSVTCommandBase
 				}
 
 				# Changes for compliance table dependency removal
-				# if IsComplianceStateCachingEnabled is false, do not persist scan result in compliance state table
-				if($this.IsComplianceStateCachingEnabled)
-				{	
-					if($this.IsLocalComplianceStoreEnabled -and ($currentResourceResults | Measure-Object).Count -gt 0)
-					{
+				# if IsLocalComplianceStoreEnabled is false, do not persist scan result in compliance state table
+				if($this.IsLocalComplianceStoreEnabled -and ($currentResourceResults | Measure-Object).Count -gt 0)
+				{
 					# Persist scan data to subscription
 						try 
 						{
@@ -266,7 +264,7 @@ class ServicesSecurityStatus: AzSVTCommandBase
 						{
 							$this.PublishException($_);
 						}
-					}
+					
 
 				}
 				

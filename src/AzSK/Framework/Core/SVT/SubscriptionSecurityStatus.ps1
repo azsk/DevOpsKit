@@ -81,12 +81,10 @@ class SubscriptionSecurityStatus: AzSVTCommandBase
 
 		#save result into local compliance report
 		# Changes for compliance table dependency removal
-		# if IsComplianceStateCachingEnabled is false, do not persist scan result in compliance state table
-		if($this.IsComplianceStateCachingEnabled)
+		# if IsLocalComplianceStoreEnabled is false, do not persist scan result in compliance state table
+		if($this.IsLocalComplianceStoreEnabled -and ($result | Measure-Object).Count -gt 0)
 		{
-			if($this.IsLocalComplianceStoreEnabled -and ($result | Measure-Object).Count -gt 0)
-			{
-				# Persist scan data to subscription
+			# Persist scan data to subscription
 				try 
 				{
 					if($null -eq $this.ComplianceReportHelper)
@@ -107,7 +105,7 @@ class SubscriptionSecurityStatus: AzSVTCommandBase
 				{
 					$this.PublishException($_);
 				}
-			}
+			
 		}		
 		[AzListenerHelper]::RegisterListeners();
 		

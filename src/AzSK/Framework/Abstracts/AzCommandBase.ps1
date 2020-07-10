@@ -54,7 +54,8 @@ class AzCommandBase: CommandBase {
 		{
 			$this.IsLocalComplianceStoreEnabled = $true
 		}
-		$this.IsComplianceStateCachingEnabled = $this.ValidateComplianceStateCaching();     
+		$this.IsComplianceStateCachingEnabled = $this.ValidateComplianceStateCaching(); 
+		$this.IsLocalComplianceStoreEnabled = $this.IsComplianceStateCachingEnabled  -or $this.IsLocalComplianceStoreEnabled;
 		#clear azsk storage instance
 		[StorageHelper]::AzSKStorageHelperInstance = $null;
 

@@ -15,6 +15,8 @@ class ComplianceReportHelper: ComplianceBase
 		$this.ScannerVersion = $ScannerVersion
 		$this.ScanKind = [ServiceScanKind]::Partial;
 		$this.IsComplianceStateCachingEnabled = $this.ValidateComplianceStateCaching();
+		$azskConfig = [ConfigurationManager]::GetAzSKConfigData();
+		$this.IsComplianceStateCachingEnabled =($this.IsComplianceStateCachingEnabled) -or ($azskConfig.StoreComplianceSummaryInUserSubscriptions) -or ([ConfigurationManager]::GetAzSKSettings().StoreComplianceSummaryInUserSubscriptions);
 	}
 	
 	#Get cached instance for compliance. This is to avoid repeatative calls for base constructor which fetch details of AzSK resources on every resource
