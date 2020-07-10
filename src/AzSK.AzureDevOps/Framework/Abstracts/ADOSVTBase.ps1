@@ -361,7 +361,7 @@ class ADOSVTBase: SVTBase {
 
 		return $automatedControlsResult;
 	}
-
+ #isRescan parameter is added to check if method is called from rescan. 
 	hidden [SVTEventContext] FetchControlState([ControlItem] $controlItem, $isRescan = $false) {
 		[SVTEventContext] $singleControlResult = $this.CreateSVTEventContextObject();
 		$singleControlResult.ControlItem = $controlItem;
