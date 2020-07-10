@@ -90,12 +90,12 @@
     },
     {
       "ControlID": "AzureDevOps_Project_AuthZ_Limit_Job_Scope_To_Current_Project",
-      "Description": "Scope of access of all pipelines should be restricted to current project.",
+      "Description": "Do not run pipelines using tokens that have project collection level access.",
       "Id": "Project160",
       "ControlSeverity": "Medium",
       "Automated": "Yes",
-      "MethodName": "CheckJobAuthnScope",
-      "Rationale": "This ensures pipeline execution happens using a token scoped to the current project abiding with principle of least privilege.",
+      "MethodName": "CheckJobAuthZScope",
+      "Rationale": "If pipelines use project collection level tokens, a vulnerability in components used by one project can be leveraged by an attacker to attack all other projects. This is also in keeping with the principle of least privilege.",
       "Recommendation": "Go to Project Settings --> Pipelines --> Settings --> Enable 'Limit job authorization scope to current project.'.",
       "Tags": [
         "SDL",
