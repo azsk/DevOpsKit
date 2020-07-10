@@ -8,6 +8,9 @@ using namespace Microsoft.IdentityModel.Clients.ActiveDirectory
 class ContextHelper {
     
     static hidden [Context] $currentContext;
+    
+    #This will be used to carry current org under current context.
+    static hidden [string] $orgName;
 
     hidden static [PSObject] GetCurrentContext()
     {
@@ -86,6 +89,8 @@ class ContextHelper {
                            Scope = "/Organization/$subscriptionId";
                            SubscriptionName = $subscriptionId;
                      };
+                     # $subscriptionId contains the organization name (due to framework).
+                     [ContextHelper]::orgName = $subscriptionId;
                      [ContextHelper]::GetCurrentContext()                  
               }
               else
@@ -104,6 +109,8 @@ class ContextHelper {
                            Scope = "/Organization/$subscriptionId";
                            SubscriptionName = $subscriptionId;
                      };
+                     # $subscriptionId contains the organization name (due to framework).
+                     [ContextHelper]::orgName = $subscriptionId;
                      [ContextHelper]::GetCurrentContext($PATToken)         
               }
               else
@@ -124,6 +131,13 @@ class ContextHelper {
         $contextObj.Account.Id = $context.UserInfo.DisplayableId
         $contextObj.Tenant.Id = $context.TenantId 
         $contextObj.AccessToken = $context.AccessToken
+        
+        # Here subscription basically means ADO organization (due to framework).
+        # We do not get ADO organization Id as part of current context. Hence appending org name to both Id and Name param.
+        $contextObj.Subscription = [Subscription]::new()
+        $contextObj.Subscription.Id = [ContextHelper]::orgName
+        $contextObj.Subscription.Name = [ContextHelper]::orgName 
+        
         $contextObj.TokenExpireTimeLocal = $context.ExpiresOn.LocalDateTime
         #$contextObj.AccessToken =  ConvertTo-SecureString -String $context.AccessToken -asplaintext -Force
         [ContextHelper]::currentContext = $contextObj
@@ -136,6 +150,13 @@ class ContextHelper {
         $contextObj.Tenant.Id =  [string]::Empty
         $BSTR = [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($patToken)
         $contextObj.AccessToken = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto($BSTR)
+        
+        # Here subscription basically means ADO organization (due to framework).
+        # We do not get ADO organization Id as part of current context. Hence appending org name to both Id and Name param.
+        $contextObj.Subscription = [Subscription]::new()
+        $contextObj.Subscription.Id = [ContextHelper]::orgName
+        $contextObj.Subscription.Name = [ContextHelper]::orgName 
+
         #$contextObj.AccessToken = $patToken
         #$contextObj.AccessToken =  ConvertTo-SecureString -String $context.AccessToken -asplaintext -Force
         [ContextHelper]::currentContext = $contextObj
