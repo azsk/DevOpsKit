@@ -45,19 +45,30 @@ class Project: ADOSVTBase
     hidden [ControlResult] CheckPublicProjects([ControlResult] $controlResult)
 	{
         $apiURL = $this.ResourceContext.ResourceId;
-        $responseObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
-        if([Helpers]::CheckMember($responseObj,"visibility"))
+        try 
         {
-            if(($responseObj.visibility -eq "private") -or ($responseObj.visibility -eq "organization"))
+            $responseObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
+            if([Helpers]::CheckMember($responseObj,"visibility"))
             {
-                $controlResult.AddMessage([VerificationResult]::Passed,
-                                                "Project visibility is set to $($responseObj.visibility)."); 
+                $visibility = $responseObj.visibility;
+                if(($visibility -eq "private") -or ($visibility -eq "organization"))
+                {
+                    $controlResult.AddMessage([VerificationResult]::Passed, "Project visibility is set to '$visibility'."); 
 
+                }
+                else # For orgs with public projects allowed, this control needs to be attested by the project admins. 
+                {
+                    $controlResult.AddMessage([VerificationResult]::Failed, "Project visibility is set to '$visibility'.");
+                }
             }
-            else {
-                $controlResult.AddMessage([VerificationResult]::Failed,
-                                                "Project visibility is set to $($responseObj.visibility).");
+            else 
+            {
+                $controlResult.AddMessage([VerificationResult]::Error,"Project visibility details could not be fetched.");
             }
+        }
+        catch 
+        {
+            $controlResult.AddMessage([VerificationResult]::Error,"Project visibility details could not be fetched.");
         }
         return $controlResult;
     }
@@ -100,21 +111,34 @@ class Project: ADOSVTBase
         return $controlResult
     }
 
-    hidden [ControlResult] CheckJobAuthnScope([ControlResult] $controlResult)
+    hidden [ControlResult] CheckJobAuthZScope([ControlResult] $controlResult)
     {
-       if($this.PipelineSettingsObj)
-       {
-            
-            if($this.PipelineSettingsObj.enforceJobAuthScope.enabled -eq $true )
+        if($this.PipelineSettingsObj)
+        {
+            $orgLevelScope = $this.PipelineSettingsObj.enforceJobAuthScope.orgEnabled;
+            $prjLevelScope = $this.PipelineSettingsObj.enforceJobAuthScope.enabled;
+
+            if($prjLevelScope -eq $true )
             {
-                $controlResult.AddMessage([VerificationResult]::Passed, "Scope of access of all pipelines is restricted to current project. It is set as '$($this.PipelineSettingsObj.enforceJobAuthScope.orgEnabled)' at organization scope.");
+                $controlResult.AddMessage([VerificationResult]::Passed, "Job authorization scope is limited to current project.");
             }
-            else{
-                $controlResult.AddMessage([VerificationResult]::Failed, "Scope of access of all pipelines is set to project collection. It is set as '$($this.PipelineSettingsObj.enforceJobAuthScope.orgEnabled)' at organization scope.");
-            }       
-       }
-       else{
-            $controlResult.AddMessage([VerificationResult]::Manual, "Pipeline settings could not be fetched due to insufficient permissions at project scope.");
+            else
+            {
+                $controlResult.AddMessage([VerificationResult]::Failed, "Job authorization scope is set to project collection.");
+            }     
+            
+            if($orgLevelScope -eq $true )
+            {
+                $controlResult.AddMessage("This setting is enabled (limited to current project) at organization level.");
+            }
+            else
+            {
+                $controlResult.AddMessage("This setting is disabled (set to project collection) at organization level.");
+            }     
+        }
+        else
+        {
+            $controlResult.AddMessage([VerificationResult]::Error, "There was an error accessing the project pipeline settings.");
         }       
         return $controlResult
     }

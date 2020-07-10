@@ -59,7 +59,7 @@
       "ControlID": "AzureDevOps_AgentPool_AuthZ_Disable_Inherited_Permissions",
       "Description": "Do not allow inherited permission on agent pool",
       "Id": "AgentPool140",
-      "ControlSeverity": "Medium",
+      "ControlSeverity": "High",
       "Automated": "Yes",
       "MethodName": "CheckInheritPermissions",
       "Rationale": "Disabling inherit permissions lets you finely control access to various operations at the agent level for different stakeholders. This ensures that you follow the principle of least privilege and provide access only to the persons that require it.",

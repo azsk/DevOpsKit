@@ -93,6 +93,8 @@
     ]
  }
   ],
+  "IsAllowLongRunningScan": true,
+  "LongRunningScanCheckPoint": 1000,
   "DefaultValidAttestationStates": [ "NotAnIssue", "WillFixLater", "WillNotFix" ],
   "NewControlGracePeriodInDays": {
     "Default": 60,

@@ -157,6 +157,7 @@ function Get-AzSKAzureDevOpsSecurityStatus
 		[Alias("atp")]
 		$AttestationHostProjectName,
 
+
 		[ValidateSet("All","BaselineControls","PreviewBaselineControls")]
 		[Parameter(Mandatory = $false)]
 		[Alias("abl")]		
@@ -172,6 +173,13 @@ function Get-AzSKAzureDevOpsSecurityStatus
 		[Alias("ipt")]
 		$IterationPath
 
+		[switch]
+		[Parameter(HelpMessage="Allow long running scan.")]
+		[Alias("als")]
+		$AllowLongRunningScan
+
+
+
 	)
 	Begin
 	{
@@ -183,10 +191,12 @@ function Get-AzSKAzureDevOpsSecurityStatus
 	{
 	try 
 		{
-				$resolver = [SVTResourceResolver]::new($OrganizationName,$ProjectNames,$BuildNames,$ReleaseNames,$AgentPoolNames, $ServiceConnectionNames, $MaxObj, $ScanAllArtifacts, $PATToken,$ResourceTypeName);
+				$resolver = [SVTResourceResolver]::new($OrganizationName,$ProjectNames,$BuildNames,$ReleaseNames,$AgentPoolNames, $ServiceConnectionNames, $MaxObj, $ScanAllArtifacts, $PATToken,$ResourceTypeName, $AllowLongRunningScan);
 			    $secStatus = [ServicesSecurityStatus]::new($OrganizationName, $PSCmdlet.MyInvocation, $resolver);
 			    if ($secStatus) 
-			    {		
+			    {	
+					if ($null -ne $secStatus.Resolver.SVTResources) {
+							
 					$secStatus.ControlIdString = $ControlIds;
 					$secStatus.Severity = $Severity;
 					$secStatus.UseBaselineControls = $UseBaselineControls;
@@ -201,7 +211,8 @@ function Get-AzSKAzureDevOpsSecurityStatus
 				    $attestationOptions.IsExemptModeOn = $AddException
 				    $secStatus.AttestationOptions = $attestationOptions;	
 
-			    	return $secStatus.EvaluateControlStatus();
+					return $secStatus.EvaluateControlStatus();
+					}
 			    }    
 		}
 		catch 
@@ -313,6 +324,7 @@ function Get-AzSKAzureDevOpsOrgSecurityStatus
 		[Alias("aex")]
 		$AddException,
 
+
 		[ValidateSet("All","BaselineControls","PreviewBaselineControls")]
 		[Parameter(Mandatory = $false)]
 		[Alias("abl")]
@@ -330,6 +342,12 @@ function Get-AzSKAzureDevOpsOrgSecurityStatus
 		[Alias("itp")]
 		$IterationPath
 
+		[switch]
+		[Parameter(HelpMessage = "Allow long running scan.")]
+		[Alias("als")]
+		$AllowLongRunningScan
+
+
 	)
 	Begin
 	{
@@ -341,11 +359,12 @@ function Get-AzSKAzureDevOpsOrgSecurityStatus
 	{
 	try 
 		{
-			$resolver = [SVTResourceResolver]::new($OrganizationName,$null,$null,$null,$null,$null,$null,$PATToken,[ResourceTypeName]::Organization);
+			$resolver = [SVTResourceResolver]::new($OrganizationName,$null,$null,$null,$null,$null,$null,$PATToken,[ResourceTypeName]::Organization, $AllowLongRunningScan);
 			$secStatus = [ServicesSecurityStatus]::new($OrganizationName, $PSCmdlet.MyInvocation, $resolver);
 			if ($secStatus) 
 			{		
-				$secStatus.ControlIdString = $ControlIds;
+				if ($null -ne $secStatus.Resolver.SVTResources) {
+				    $secStatus.ControlIdString = $ControlIds;
 					$secStatus.Severity = $Severity;
 					$secStatus.UseBaselineControls = $UseBaselineControls;
 					$secStatus.UsePreviewBaselineControls = $UsePreviewBaselineControls;
@@ -359,8 +378,8 @@ function Get-AzSKAzureDevOpsOrgSecurityStatus
 				    $attestationOptions.IsExemptModeOn = $AddException
 				    $secStatus.AttestationOptions = $attestationOptions;	
 
-
 				return $secStatus.EvaluateControlStatus();
+				}
 			}   
 		}
 		catch 
@@ -478,6 +497,7 @@ function Get-AzSKAzureDevOpsProjectSecurityStatus
 		[Alias("aex")]
 		$AddException,
 
+
 		[ValidateSet("All","BaselineControls","PreviewBaselineControls")]
 		[Parameter(Mandatory = $false)]
 		[Alias("abl")]
@@ -495,6 +515,12 @@ function Get-AzSKAzureDevOpsProjectSecurityStatus
 		[Alias("itp")]
 		$IterationPath
 
+		[switch]
+		[Parameter(HelpMessage="Allow long running scan.")]
+		[Alias("als")]
+		$AllowLongRunningScan
+
+
 	)
 	Begin
 	{
@@ -506,11 +532,12 @@ function Get-AzSKAzureDevOpsProjectSecurityStatus
 	{
 	try 
 		{
-			$resolver = [SVTResourceResolver]::new($OrganizationName,$ProjectNames,$null,$null,$null,$null,$null,$PATToken,[ResourceTypeName]::Project);
+			$resolver = [SVTResourceResolver]::new($OrganizationName,$ProjectNames,$null,$null,$null,$null,$null,$PATToken,[ResourceTypeName]::Project, $AllowLongRunningScan);
 			$secStatus = [ServicesSecurityStatus]::new($OrganizationName, $PSCmdlet.MyInvocation, $resolver);
 			if ($secStatus) 
 			{		
-				$secStatus.ControlIdString = $ControlIds;
+				if ($null -ne $secStatus.Resolver.SVTResources) {
+				    $secStatus.ControlIdString = $ControlIds;
 					$secStatus.Severity = $Severity;
 					$secStatus.UseBaselineControls = $UseBaselineControls;
 					$secStatus.UsePreviewBaselineControls = $UsePreviewBaselineControls;
@@ -524,8 +551,8 @@ function Get-AzSKAzureDevOpsProjectSecurityStatus
 				    $attestationOptions.IsExemptModeOn = $AddException
 				    $secStatus.AttestationOptions = $attestationOptions;	
 
-
 				return $secStatus.EvaluateControlStatus();
+				}
 			}
 		}
 		catch 
@@ -622,6 +649,7 @@ function Get-AzSKAzureDevOpsBuildSecurityStatus
 		[Alias("dnof")]
 		$DoNotOpenOutputFolder,
 
+
 		[ValidateSet("All","BaselineControls","PreviewBaselineControls")]
 		[Parameter(Mandatory = $false)]
 		[Alias("abl")]
@@ -639,6 +667,12 @@ function Get-AzSKAzureDevOpsBuildSecurityStatus
 		[Alias("itp")]
 		$IterationPath
 
+		[switch]
+		[Parameter(HelpMessage="Allow long running scan.")]
+		[Alias("als")]
+		$AllowLongRunningScan
+
+
 	)
 	Begin
 	{
@@ -650,16 +684,18 @@ function Get-AzSKAzureDevOpsBuildSecurityStatus
 	{
 	try 
 		{
-			$resolver = [SVTResourceResolver]::new($OrganizationName,$ProjectNames,$BuildNames,$null,$null,$null,$null,$PATToken,[ResourceTypeName]::Build);
+			$resolver = [SVTResourceResolver]::new($OrganizationName,$ProjectNames,$BuildNames,$null,$null,$null,$null,$PATToken,[ResourceTypeName]::Build, $AllowLongRunningScan);
 			$secStatus = [ServicesSecurityStatus]::new($OrganizationName, $PSCmdlet.MyInvocation, $resolver);
 			if ($secStatus) 
-			{		
+			{	
+				if ($null -ne $secStatus.Resolver.SVTResources) {	
 				$secStatus.ControlIdString = $ControlIds;
 					$secStatus.Severity = $Severity;
 					$secStatus.UseBaselineControls = $UseBaselineControls;
 					$secStatus.UsePreviewBaselineControls = $UsePreviewBaselineControls;
 
 				return $secStatus.EvaluateControlStatus();
+				}
 			} 
 		}
 		catch 
@@ -759,6 +795,7 @@ function Get-AzSKAzureDevOpsReleaseSecurityStatus
 		[Alias("dnof")]
 		$DoNotOpenOutputFolder,
 
+
 		[ValidateSet("All","BaselineControls","PreviewBaselineControls")]
 		[Parameter(Mandatory = $false)]
 		[Alias("abl")]
@@ -776,6 +813,13 @@ function Get-AzSKAzureDevOpsReleaseSecurityStatus
 		[Alias("itp")]
 		$IterationPath
 
+		[switch]
+		[Parameter(HelpMessage="Allow long running scan.")]
+		[Alias("als")]
+		$AllowLongRunningScan
+
+
+
 	)
 	Begin
 	{
@@ -786,16 +830,18 @@ function Get-AzSKAzureDevOpsReleaseSecurityStatus
 	{
 	try 
 		{
-			$resolver = [SVTResourceResolver]::new($OrganizationName,$ProjectNames,$null,$ReleaseNames,$null,$null,$null,$PATToken,[ResourceTypeName]::Release);
+			$resolver = [SVTResourceResolver]::new($OrganizationName,$ProjectNames,$null,$ReleaseNames,$null,$null,$null,$PATToken,[ResourceTypeName]::Release, $AllowLongRunningScan);
 			$secStatus = [ServicesSecurityStatus]::new($OrganizationName, $PSCmdlet.MyInvocation, $resolver);
 			if ($secStatus) 
-			{		
+			{	
+				if ($null -ne $secStatus.Resolver.SVTResources) {		
 				$secStatus.ControlIdString = $ControlIds;
 					$secStatus.Severity = $Severity;
 					$secStatus.UseBaselineControls = $UseBaselineControls;
 					$secStatus.UsePreviewBaselineControls = $UsePreviewBaselineControls;
 					
 				return $secStatus.EvaluateControlStatus();
+				}
 			}    
 		}
 		catch 

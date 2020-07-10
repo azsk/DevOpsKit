@@ -80,7 +80,8 @@ class ADOSVTBase: SVTBase {
 		}
 	}
 
-	hidden [ControlState[]] GetResourceState() {
+	#isRescan parameter is added to check if method is called from rescan. state data is fetching for rescan
+	hidden [ControlState[]] GetResourceState([bool] $isRescan = $false) {
 		if ($null -eq $this.ResourceState) {
 			$this.ResourceState = @();
 			if ($this.ControlStateExt -and $this.ControlStateExt.HasControlStateReadAccessPermissions()) {
@@ -89,11 +90,13 @@ class ADOSVTBase: SVTBase {
 					$resourceType = $this.ResourceContext.ResourceTypeName
 				}
 				#Fetch control state for organization only if project is configured for org spesific control attestation (Check for Organization only, for other resource go inside without project check).
-				if ($resourceType -ne "Organization" -or $this.ControlStateExt.GetProject()) {
-					$resourceStates = $this.ControlStateExt.GetControlState($this.ResourceId, $resourceType, $this.ResourceContext.ResourceName, $this.ResourceContext.ResourceGroupName)
-					if ($null -ne $resourceStates) {
-						$this.ResourceState += $resourceStates
-					}
+
+				if($resourceType -ne "Organization" -or $this.ControlStateExt.GetProject())
+				{
+				$resourceStates = $this.ControlStateExt.GetControlState($this.ResourceId, $resourceType, $this.ResourceContext.ResourceName, $this.ResourceContext.ResourceGroupName, $isRescan)
+				if ($null -ne $resourceStates) {
+					$this.ResourceState += $resourceStates
+
 				}
 				else {
 					return $null;
@@ -109,7 +112,7 @@ class ADOSVTBase: SVTBase {
 		$controlState = @();
 		$controlStateValue = @();
 		try {
-			$resourceStates = $this.GetResourceState()			
+			$resourceStates = $this.GetResourceState($false)			
 			if (($resourceStates | Measure-Object).Count -ne 0) {
 				$controlStateValue += $resourceStates | Where-Object { $_.InternalId -eq $eventContext.ControlItem.Id };
 				$controlStateValue | ForEach-Object {
@@ -164,6 +167,7 @@ class ADOSVTBase: SVTBase {
 						if ($currentItem.ActualVerificationResult -ne [VerificationResult]::Passed) {
 							#compare the states
 							if (($childResourceState.ActualVerificationResult -eq $currentItem.ActualVerificationResult) -and $childResourceState.State) {
+				
 								$currentItem.StateManagement.AttestedStateData = $childResourceState.State;
 
 								# Compare dataobject property of State
@@ -357,15 +361,15 @@ class ADOSVTBase: SVTBase {
 
 		return $automatedControlsResult;
 	}
-
-	hidden [SVTEventContext] FetchControlState([ControlItem] $controlItem) {
+ #isRescan parameter is added to check if method is called from rescan. 
+	hidden [SVTEventContext] FetchControlState([ControlItem] $controlItem, $isRescan = $false) {
 		[SVTEventContext] $singleControlResult = $this.CreateSVTEventContextObject();
 		$singleControlResult.ControlItem = $controlItem;
 
 		$controlState = @();
 		$controlStateValue = @();
 		try {
-			$resourceStates = $this.GetResourceState();
+			$resourceStates = $this.GetResourceState($isRescan);
 			if (($resourceStates | Measure-Object).Count -ne 0) {
 				$controlStateValue += $resourceStates | Where-Object { $_.InternalId -eq $singleControlResult.ControlItem.Id };
 				$controlStateValue | ForEach-Object {
@@ -385,7 +389,10 @@ class ADOSVTBase: SVTBase {
 			$this.EvaluationError($_);
 		}
 		if (($controlState | Measure-Object).Count -gt 0) {
-			$this.ControlStarted($singleControlResult);
+		#Added check to resolve duplicate log issue in rescan
+			if (!$isRescan) {
+			   $this.ControlStarted($singleControlResult);
+			}
 			if ($controlItem.Enabled -eq $false) {
 				$this.ControlDisabled($singleControlResult);
 			}
@@ -414,7 +421,10 @@ class ADOSVTBase: SVTBase {
 				};
 
 			}
-			$this.ControlCompleted($singleControlResult);
+			#Added check to resolve duplicate log issue in rescan
+			if (!$isRescan) {
+			   $this.ControlCompleted($singleControlResult);
+			}
 		}
 
 		return $singleControlResult;

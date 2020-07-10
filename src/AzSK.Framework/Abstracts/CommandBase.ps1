@@ -100,7 +100,20 @@ class CommandBase: AzSKRoot {
     [string] InvokeFunction([PSMethod] $methodToCall, [System.Object[]] $arguments) {
         if (-not $methodToCall) {
             throw [System.ArgumentException] ("The argument 'methodToCall' is null. Pass the reference of method to call. e.g.: [YourClass]::new().YourMethod");
-        }
+		}
+		#if attestation then rescan the controls
+		if ($null -eq $arguments)
+		{
+			$folderPath = $this.GetOutputFolderPath();
+			$methodResult = $methodToCall.Invoke(@());
+            #$this.CommandCompleted($methodResult); this will update CSV but issue is there will be duplicate entries
+			if(-not $this.DoNotOpenOutputFolder) {
+				if (Test-Path $folderPath) {
+					Invoke-Item -Path $folderPath;
+				}
+			}
+		}
+        else {
 
 		# Reset cached context <TODO Framework: Fix Dependancy on RM module>
 		[ContextHelper]::ResetCurrentContext()
@@ -182,6 +195,19 @@ class CommandBase: AzSKRoot {
         $AttestControlParamFound = $this.InvocationContext.BoundParameters["AttestControls"];
 		if($null -eq $AttestControlParamFound)
 		{
+			#If controls are attested then open folder when rescan of attested controls is complete
+			$controlAttested = $false
+			if( ([FeatureFlightingManager]::GetFeatureStatus("EnableScanAfterAttestation","*"))) { 
+				#Global variable "AttestationValue" is set to true when one or more controls are attested in current scan
+				#Ignore if variable AttestationValue is not found
+				if (Get-Variable AttestationValue -Scope Global -ErrorAction Ignore){
+					if ( $Global:AttestationValue){
+						$controlAttested = $true
+					}
+				}
+			}
+
+			if ( !$controlAttested){
 			if((-not $this.DoNotOpenOutputFolder) -and (-not [string]::IsNullOrEmpty($folderPath)))
 			{
 				try
@@ -194,6 +220,8 @@ class CommandBase: AzSKRoot {
 				}
 			}
 		}
+	}
+	}
         return $folderPath;
 	}
 	#EndRegion

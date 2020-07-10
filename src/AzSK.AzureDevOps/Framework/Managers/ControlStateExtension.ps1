@@ -64,7 +64,7 @@ class ControlStateExtension
 	      	$this.HasControlStateWritePermissions = 0
 	      }
 	}
-	
+
 	hidden [bool] ComputeControlStateIndexer()
 	{
 		try {
@@ -129,7 +129,28 @@ class ControlStateExtension
 		return $true;
 	}
 
-	hidden [PSObject] GetControlState([string] $id, [string] $resourceType, [string] $resourceName, [string] $resourceGroupName)
+	# set indexer for rescan post attestation
+	hidden [PSObject] RescanComputeControlStateIndexer([string] $projectName, [string] $resourceType)
+	{
+	        #$this.resourceType is used inside the GetProject method to get the project name for organization from extension storage, also return project for other resources
+		$this.resourceType = $resourceType;
+		if ($resourceType -eq "Organization" -or $resourceType -eq "Project") {
+			$this.resourceName = $projectName
+		}
+		else {
+			$this.resourceGroupName = $projectName
+		}
+		
+		[PSObject] $ControlStateIndexerForRescan = $this.GetRepoFileContent($this.IndexerBlobName );
+                #setting below global variables null as needed for next resource.
+		$this.resourceType = $null;
+		$this.resourceName = "";
+		$this.resourceGroupName = "";
+		
+        return $ControlStateIndexerForRescan;
+	}
+        #isRescan parameter is added to check if method is called from rescan.
+	hidden [PSObject] GetControlState([string] $id, [string] $resourceType, [string] $resourceName, [string] $resourceGroupName, [bool] $isRescan = $false)
 	{
 		try
 		{
@@ -147,13 +168,34 @@ class ControlStateExtension
 			    $this.ControlStateIndexer =  $null;
 			    $this.IsControlStateIndexerPresent = $true;
 			}
-			
-			$retVal = $this.ComputeControlStateIndexer();
+			#getting resource.index for rescan
+			[PSObject] $ControlStateIndexerForRescan = $null;
+			[bool] $retVal = $true;
+			if ($isRescan) {
+				#this is to set project name from GetProject method
+				$projectName = $resourceName;
+				if ($resourceType -ne "Organization" -and $resourceType -ne "Project") {
+					$projectName = $resourceGroupName
+				}
+				$ControlStateIndexerForRescan = $this.RescanComputeControlStateIndexer($projectName, $resourceType);
+				#Above method setting below blobal variable null so settting them again.
+				$this.resourceType = $resourceType;
+			    $this.resourceName = $resourceName
+			    $this.resourceGroupName = $resourceGroupName
+			}
+			else {
+			    $retVal = $this.ComputeControlStateIndexer();
+			}
 
-			if($null -ne $this.ControlStateIndexer -and  $retVal)
+			if(($null -ne $this.ControlStateIndexer -and  $retVal) -or $isRescan)
 			{
 				$indexes = @();
-				$indexes += $this.ControlStateIndexer
+				if ($isRescan) {
+					$indexes = $ControlStateIndexerForRescan;
+				}
+				else {
+				    $indexes += $this.ControlStateIndexer
+				}
 				$hashId = [Helpers]::ComputeHash($id)
 				$selectedIndex = $indexes | Where-Object { $_.HashId -eq $hashId}
 				
@@ -253,6 +295,26 @@ class ControlStateExtension
 				#merge with the exiting if found
 				$persistedControlStates = $this.GetPersistedControlStates("$hash.json");
 				$finalControlStates = $this.MergeControlStates($persistedControlStates, $finalControlStates);
+				$finalControl = @();
+				#convert state data object to encoded string
+				foreach ($controls in $finalControlStates) {
+					# checking If state.DataObject is not empty and dataobject is not encode string, if control is already attested it will have encoded string
+					if ($controls.state.DataObject -and !($controls.state.DataObject -is [string]) ) {
+						try {
+							#when dataobject is empty it comes like {} and null check does not work it alwasys count 1
+							if ($controls.state.DataObject.count -gt 0) {
+								$stateData = $controls.state.DataObject | ConvertTo-Json -Depth 10
+								$encodedStateData =[Convert]::ToBase64String([System.Text.Encoding]::Unicode.GetBytes($stateData))
+								$controls.state.DataObject = $encodedStateData;
+							}
+						}
+						catch {
+							#eat the exception
+						}
+					}
+					$finalControl += $controls;
+				}
+				$finalControlStates = $finalControl;
 				$this.UpdateControlIndexer($id, $finalControlStates, $false);
 				
 			}
@@ -448,6 +510,20 @@ class ControlStateExtension
 		   $uri = [Constants]::GetAttRepoStorageUri -f $this.SubscriptionContext.subscriptionid, $projectName, [Constants]::AttestationRepo, $fileName, $branchName 
 		   $webRequestResult = Invoke-RestMethod -Uri $uri -Method Get -ContentType "application/json" -Headers @{Authorization=("Basic {0}" -f $base64AuthInfo)}
            if ($webRequestResult) {
+			if($fileName -ne $this.IndexerBlobName)
+			{   
+			    #convert back state data from encoded string
+			    $attestationData = @();
+				foreach ($controls in $webRequestResult) 
+				{
+			    	if($controls.State.DataObject -is [string])
+			        {
+			        	$controls.State.DataObject = [System.Text.Encoding]::Unicode.GetString([System.Convert]::FromBase64String($controls.State.DataObject)) | ConvertFrom-Json
+			        }
+			    	$attestationData += $controls;
+			    }
+			    $webRequestResult = $attestationData;
+		    }
 			return $webRequestResult
 		   }
 		   return $null;

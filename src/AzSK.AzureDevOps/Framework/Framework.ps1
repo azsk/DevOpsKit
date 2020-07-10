@@ -128,3 +128,4 @@ Add-Type -Path "$libraryPath\Microsoft.IdentityModel.Clients.ActiveDirectory.dll
 
 . $PSScriptRoot\Core\SVT\SVTResourceResolver.ps1
 . $PSScriptRoot\Abstracts\ServicesSecurityStatus.ps1
+. $PSScriptRoot\Core\ADOMonitoring\LogAnalyticsMonitoring.ps1
