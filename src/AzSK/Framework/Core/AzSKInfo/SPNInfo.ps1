@@ -16,8 +16,7 @@ class SPNInfo: CommandBase
 		$ownedSPNs = @()
 		$usedSPNs = @()
 		$notInUsedSPNs = @()
-		$rmContext = [ContextHelper]::GetCurrentRMContext();
-        $this.PublishCustomMessage([Constants]::DoubleDashLine + "`r`nFetching SPN(s) Details...`r`n" + [Constants]::DoubleDashLine);
+		$this.PublishCustomMessage([Constants]::DoubleDashLine + "`r`nFetching SPN(s) Details...`r`n" + [Constants]::DoubleDashLine);
 		#Get all owned SPNs
         $ownedSPNDetails = $this.GetOwnedSPNList();
 		#Get SPNs start with AzSK_CA
@@ -29,10 +28,8 @@ class SPNInfo: CommandBase
 		
 		if($null -ne $ownedSPNs -and ($ownedSPNs | Measure-Object).Count -ne 0)
         {
-			#Add subscriptionName and subscriptionId in ownedSPNs list
-			$ownedSPNsObject = $this.CreateOwnedSPNObject($ownedSPNs.appId,$rmContext)
 			#Get SPNsResponse which contain list of used SPNs
-            $SPNsResponse = [RemoteApiHelper]::FetchUsedSPNList($ownedSPNsObject);
+            $SPNsResponse = [RemoteApiHelper]::FetchUsedSPNList($ownedSPNs.appId);
 		    #Convert SPNsResponse into usedSPNs, which contain list of CA used SPNs 
 		    if(!($null -eq $SPNsResponse) -and ($SPNsResponse.StatusCode -eq 202))
 			{
@@ -93,14 +90,5 @@ class SPNInfo: CommandBase
             throw $_
         }
 	} 
-
-	[PSObject] CreateOwnedSPNObject($ownedSPNApplicationId,$rmcontext)
-	{
-		$ownedSPNObject = "" | Select-Object SubscriptionId, SubscriptionName, UserSPNAppIds
-		$ownedSPNObject.SubscriptionId = $rmcontext.Subscription.Id
-		$ownedSPNObject.SubscriptionName = $rmcontext.Subscription.Name
-		$ownedSPNObject.UserSPNAppIds = $ownedSPNApplicationId
-		return ($ownedSPNObject);
-	}
 
 }
