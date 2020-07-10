@@ -96,6 +96,7 @@ class SVTResourceResolver: AzSKRoot
 
 	[void] LoadAzureResources()
 	{
+		$ControlSettings = [ConfigurationManager]::LoadServerConfigFile("ControlSettings.json");
 		#Lazy load the SVT resource array
 		if($this.SVTResources.Count -eq 0)
 		{
@@ -231,6 +232,18 @@ class SVTResourceResolver: AzSKRoot
 				{
 					$this.SVTResources += $svtResource;
 				}
+
+				#filtering IPAddress resource
+				if([Helpers]::CheckMember($ControlSettings,"PublicIpAddress") `
+						-and [Helpers]::CheckMember($ControlSettings.PublicIpAddress,"EnablePublicIpResource"))
+				{
+					if($ControlSettings.PublicIpAddress.EnablePublicIpResource -ne "true")
+				 {
+					$filter = ($this.SVTResources | Where-Object { $_.ResourceType -ne 'Microsoft.Network/publicIPAddresses'});
+					$this.SVTResources = $filter;
+				 }
+				}
+				
 			}
 			$this.SVTResourcesFoundCount = ($this.SVTResources | Measure-Object).Count
 				

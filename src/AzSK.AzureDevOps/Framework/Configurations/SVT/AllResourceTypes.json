@@ -43,5 +43,6 @@
   "Microsoft.ContainerInstance/containerGroups",
   "Microsoft.ContainerRegistry/registries",
   "Microsoft.Databricks/workspaces",
-  "Microsoft.ContainerService/ManagedClusters"
+  "Microsoft.ContainerService/ManagedClusters",
+  "Microsoft.Network/publicIPAddresses"
 ]
