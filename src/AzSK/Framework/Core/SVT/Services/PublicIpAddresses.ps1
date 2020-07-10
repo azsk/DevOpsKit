@@ -25,7 +25,6 @@ class PublicIpAddresses: AzSVTBase
 
     hidden [ControlResult] VerifyPublicIp([ControlResult] $controlResult)
 	{	
-		#$publicIps = Get-AzPublicIpAddress -ResourceGroupName $this.ResourceContext.ResourceGroupName -Name $this.ResourceContext.ResourceName
 		
 			$ip = $this.ResourceObject | Select-Object ResourceGroupName, Name, Location, PublicIpAllocationMethod, PublicIpAddressVersion
 
