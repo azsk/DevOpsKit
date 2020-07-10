@@ -13,6 +13,7 @@ class ServicesSecurityStatus: ADOSVTCommandBase
 
 		$this.Resolver = $resolver;
 		$this.Resolver.LoadResourcesForScan();
+		#If resource scan count is more than allowed foe scan (>1000) then stopping scan and returning.
 		if (!$this.Resolver.SVTResources) {
 			return;
 		}
