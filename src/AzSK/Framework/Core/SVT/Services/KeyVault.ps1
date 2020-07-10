@@ -7,6 +7,9 @@ class KeyVault: AzSVTBase
     hidden [PSObject[]] $AllEnabledSecrets = $null;
 	hidden [boolean] $HasFetchKeysPermissions=$false;
 	hidden [boolean] $HasFetchSecretsPermissions=$true;
+	hidden [PSObject[]] $AllApplicationsList = $null;
+	hidden [PSObject[]] $AADApplicationsList = $null;
+	hidden [boolean] $ErrorWhileFetchingApplicationDetails = $false;
 
     KeyVault([string] $subscriptionId, [SVTResource] $svtResource): 
         Base($subscriptionId, $svtResource) 
@@ -265,8 +268,17 @@ class KeyVault: AzSVTBase
     hidden [ControlResult] CheckAppAuthenticationCertificate([ControlResult] $controlResult)
     {
         try{
-              $outputList = @();
-              $appList = $this.GetAzureRmKeyVaultApplications()
+			  $outputList = @();
+			  if([FeatureFlightingManager]::GetFeatureStatus("EnableKeyVaultApplicationsFix",$($this.SubscriptionContext.SubscriptionId)) -eq $true)
+			  {
+			  		$this.GetApplicationsInAccessPolicy()
+					$appList = $this.AADApplicationsList
+			  }
+			  else
+			  {
+				  $appList = $this.GetAzureRmKeyVaultApplications()
+			  }
+			  
               $appList |
                 ForEach-Object {
                     $credentials = Get-AzADAppCredential -ApplicationId $_.ApplicationId
@@ -318,26 +330,41 @@ class KeyVault: AzSVTBase
 
    
 	hidden [ControlResult] CheckAppsSharingKeyVault([ControlResult] $controlResult)
-	{
-		$appList = $this.GetAzureRmKeyVaultApplications() 
-      
-		$controlResult.SetStateData("Key Vault sharing app list", $appList);
+	{		
+		if([FeatureFlightingManager]::GetFeatureStatus("EnableKeyVaultApplicationsFix",$($this.SubscriptionContext.SubscriptionId)) -eq $true)
+		{
+			$this.GetApplicationsInAccessPolicy()
+			if($this.ErrorWhileFetchingApplicationDetails)
+			{
+				# When there is exception to read  application details, mark control as Verify 
+				$controlResult.AddMessage([VerificationResult]::Verify,
+										[MessageData]::new("Unable to fetch application details."));
+				return $controlResult
+			}
+			$appList = $this.AllApplicationsList
+			$controlResult.SetStateData("Key Vault sharing app list", ($appList| Select-Object -Property ApplicationId, DisplayName, Id, ObjectType))
+		}
+		else
+		{
+			$appList = $this.GetAzureRmKeyVaultApplications()
+			$controlResult.SetStateData("Key Vault sharing app list", $appList); 
+		}		
 
 		if( ($appList | Measure-Object ).Count -gt 1)
 		{
 			$controlResult.AddMessage([VerificationResult]::Verify,
-										[MessageData]::new("Validate that Azure AD Applications requires access to Key Vault. Total:" + ($appList | Measure-Object ).Count , 
+										[MessageData]::new("Validate that applications requires access to Key Vault. Total:" + ($appList | Measure-Object ).Count , 
 															$appList)); 
 		}
 		elseif( ($appList | Measure-Object ).Count -eq 1)
         {
            $controlResult.AddMessage([VerificationResult]::Passed,
-                                     "Only 1 Azure AD Application has access to Key Vault.", $appList); 
+                                     "Only 1 application has access to Key Vault.", $appList); 
         } 
 		else
         {
            $controlResult.AddMessage([VerificationResult]::Passed,
-                                     "No Azure AD Applications have access to Key Vault."); 
+                                     "No applications have access to Key Vault."); 
         } 
       
 		return $controlResult;
@@ -501,7 +528,7 @@ class KeyVault: AzSVTBase
 		return $controlResult;
    }
 
-    hidden [PSObject] GetAzureRmKeyVaultApplications()  
+   hidden [PSObject] GetAzureRmKeyVaultApplications()  
      {
         $applicationList = @();
         $this.ResourceObject.AccessPolicies  | 
@@ -516,6 +543,38 @@ class KeyVault: AzSVTBase
         }
         return $applicationList;
 }
+    hidden [void] GetApplicationsInAccessPolicy()  
+     {
+		try{
+			#Fetch Application details only once if not fetched previously
+			if($null -eq $this.AllApplicationsList -or $null -eq  $this.AADApplicationsList)
+			{
+				#list of all applications including AAD applicatins, enterprise applications 
+				$this.AllApplicationsList = @()
+				$this.AADApplicationsList = @()
+				$this.ResourceObject.AccessPolicies  | 
+        		ForEach-Object { 
+            		$svcPrincipal= Get-AzADServicePrincipal -ObjectId $_.ObjectId
+					if($svcPrincipal)
+					{
+                		$application = Get-AzADApplication -ApplicationId $svcPrincipal.ApplicationId
+                		if($application){
+							$this.AADApplicationsList += $application
+						}
+						$this.AllApplicationsList += $svcPrincipal
+            		}
+				}				        
+			}			
+		}
+		catch
+		{
+			#Unable to fetch details about service principals
+			#this is possible when scanning the control with  powershell CICD task(VSO). If SPN used in CICD task does not have appropriate permissions, control was resulting into Error
+			#Added catch block to avoid control going to Error in such case.
+			$this.ErrorWhileFetchingApplicationDetails = $true
+		}		
+	 }
+	 
 	hidden [ControlResult] CheckKeyVaultSoftDelete([ControlResult] $controlResult)
 	{
 		$isSoftDeleteEnable=$this.ResourceObject.EnableSoftDelete;

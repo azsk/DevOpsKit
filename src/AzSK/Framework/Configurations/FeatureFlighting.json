@@ -40,31 +40,13 @@
       "IsEnabled": false
     },
     {
-      "Name": "IsSetAzStorageBlobAvailable",
-      "Description" : "",
-      "Sources" : ["*"],
-      "EnabledForSubs": [],
-      "DisabledForSubs": [],      
-      "UnderPreview" : false,
-      "IsEnabled": true      
-    },
-    {
       "Name": "EnableAppServiceAADAuthAllowAnonymousCheck",
       "Description" : "",
       "Sources" : ["*"],
       "EnabledForSubs": [],
       "DisabledForSubs": [],      
       "UnderPreview" : false,
-      "IsEnabled": false
-    },
-    {
-      "Name": "EnableListenerReset",
-      "Description" : "",
-      "Sources" : ["*"],
-      "EnabledForSubs": [],
-      "DisabledForSubs": [],      
-      "UnderPreview" : false,
-      "IsEnabled": false
+      "IsEnabled": true
     },
     {
       "Name": "EnableResourceGroupTagTelemetry",
@@ -74,15 +56,6 @@
       "DisabledForSubs": [],      
       "UnderPreview" : false,
       "IsEnabled": false
-    },
-    {
-      "Name": "EnableASCPolicyOnVMCheckUsingPolicyAssessmentKey",
-      "Description": "",
-      "Sources": ["*"],
-      "EnabledForSubs": [],
-      "DisabledForSubs": [],
-      "UnderPreview": false,
-      "IsEnabled": true
     },
     {
       "Name": "EnableResourceGroupPersistentAccessCheck",
@@ -139,25 +112,7 @@
       "IsEnabled": true
     },
     {
-      "Name": "EnableCSPSubsValidation",
-      "Description": "",
-      "Sources": ["*"],
-      "EnabledForSubs": [],
-      "DisabledForSubs": [],
-      "UnderPreview": false,
-      "IsEnabled": true
-    },
-    {
       "Name": "FetchRGPIMControlStatusFromComplianceState",
-      "Description": "",
-      "Sources": ["*"],
-      "EnabledForSubs": [],
-      "DisabledForSubs": [],
-      "UnderPreview": false,
-      "IsEnabled": true
-    },
-    {
-      "Name": "EnableResourceScanStartEndTelemetry",
       "Description": "",
       "Sources": ["*"],
       "EnabledForSubs": [],
@@ -172,7 +127,7 @@
       "EnabledForSubs": [],
       "DisabledForSubs": [],
       "UnderPreview": false,
-      "IsEnabled": true
+      "IsEnabled": false
     },
     {
       "Name": "EnableDetailedResourceTrackerTelemetry",
@@ -231,6 +186,33 @@
     },
     {
       "Name": "AddPolicyAssignmentsLocation",
+      "Description": "",
+      "Sources": ["*"],
+      "EnabledForSubs": [],
+      "DisabledForSubs": [],
+      "UnderPreview": false,
+      "IsEnabled": true
+    },
+    {
+      "Name": "EnableAnonymouscheckforADLGen2",
+      "Description": "",
+      "Sources": ["*"],
+      "EnabledForSubs": [],
+      "DisabledForSubs": [],
+      "UnderPreview": false,
+      "IsEnabled": true
+    },
+    {
+      "Name": "EnableKeyVaultApplicationsFix",
+      "Description": "",
+      "Sources": ["*"],
+      "EnabledForSubs": [],
+      "DisabledForSubs": [],
+      "UnderPreview": false,
+      "IsEnabled": true
+    },
+    {
+      "Name": "EnableAppServiceCustomAuth",
       "Description": "",
       "Sources": ["*"],
       "EnabledForSubs": [],

@@ -64,15 +64,19 @@ class APIManagement: AzSVTBase
 			{
 				$result += $controls | Where-Object {$_.Tags -contains "DeveloperSku" }
 			}
+			elseif($this.APIMInstance.Sku -eq "Consumption")
+			{
+				$result += $controls | Where-Object {$_.Tags -contains "ConsumptionSku" }
+			}
 
 			# Filter controls: API and Products
 			if(-not $this.APIMAPIs)
 			{
-				$result = $result | Where-Object {$_.Tags -notcontains "APIMAPIs" }
+				$result = @($result | Where-Object {$_.Tags -notcontains "APIMAPIs" })
 			}
 			if(-not $this.APIMProducts)
 			{
-				$result = $result | Where-Object {$_.Tags -notcontains "APIMProducts" }
+				$result = @($result | Where-Object {$_.Tags -notcontains "APIMProducts" })
 			}
 			
 		}
@@ -228,14 +232,20 @@ class APIManagement: AzSVTBase
 		if( $null -ne $this.APIMContext)
 		{
 			$tenantSyncState = Get-AzApiManagementTenantSyncState -Context $this.APIMContext
-			
-			if(($tenantSyncState.IsGitEnabled -eq $true) -and ($tenantSyncState.CommitId -ne $null))
+			if($tenantSyncState)
 			{
-				$controlResult.AddMessage([VerificationResult]::Verify, "Verify that constant string values, including secrets, across all API configuration and policies are not checked in Git repository.") 
+				if(($tenantSyncState.IsGitEnabled -eq $true) -and ($tenantSyncState.CommitId -ne $null))
+				{
+					$controlResult.AddMessage([VerificationResult]::Verify, "Verify that constant string values, including secrets, across all API configuration and policies are not checked in Git repository.") 
+				}
+				else
+				{
+					$controlResult.AddMessage([VerificationResult]::Passed,"")
+				}
 			}
 			else
 			{
-			    $controlResult.AddMessage([VerificationResult]::Passed,"")
+				$controlResult.AddMessage("Unable to read repository settings. Please verify that constant string values, including secrets, across all API configuration and policies are not checked into the Git repository.")
 			}
 		}
 		return $controlResult;
@@ -256,7 +266,8 @@ class APIManagement: AzSVTBase
 			} 
 			catch
 			{
-				$json=$null;
+				$controlResult.AddMessage([VerificationResult]::Manual,"Unable to validate identity provider setting for this control. Please verify that Azure Active Directory is used for user registration.");
+				return $controlResult;
 			}
 			$failMsg = ""
 			if($null -ne $json)
@@ -769,7 +780,7 @@ class APIManagement: AzSVTBase
 			}
 			else
 			{
-				$controlResult.AddMessage([VerificationResult]::Verify, "Unable to validate control. Please verify from portal that IP restirction is enabled for APIs.")
+				$controlResult.AddMessage([VerificationResult]::Verify, "Unable to validate control. Please verify from portal that IP filter policy is enabled for APIs. This ensures that access to the backend service is restricted to a specific set/group of clients.")
 			}
 		} 
 	}	

@@ -412,6 +412,10 @@
       "facebookAppId",
       "twitterConsumerKey",
       "microsoftAccountClientId"
+    ],
+    "AllowedAuthenticationProviders": [
+    ],
+    "AllowedExternalRedirectURLs": [
     ]
   },
   "DataBricksFilters":{
