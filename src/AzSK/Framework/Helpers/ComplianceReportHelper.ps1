@@ -6,6 +6,7 @@ class ComplianceReportHelper: ComplianceBase
 	hidden [System.Version] $ScannerVersion
 	hidden [string] $ScanKind
 	static [ComplianceReportHelper] $Instance
+	hidden [bool] $IsComplianceStateCachingEnabled
 	
     ComplianceReportHelper([SubscriptionContext] $subscriptionContext,[System.Version] $ScannerVersion):
     Base([SubscriptionContext] $subscriptionContext) 
@@ -13,6 +14,7 @@ class ComplianceReportHelper: ComplianceBase
 		$this.ScanSource = [RemoteReportHelper]::GetScanSource();
 		$this.ScannerVersion = $ScannerVersion
 		$this.ScanKind = [ServiceScanKind]::Partial;
+		$this.IsComplianceStateCachingEnabled = $this.ValidateComplianceStateCaching();
 	}
 	
 	#Get cached instance for compliance. This is to avoid repeatative calls for base constructor which fetch details of AzSK resources on every resource
@@ -24,7 +26,27 @@ class ComplianceReportHelper: ComplianceBase
 		}
         return [ComplianceReportHelper]::Instance
     }
-	
+	#Function to check if ComplianceStateCaching tag is present on "AzSKRG" resource group
+	#if this tag is missing, Compliance state table will not be used to store/fetch compliance data(default case)
+	hidden [bool] ValidateComplianceStateCaching()
+	{
+		$AzSKConfigData = [ConfigurationManager]::GetAzSKConfigData()
+		$tagsOnSub =  [ResourceGroupHelper]::GetResourceGroupTags($AzSKConfigData.AzSKRGName)
+		if($tagsOnSub)
+		{
+			$ComplianceCacheTag = $tagsOnSub.GetEnumerator() | Where-Object {$_.Name -like "ComplianceStateCaching*"}
+			if(($ComplianceCacheTag | Measure-Object).Count -gt 0)
+			{
+				$ComplianceCacheTagValue =$ComplianceCacheTag.Value		
+				if(-not [string]::IsNullOrWhiteSpace($ComplianceCacheTagValue) -and  $ComplianceCacheTagValue -eq "true")
+				{
+					return $true
+				}
+			}			
+		}
+		return $false
+	}
+
 	hidden [ComplianceStateTableEntity[]] GetSubscriptionComplianceReport()
 	{
 		return $this.GetSubscriptionComplianceReport($null,$null);

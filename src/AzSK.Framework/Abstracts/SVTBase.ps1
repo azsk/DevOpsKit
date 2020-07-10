@@ -278,12 +278,21 @@ class SVTBase: AzSKRoot
     {
         [SVTEventContext[]] $resourceSecurityResult = @();
         if (-not $this.ValidateMaintenanceState()) {
-			if($this.GetApplicableControls().Count -eq 0)
+			$ControlsApplicableForScan = @();
+			$ControlsApplicableForScan = $this.GetApplicableControls();
+			if($ControlsApplicableForScan.Count -eq 0)
 			{
 				if($this.ResourceContext)
 				{
 					$this.PublishCustomMessage("No controls have been found to evaluate for Resource [$($this.ResourceContext.ResourceName)]", [MessageType]::Warning);
 					$this.PublishCustomMessage("$([Constants]::SingleDashLine)");
+					# Marking resource scan completed status in ResourceScanTracker file if no controls found to be applicable
+					# This will avoid scanning resource repetitively in case of CA and unblock further scan 
+					if($this.invocationContext.BoundParameters["UsePartialCommits"])
+					{
+						[PartialScanManager] $partialScanMngr = [PartialScanManager]::GetInstance();
+						$partialScanMngr.UpdateResourceStatus( $this.ResourceContext.ResourceId,"COMP");
+					}					
 				}
 				else
 				{
@@ -298,6 +307,16 @@ class SVTBase: AzSKRoot
 				$resourceSecurityResult += $this.GetManualSecurityStatus();			
 				$this.PostEvaluationCompleted($resourceSecurityResult);
 				$this.EvaluationCompleted($resourceSecurityResult);
+				$EnabledApplicableControlForScan = @();	
+				$EnabledApplicableControlForScan = $ControlsApplicableForScan | Where-Object {$_.Enabled -eq $true};
+				# Marking resource scan completed status in ResourceScanTracker file if no controls found to be Enabled
+				# This scenario has been observed in case of Org Policy overwriting Control jsons
+				# This will avoid scanning resource repetitively in case of CA and unblock further scan  
+				if($this.invocationContext.BoundParameters["UsePartialCommits"] -and $EnabledApplicableControlForScan -eq $null)
+				{
+					[PartialScanManager] $partialScanMngr = [PartialScanManager]::GetInstance();
+					$partialScanMngr.UpdateResourceStatus( $this.ResourceContext.ResourceId,"COMP");
+				}	
 			}
         }
         return $resourceSecurityResult;

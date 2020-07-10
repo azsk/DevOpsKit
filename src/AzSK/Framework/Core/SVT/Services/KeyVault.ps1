@@ -336,9 +336,10 @@ class KeyVault: AzSVTBase
 			$this.GetApplicationsInAccessPolicy()
 			if($this.ErrorWhileFetchingApplicationDetails)
 			{
-				# When there is exception to read  application details, mark control as Verify 
-				$controlResult.AddMessage([VerificationResult]::Verify,
-										[MessageData]::new("Unable to fetch application details."));
+				# When there is exception to read  application details, mark control as Manual 
+				$controlResult.AddMessage([VerificationResult]::Manual,
+										[MessageData]::new("Unable to fetch application details due to insufficient privileges."));
+			    $controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false;
 				return $controlResult
 			}
 			$appList = $this.AllApplicationsList

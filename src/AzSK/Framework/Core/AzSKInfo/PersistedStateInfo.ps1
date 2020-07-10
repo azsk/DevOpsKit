@@ -35,6 +35,12 @@ class PersistedStateInfo: AzCommandBase
 				$this.PublishCustomMessage("NOTE: This feature is currently disabled in your environment. Please contact the cloud security team for your org.", [MessageType]::Warning);	
 				return $messages;
 			} 
+			# if IsComplianceStateCachingEnabled is false, return message indicating Compliance state table caching is disabled by default	
+			if(!$this.IsComplianceStateCachingEnabled)
+        	{
+            	$this.PublishCustomMessage([Constants]::ComplianceInfoCachingDisabled, [MessageType]::Warning);	
+            	return $messages;
+        	}
 			#Check for file path exist
 			if(-not (Test-Path -path $filePath))
 			{  
@@ -102,7 +108,7 @@ class PersistedStateInfo: AzCommandBase
 
 					if(($UpdatedPersistedControls | Measure-Object).Count -gt 0)
 					{
-						$complianceReportHelper.SetLocalSubscriptionScanReport($UpdatedPersistedControls);
+						$complianceReportHelper.SetLocalSubscriptionScanReport($UpdatedPersistedControls);												
 					}
 				}
 			}

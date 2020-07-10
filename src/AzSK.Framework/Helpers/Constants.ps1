@@ -93,6 +93,7 @@ class Constants
 			[AttestationStatus]::StateConfirmed ="6";
 			
 	}
+	static [string] $ComplianceInfoCachingDisabled = "Compliance information caching is currently disabled by default.";
 
 	static [string] $StorageAccountPreName= "azsk"
 	static [string] $AzSKAppFolderPath = [Environment]::GetFolderPath('LocalApplicationData') + "/Microsoft/" + [Constants]::AzSKModuleName

@@ -2038,6 +2038,7 @@ class SubscriptionCore: AzSVTBase
 	hidden [string] GetControlStatusFromComplianceState([string]$controlId)
 	{
 		$verificationResult = "Manual"
+		#As fetching ComplianceStateData from ComplianceState table is disabled by default, when run in non CA mode without passing control Id explicitly, result will always be Manual
 		if(($this.ComplianceStateData | Measure-Object).Count -gt 0)
 		{
 			

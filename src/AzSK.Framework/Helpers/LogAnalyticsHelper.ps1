@@ -164,7 +164,9 @@ Class LogAnalyticsHelper{
 			$out.HasAttestationReadPermissions = $ControlResult.CurrentSessionContext.Permissions.HasAttestationReadPermissions				
 			$out.IsLatestPSModule = $ControlResult.CurrentSessionContext.IsLatestPSModule
 			$out.PolicyOrgName = $AzSKContext.PolicyOrgName
-			$out.IsControlInGrace = $ControlResult.IsControlInGrace
+			#Changes for compliance table dependency removal
+    		#removing IsControlInGrace from Log Analytics
+			#$out.IsControlInGrace = $ControlResult.IsControlInGrace
 			$out.ScannedBy=[ContextHelper]::GetCurrentRMContext().Account
 			#mapping the attestation properties
 			if($null -ne $ControlResult -and $null -ne $ControlResult.StateManagement -and $null -ne $ControlResult.StateManagement.AttestedStateData)
@@ -447,7 +449,9 @@ Class LAWSModel {
 	[bool] $HasAttestationWritePermissions
 	[bool] $HasAttestationReadPermissions
 	[bool] $IsLatestPSModule
-	[bool] $IsControlInGrace
+	#Changes for compliance table dependency removal
+    #removing IsControlInGrace from LAWS
+	#[bool] $IsControlInGrace
 	[string[]] $Tags
 	[string] $ScannerVersion
 	[bool] $IsBaselineControl
