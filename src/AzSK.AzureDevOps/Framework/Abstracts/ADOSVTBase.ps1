@@ -98,6 +98,7 @@ class ADOSVTBase: SVTBase {
 					$this.ResourceState += $resourceStates
 
 				}
+			}
 				else {
 					return $null;
 				}				
