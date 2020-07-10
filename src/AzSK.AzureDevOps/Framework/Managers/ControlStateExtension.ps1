@@ -128,6 +128,7 @@ class ControlStateExtension
 	# set indexer for rescan post attestation
 	hidden [PSObject] RescanComputeControlStateIndexer([string] $projectName, [string] $resourceType)
 	{
+	        #$this.resourceType is used inside the GetProject method to get the project name for organization from extension storage, also return project for other resources
 		$this.resourceType = $resourceType;
 		if ($resourceType -eq "Organization" -or $resourceType -eq "Project") {
 			$this.resourceName = $projectName
@@ -137,14 +138,14 @@ class ControlStateExtension
 		}
 		
 		[PSObject] $ControlStateIndexerForRescan = $this.GetRepoFileContent($this.IndexerBlobName );
-
+                #setting below global variables null as needed for next resource.
 		$this.resourceType = $null;
 		$this.resourceName = "";
 		$this.resourceGroupName = "";
 		
         return $ControlStateIndexerForRescan;
 	}
-
+        #isRescan parameter is added to check if method is called from rescan.
 	hidden [PSObject] GetControlState([string] $id, [string] $resourceType, [string] $resourceName, [string] $resourceGroupName, [bool] $isRescan = $false)
 	{
 		try
