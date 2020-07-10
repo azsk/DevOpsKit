@@ -254,7 +254,7 @@
       "ControlSeverity": "High",
       "Automated": "Yes",
       "MethodName": "CheckVnetPeering",
-      "Rationale": "Resources in the peered virtual networks can communicate with each other directly. If the two peered networks are on different sides of a security boundary (e.g., corpnet v. private vNet), this can lead to exposure of corporate data. Hence any vNet peerings should be closely scrutinized and approved by the network security team",
+      "Rationale": "Resources in the peered virtual networks can communicate with each other directly. If the two peered networks are on different sides of a security boundary (e.g., corpnet v. private vNet), this can lead to exposure of corporate data. Hence any vNet peerings should be closely scrutinized and approved by the network security team",
       "Recommendation": "You can remove any virtual network peering by navigating to Azure portal --> Databricks --> Virtual Network Peerings --> select vNET peering --> Delete (unless their presence has been approved by network security team).",
       "Tags": [
         "SDL",

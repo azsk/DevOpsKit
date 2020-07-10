@@ -130,7 +130,7 @@
       "Enabled": true
     },
     {
-      "ControlID": "Azure_DataFatory_AuthN_DataLakeStore_LinkedService",
+      "ControlID": "Azure_DataFactory_AuthN_DataLakeStore_LinkedService",
       "Description": "Data lake store linked service in Data Factory must be configured with service-to-service authentication",
       "Id": "DataFactory190",
       "ControlSeverity": "High",
@@ -148,7 +148,7 @@
       "Enabled": true
     },
     {
-      "ControlID": "Azure_DataFatory_BCDR_Multiple_Node_DMG",
+      "ControlID": "Azure_DataFactory_BCDR_Multiple_Node_DMG",
       "Description": "To ensure high availability multiple nodes should be configured on DMG",
       "Id": "DataFactory200",
       "ControlSeverity": "High",

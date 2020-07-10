@@ -297,14 +297,16 @@ class WriteSummaryFile: FileOutputBase
 							}
 						}
 					}
-					if($_.IsControlInGrace -eq $true)
-					{
-						$csvItem.IsControlInGrace = "Yes"
-					}
-					else 
-					{
-						$csvItem.IsControlInGrace = "No"
-					}					
+					#Changes for compliance table dependency removal
+    				#removing IsControlInGrace from csv output
+					# if($_.IsControlInGrace -eq $true)
+					# {
+					# 	$csvItem.IsControlInGrace = "Yes"
+					# }
+					# else 
+					# {
+					# 	$csvItem.IsControlInGrace = "No"
+					# }					
                     $csvItems += $csvItem;
                 }                                
             }

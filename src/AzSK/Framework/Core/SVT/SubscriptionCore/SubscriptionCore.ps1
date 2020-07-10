@@ -955,6 +955,8 @@ class SubscriptionCore: AzSVTBase
 	{
 		$message = '';
 		$whitelistedPermanentRoles = $null
+		try 
+		{
 		if($null -eq $this.PIMAssignments -and $null -eq $this.permanentAssignments)
 		{
 			$message=$this.GetPIMRoles();
@@ -1000,6 +1002,12 @@ class SubscriptionCore: AzSVTBase
 			}
 	
 		}
+		}
+		catch {
+			#setting has required access to false in case of api failure
+			$controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false;
+			$controlResult.AddMessage([VerificationResult]::Manual, "Unable to fetch PIM data.")
+		}
 
 		return $controlResult
 
@@ -1007,6 +1015,7 @@ class SubscriptionCore: AzSVTBase
 	# This function evaluates permanent role assignments at resource group level.
 	hidden [ControlResult] CheckRGLevelPermanentRoleAssignments([ControlResult] $controlResult)
 	{
+		try{
 		$criticalRoles = $this.ControlSettings.CriticalPIMRoles.ResourceGroup;
 		# Check if the scan is run in  CA mode or in SDL mode explicity ran for this control or user is getting into an attestation mode
 		# The logic being this control is only scanned in CA mode and if user needs to attest then they would otherwise need to manually set scan source in client as 'CA'
@@ -1089,6 +1098,12 @@ class SubscriptionCore: AzSVTBase
 				
 			}
 		}
+	}
+	catch{
+		#setting has required access to false in case of api failure
+		$controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false;
+		$controlResult.AddMessage([VerificationResult]::Manual, "Unable to fetch PIM data.")
+	}
 
 		return $controlResult
 
@@ -1812,7 +1827,8 @@ class SubscriptionCore: AzSVTBase
 					{
 						#Get RoleAssignments from PIM API 
 						$url=[string]::Format([Constants]::PIMAPIUri +"/{0}/roleAssignments?`$expand=subject,roleDefinition(`$expand=resource)", $resourceID)
-						$responseContent=[WebRequestHelper]::InvokeGetWebRequest($url, $headers)
+						#NextLink handled in the web request
+                        $responseContent = [WebRequestHelper]::InvokeWebRequest('Get', $url, $headers, $null, [string]::Empty, @{} )
 						foreach ($roleAssignment in $responseContent)
 						{
 							$item= New-Object TelemetryRBAC 
@@ -1899,7 +1915,8 @@ class SubscriptionCore: AzSVTBase
 							}
 							#Get RoleAssignments from PIM API 
 							$url=[string]::Format([Constants]::PIMAPIUri +"/{0}/roleAssignments?`$expand=subject,roleDefinition(`$expand=resource)", $resourceID)
-							$responseContent=[WebRequestHelper]::InvokeGetWebRequest($url, $headers)
+							#NextLink handled in the web request
+                            $responseContent = [WebRequestHelper]::InvokeWebRequest('Get', $url, $headers, $null, [string]::Empty, @{} )
 							foreach ($roleAssignment in $responseContent)
 							{
 								$item= New-Object TelemetryRBAC 
@@ -2021,6 +2038,7 @@ class SubscriptionCore: AzSVTBase
 	hidden [string] GetControlStatusFromComplianceState([string]$controlId)
 	{
 		$verificationResult = "Manual"
+		#As fetching ComplianceStateData from ComplianceState table is disabled by default, when run in non CA mode without passing control Id explicitly, result will always be Manual
 		if(($this.ComplianceStateData | Measure-Object).Count -gt 0)
 		{
 			

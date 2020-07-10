@@ -206,23 +206,27 @@ class LogAnalyticsOutput: ListenerBase
 							$tempBodyObjectsAll.Add($tempBody)
 						}
 					}
+					# Send data to Log analytics only if content to post is not null
+					# Added if block to avoid exception for cases where ControlResult is null
+					if($tempBodyObjectsAll -ne $null)
+					{
+						$body = $tempBodyObjectsAll | ConvertTo-Json
+						$lawBodyByteArray = ([System.Text.Encoding]::UTF8.GetBytes($body))
+
+						#publish to primary workspace
+						if(-not [string]::IsNullOrWhiteSpace($settings.LAWSId) -and [LogAnalyticsHelper]::IsLAWSSettingValid -ne -1)
+						{
+							[LogAnalyticsHelper]::PostLAWSData($settings.LAWSId, $settings.LAWSSharedKey, $lawBodyByteArray, $settings.LAType, 'LAWS')
+						}
+
+						#publish to secondary workspace
+						if(-not [string]::IsNullOrWhiteSpace($settings.AltLAWSId) -and [LogAnalyticsHelper]::IsAltLAWSSettingValid -ne -1)
+						{
+							[LogAnalyticsHelper]::PostLAWSData($settings.AltLAWSId, $settings.AltLAWSSharedKey, $lawBodyByteArray, $settings.LAType, 'AltLAWS')
+						}
+					}
 					
-					$body = $tempBodyObjectsAll | ConvertTo-Json
-					$lawBodyByteArray = ([System.Text.Encoding]::UTF8.GetBytes($body))
-
-					#publish to primary workspace
-					if(-not [string]::IsNullOrWhiteSpace($settings.LAWSId) -and [LogAnalyticsHelper]::IsLAWSSettingValid -ne -1)
-					{
-						[LogAnalyticsHelper]::PostLAWSData($settings.LAWSId, $settings.LAWSSharedKey, $lawBodyByteArray, $settings.LAType, 'LAWS')
-					}
-
-					#publish to secondary workspace
-					if(-not [string]::IsNullOrWhiteSpace($settings.AltLAWSId) -and [LogAnalyticsHelper]::IsAltLAWSSettingValid -ne -1)
-					{
-						[LogAnalyticsHelper]::PostLAWSData($settings.AltLAWSId, $settings.AltLAWSSharedKey, $lawBodyByteArray, $settings.LAType, 'AltLAWS')
-					}
 				}
-
                 
 			}
 			catch

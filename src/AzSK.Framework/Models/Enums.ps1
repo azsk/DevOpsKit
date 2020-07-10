@@ -123,6 +123,7 @@ enum InfoType
 	HostInfo
 	AttestationInfo
 	ComplianceInfo
+	SPNInfo
 }
 
 enum AutoUpdate

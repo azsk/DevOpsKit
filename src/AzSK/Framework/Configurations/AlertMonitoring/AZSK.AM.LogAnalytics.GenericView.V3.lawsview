@@ -571,11 +571,6 @@
                                 "FieldName": "IsPreviewBaselineControl_b",
                                 "QueryForValues": "AzSK_CL | distinct tostring(IsPreviewBaselineControl_b)",
                                 "Title": "PreviewBaseline"
-                            },
-                            {
-                                "FieldName": "IsControlInGrace_b",
-                                "QueryForValues": "AzSK_CL | distinct tostring(IsControlInGrace_b)",
-                                "Title": "InGrace"
                             }
                         ],
                         "OverviewTile": {

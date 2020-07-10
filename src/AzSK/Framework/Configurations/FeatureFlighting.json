@@ -127,7 +127,7 @@
       "EnabledForSubs": [],
       "DisabledForSubs": [],
       "UnderPreview": false,
-      "IsEnabled": false
+      "IsEnabled": true
     },
     {
       "Name": "EnableDetailedResourceTrackerTelemetry",
@@ -177,15 +177,6 @@
     },
     {
       "Name": "EnableSecuritySolutionsDataCapture",
-      "Description": "",
-      "Sources": ["*"],
-      "EnabledForSubs": [],
-      "DisabledForSubs": [],
-      "UnderPreview": false,
-      "IsEnabled": true
-    },
-    {
-      "Name": "AddPolicyAssignmentsLocation",
       "Description": "",
       "Sources": ["*"],
       "EnabledForSubs": [],

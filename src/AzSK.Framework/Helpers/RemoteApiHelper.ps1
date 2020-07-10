@@ -48,6 +48,7 @@ class RemoteApiHelper {
     
     hidden static [psobject] GetContent($uri, $content, $type) 
     {
+        
         $url = [RemoteApiHelper]::ApiBaseEndpoint + $uri;
         $accessToken = [RemoteApiHelper]::GetAccessToken()
             $result = Invoke-WebRequest -Uri $url `
@@ -56,11 +57,9 @@ class RemoteApiHelper {
                 -ContentType $type `
                 -Headers @{"Authorization" = "Bearer $accessToken"} `
                 -UseBasicParsing
-                
             return $result.Content
               
     }
-
 
     hidden static [psobject] PostJsonContent($uri, $obj) {
         $postContent = [JsonHelper]::ConvertToJsonCustomCompressed($obj)
@@ -106,6 +105,10 @@ class RemoteApiHelper {
     }
     static [PSObject] GetComplianceSnapshot([string] $parameters){
 		return([RemoteApiHelper]::GetJsonContent("/compliancedata", $parameters) )	
+    }
+
+    static [PSObject] FetchUsedSPNList([PSObject] $ownedSPNDetails) {
+        return([RemoteApiHelper]::PostJsonContent("/inventory/SPNList", $ownedSPNDetails))
     }
     
     static [void] PostASCTelemetry($ASCTelemetryData)

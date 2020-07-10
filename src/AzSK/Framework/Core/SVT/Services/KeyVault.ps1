@@ -268,17 +268,25 @@ class KeyVault: AzSVTBase
     hidden [ControlResult] CheckAppAuthenticationCertificate([ControlResult] $controlResult)
     {
         try{
-			  $outputList = @();
-			  if([FeatureFlightingManager]::GetFeatureStatus("EnableKeyVaultApplicationsFix",$($this.SubscriptionContext.SubscriptionId)) -eq $true)
-			  {
-			  		$this.GetApplicationsInAccessPolicy()
-					$appList = $this.AADApplicationsList
-			  }
-			  else
-			  {
-				  $appList = $this.GetAzureRmKeyVaultApplications()
-			  }
-			  
+              $outputList = @();
+              if([FeatureFlightingManager]::GetFeatureStatus("EnableKeyVaultApplicationsFix",$($this.SubscriptionContext.SubscriptionId)) -eq $true)
+              {
+                  $this.GetApplicationsInAccessPolicy()
+                  if($this.ErrorWhileFetchingApplicationDetails)
+                  {
+                    # When there is exception to read  application details, mark control as Manual 
+                    $controlResult.AddMessage([VerificationResult]::Manual,
+                                        [MessageData]::new("Unable to fetch application details due to insufficient privileges."));
+                    $controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false;
+                    return $controlResult
+                    }
+                    $appList = $this.AADApplicationsList
+              }
+              else
+              {
+                  $appList = $this.GetAzureRmKeyVaultApplications()
+              }
+              
               $appList |
                 ForEach-Object {
                     $credentials = Get-AzADAppCredential -ApplicationId $_.ApplicationId
@@ -299,7 +307,7 @@ class KeyVault: AzSVTBase
           
                     if (($outputList | Where-Object { ($_.Compliance -eq "No") } | Measure-Object ).Count -gt 0)
                     {
-						$controlResult.SetStateData("Compliance details of Azure Active Directory applications:", $outputList);
+                        $controlResult.SetStateData("Compliance details of Azure Active Directory applications:", $outputList);
                         $controlResult.AddMessage([VerificationResult]::Failed ,
                                                   [MessageData]::new("Remove the password credentials from Azure AD Applications which are non-compliant.") );
                     }
@@ -318,7 +326,7 @@ class KeyVault: AzSVTBase
         {
              if ($_.Exception.GetType().FullName -eq "Microsoft.Azure.KeyVault.Models.KeyVaultErrorException")
              {
-				$controlResult.AddMessage([MessageData]::new("Access denied: Read access is required on Key Vault Keys."));
+                $controlResult.AddMessage([MessageData]::new("Access denied: Read access is required on Key Vault Keys."));
              }
              else
              {
@@ -336,9 +344,10 @@ class KeyVault: AzSVTBase
 			$this.GetApplicationsInAccessPolicy()
 			if($this.ErrorWhileFetchingApplicationDetails)
 			{
-				# When there is exception to read  application details, mark control as Verify 
-				$controlResult.AddMessage([VerificationResult]::Verify,
-										[MessageData]::new("Unable to fetch application details."));
+				# When there is exception to read  application details, mark control as Manual 
+				$controlResult.AddMessage([VerificationResult]::Manual,
+										[MessageData]::new("Unable to fetch application details due to insufficient privileges."));
+			    $controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false;
 				return $controlResult
 			}
 			$appList = $this.AllApplicationsList

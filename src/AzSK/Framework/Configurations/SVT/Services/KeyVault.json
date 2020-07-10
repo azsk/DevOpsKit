@@ -74,7 +74,7 @@
             "Automated": "Yes",
             "MethodName": "CheckAccessPolicies",
             "Rationale": "Granting minimum access by defining Key Vault access policies ensures that applications/users are granted just enough permissions to perform their tasks. This minimizes exposure of the resources in case of user/service account compromise.",
-            "Recommendation": "Use command Set-AzKeyVaultAccessPolicy -VaultName '{VaultName}' -ResourceGroupName '{ResourceGroupName}'  -PermissionsToKeys '{PermissionsToKeys}' -PermissionsToSecrets '{PermissionsToSecrets}'  -PermissionsToCertificates '{PermissionsToCertificates}' -ObjectId '{ObjectId}'. Refer:  https://docs.microsoft.com/en-us/powershell/module/az.keyvault/Set-AzKeyVaultAccessPolicy",
+            "Recommendation": "Use command Set-AzKeyVaultAccessPolicy -VaultName '{VaultName}' -ResourceGroupName '{ResourceGroupName}' -PermissionsToKeys '{PermissionsToKeys}' -PermissionsToSecrets '{PermissionsToSecrets}' -PermissionsToCertificates '{PermissionsToCertificates}' -ObjectId '{ObjectId}'. Refer: https://docs.microsoft.com/en-us/powershell/module/az.keyvault/Set-AzKeyVaultAccessPolicy",
             "Tags": [
                 "SDL",
                 "TCP",
@@ -111,7 +111,7 @@
             "Automated": "Yes",
             "MethodName": "CheckKeyHSMProtected",
             "Rationale": "A hardware security module (HSM) is a physical device that provides extra security for sensitive data like Keys. HSMs make sure that the keys never leave the HSM boundary throughout their lifecycle. Using HSMs for key protection is required for keys that encrypt highly sensitive data (often in regulated environments).",
-            "Recommendation": "Remove the non-HSM keys and recreate the removed ones within a destination Key Vault of type HSM. Run command Remove-AzKeyVaultKey -VaultName '{KeyVaultName}' -Name '{KeyName}' to remove non-HSM key. Use command Add-AzKeyVaultKey -VaultName  '{VaultName}' -Name '{KeyName}' -Expires '{ExpiryDate}' -Destination 'HSM' -KeyOps '{KeyOps}'. Refer: https://docs.microsoft.com/en-us/powershell/module/az.keyvault/remove-azkeyvaultkey, https://docs.microsoft.com/en-us/powershell/module/az.keyvault/add-azkeyvaultkey",
+            "Recommendation": "Remove the non-HSM keys and recreate the removed ones within a destination Key Vault of type HSM. Run command Remove-AzKeyVaultKey -VaultName '{KeyVaultName}' -Name '{KeyName}' to remove non-HSM key. Use command Add-AzKeyVaultKey -VaultName '{VaultName}' -Name '{KeyName}' -Expires '{ExpiryDate}' -Destination 'HSM' -KeyOps '{KeyOps}'. Refer: https://docs.microsoft.com/en-us/powershell/module/az.keyvault/remove-azkeyvaultkey, https://docs.microsoft.com/en-us/powershell/module/az.keyvault/add-azkeyvaultkey",
             "Tags": [
                 "SDL",
                 "TCP",
@@ -210,7 +210,7 @@
             "Automated": "No",
             "MethodName": "",
             "Rationale": "Periodic key/password rotation is a good security hygiene practice as, over time, it minimizes the likelihood of data loss/compromise which can arise from key theft/brute forcing/recovery attacks.",
-            "Recommendation": "Rotate the keys and secrets at regular intervals. Run command: Update-AzKeyVaultKey -VaultName '{KeyVaultName}' -Name '{KeyName}' -Expires '{ExpiryDate}' -Version '{Version}' to generate new version for key. Run command: Update-AzKeyVaultSecret -VaultName '{KeyVaultName}' -Name '{KeyName}' -Expires '{ExpiryDate}'  -Version  '{Version}'  to generate new version for secret.",
+            "Recommendation": "Rotate the keys and secrets at regular intervals. Run command: Update-AzKeyVaultKey -VaultName '{KeyVaultName}' -Name '{KeyName}' -Expires '{ExpiryDate}' -Version '{Version}' to generate new version for key. Run command: Update-AzKeyVaultSecret -VaultName '{KeyVaultName}' -Name '{KeyName}' -Expires '{ExpiryDate}' -Version '{Version}' to generate new version for secret.",
             "Tags": [
                 "SDL",
                 "TCP",

@@ -136,7 +136,12 @@ class SVTCommandBase: AzCommandBase {
         $svtObject.InvocationContext = $this.InvocationContext;
         # ToDo: Assumption: usercomment will only work when storage report feature flag is enable
         $resourceId = $svtObject.ResourceId; 
-		$svtObject.ComplianceStateData = $this.FetchComplianceStateData($resourceId);
+        # Changes for compliance table dependency removal
+				# if IsLocalComplianceStoreEnabled is false, do not fetch scan result from compliance state table
+        if($this.IsLocalComplianceStoreEnabled)
+		{
+            $svtObject.ComplianceStateData = $this.FetchComplianceStateData($resourceId);
+        }
 
         #Include Server Side Exclude Tags
         $svtObject.ExcludeTags += [ConfigurationManager]::GetAzSKConfigData().DefaultControlExculdeTags
