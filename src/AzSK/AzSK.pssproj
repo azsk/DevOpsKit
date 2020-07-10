@@ -114,6 +114,7 @@
     <Compile Include="Framework\Configurations\Migration\Migration.ps1" />
     <Compile Include="Framework\Core\AzSKInfo\ControlsInfo.ps1" />
     <Compile Include="Framework\Core\AzSKInfo\EnvironmentInfo.ps1" />
+    <Compile Include="Framework\Core\AzSKInfo\SPNInfo.ps1" />
     <Compile Include="Framework\Core\AzSKInfo\PersistedStateInfo.ps1" />
     <Compile Include="Framework\Core\PolicySetup\AzSKStaging-EasyInstaller.ps1" />
     <Compile Include="Framework\Core\SVT\AzSKCfg\AzSKCfg.ps1" />
