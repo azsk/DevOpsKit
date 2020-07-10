@@ -724,7 +724,8 @@ class AppService: AzSVTBase
 		if($this.IsReaderRole)
 		{
 			$controlResult.AddMessage([VerificationResult]::Manual,
-                                        [MessageData]::new("Control can not be validated due to insufficient access permission on resource"));
+										[MessageData]::new("Control can not be validated due to insufficient access permission on resource"));
+			$controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false;
 		}
 		else
 		{
@@ -849,7 +850,8 @@ class AppService: AzSVTBase
 		if($this.IsReaderRole)
 		{
 			$controlResult.AddMessage([VerificationResult]::Manual,
-                                        [MessageData]::new("Control can not be validated due to insufficient access permission on resource"));
+										[MessageData]::new("Control can not be validated due to insufficient access permission on resource"));
+			$controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false;
 		}
 		else
 		{
@@ -885,7 +887,8 @@ class AppService: AzSVTBase
 	     if($this.IsReaderRole)
 		{
 			$controlResult.AddMessage([VerificationResult]::Manual,
-                                        [MessageData]::new("Control can not be validated due to insufficient access permission on resource"));
+										[MessageData]::new("Control can not be validated due to insufficient access permission on resource"));
+			$controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false;
 		}
 		else
 		{
