@@ -306,6 +306,10 @@ class Organization: ADOSVTBase
                     $controlResult.AddMessage([VerificationResult]::Passed, "No shared extensions found.");
                 }
             }
+            else 
+            {
+                $controlResult.AddMessage([VerificationResult]::Error, "Could not fetch the list of shared extensions.");    
+            }
         }
         catch
         {
