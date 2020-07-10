@@ -234,10 +234,10 @@ class SVTResourceResolver: AzSKRoot
 				}
 
 				#filtering IPAddress resource
-				if([Helpers]::CheckMember($ControlSettings,"PublicIpAddresses") `
-						-and [Helpers]::CheckMember($ControlSettings.PublicIpAddresses,"EnablePublicIpResource"))
+				if([Helpers]::CheckMember($ControlSettings,"PublicIpAddress") `
+						-and [Helpers]::CheckMember($ControlSettings.PublicIpAddress,"EnablePublicIpResource"))
 				{
-					if($ControlSettings.PublicIpAddresses.EnablePublicIpResource -ne "true")
+					if($ControlSettings.PublicIpAddress.EnablePublicIpResource -ne "true")
 				 {
 					$filter = ($this.SVTResources | Where-Object { $_.ResourceType -ne 'Microsoft.Network/publicIPAddresses'});
 					$this.SVTResources = $filter;

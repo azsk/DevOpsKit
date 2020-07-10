@@ -296,8 +296,8 @@ class SVTMapping
     },
     [ResourceTypeMapping]@{
         ResourceType = "Microsoft.Network/publicIPAddresses";
-        JsonFileName = "PublicIpAddresses.json";
-        ClassName = "PublicIpAddresses";
+        JsonFileName = "PublicIpAddress.json";
+        ClassName = "PublicIpAddress";
         ResourceTypeName = "PublicIpAddresses";
     },
     [ResourceTypeMapping]@{
