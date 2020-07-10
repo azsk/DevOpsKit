@@ -1,4 +1,4 @@
-﻿{
+{
   "FeatureName": "CDN",
   "Reference": "aka.ms/azsktcp/cdn",
   "IsMaintenanceMode": false,
@@ -63,7 +63,7 @@
       "Automated": "Yes",
       "MethodName": "CheckCDNHttpsProtocol",
       "Rationale": "Use of HTTPS ensures server/service authentication and protects data in transit from network layer man-in-the-middle, eavesdropping, session-hijacking attacks.",
-      "Recommendation": "To enable HTTPS protocol: Go to Azure Portal --> your CDN Profile --> your CDN Endpoint --> Origin --> Select HTTPS --> Save. Else implement through PowerShell as follows: `$ce= Get-AzCdnEndpoint -EndpointName <EndpointName> –ProfileName <CDNprofile> -ResourceGroupName <RGName>; `$ce.IsHttpAllowed =`$false; `$ce.IsHttpsAllowed =`$true; Set-AzCdnEndpoint -CdnEndpoint `$ce",
+      "Recommendation": "To enable HTTPS protocol: Go to Azure Portal --> your CDN Profile --> your CDN Endpoint --> Origin --> Select HTTPS --> Save. Else implement through PowerShell as follows: `$ce= Get-AzCdnEndpoint -EndpointName <EndpointName> -ProfileName <CDNprofile> -ResourceGroupName <RGName>; `$ce.IsHttpAllowed =`$false; `$ce.IsHttpsAllowed =`$true; Set-AzCdnEndpoint -CdnEndpoint `$ce",
       "Tags": [
         "SDL",
         "TCP",
