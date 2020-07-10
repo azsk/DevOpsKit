@@ -243,7 +243,7 @@
     },
     {
       "ControlID": "AzureDevOps_Organization_AuthZ_Review_Project_Collection_Service_Accounts",
-      "Description": "Minimize and review user/service accounts that are member of the Project Collection Service Accounts group.",
+      "Description": "Minimize and review user/service accounts that are members of the Project Collection Service Accounts group.",
       "Id": "Organization250",
       "ControlSeverity": "High",
       "Automated": "Yes",
