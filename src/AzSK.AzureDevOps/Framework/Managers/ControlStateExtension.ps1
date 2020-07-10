@@ -125,7 +125,28 @@ class ControlStateExtension
 		return $true;
 	}
 
-	hidden [PSObject] GetControlState([string] $id, [string] $resourceType, [string] $resourceName, [string] $resourceGroupName)
+	# set indexer for rescan post attestation
+	hidden [PSObject] RescanComputeControlStateIndexer([string] $projectName, [string] $resourceType)
+	{
+	        #$this.resourceType is used inside the GetProject method to get the project name for organization from extension storage, also return project for other resources
+		$this.resourceType = $resourceType;
+		if ($resourceType -eq "Organization" -or $resourceType -eq "Project") {
+			$this.resourceName = $projectName
+		}
+		else {
+			$this.resourceGroupName = $projectName
+		}
+		
+		[PSObject] $ControlStateIndexerForRescan = $this.GetRepoFileContent($this.IndexerBlobName );
+                #setting below global variables null as needed for next resource.
+		$this.resourceType = $null;
+		$this.resourceName = "";
+		$this.resourceGroupName = "";
+		
+        return $ControlStateIndexerForRescan;
+	}
+        #isRescan parameter is added to check if method is called from rescan.
+	hidden [PSObject] GetControlState([string] $id, [string] $resourceType, [string] $resourceName, [string] $resourceGroupName, [bool] $isRescan = $false)
 	{
 		try
 		{
@@ -143,13 +164,34 @@ class ControlStateExtension
 			    $this.ControlStateIndexer =  $null;
 			    $this.IsControlStateIndexerPresent = $true;
 			}
-			
-			$retVal = $this.ComputeControlStateIndexer();
+			#getting resource.index for rescan
+			[PSObject] $ControlStateIndexerForRescan = $null;
+			[bool] $retVal = $true;
+			if ($isRescan) {
+				#this is to set project name from GetProject method
+				$projectName = $resourceName;
+				if ($resourceType -ne "Organization" -and $resourceType -ne "Project") {
+					$projectName = $resourceGroupName
+				}
+				$ControlStateIndexerForRescan = $this.RescanComputeControlStateIndexer($projectName, $resourceType);
+				#Above method setting below blobal variable null so settting them again.
+				$this.resourceType = $resourceType;
+			    $this.resourceName = $resourceName
+			    $this.resourceGroupName = $resourceGroupName
+			}
+			else {
+			    $retVal = $this.ComputeControlStateIndexer();
+			}
 
-			if($null -ne $this.ControlStateIndexer -and  $retVal)
+			if(($null -ne $this.ControlStateIndexer -and  $retVal) -or $isRescan)
 			{
 				$indexes = @();
-				$indexes += $this.ControlStateIndexer
+				if ($isRescan) {
+					$indexes = $ControlStateIndexerForRescan;
+				}
+				else {
+				    $indexes += $this.ControlStateIndexer
+				}
 				$hashId = [Helpers]::ComputeHash($id)
 				$selectedIndex = $indexes | Where-Object { $_.HashId -eq $hashId}
 				

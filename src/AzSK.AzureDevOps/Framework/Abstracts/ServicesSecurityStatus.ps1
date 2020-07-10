@@ -272,6 +272,41 @@ class ServicesSecurityStatus: ADOSVTCommandBase
 			$this.PublishAzSKRootEvent([AzSKRootEvent]::UnsupportedResources, $nonAutomatedResources);
 		}
 	}
+    #Rescan controls post attestation
+	hidden [SVTEventContext[]] ScanAttestedControls()
+	{
+		[ControlStateExtension] $ControlStateExt = [ControlStateExtension]::new($this.SubscriptionContext, $this.InvocationContext);
+		$ControlStateExt.UniqueRunId = $this.ControlStateExt.UniqueRunId;
+		$ControlStateExt.Initialize($false);
+		#$ControlStateExt.ComputeControlStateIndexer();
+		[PSObject] $ControlStateIndexer = $null;
+		foreach ($items in $this.Resolver.SVTResources) {
+			$resourceType = $null;
+			$projectName = $null;
+			if ($items.ResourceType -ne "AzureDevOps.Organization") {
+				
+				if ($items.ResourceType -eq "AzureDevOps.Project") {
+					$projectName = $items.ResourceName
+					$resourceType = "Project";
+				}
+				else {
+					$projectName = $items.ResourceGroupName
+					$resourceType = $items.ResourceType
+				}
+			}
+			else {
+				$resourceType = "Organization";
+			}
+		  $ControlStateIndexer += $ControlStateExt.RescanComputeControlStateIndexer($projectName, $resourceType);
+		}
+		$ControlStateIndexer = $ControlStateIndexer | Select-Object * -Unique
+		$resourcesAttestedinCurrentScan = @()
+		if(($null -ne $ControlStateIndexer) -and ([Helpers]::CheckMember($ControlStateIndexer, "ResourceId")))
+		{
+			$resourcesAttestedinCurrentScan = $this.Resolver.SVTResources | Where-Object {$ControlStateIndexer.ResourceId -contains $_.ResourceId}
+		}
+		return $this.RunForAllResources("RescanAndPostAttestationData",$false,$resourcesAttestedinCurrentScan)
+	}
 
 	#BaseLine Control Filter Function
 	[void] BaselineFilterCheck()
