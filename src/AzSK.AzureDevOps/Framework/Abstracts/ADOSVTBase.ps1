@@ -389,6 +389,7 @@ class ADOSVTBase: SVTBase {
 			$this.EvaluationError($_);
 		}
 		if (($controlState | Measure-Object).Count -gt 0) {
+		#Added check to resolve duplicate log issue in rescan
 			if (!$isRescan) {
 			   $this.ControlStarted($singleControlResult);
 			}
@@ -420,6 +421,7 @@ class ADOSVTBase: SVTBase {
 				};
 
 			}
+			#Added check to resolve duplicate log issue in rescan
 			if (!$isRescan) {
 			   $this.ControlCompleted($singleControlResult);
 			}
