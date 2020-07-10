@@ -304,7 +304,7 @@ class Organization: ADOSVTBase
                 else 
                 {
                     $controlResult.AddMessage([VerificationResult]::Passed, "No shared extensions found.");
-                }
+                } 
             }
             else 
             {

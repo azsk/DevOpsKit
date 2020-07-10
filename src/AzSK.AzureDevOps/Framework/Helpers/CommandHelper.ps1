@@ -39,12 +39,12 @@ class CommandHelper
             Noun = "AzSKMonitoringSettings";
             ShortName = "SMS";
         },
-		#[CommandDetails]@{
-        #    Verb = "Install";
-        #    Noun = "Install-AzSKMonitoringSolution";
-        #    ShortName = "IMS";
-		#	IsLatestRequired = $false;
-		#},
+		[CommandDetails]@{
+            Verb = "Install";
+            Noun = "Install-AzSKMonitoringSolution";
+            ShortName = "IMS";
+			IsLatestRequired = $false;
+		},
 		[CommandDetails]@{
             Verb = "Clear";
             Noun = "AzSKSessionState";

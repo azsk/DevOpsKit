@@ -69,7 +69,7 @@ class FileOutputBase: ListenerBase
 				$outputPath = Join-Path $outputPath -ChildPath "Default" |Join-Path -ChildPath $runPath ;           
 			}
 			else {
-				$outputPath = Join-Path $outputPath -ChildPath ("Sub_" + $sanitizedPath) |Join-Path -ChildPath $runPath ;            
+				$outputPath = Join-Path $outputPath -ChildPath ([Constants]::ParentFolder + $sanitizedPath) |Join-Path -ChildPath $runPath ;            
 			}
 
 			if (-not [string]::IsNullOrEmpty($subFolderPath)) {

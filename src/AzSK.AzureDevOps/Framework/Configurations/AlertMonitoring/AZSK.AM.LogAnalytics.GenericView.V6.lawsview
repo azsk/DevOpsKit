@@ -1,0 +1,621 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "location": {
+            "type": "string",
+            "defaultValue": ""
+        },
+        "resourcegroup": {
+            "type": "string",
+            "defaultValue": ""
+        },
+        "organizationName": {
+            "type": "string",
+            "defaultValue": ""
+        },
+        "subscriptionId": {
+            "type": "string",
+            "defaultValue": ""
+        },
+        "workspace": {
+            "type": "string",
+            "defaultValue": ""
+        },
+        "workspaceapiversion": {
+            "type": "string",
+            "defaultValue": ""
+        },
+        "viewName": {
+          "type": "string",
+          "defaultValue": ""
+        }
+    },
+    "variables": {
+        "ViewName": "[concat('AzSK.AzureDevOps Security View - ', parameters('viewName'))]"
+    },
+    "resources": [
+        {
+            "apiVersion": "[parameters('workspaceapiversion')]",
+            "name": "[parameters('workspace')]",
+            "type": "Microsoft.OperationalInsights/workspaces",
+            "location": "[parameters('location')]",
+            "id": "[Concat('/subscriptions/', parameters('subscriptionId'), '/resourceGroups/', parameters('resourcegroup'), '/providers/Microsoft.OperationalInsights/workspaces/', parameters('workspace'))]",
+            "resources": [
+                {
+                    "apiVersion": "2015-11-01-preview",
+                    "name": "[variables('ViewName')]",
+                    "type": "views",
+                    "location": "[parameters('location')]",
+                    "id": "[Concat('/subscriptions/', parameters('subscriptionId'), '/resourceGroups/', parameters('resourcegroup'), '/providers/Microsoft.OperationalInsights/workspaces/', parameters('workspace'),'/views/', variables('ViewName'))]",
+                    "dependson": [
+                        "[Concat('/subscriptions/', parameters('subscriptionId'), '/resourceGroups/', parameters('resourcegroup'), '/providers/Microsoft.OperationalInsights/workspaces/', parameters('workspace'))]"
+                    ],
+                    "properties": {
+                        "Id": "[variables('ViewName')]",
+                        "Name": "[variables('ViewName')]",
+                        "Author": "Microsoft Corporation",
+                        "Source": "Local",
+                        "Version": 2,
+                        "Dashboard": [
+                            {
+                                "Id": "InformationBlade",
+                                "Type": "Blade",
+                                "Version": 0,
+                                "Configuration": {
+                                    "General": {
+                                        "Title": "About the AzSK.AzureDevOps Security Monitoring View",
+                                        "NewGroup": false,
+                                        "Color": "#0072c6"
+                                    },
+                                    "Header": {
+                                        "Image": "data:image/png;base64,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",
+                                        "Label": "Security Monitoring using ADO Security Scanner",
+                                        "Link": {
+                                            "Label": "More info",
+                                            "Url": " https://github.com/azsk/DevOpsKit-docs/tree/master/05-Alerting-and-Monitoring "
+                                        }
+                                    },
+                                    "List": [
+                                        {
+                                            "Title": "",
+                                            "Content": "# Using this view\nThis view contains multiple blades. Each blade represents a 'view' of the security status of your cloud assets along a speicfic dimension (or a specific pivot).\n\nEach blade contains a graphic on the top followed by a list underneath. The graphic presents a pictorial gist. \n\nYou can click on the list below the graphic for any blade to look at the detailed control failure data (control evaluation events as they were received by Log Analytics workspace from AzSK.AzureDevOps scans). These events contain useful information (such as 'Recommendation') that you can leverage to fix issues.\n\nAny blade depicts baseline control events received by Log Analytics workspace for last scan done within last 3 days. Typically these would be events generated via Continuous Assurance (by setting pipeline trigger) scanning. However, manual scan results can also come here if AzSK.AzureDevOps is configured to forward local scan events to Log Analytics. \n\nIf you would like to determine and fix controls beyond the ones currently enabled, you can manually run the scan commands and look at the CSV (or this view if you have local Log Analytics forwarding enabled in AzSK.AzureDevOps).\n\nIf multiple organizations have been configured to use this Log Analytics workspace then the view aggregates data from all organizations. (You can use/apply filters to view the data for a specific organization.)\n\nNote that, although it should serve the needs of a lot of scenarios, this is *still* just a sample view. There are lots of possible ways other views can be generated by you (or you can integrate one or more blades from this view into your own views).\n\n# Filters\n\nYou can apply filters to this view to evaluate all queries with additional conditions. Click the \"+\" on the top ribbon to see available filters and their values. Select `True` or `False` to enable or disable individual conditions. Upon selection the views will automatically update and display the scan results. Multiple filter conditions can be applied at the same time. \n\nAvailable filters:\n1. Baseline: Show result only for the baseline controls.\n2. Preview Baseline: Show results only for preview (extended) baseline controls. \n3. Organization Name: Show results for a particular organization. \n4. Severity: AzSK.AzureDevOps controls are classified into categories: Critical, High, Medium, and Low. Selecting one of them will show the results for the selected severity only. \n5. Resource Type: Selects resource type like \"Organization\", \"Project\", and more. \n\nPlease contact AzSK.AzureDevOps support if you need further help using this view. \n\nHappy Security Monitoring!"
+                                        }
+                                    ]
+                                }
+                            },
+                            {
+                                "Id": "SingleQueryDonutBuilderBladeV1",
+                                "Type": "Blade",
+                                "Version": 0,
+                                "Configuration": {
+                                    "General": {
+                                        "title": "Organization Security",
+                                        "newGroup": true,
+                                        "icon": "",
+                                        "useIcon": false
+                                    },
+                                    "Header": {
+                                        "Title": "Organization Security Status",
+                                        "Subtitle": "AzSK.AzureDevOps Compliance"
+                                    },
+                                    "Donut": {
+                                        "Query": "AzSK_ADO_CL | where TimeGenerated > ago(3d) | summarize arg_max(TimeGenerated, *) by ResourceId,ControlId_s | where ${Baseline} and ${PreviewBaseline} and ${ResourceName} and ${ResourceType} and ${Severity} | where FeatureName_s == \"Organization\" | extend ControlStatus=iff(ControlStatus_s!= \"Passed\",\"Failed\",\"Passed\") | summarize count() by ResourceId,ControlId_s,ControlStatus | summarize AggregatedValue = count() by ControlStatus | sort by AggregatedValue desc",
+                                        "CenterLegend": {
+                                            "Text": "Total",
+                                            "Operation": "Sum",
+                                            "ArcsToSelect": []
+                                        },
+                                        "Options": {
+                                            "colors": [
+                                                "#FF0000",
+                                                "#339947",
+                                                "#fff100"
+                                            ],
+                                            "valueColorMapping": [
+                                                {
+                                                    "value": "Passed",
+                                                    "color": "#339947"
+                                                },
+                                                {
+                                                    "value": "RiskAck",
+                                                    "color": "#fcd116"
+                                                },
+                                                {
+                                                    "value": "Verify",
+                                                    "color": "#ff8c00"
+                                                },
+                                                {
+                                                    "value": "Failed",
+                                                    "color": "#FF0000"
+                                                }
+                                            ]
+                                        },
+                                        "NavigationSelect": {}
+                                    },
+                                    "List": {
+                                        "Query": "AzSK_ADO_CL | where TimeGenerated > ago(3d) | summarize arg_max(TimeGenerated, *) by SubscriptionName_s,ControlId_s | where ${Baseline} and ${PreviewBaseline} and ${ResourceType} and ${Severity} | where FeatureName_s == \"Organization\" | extend ControlStatus=iff(ControlStatus_s!= \"Passed\",\"Failed\",\"Passed\") | where ControlStatus==\"Failed\"| summarize count() by SubscriptionName_s,ControlId_s,ControlStatus_s | summarize AggregatedValue = count() by SubscriptionName_s | sort by AggregatedValue desc",
+                                        "HideGraph": false,
+                                        "enableSparklines": false,
+                                        "operation": "Summary",
+                                        "ColumnsTitle": {
+                                            "Name": "Organization name",
+                                            "Value": "# of Failures"
+                                        },
+                                        "Color": "#FF0000",
+                                        "thresholds": {
+                                            "isEnabled": false,
+                                            "values": [
+                                                {
+                                                    "name": "Normal",
+                                                    "threshold": "Default",
+                                                    "color": "#339947",
+                                                    "isDefault": true
+                                                },
+                                                {
+                                                    "name": "Warning",
+                                                    "threshold": "60",
+                                                    "color": "#fcd116",
+                                                    "isDefault": false
+                                                },
+                                                {
+                                                    "name": "Error",
+                                                    "threshold": "90",
+                                                    "color": "#FF0000",
+                                                    "isDefault": false
+                                                }
+                                            ]
+                                        },
+                                        "NameDSVSeparator": "",
+                                        "NavigationQuery": "AzSK_ADO_CL | where TimeGenerated > ago(3d) | summarize arg_max(TimeGenerated, *) by SubscriptionName_s,ControlId_s | where ${Baseline} and ${PreviewBaseline} and ${ResourceType} and ${Severity} | where FeatureName_s == \"Organization\" and {selected item} | extend ControlStatus=iff(ControlStatus_s!= \"Passed\",\"Failed\",\"Passed\")| where ControlStatus==\"Failed\"",
+                                        "NavigationSelect": {
+                                            "NavigationQuery": "AzSK_ADO_CL | where TimeGenerated > ago(3d) | summarize arg_max(TimeGenerated, *) by SubscriptionName_s,ControlId_s | where ${Baseline} and ${PreviewBaseline} and ${ResourceType} and ${Severity} | where FeatureName_s == \"Organization\" and {selected item} | extend ControlStatus=iff(ControlStatus_s!= \"Passed\",\"Failed\",\"Passed\")| where ControlStatus==\"Failed\""
+                                        }
+                                    }
+                                }
+                            },
+                            {
+                                "Id": "SingleQueryDonutBuilderBladeV1",
+                                "Type": "Blade",
+                                "Version": 0,
+                                "Configuration": {
+                                    "General": {
+                                        "title": "Project Security",
+                                        "newGroup": true,
+                                        "icon": "",
+                                        "useIcon": false
+                                    },
+                                    "Header": {
+                                        "Title": "Project Security",
+                                        "Subtitle": "AzSK.AzureDevOps Project Security Compliance"
+                                    },
+                                    "Donut": {
+                                        "Query": "AzSK_ADO_CL | where TimeGenerated > ago(3d) | where ${Baseline} and ${PreviewBaseline} and ${SubscriptionName} and ${ResourceType} and ${Severity} | where FeatureName_s == \"Project\" | extend ControlStatus=iff(ControlStatus_s!= \"Passed\",\"Failed\",\"Passed\") | summarize arg_max(TimeGenerated,*) by SubscriptionName_s,ResourceId,ControlId_s | summarize AggregatedValue = count() by ControlStatus | sort by AggregatedValue desc",
+                                        "CenterLegend": {
+                                            "Text": "Total",
+                                            "Operation": "Sum",
+                                            "ArcsToSelect": []
+                                        },
+                                        "Options": {
+                                            "colors": [
+                                                "#00188f",
+                                                "#0072c6",
+                                                "#00bcf2"
+                                            ],
+                                            "valueColorMapping": [
+                                                {
+                                                    "value": "Passed",
+                                                    "color": "#339947"
+                                                },
+                                                {
+                                                    "value": "Failed",
+                                                    "color": "#FF0000"
+                                                },
+                                                {
+                                                    "value": "RiskAck",
+                                                    "color": "#ff8c00"
+                                                },
+                                                {
+                                                    "value": "Verify",
+                                                    "color": "#fff100"
+                                                }
+                                            ]
+                                        },
+                                        "NavigationSelect": {}
+                                    },
+                                    "List": {
+                                        "Query": "AzSK_ADO_CL | where TimeGenerated > ago(3d) | where ${Baseline} and ${PreviewBaseline} and ${ResourceType} and ${Severity} | where FeatureName_s == \"Project\" | extend ControlStatus=iff(ControlStatus_s!= \"Passed\",\"Failed\",\"Passed\") | summarize arg_max(TimeGenerated,*) by SubscriptionName_s,ResourceId,ControlId_s | where ControlStatus ==\"Failed\" | summarize AggregatedValue = count() by SubscriptionName_s, ResourceName_s | sort by AggregatedValue desc",
+                                        "HideGraph": false,
+                                        "enableSparklines": false,
+                                        "operation": "Summary",
+                                        "ColumnsTitle": {
+                                            "Name": "Organization Name",
+                                            "Value": "# Of Failures"
+                                        },
+                                        "Color": "#FF0000",
+                                        "thresholds": {
+                                            "isEnabled": false,
+                                            "values": [
+                                                {
+                                                    "name": "Normal",
+                                                    "threshold": "Default",
+                                                    "color": "#339947",
+                                                    "isDefault": true
+                                                },
+                                                {
+                                                    "name": "Warning",
+                                                    "threshold": "60",
+                                                    "color": "#fcd116",
+                                                    "isDefault": false
+                                                },
+                                                {
+                                                    "name": "Error",
+                                                    "threshold": "90",
+                                                    "color": "#FF0000",
+                                                    "isDefault": false
+                                                }
+                                            ]
+                                        },
+                                        "NameDSVSeparator": "",
+                                        "NavigationQuery": "AzSK_ADO_CL | where TimeGenerated > ago(3d) | where ${Baseline} and ${PreviewBaseline} and ${ResourceType} and ${Severity} | where FeatureName_s == \"Project\" and {selected item} | extend ControlStatus=iff(ControlStatus_s!= \"Passed\",\"Failed\",\"Passed\") | where ControlStatus ==\"Failed\" | summarize arg_max(TimeGenerated,*) by SubscriptionName_s,ResourceId,ControlId_s",
+                                        "NavigationSelect": {
+                                            "NavigationQuery": "AzSK_ADO_CL | where TimeGenerated > ago(3d) | where ${Baseline} and ${PreviewBaseline} and ${ResourceType} and ${Severity} | where FeatureName_s == \"Project\" and {selected item} | extend ControlStatus=iff(ControlStatus_s!= \"Passed\",\"Failed\",\"Passed\") | where ControlStatus ==\"Failed\" | summarize arg_max(TimeGenerated,*) by SubscriptionName_s,ResourceId,ControlId_s"
+                                        }
+                                    }
+                                }
+                            },
+                            {
+                                "Id": "SingleQueryDonutBuilderBladeV1",
+                                "Type": "Blade",
+                                "Version": 0,
+                                "Configuration": {
+                                    "General": {
+                                        "title": "Resource Security (RS-1)",
+                                        "newGroup": true,
+                                        "icon": "",
+                                        "useIcon": false
+                                    },
+                                    "Header": {
+                                        "Title": "Security Status across Project Components by type",
+                                        "Subtitle": "AzSK.AzureDevOps Resource Security Compliance "
+                                    },
+                                    "Donut": {
+                                        "Query": "AzSK_ADO_CL | where TimeGenerated > ago(3d) | where ${Baseline} and ${PreviewBaseline} and ${ResourceType} and ${Severity} | where FeatureName_s != \"Organization\" and FeatureName_s != \"Project\" | extend ControlStatus = iff(ControlStatus_s == \"Passed\", \"Passed\",\"Failed\") | summarize arg_max(TimeGenerated, *) by SubscriptionName_s, ResourceId, ControlId_s | summarize AggregatedValue = count() by ControlStatus | sort by AggregatedValue desc",
+                                        "CenterLegend": {
+                                            "Text": "Total",
+                                            "Operation": "Sum",
+                                            "ArcsToSelect": []
+                                        },
+                                        "Options": {
+                                            "colors": [
+                                                "#FF0000",
+                                                "#339947",
+                                                "#fff100"
+                                            ],
+                                            "valueColorMapping": [
+                                                {
+                                                    "value": "Passed",
+                                                    "color": "#339947"
+                                                },
+                                                {
+                                                    "value": "RiskAck",
+                                                    "color": "#fff100"
+                                                },
+                                                {
+                                                    "value": "Verify",
+                                                    "color": "#ff8c00"
+                                                },
+                                                {
+                                                    "value": "Failed",
+                                                    "color": "#FF0000"
+                                                }
+                                            ]
+                                        },
+                                        "NavigationSelect": {}
+                                    },
+                                    "List": {
+                                        "Query": "AzSK_ADO_CL | where TimeGenerated > ago(3d) | where ${Baseline} and ${PreviewBaseline} and ${SubscriptionName} and ${ResourceType} and ${Severity} | where FeatureName_s != \"Organization\" and FeatureName_s != \"Project\" | extend ControlStatus = iff(ControlStatus_s == \"Passed\", \"Passed\",\"Failed\") | summarize arg_max(TimeGenerated, *) by SubscriptionId, ResourceId, ControlId_s | where ControlStatus == \"Failed\" | summarize AggregatedValue = count() by FeatureName_s | sort by AggregatedValue desc",
+                                        "HideGraph": false,
+                                        "enableSparklines": false,
+                                        "operation": "Summary",
+                                        "ColumnsTitle": {
+                                            "Name": "ResourceType Names",
+                                            "Value": "# Of Failures"
+                                        },
+                                        "Color": "#FF0000",
+                                        "thresholds": {
+                                            "isEnabled": false,
+                                            "values": [
+                                                {
+                                                    "name": "Normal",
+                                                    "threshold": "Default",
+                                                    "color": "#339947",
+                                                    "isDefault": true
+                                                },
+                                                {
+                                                    "name": "Warning",
+                                                    "threshold": "60",
+                                                    "color": "#fcd116",
+                                                    "isDefault": false
+                                                },
+                                                {
+                                                    "name": "Error",
+                                                    "threshold": "90",
+                                                    "color": "#FF0000",
+                                                    "isDefault": false
+                                                }
+                                            ]
+                                        },
+                                        "NameDSVSeparator": "",
+                                        "NavigationQuery": "AzSK_ADO_CL | where TimeGenerated > ago(3d) | where ${Baseline} and ${PreviewBaseline} and ${SubscriptionName} and ${ResourceType} and ${Severity} | where {selected item} | extend ControlStatus = iff(ControlStatus_s == \"Passed\", \"Passed\",\"Failed\") | summarize arg_max(TimeGenerated, *) by SubscriptionId, ResourceId, ControlId_s | where ControlStatus == \"Failed\" ",
+                                        "NavigationSelect": {
+                                            "NavigationQuery": "AzSK_ADO_CL | where TimeGenerated > ago(3d) | where ${Baseline} and ${PreviewBaseline} and ${SubscriptionName} and ${ResourceType} and ${Severity} | where {selected item} | extend ControlStatus = iff(ControlStatus_s == \"Passed\", \"Passed\",\"Failed\") | summarize arg_max(TimeGenerated, *) by SubscriptionId, ResourceId, ControlId_s | where ControlStatus == \"Failed\" "
+                                        }
+                                    }
+                                }
+                            },                 
+                            {
+                                "Id": "NumberTileListBuilderBlade",
+                                "Type": "Blade",
+                                "Version": 0,
+                                "Configuration": {
+                                    "General": {
+                                        "title": "Resource Security (RS-2)",
+                                        "newGroup": false,
+                                        "icon": "",
+                                        "useIcon": false
+                                    },
+                                    "Tile": {
+                                        "Query": "AzSK_ADO_CL | where TimeGenerated >ago(3d) | where ${Baseline} and ${PreviewBaseline} and ${SubscriptionName} and ${ResourceType} and ${Severity} | where FeatureName_s != \"Organization\" | extend ControlStatus = iff(ControlStatus_s == \"Passed\", \"Passed\",\"Failed\") | summarize arg_max(TimeGenerated, *) by SubscriptionId, ResourceId, ControlId_s | where ControlStatus == \"Failed\" | summarize AggregatedValue = count() by ResourceName_s | count ",
+                                        "Legend": "Unique Resources with Security Issues",
+                                        "NavigationSelect": {}
+                                    },
+                                    "List": {
+                                        "Query": "AzSK_ADO_CL | where TimeGenerated >ago(3d) | where ${Baseline} and ${PreviewBaseline} and ${SubscriptionName} and ${ResourceType} and ${Severity} | where FeatureName_s != \"Organization\" | extend ControlStatus = iff(ControlStatus_s == \"Passed\", \"Passed\",\"Failed\") | summarize arg_max(TimeGenerated, *) by SubscriptionId, ResourceId, ControlId_s | where ControlStatus == \"Failed\" | summarize AggregatedValue = count() by ResourceName_s, FeatureName_s , ResourceGroup ",
+                                        "HideGraph": false,
+                                        "enableSparklines": false,
+                                        "operation": "Summary",
+                                        "ColumnsTitle": {
+                                            "Name": "Resource Names",
+                                            "Value": "# Of Failures"
+                                        },
+                                        "Color": "#FF0000",
+                                        "thresholds": {
+                                            "isEnabled": false,
+                                            "values": [
+                                                {
+                                                    "name": "Normal",
+                                                    "threshold": "Default",
+                                                    "color": "#339947",
+                                                    "isDefault": true
+                                                },
+                                                {
+                                                    "name": "Warning",
+                                                    "threshold": "60",
+                                                    "color": "#fcd116",
+                                                    "isDefault": false
+                                                },
+                                                {
+                                                    "name": "Error",
+                                                    "threshold": "90",
+                                                    "color": "#FF0000",
+                                                    "isDefault": false
+                                                }
+                                            ]
+                                        },
+                                        "NameDSVSeparator": "",
+                                        "NavigationQuery": "AzSK_ADO_CL | where TimeGenerated >ago(3d) | where ${Baseline} and ${PreviewBaseline} and ${SubscriptionName} and ${ResourceType} and ${Severity} | where FeatureName_s != \"Organization\" and {selected item} | extend ControlStatus = iff(ControlStatus_s == \"Passed\", \"Passed\",\"Failed\") | summarize arg_max(TimeGenerated, *) by SubscriptionId, ResourceId, ControlId_s | where ControlStatus == \"Failed\" ",
+                                        "NavigationSelect": {
+                                            "NavigationQuery": "AzSK_ADO_CL | where TimeGenerated >ago(3d) | where ${Baseline} and ${PreviewBaseline} and ${SubscriptionName} and ${ResourceType} and ${Severity} | where FeatureName_s != \"Organization\" and {selected item} | extend ControlStatus = iff(ControlStatus_s == \"Passed\", \"Passed\",\"Failed\") | summarize arg_max(TimeGenerated, *) by SubscriptionId, ResourceId, ControlId_s | where ControlStatus == \"Failed\" "
+                                        }
+                                    }
+                                }
+                            },
+                            {
+                                "Id": "NumberTileListBuilderBlade",
+                                "Type": "Blade",
+                                "Version": 0,
+                                "Configuration": {
+                                    "General": {
+                                        "title": "Resource Security (RS-3)",
+                                        "newGroup": false,
+                                        "icon": "",
+                                        "useIcon": false
+                                    },
+                                    "Tile": {
+                                        "Query": "AzSK_ADO_CL | where TimeGenerated > ago(3d) | where ${Baseline} and ${PreviewBaseline} and ${SubscriptionName} and ${ResourceType} and ${Severity} | extend ControlStatus = iff(ControlStatus_s == \"Passed\", \"Passed\",\"Failed\") | summarize arg_max(TimeGenerated, *) by SubscriptionId, ResourceId, ControlId_s | where ControlStatus == \"Failed\" | summarize AggregatedValue = count() by ControlId_s | count ",
+                                        "Legend": "Unique security failures across all resources",
+                                        "NavigationSelect": {}
+                                    },
+                                    "List": {
+                                        "Query": "AzSK_ADO_CL | where TimeGenerated > ago(3d) | where ${Baseline} and ${PreviewBaseline} and ${SubscriptionName} and ${ResourceType} and ${Severity} | extend ControlStatus = iff(ControlStatus_s == \"Passed\", \"Passed\",\"Failed\") | summarize arg_max(TimeGenerated, *) by SubscriptionId, ResourceId, ControlId_s | where ControlStatus == \"Failed\" | summarize AggregatedValue = count() by ControlId_s",
+                                        "HideGraph": false,
+                                        "enableSparklines": false,
+                                        "operation": "Summary",
+                                        "ColumnsTitle": {
+                                            "Name": "ControlId Names",
+                                            "Value": "# Of Failures"
+                                        },
+                                        "Color": "#FF0000",
+                                        "thresholds": {
+                                            "isEnabled": false,
+                                            "values": [
+                                                {
+                                                    "name": "Normal",
+                                                    "threshold": "Default",
+                                                    "color": "#339947",
+                                                    "isDefault": true
+                                                },
+                                                {
+                                                    "name": "Warning",
+                                                    "threshold": "60",
+                                                    "color": "#fcd116",
+                                                    "isDefault": false
+                                                },
+                                                {
+                                                    "name": "Error",
+                                                    "threshold": "90",
+                                                    "color": "#FF0000",
+                                                    "isDefault": false
+                                                }
+                                            ]
+                                        },
+                                        "NameDSVSeparator": "",
+                                        "NavigationQuery": "AzSK_ADO_CL | where TimeGenerated > ago(3d) | where ${Baseline} and ${PreviewBaseline} and ${SubscriptionName} and ${ResourceType} and ${Severity} | extend ControlStatus = iff(ControlStatus_s == \"Passed\", \"Passed\",\"Failed\") | summarize arg_max(TimeGenerated, *) by SubscriptionId, ResourceId, ControlId_s | where ControlStatus == \"Failed\" ",
+                                        "NavigationSelect": {
+                                            "NavigationQuery": "AzSK_ADO_CL | where TimeGenerated > ago(3d) | where ${Baseline} and ${PreviewBaseline} and ${SubscriptionName} and ${ResourceType} and ${Severity} | extend ControlStatus = iff(ControlStatus_s == \"Passed\", \"Passed\",\"Failed\") | summarize arg_max(TimeGenerated, *) by SubscriptionId, ResourceId, ControlId_s | where ControlStatus == \"Failed\" "
+                                        }
+                                    }
+                                }
+                            },
+                            {
+                                "Id": "NotableQueriesBuilderBlade",
+                                "Type": "Blade",
+                                "Version": 0,
+                                "Configuration": {
+                                    "General": {
+                                        "title": "Useful Queries",
+                                        "newGroup": false,
+                                        "preselectedFilters": "SubscriptionName_s, ResourceGroup , ResourceName_s , FeatureName_s , ControlId_s, ControlSeverity_s , ControlStatus_s",
+                                        "renderMode": "grid"
+                                    },
+                                    "queries": [
+                                        {
+                                            "query": "AzSK_ADO_CL | where TimeGenerated > ago(3d) | summarize arg_max(TimeGenerated, *) by SubscriptionName_s,ControlId_s | where HasRequiredAccess_b == true | where FeatureName_s == \"Organization\" | extend ControlStatus=iff(ControlStatus_s!= \"Passed\",\"Failed\",\"Passed\") | summarize count() by SubscriptionName_s,ControlId_s,ControlStatus_s | summarize AggregatedValue = count() by SubscriptionName_s | sort by AggregatedValue desc",
+                                            "displayName": "Distribution By ControlStatus for last scan done with required access including NonBaseline controls"
+                                        },
+                                        {
+                                            "query": "AzSK_ADO_CL | where TimeGenerated >ago(3d) | where HasRequiredAccess_b == true | where FeatureName_s != \"Organization\" | extend ControlStatus = iff(ControlStatus_s == \"Passed\", \"Passed\",\"Failed\") | summarize arg_max(TimeGenerated, *) by SubscriptionId, ResourceId, ControlId_s | where ControlStatus == \"Failed\" | summarize AggregatedValue = count() by FeatureName_s",
+                                            "displayName": "Distribution of Failed Controls by Resource Type for last scan done with required access including NonBaseline controls"
+                                        },
+                                        {
+                                            "query": "AzSK_ADO_CL | where TimeGenerated >ago(3d) | where HasRequiredAccess_b == true | where FeatureName_s != \"Organization\" | extend ControlStatus = iff(ControlStatus_s == \"Passed\", \"Passed\",\"Failed\") | summarize arg_max(TimeGenerated, *) by SubscriptionId, ResourceId, ControlId_s | where ControlStatus == \"Failed\" | summarize AggregatedValue = count() by ResourceName_s ",
+                                            "displayName": "Distribution of Failed Controls by Resource Name for last scan done with required access including NonBaseline controls"
+                                        },
+                                        {
+                                            "query": "AzSK_ADO_CL | where TimeGenerated > ago(3d) | where HasRequiredAccess_b == true | where FeatureName_s != \"Organization\" | extend ControlStatus = iff(ControlStatus_s == \"Passed\", \"Passed\",\"Failed\") | summarize arg_max(TimeGenerated, *) by SubscriptionId, ResourceId, ControlId_s | where ControlStatus == \"Failed\" | summarize AggregatedValue = count() by ControlId_s",
+                                            "displayName": "Distribution of Failed Controls by ControlIds for last scan done with required access including NonBaseline controls"
+                                        },
+                                        {
+                                            "query": "AzSK_ADO_CL | where TimeGenerated > ago(3d) | where HasRequiredAccess_b == true | where FeatureName_s == \"Organization\" | extend ControlStatus = iff(ControlStatus_s == \"Passed\", \"Passed\",\"Failed\") | summarize arg_max(TimeGenerated, *) by SubscriptionId, ResourceId, ControlId_s | where ControlStatus == \"Failed\" | summarize AggregatedValue = count() by ControlId_s",
+                                            "displayName": "Distribution of Failed Subscription Controls for last scan done with required access including NonBaseline controls"
+                                        },
+                                        {
+                                            "query": "AzSK_ADO_CL | where TimeGenerated > ago(3d) | where HasRequiredAccess_b == true | where FeatureName_s != \"Organization\" | summarize arg_max(TimeGenerated, *) by SubscriptionId, ResourceId, ControlId_s | summarize AggregatedValue = count() by ControlId_s,ControlStatus_s",
+                                            "displayName": "Distribution By ControlIDs for last scan done with required access including NonBaseline controls"
+                                        }
+                                    ]
+                                }
+                            }
+                        ],
+                        "Filters": [
+                            {
+                                "FieldName": "IsBaselineControl_b",
+                                "QueryForValues": "AzSK_ADO_CL | distinct tostring(IsBaselineControl_b)",
+                                "Title": "Baseline"
+                            },
+                            {
+                                "FieldName": "IsPreviewBaselineControl_b",
+                                "QueryForValues": "AzSK_ADO_CL | distinct tostring(IsPreviewBaselineControl_b)",
+                                "Title": "PreviewBaseline"
+                            },
+                            {
+                                "FieldName": "SubscriptionName_s",
+                                "QueryForValues": "AzSK_ADO_CL | distinct tostring(SubscriptionName_s)",
+                                "Title": "SubscriptionName"
+                            },
+                            {
+                                "FieldName": "ControlSeverity_s",
+                                "QueryForValues": "AzSK_ADO_CL | distinct tostring(ControlSeverity_s)",
+                                "Title": "Severity"
+                            },
+                            {
+                                "FieldName": "ResourceType",
+                                "QueryForValues": "AzSK_ADO_CL | distinct tostring(ResourceType)",
+                                "Title": "ResourceType"
+                            }
+                        ],
+                        "OverviewTile": {
+                            "Id": "SingleQueryDonutBuilderTileV1",
+                            "Type": "OverviewTile",
+                            "Version": 6,
+                            "Configuration": {
+                                "Donut": {
+                                    "Query": "AzSK_ADO_CL| where TimeGenerated > ago(3d) | extend ControlStatus = iff(ControlStatus_s == \"Passed\", \"Passed\",\"Failed\")| summarize arg_max(TimeGenerated, *) by SubscriptionId, ResourceId, ControlId_s| where ControlStatus == \"Failed\"| summarize AggregatedValue = count() by FeatureName_s | sort by AggregatedValue desc",
+                                    "CenterLegend": {
+                                        "Text": "Total",
+                                        "Operation": "Sum",
+                                        "ArcsToSelect": []
+                                    },
+                                    "Options": {
+                                        "colors": [
+                                            "#FF0000",
+                                            "#F58B1F",
+                                            "#FFFF00",
+                                            "#FFFF00",
+                                            "#ff5a00",
+                                            "#ff1a00"
+                                        ],
+                                        "valueColorMapping": [],
+                                        "legend": true,
+                                        "skipLegendPositioning": true,
+                                        "center": true,
+                                        "unitType": "Count",
+                                        "fromUnit": "Ones"
+                                    },
+                                    "HideOtherLegend": true
+                                },
+                                "List": {
+                                        "Query": "AzSK_ADO_CL| where TimeGenerated > ago(3d) | extend ControlStatus = iff(ControlStatus_s == \"Passed\", \"Passed\",\"Failed\")| summarize arg_max(TimeGenerated, *) by SubscriptionId, ResourceId, ControlId_s| where ControlStatus == \"Failed\"| summarize AggregatedValue = count() by FeatureName_s | sort by AggregatedValue desc",
+                                        "HideGraph": false,
+                                        "enableSparklines": false,
+                                        "operation": "Summary",
+                                        "ColumnsTitle": {
+                                            "Name": "Resource Name",
+                                            "Value": "# Of Failures"
+                                        },
+                                        "Color": "#ba141a",
+                                        "thresholds": {
+                                            "isEnabled": false,
+                                            "values": [
+                                                {
+                                                    "name": "Normal",
+                                                    "threshold": "Default",
+                                                    "color": "#339947",
+                                                    "isDefault": true
+                                                },
+                                                {
+                                                    "name": "Warning",
+                                                    "threshold": "60",
+                                                    "color": "#fcd116",
+                                                    "isDefault": false
+                                                },
+                                                {
+                                                    "name": "Error",
+                                                    "threshold": "90",
+                                                    "color": "#FF0000",
+                                                    "isDefault": false
+                                                }
+                                            ]
+                                        },
+                                        "NameDSVSeparator": "",
+                                        "NavigationQuery": "AzSK_ADO_CL | where TimeGenerated > ago(3d) | where ${Baseline} and ${PreviewBaseline} and ${ResourceType} and ${Severity} | where FeatureName_s == \"Project\" and {selected item} | extend ControlStatus=iff(ControlStatus_s!= \"Passed\",\"Failed\",\"Passed\") | where ControlStatus ==\"Failed\" | summarize arg_max(TimeGenerated,*) by SubscriptionName_s,ResourceId,ControlId_s",
+                                        "NavigationSelect": {
+                                            "NavigationQuery": "AzSK_ADO_CL | where TimeGenerated > ago(3d) | where ${Baseline} and ${PreviewBaseline} and ${ResourceType} and ${Severity} | where FeatureName_s == \"Project\" and {selected item} | extend ControlStatus=iff(ControlStatus_s!= \"Passed\",\"Failed\",\"Passed\") | where ControlStatus ==\"Failed\" | summarize arg_max(TimeGenerated,*) by SubscriptionName_s,ResourceId,ControlId_s"
+                                        }
+                                    },
+                                "Advanced": {
+                                    "DataFlowVerification": {
+                                        "Enabled": false,
+                                        "Query": "search * | limit 1 | project TimeGenerated",
+                                        "Message": ""
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            ]
+        }
+    ]
+}

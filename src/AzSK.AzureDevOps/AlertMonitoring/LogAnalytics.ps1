@@ -198,19 +198,14 @@ function Install-AzSKMonitoringSolution
     )
 	Begin
 	{
-        [CommandHelper]::BeginCommand($PSCmdlet.MyInvocation);
-		[AzListenerHelper]::RegisterListeners();
+		[CommandHelper]::BeginCommand($PSCmdlet.MyInvocation);
+		[ListenerHelper]::RegisterListeners();
 	}
 	Process
 	{
 		try
 		{
-			if($PSCmdlet.MyInvocation.InvocationName.ToUpper().Equals("INSTALL-AZSKOMSSOLUTION"))
-			{
-				Write-Host "WARNING: The command 'Install-AzSKOMSSolution' will soon be deprecated. It will be replaced by 'Install-AzSKMonitoringSolution'.`n" -ForegroundColor Yellow
-			}
-			$monitoringInstance = [LogAnalyticsMonitoring]::new($LAWSSubscriptionId, $LAWSResourceGroup, $LAWSId, $PSCmdlet.MyInvocation);
-			$monitoringInstance.InvokeFunction($monitoringInstance.ConfigureLAWS, @($ViewName, $ValidateOnly));
+			$monitoringInstance = [LogAnalyticsMonitoring]::new($LAWSSubscriptionId, $LAWSResourceGroup, $LAWSId, $PSCmdlet.MyInvocation, $ViewName);
 		}
 		catch
 		{
@@ -219,6 +214,6 @@ function Install-AzSKMonitoringSolution
 	}
 	End
 	{
-		[AzListenerHelper]::UnregisterListeners();
+		[ListenerHelper]::UnregisterListeners();
 	}
 }
