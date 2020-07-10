@@ -5,7 +5,7 @@
      "Controls": [
         {
            "ControlID": "Azure_PublicIpAddresses_Justify_PublicIp",
-           "Description": "Verify the list of public IP addresses and delete the unwanted and unused ones",
+           "Description": "Verify the list of public IP addresses.",
            "Id": "PublicIp100",
            "ControlSeverity": "Medium",
            "Automated": "Yes",
