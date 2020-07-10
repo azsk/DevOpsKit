@@ -34,7 +34,7 @@ class SPNInfo: CommandBase
 			#Get SPNsResponse which contain list of used SPNs
             $SPNsResponse = [RemoteApiHelper]::FetchUsedSPNList($ownedSPNsObject);
 		    #Convert SPNsResponse into usedSPNs, which contain list of CA used SPNs 
-		    if($null -ne $SPNsResponse)
+		    if(!($null -eq $SPNsResponse) -and ($SPNsResponse.StatusCode -eq 202))
 			{
 				$SPNsResponse | ConvertFrom-Json | where-object { $usedSPNs += $_ }
 			}
@@ -56,7 +56,7 @@ class SPNInfo: CommandBase
             }
             else
             {
-                $this.PublishCustomMessage($($usedSPNs | Format-Table @{Label = "ApplicationId"; Expression = { $_.appId } },@{Label = "SubscriptionId"; Expression = { $_.subscriptionId }} -AutoSize -Wrap | Out-String), [MessageType]::Default)
+                $this.PublishCustomMessage($($usedSPNs | Format-Table @{Label = "ApplicationId"; Expression = { $_.appId } },@{Label = "SubscriptionId"; Expression = { $_.subscriptionId }},@{Label = "SubscriptionName"; Expression = { $_.subscriptionName } } -AutoSize -Wrap | Out-String), [MessageType]::Default)
             }
         
             $this.PublishCustomMessage([Constants]::SingleDashLine, [MessageType]::Default);
