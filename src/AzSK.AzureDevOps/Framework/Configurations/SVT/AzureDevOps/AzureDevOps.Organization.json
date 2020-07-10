@@ -10,7 +10,7 @@
       "ControlSeverity": "High",
       "Automated": "Yes",
       "MethodName": "CheckAADConfiguration",
-      "Rationale": "Using the native enterprise directory for authentication ensures that there is a built-in high level of assurance in the user identity established for subsequent access control.All Enterprise subscriptions are automatically associated with their enterprise directory (xxx.onmicrosoft.com) and users in the native directory are trusted for authentication to enterprise subscriptions.",
+      "Rationale": "Using the native enterprise directory for authentication ensures that there is a built-in high level of assurance in the user identity established for subsequent access control. All enterprise organizations are automatically associated with their enterprise directory (xxx.onmicrosoft.com) and users in the native directory are trusted for authentication to enterprise organizations.",
       "Recommendation": "Refer: https://docs.microsoft.com/en-us/azure/devops/organizations/accounts/connect-organization-to-azure-ad?view=azure-devops#connect-your-organization-to-azure-ad",
       "Tags": [
         "SDL",
@@ -90,7 +90,7 @@
     },
     {
       "ControlID": "AzureDevOps_Organization_SI_Review_Shared_Extensions",
-      "Description": "Exercise due care when installing (private) shared extensions for your organization",
+      "Description": "Exercise due care when installing (private) shared extensions for your organization.",
       "Id": "Organization160",
       "ControlSeverity": "High",
       "Automated": "Yes",
@@ -243,12 +243,12 @@
     },
     {
       "ControlID": "AzureDevOps_Organization_AuthZ_Review_Project_Collection_Service_Accounts",
-      "Description": "Minimize and reviews service accounts that are members of the Project Collection Service Accounts group.",
+      "Description": "Minimize and review user/service accounts that are members of the Project Collection Service Accounts group.",
       "Id": "Organization250",
       "ControlSeverity": "High",
       "Automated": "Yes",
       "MethodName": "CheckProCollSerAcc",
-      "Rationale": "ADO has a misleading group called Project Collection Service Accounts. By inheritance, Project Collection Service Accounts are also Project Collection Administrators. It is found that multiple build agent user accounts across Microsoft were members of Project Collection Service Accounts. An adversary that executes code in a pipeline assigned to one of these build agents can take over the entire ADO organization",
+      "Rationale": "Any accounts that are members of Project Collection Service Accounts are effectively Project Collection Administrators. An adversary that executes code in a pipeline assigned to one of these build agents can take over the entire ADO organization.",
       "Recommendation": "Go to Organization Settings --> Security --> Permissions --> Project Collection Service Accounts --> Validate all the members.",
       "Tags": [
         "SDL",
@@ -379,12 +379,12 @@
     },
     {
       "ControlID": "AzureDevOps_Organization_AuthZ_Limit_Job_Authorization_Scope_To_Current_Project",
-      "Description": "Scope of access of all pipelines should be restricted to current project.",
+      "Description": "Do not run pipelines using tokens that have project collection level access.",
       "Id": "Organization330",
       "ControlSeverity": "Medium",
       "Automated": "Yes",
-      "MethodName": "CheckJobAuthnScope",
-      "Rationale": "This ensures pipeline execution happens using a token scoped to the current project abiding with principle of least privilege.",
+      "MethodName": "CheckJobAuthZScope",
+      "Rationale": "If pipelines use project collection level tokens, a vulnerability in components used by one project can be leveraged by an attacker to attack all other projects. This is also in keeping with the principle of least privilege.",
       "Recommendation": "Go to Organization Settings --> Pipelines --> Settings --> Enable 'Limit job authorization scope to current project.'.",
       "Tags": [
         "SDL",
