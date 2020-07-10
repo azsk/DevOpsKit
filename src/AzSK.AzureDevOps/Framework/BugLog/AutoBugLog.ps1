@@ -27,26 +27,6 @@ class AutoBugLog {
 
             #check if the area and iteration path are valid
             if ([BugLogPathManager]::CheckIfPathIsValid($this.SubscriptionContext.SubscriptionName,$ProjectName,$this.InvocationContext,  $this.ControlSettings.BugLogging.BugLogAreaPath, $this.ControlSettings.BugLogging.BugLogIterationPath)) {
-                #Obtain project id that will be used by hash based searching of work item
-                $ProjectId = $null
-                if ($ControlResults[0].ResourceContext.ResourceTypeName -eq "Organization" -or $ControlResults[0].ResourceContext.ResourceTypeName -eq "ServiceConnection") {
-                    $apiURL = "https://dev.azure.com/{0}/_apis/projects/{1}?api-version=5.0" -f $($this.SubscriptionContext.SubscriptionName), $($ProjectName);
-                    $projectObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
-                    $ProjectId = $projectObj.id
-                }
-                if ($ControlResults[0].ResourceContext.ResourceTypeName -eq "Project") {
-                    $ProjectId=($ControlResults[0].ResourceContext.ResourceId -split ("projects/"))[1]
-                }
-                elseif ($ControlResults[0].ResourceContext.ResourceTypeName -eq "AgentPool") {
-                    $ProjectId = ($ControlResults[0].ResourceContext.ResourceId -split ("resources/"))[1].Split("_")[0]
-                }
-                elseif ($ControlResults[0].ResourceContext.ResourceTypeName -eq "Build") {
-                    $ProjectId = ($ControlResults[0].ResourceContext.ResourceId -split ("com/"))[1].Split("/")[0]
-                }
-                elseif ($ControlResults[0].ResourceContext.ResourceTypeName -eq "Release"){
-                    $ProjectId = (($ControlResults[0].ResourceContext.ResourceId -split ($this.SubscriptionContext.SubscriptionName+"/"))[1]).Split("/")[0]
-                }
-
                 #Obtain the assignee for the current resource, will be same for all the control failures for this particular resource
                 $AssignedTo = $this.GetAssignee($ControlResults[0])
                 #Obtain area and iteration paths
@@ -78,7 +58,7 @@ class AutoBugLog {
                         #compute hash of control Id and resource Id	
                         $hash = $this.GetHashedTag($control.ControlItem.Id, $control.ResourceContext.ResourceId)
                         #check if a bug with the computed hash exists
-                        $workItem = $this.GetWorkItemByHash($hash, $ProjectName, $ProjectId)
+                        $workItem = $this.GetWorkItemByHash($hash, $ProjectName)
                         if ($workItem[0].results.count -eq 1) {
                             #a work item with the hash exists, find if it's state and reactivate if resolved bug
                             $this.ManageActiveAndResolvedBugs($ProjectName, $control, $workItem, $AssignedTo)
@@ -101,6 +81,9 @@ class AutoBugLog {
                             $Description = $Description.Replace("{4}", $control.ResourceContext.ResourceTypeName)
                             $Description = $Description.Replace("{5}", $control.ResourceContext.ResourceName)
                             $Description = $Description.Replace("{6}", $control.ControlResults[0].VerificationResult)
+                            $RunStepsForControl = " </br></br> <b>Steps:</b> Run  {0}"
+                            $RunStepsForControl = $RunStepsForControl.Replace("{0}", $this.GetControlReproStep($control))
+                            $Description+=$RunStepsForControl
 				
 				
                             #check and append any detailed log and state data for the control failure
@@ -115,7 +98,7 @@ class AutoBugLog {
 					
 				
                             #function to attempt bug logging
-                            $this.AddWorkItem($Title, $Description, $AssignedTo, $AreaPath, $IterationPath, $Severity, $ProjectName, $control, $hash, $ProjectId)
+                            $this.AddWorkItem($Title, $Description, $AssignedTo, $AreaPath, $IterationPath, $Severity, $ProjectName, $control, $hash)
 
                         }
                     }
@@ -123,6 +106,31 @@ class AutoBugLog {
             }
         }
 
+    }
+
+    #function to get the security command for repro of this bug 
+    hidden [string] GetControlReproStep([SVTEventContext []] $ControlResult){
+        $StepsForRepro=""
+        if ($ControlResult.FeatureName -eq "Organization") {
+            $StepsForRepro="Get-AzSKAzureDevOpsOrgSecurityStatus -OrganizationName '{0}' -ControlIds '{1}'"
+            $StepsForRepro=$StepsForRepro.Replace("{0}",$ControlResult.ResourceContext.ResourceName)
+            $StepsForRepro=$StepsForRepro.Replace("{1}",$ControlResult.ControlItem.ControlID)
+        }
+        elseif ($ControlResult.ResourceContext.ResourceTypeName -eq "Project") {
+            $StepsForRepro="Get-AzSKAzureDevOpsOrgSecurityStatus -OrganizationName '{0}' -ProjectNames '{1}' -ControlIds '{2}'"
+            $StepsForRepro=$StepsForRepro.Replace("{0}",$ControlResult.ResourceContext.ResourceGroupName)
+            $StepsForRepro=$StepsForRepro.Replace("{1}",$ControlResult.ResourceContext.ResourceName)
+            $StepsForRepro=$StepsForRepro.Replace("{2}",$ControlResult.ControlItem.ControlID)
+        }
+        else {
+            $StepsForRepro="Get-AzSKAzureDevOpsOrgSecurityStatus -OrganizationName '{0}' -ProjectNames '{1}' -{2}Names '{3}' -ControlIds '{4}'"
+            $StepsForRepro=$StepsForRepro.Replace("{0}",$this.SubscriptionContext.SubscriptionName)
+            $StepsForRepro=$StepsForRepro.Replace("{1}",$ControlResult.ResourceContext.ResourceGroupName)
+            $StepsForRepro=$StepsForRepro.Replace("{2}",$ControlResult.FeatureName)
+            $StepsForRepro=$StepsForRepro.Replace("{3}",$ControlResult.ResourceContext.ResourceName)
+            $StepsForRepro=$StepsForRepro.Replace("{4}",$ControlResult.ControlItem.ControlID)
+        }
+        return $StepsForRepro
     }
     
     #function to retrieve project name according to the resource
@@ -404,7 +412,7 @@ class AutoBugLog {
     }
 
     #function to search for existing bugs based on the hash
-    hidden [object] GetWorkItemByHash([string] $hash, [string] $ProjectName, [string] $ProjectId) {
+    hidden [object] GetWorkItemByHash([string] $hash, [string] $ProjectName) {
 		
         $url = "https://{0}.almsearch.visualstudio.com/{1}/_apis/search/workItemQueryResults?api-version=5.1-preview" -f $($this.SubscriptionContext.SubscriptionName), $ProjectName;
 
@@ -441,7 +449,7 @@ class AutoBugLog {
         return $hashedTag
     }
 
-    hidden [void] AddWorkItem([string] $Title, [string] $Description, [string] $AssignedTo, [string] $AreaPath, [string] $IterationPath, [string]$Severity, [string]$ProjectName, [SVTEventContext[]] $control, [string] $hash, [string] $ProjectId ) {
+    hidden [void] AddWorkItem([string] $Title, [string] $Description, [string] $AssignedTo, [string] $AreaPath, [string] $IterationPath, [string]$Severity, [string]$ProjectName, [SVTEventContext[]] $control, [string] $hash) {
 		
 		
         #logging new bugs
@@ -479,8 +487,8 @@ class AutoBugLog {
                 try {
                     $responseObj = Invoke-RestMethod -Uri $apiurl -Method Post -ContentType "application/json-patch+json ; charset=utf-8" -Headers $header -Body $BugTemplate
                     $bugUrl = "https://{0}.visualstudio.com/_workitems/edit/{1}" -f $($this.SubscriptionContext.SubscriptionName), $responseObj.id
-                    $control.ControlResults.AddMessage("New Bug", $bugUrl)
                     Write-Host "Logged a new bug" -ForegroundColor Green
+                    $control.ControlResults.AddMessage("New Bug", $bugUrl)
                 }
                 catch {
                     Write-Host "Could not log the bug" -ForegroundColor Red

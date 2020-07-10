@@ -252,7 +252,6 @@ class WritePsConsole: FileOutputBase
 					if($currentInstance.InvocationContext.BoundParameters["AutoBugLog"] -and [BugLogPathManager]::GetIsPathValid()){
 						$currentInstance.WriteMessage([Constants]::SingleDashLine, [MessageType]::Info)
 						$currentInstance.PrintBugSummaryData($Event);
-						$currentInstance.WriteMessage("A summary of the bugs logged has been written to the following file: $([WriteFolderPath]::GetInstance().FolderPath)\BugSummary.Json", [MessageType]::Info)
 					}
 					$currentInstance.WriteMessage([Constants]::SingleDashLine, [MessageType]::Info)
 				}
@@ -624,6 +623,8 @@ class WritePsConsole: FileOutputBase
 				$currentInstance = [WritePsConsole]::GetInstance();
 				$currentInstance.WriteMessage([Constants]::DoubleDashLine, [MessageType]::Info)
 				$currentInstance.WriteMessage([Constants]::BugLogMsg, [MessageType]::Info)
+				$currentInstance.WriteMessage("A summary of the bugs logged has been written to the following file: $([WriteFolderPath]::GetInstance().FolderPath)\BugSummary.Json", [MessageType]::Info)
+
 			
 		}
 

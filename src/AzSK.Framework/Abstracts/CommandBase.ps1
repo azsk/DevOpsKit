@@ -139,6 +139,13 @@ class CommandBase: AzSKRoot {
 		if($this.InvocationContext.BoundParameters["AutoBugLog"] -and [BugLogPathManager]::GetIsPathValid()){
 			[PublishToJSON]::new($methodResult,$folderPath)
 		}
+
+		#auto close passed bugs
+		if($this.InvocationContext.BoundParameters["AutoBugLog"]){
+			#call the AutoCloseBugManager
+			$AutoClose=[AutoCloseBugManager]::new($this.SubscriptionContext,$methodResult);
+			$AutoClose.AutoCloseBug($methodResult)
+		}
 		# Publish command complete events
         $this.CommandCompleted($methodResult);
 		[AIOrgTelemetryHelper]::TrackCommandExecution("Command Completed",

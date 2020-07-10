@@ -439,8 +439,6 @@ class ADOSVTBase: SVTBase {
 		}
 		
 		$this.UpdateControlStates($ControlResults);
-	
-		
 
 		$BugLogParameterValue =$this.InvocationContext.BoundParameters["AutoBugLog"]
 		#perform bug logging after control scans for the current resource
@@ -453,6 +451,7 @@ class ADOSVTBase: SVTBase {
 	hidden [void] BugLoggingPostEvaluation([SVTEventContext []] $ControlResults,[string] $BugLogParameterValue){
 		$AutoBugLog=[AutoBugLog]::new($this.SubscriptionContext,$this.InvocationContext,$ControlResults,$this.ControlStateExt);
 		$AutoBugLog.LogBugInADO($ControlResults,$this.ControlStateExt.InvocationContext.BoundParameters["AutoBugLog"])
+
 	}
 
 	

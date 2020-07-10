@@ -70,10 +70,12 @@ Add-Type -Path "$libraryPath\Microsoft.IdentityModel.Clients.ActiveDirectory.dll
 . $FrameworkPath\Helpers\RemoteApiHelper.ps1
 . $FrameworkPath\Abstracts\PrivacyNotice.ps1
 
+
 #BugLog
 . $PSScriptRoot\BugLog\BugLogPathManager.ps1
 . $PSScriptRoot\BugLog\AutoBugLog.ps1
 . $PSScriptRoot\BugLog\PublishToJSON.ps1
+. $PSScriptRoot\BugLog\AutoCloseBugManager.ps1
 
 
 #Abstracts
