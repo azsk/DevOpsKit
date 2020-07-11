@@ -461,7 +461,7 @@ class ADOSVTBase: SVTBase {
 	#function to call AutoBugLog class for performing bug logging
 	hidden [void] BugLoggingPostEvaluation([SVTEventContext []] $ControlResults,[string] $BugLogParameterValue){
 		$AutoBugLog=[AutoBugLog]::new($this.SubscriptionContext,$this.InvocationContext,$ControlResults,$this.ControlStateExt);
-		$AutoBugLog.LogBugInADO($ControlResults,$this.ControlStateExt.InvocationContext.BoundParameters["AutoBugLog"])
+		$AutoBugLog.LogBugInADO($ControlResults,$BugLogParameterValue)
 
 	}
 

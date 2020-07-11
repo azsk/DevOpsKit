@@ -196,8 +196,9 @@
                                   ] }                         
    ],
    "BugLogging":{
-   "BugLogAreaPath":"RootDefaultProject",
-   "BugLogIterationPath":"RootDefaultProject",
-   "ResolvedBugLogBehaviour":"ReactiveOldBug"
+    "BugLogAreaPath":"RootDefaultProject",
+    "BugLogIterationPath":"RootDefaultProject",
+    "ResolvedBugLogBehaviour":"ReactiveOldBug",
+    "MaxKeyWordsToQueryForBugClose":100
    }
 }

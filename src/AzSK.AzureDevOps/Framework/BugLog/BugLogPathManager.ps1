@@ -2,7 +2,9 @@ Set-StrictMode -Version Latest
 class BugLogPathManager {
     hidden static [string] $AreaPath = $null
     hidden static [string] $IterationPath = $null
+    #flag to check if the path validity test has been done once, this will be used to skip path validation, whether correct/incorrect for all control results
     hidden static [bool] $checkValidPathFlag = $true;
+    #flag to check if the path that has been declared is valid
     hidden static [bool] $isPathValid = $false;
     
     

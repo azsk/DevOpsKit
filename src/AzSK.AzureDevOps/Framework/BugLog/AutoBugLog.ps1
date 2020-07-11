@@ -12,18 +12,15 @@ class AutoBugLog {
         $this.InvocationContext = $invocationContext;	
         $this.ControlResults = $ControlResults;		
         $this.ControlSettings = [ConfigurationManager]::LoadServerConfigFile("ControlSettings.json");
-        $this.ControlStateExt = $ControlStateExt
-        
-        
-    }    
-
+        $this.ControlStateExt = $ControlStateExt               
+    }  
 
     #main function where bug logging takes place 
     hidden [void] LogBugInADO([SVTEventContext[]] $ControlResults, [string] $BugLogParameterValue) {
         #check if user has permissions to log bug for the current resource
         if ($this.CheckPermsForBugLog($ControlResults[0])) {
             #retrieve the project name for the current resource
-            $ProjectName = $this.GetProject($ControlResults[0])
+            $ProjectName = $this.GetProjectForBugLog($ControlResults[0])
 
             #check if the area and iteration path are valid
             if ([BugLogPathManager]::CheckIfPathIsValid($this.SubscriptionContext.SubscriptionName,$ProjectName,$this.InvocationContext,  $this.ControlSettings.BugLogging.BugLogAreaPath, $this.ControlSettings.BugLogging.BugLogIterationPath)) {
@@ -31,10 +28,8 @@ class AutoBugLog {
                 $AssignedTo = $this.GetAssignee($ControlResults[0])
                 #Obtain area and iteration paths
                 $AreaPath = [BugLogPathManager]::GetAreaPath()
-                $IterationPath = [BugLogPathManager]::GetIterationPath()
-        
-
-		
+                $IterationPath = [BugLogPathManager]::GetIterationPath()       
+	
                 #Loop through all the control results for the current resource
                 $ControlResults | ForEach-Object {			
 					
@@ -81,7 +76,7 @@ class AutoBugLog {
                             $Description = $Description.Replace("{4}", $control.ResourceContext.ResourceTypeName)
                             $Description = $Description.Replace("{5}", $control.ResourceContext.ResourceName)
                             $Description = $Description.Replace("{6}", $control.ControlResults[0].VerificationResult)
-                            $RunStepsForControl = " </br></br> <b>Steps:</b> Run  {0}"
+                            $RunStepsForControl = " </br></br> <b>Control Scan Command</b> Run  {0}"
                             $RunStepsForControl = $RunStepsForControl.Replace("{0}", $this.GetControlReproStep($control))
                             $Description+=$RunStepsForControl
 				
@@ -134,11 +129,13 @@ class AutoBugLog {
     }
     
     #function to retrieve project name according to the resource
-    hidden [string] GetProject([SVTEventContext[]] $ControlResult) {
+    hidden [string] GetProjectForBugLog([SVTEventContext[]] $ControlResult) {
         $ProjectName = ""
+        #if resource is the organization, call control state extension to retreive attestation host project
         if ($ControlResult.FeatureName -eq "Organization") {
             $ProjectName = $this.ControlStateExt.GetProject()
         }
+        #for all the other resource types, retrieve the project name from the control itself
         elseif ($ControlResult.ResourceContext.ResourceTypeName -eq "Project") {
             $ProjectName = $ControlResult.ResourceContext.ResourceName
         }
@@ -195,20 +192,17 @@ class AutoBugLog {
                 return $null
 					  
             }
-            #user is a PCA member but the project has not been set for org control failures
-            elseif (!$this.ControlStateExt.GetProject()) { 
-                Write-Host "`nNo project defined to store bugs for organization-specific controls." -ForegroundColor Red
-                Write-Host "Use the '-AttestationHostProjectName' parameter with this command to configure the project that will host bug logging details for organization level controls.`nRun 'Get-Help -Name Get-AzSKAzureDevOpsSecurityStatus -Full' for more info." -ForegroundColor Yellow
-                return $null
-            }
-            else {
-                #retreive the project name
+            else{
                 $Project = $this.ControlStateExt.GetProject()
-		    
+                #user is a PCA member but the project has not been set for org control failures
+                if (!$Project) { 
+                    Write-Host "`nNo project defined to store bugs for organization-specific controls." -ForegroundColor Red
+                    Write-Host "Use the '-AttestationHostProjectName' parameter with this command to configure the project that will host bug logging details for organization level controls.`nRun 'Get-Help -Name Get-AzSKAzureDevOpsSecurityStatus -Full' for more info." -ForegroundColor Yellow
+                    return $null
+                }
             }
         }
         return $Project
-
 
     }
 
@@ -252,7 +246,7 @@ class AutoBugLog {
 
         $Assignee = "";
         $ResourceType = $ControlResult.ResourceContext.ResourceTypeName
-        $ResourceName = $ControlResult.ResourceContext.ResourceTypeName
+        $ResourceName = $ControlResult.ResourceContext.ResourceName
         switch -regex ($ResourceType) {
             #assign to the creator of service connection
             'ServiceConnection' {
@@ -319,7 +313,8 @@ class AutoBugLog {
 
 
             }
-            #assign to the person running the scan
+            #assign to the person running the scan, as to reach at this point of code, it is ensured the user is PCA/PA and only they or other PCA
+            #PA members can fix the control
             'Organization' {
                 $Assignee = [ContextHelper]::GetCurrentSessionUser();
             }
@@ -364,33 +359,29 @@ class AutoBugLog {
         #bug url that redirects user to bug logged in ADO, this is not available via the API response and thus has to be created via the ID of bug
         $bugUrl = "https://{0}.visualstudio.com/{1}/_workitems/edit/{2}" -f $($this.SubscriptionContext.SubscriptionName), $ProjectName , $id
 
-        #if the bug state is resolved       
-        if ($state.value -eq "Resolved") {
+        #whether the bug is active or resolved, we have to ensure the state of the bug remains active after this function  
+        #if a PCA assigns this to a non PCA, the control can never be fixed for org/project controls. to tackle this, reassign it to the original owner PCA
+        #do this for both active and resolved bugs, as we need it to be assigned to the actual person who can fix this control
             $url = "https://dev.azure.com/{0}/{1}/_apis/wit/workitems/{2}?api-version=5.1" -f $($this.SubscriptionContext.SubscriptionName), $ProjectName, $id
             $BugTemplate = [ConfigurationManager]::LoadServerConfigFile("TemplateForResolvedBug.json")
             $BugTemplate = $BugTemplate | ConvertTo-Json -Depth 10 
-
-            $BugTemplate=$BugTemplate.Replace("{0}",$AssignedTo)
-            
-           
-            $header = [WebRequestHelper]::GetAuthHeaderFromUriPatch($url)
-                
+            $BugTemplate=$BugTemplate.Replace("{0}",$AssignedTo)           
+            $header = [WebRequestHelper]::GetAuthHeaderFromUriPatch($url)                
             try {
+                #TODO: shift all this as a patch request in webrequesthelper class and manage accented characters as well
                 $responseObj = Invoke-RestMethod -Uri $url -Method Patch  -ContentType "application/json-patch+json ; charset=utf-8" -Headers $header -Body $BugTemplate
-                $control.ControlResults.AddMessage("Resolved Bug", $bugUrl)
-
             }
             catch {
                 #if the user to whom the bug has been assigneed is not a member of org any more
                 if ($_.ErrorDetails.Message -like '*System.AssignedTo*') {
                     $body = $BugTemplate | ConvertFrom-Json
+                    #let it remain assigned
                     $body[2].value = "";
                     $body = $body | ConvertTo-Json
                     try {
                         $responseObj = Invoke-RestMethod -Uri $url -Method Post -ContentType "application/json-patch+json ; charset=utf-8" -Headers $header -Body $body
                         $bugUrl = "https://{0}.visualstudio.com/_workitems/edit/{1}" -f $($this.SubscriptionContext.SubscriptionName), $responseObj.id
                         Write-Host "Reactivated an active bug" -ForegroundColor Green
-                        $control.ControlResults.AddMessage("Resolved Bug", $bugUrl)
                     }
                     catch {
                         Write-Host "Could not reactivate the bug" -ForegroundColor Red
@@ -402,9 +393,11 @@ class AutoBugLog {
                 }
             }
 
-
+        #if the bug state was intially resolved, add in the state data to be referenced later
+        if ($state.value -eq "Resolved") {
+            $control.ControlResults.AddMessage("Resolved Bug", $bugUrl)
         }
-        #if the bug state is active
+        #if the bug state was initially active
         else {
             $control.ControlResults.AddMessage("Active Bug", $bugUrl)
         }
@@ -476,7 +469,6 @@ class AutoBugLog {
             $responseObj = Invoke-RestMethod -Uri $apiurl -Method Post -ContentType "application/json-patch+json ; charset=utf-8" -Headers $header -Body $BugTemplate
             $bugUrl = "https://{0}.visualstudio.com/_workitems/edit/{1}" -f $($this.SubscriptionContext.SubscriptionName), $responseObj.id
             $control.ControlResults.AddMessage("New Bug", $bugUrl)
-            #$this.PublishCustomMessage("`nLogged a new bug `n");
         }
         catch {
             #handle assignee users who are not part of org any more
@@ -498,7 +490,7 @@ class AutoBugLog {
             }
             #handle the case wherein due to global search area/ iteration paths from different projects passed the checkvalidpath function
             elseif ($_.ErrorDetails.Message -like '*Invalid Area/Iteration id*') {
-                Write-Host "Please verify the area and iteration path. They should belong under the same Project area." -ForegroundColor Red
+                Write-Host "Please verify the area and iteration path. They should belong under the same project area." -ForegroundColor Red
             }
             else {
                 Write-Host "Could not log the bug" -ForegroundColor Red
@@ -507,6 +499,12 @@ class AutoBugLog {
 		
 		
     }
+
+    #the next two functions to check baseline and preview baseline, are duplicate controls that are present in ADOSVTBase as well.
+    #they have been added again, due to behaviour of framework, where the file that needs to called in a certain file has to be mentioned
+    #above the other file as it is dumped in the memory before the second file. This behaviour will effectively create a deadlock
+    #in this case, as we have to create autobuglog object in adosvtbase, making it be declared first in framework and hence the following controls
+    #cant be accessed here from adosvtbase.
 
     #function to check if the current control is a baseline control or not
     hidden [bool] CheckBaselineControl($controlId) {

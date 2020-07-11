@@ -11,8 +11,7 @@ class ControlStateExtension
 	hidden [int] $HasControlStateReadPermissions = 1;
 	hidden [int] $HasControlStateWritePermissions = -1;
 	hidden [string]	$IndexerBlobName ="Resource.index.json"
-	$ValidUsers=@()
-
+	
 	hidden [int] $retryCount = 3;
 	hidden [string] $UniqueRunId;
 
@@ -840,43 +839,5 @@ class ControlStateExtension
 			return $false
 		}
 	}
-
-	[bool] isMember($descriptor){
-
-
-		$this.FindMembers($descriptor)
-		if($null -ne $this.ValidUsers){
-			$currentUser = [ContextHelper]::GetCurrentSessionUser();
-			$grpmember = ($this.ValidUsers | where { $_ -eq $currentUser } );
-			if ($null -ne $grpmember ) {
-				
-				 return $true;
-			}	
-		}
-		return $false
-	}
-
-	[void] FindMembers([string]$descriptor){
-		$url="https://{0}.visualstudio.com/_apis/Contribution/HierarchyQuery?api-version=5.1-preview" -f $($this.SubscriptionContext.SubscriptionName);
-		$post='{"contributionIds":["ms.vss-admin-web.org-admin-members-data-provider"],"dataProviderContext":{"properties":{"subjectDescriptor":"{0}","sourcePage":{"url":"https://{2}.visualstudio.com/_settings/groups?subjectDescriptor={1}","routeId":"ms.vss-admin-web.collection-admin-hub-route","routeValues":{"adminPivot":"groups","controller":"ContributedPage","action":"Execute","serviceHost":"cdcc3dee-d62a-41ee-aded-daf587e1851b (MicrosoftIT)"}}}}}' | ConvertFrom-Json
-		$post.dataProviderContext.properties.subjectDescriptor = $descriptor;
-		$post.dataProviderContext.properties.sourcePage.url = "https://$($this.SubscriptionContext.SubscriptionName).visualstudio.com/_settings/groups?subjectDescriptor=$($descriptor)";
-		
-		$response = [WebRequestHelper]::InvokePostWebRequest($url,$post);
-		$data=$response.dataProviders.'ms.vss-admin-web.org-admin-members-data-provider'.identities
-    	$data | ForEach-Object{
-			
-        if($_.subjectKind -eq "group"){
-            return $this.FindMembers($_.descriptor)
-        }
-        else{
-            $this.ValidUsers+=$_.mailAddress
-		}
-	}
-	
-
-	}
-
-	
 
 }
