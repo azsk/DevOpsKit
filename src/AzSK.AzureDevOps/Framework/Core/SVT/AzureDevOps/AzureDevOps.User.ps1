@@ -14,7 +14,9 @@ class User: ADOSVTBase
         try {
         if($responseObj.Count -gt 0)
         {
-            $fullAccessPATList =   $responseObj | Where-Object {$_.scope -eq "app_token"}
+            $AccessPATList =    $responseObj | Where-Object {$_.validto -gt $(Get-Date -Format "yyyy-MM-dd")}
+            if($AccessPATList.Count -gt 0){
+            $fullAccessPATList =   $AccessPATList | Where-Object {$_.scope -eq "app_token"}
             if(($fullAccessPATList | Measure-Object).Count -gt 0)
             {
                 $fullAccessPATNames = $fullAccessPATList | Select displayName,scope 
@@ -26,6 +28,11 @@ class User: ADOSVTBase
                 $controlResult.AddMessage([VerificationResult]::Verify,
                                         "Verify PAT has minimum required permissions",$AccessPATNames)   
             }
+        }
+        else{
+            $controlResult.AddMessage([VerificationResult]::Passed,
+                                        "No PAT found");
+        }
         }
         else
         {
@@ -82,11 +89,11 @@ class User: ADOSVTBase
            
             if(($AccessPATList | Measure-Object).Count -gt 0)
             {
-                $res = $responseObj | Where-Object {(([datetime]::parseexact($_.validto.Split('T')[0], 'yyyy-MM-dd', $null) - [datetime]::parseexact($_.validfrom.Split('T')[0], 'yyyy-MM-dd', $null)).Days) -gt 180}
+                $res = $AccessPATList | Where-Object {(([datetime]::parseexact($_.validto.Split('T')[0], 'yyyy-MM-dd', $null) - [datetime]::parseexact($_.validfrom.Split('T')[0], 'yyyy-MM-dd', $null)).Days) -gt 180}
                 
                 if(($res | Measure-Object).Count -gt 0)
                 {
-                 $PATList =($AccessPATList | Select-Object -Property @{Name="Name"; Expression = {$_.displayName}},@{Name="ValidFrom"; Expression = {$_.validfrom}},@{Name="ValidTo"; Expression = {$_.validto}},@{Name="ValidationPeriod"; Expression = {([datetime]::parseexact($_.validto.Split('T')[0], 'yyyy-MM-dd', $null) - [datetime]::parseexact($_.validfrom.Split('T')[0], 'yyyy-MM-dd', $null)).Days}});    
+                 $PATList =($res | Select-Object -Property @{Name="Name"; Expression = {$_.displayName}},@{Name="ValidFrom"; Expression = {$_.validfrom}},@{Name="ValidTo"; Expression = {$_.validto}},@{Name="ValidationPeriod"; Expression = {([datetime]::parseexact($_.validto.Split('T')[0], 'yyyy-MM-dd', $null) - [datetime]::parseexact($_.validfrom.Split('T')[0], 'yyyy-MM-dd', $null)).Days}});    
                  $controlResult.AddMessage([VerificationResult]::Failed, "Below PATs have validity period more than 180 days",$PATList)  
                 }
             }
