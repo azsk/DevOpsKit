@@ -410,6 +410,40 @@
         "Audit"
       ],
       "Enabled": true
+    },
+    {
+      "ControlID": "AzureDevOps_Organization_Min_PCA_Count",
+      "Description": "TBD",
+      "Id": "Organization350",
+      "ControlSeverity": "Medium",
+      "Automated": "Yes",
+      "MethodName": "CheckMinPCACount",
+      "Rationale": "TBD",
+      "Recommendation": "TBD",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Manual",
+        "Audit"
+      ],
+      "Enabled": true
+    },
+    {
+      "ControlID": "AzureDevOps_Organization_Max_PCA_Count",
+      "Description": "TBD",
+      "Id": "Organization360",
+      "ControlSeverity": "Medium",
+      "Automated": "Yes",
+      "MethodName": "CheckMaxPCACount",
+      "Rationale": "TBD",
+      "Recommendation": "TBD",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Manual",
+        "Audit"
+      ],
+      "Enabled": true
     }
   ]
 }

@@ -11,6 +11,10 @@ class ContextHelper {
     
     #This will be used to carry current org under current context.
     static hidden [string] $orgName;
+    static [int] $TotalPCAMembers=0;
+    static [int] $TotalPAMembers=0; 
+    static [bool] $isCurrentUserPCA=$false;
+    static [bool] $isCurrentUserPA=$false;
 
     hidden static [PSObject] GetCurrentContext()
     {
@@ -170,5 +174,86 @@ class ContextHelper {
         else {
             return "NO_ACTIVE_SESSION"
         }
+    }
+    static [void] FindPCAMembers([string]$descriptor,[string] $OrgName){
+        $url="https://{0}.visualstudio.com/_apis/Contribution/HierarchyQuery?api-version=5.1-preview" -f $($OrgName);
+        $postbody=@'
+        {"contributionIds":["ms.vss-admin-web.org-admin-members-data-provider"],"dataProviderContext":{"properties":{"subjectDescriptor":"{0}","sourcePage":{"url":"https://{2}.visualstudio.com/_settings/groups?subjectDescriptor={1}","routeId":"ms.vss-admin-web.collection-admin-hub-route","routeValues":{"adminPivot":"groups","controller":"ContributedPage","action":"Execute","serviceHost":"cdcc3dee-d62a-41ee-aded-daf587e1851b (MicrosoftIT)"}}}}}
+'@
+        $postbody=$postbody.Replace("{0}",$descriptor)
+        $postbody=$postbody.Replace("{1}",$OrgName)
+        $post='{"contributionIds":["ms.vss-admin-web.org-admin-members-data-provider"],"dataProviderContext":{"properties":{"subjectDescriptor":"{0}","sourcePage":{"url":"https://{2}.visualstudio.com/_settings/groups?subjectDescriptor={1}","routeId":"ms.vss-admin-web.collection-admin-hub-route","routeValues":{"adminPivot":"groups","controller":"ContributedPage","action":"Execute","serviceHost":"cdcc3dee-d62a-41ee-aded-daf587e1851b (MicrosoftIT)"}}}}}' | ConvertFrom-Json
+		$post.dataProviderContext.properties.subjectDescriptor = $descriptor;
+		$post.dataProviderContext.properties.sourcePage.url = "https://$($OrgName).visualstudio.com/_settings/groups?subjectDescriptor=$($descriptor)";
+        $rmContext = [ContextHelper]::GetCurrentContext();
+		$user = "";
+        $base64AuthInfo = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(("{0}:{1}" -f $user,$rmContext.AccessToken)))
+        try {
+            $response = Invoke-RestMethod -Uri $url -Method Post -ContentType "application/json" -Headers @{Authorization=("Basic {0}" -f $base64AuthInfo)} -Body $postbody
+            $data=$response.dataProviders.'ms.vss-admin-web.org-admin-members-data-provider'.identities
+            $data | ForEach-Object{
+    
+            if($_.subjectKind -eq "group"){
+                return [ContextHelper]::FindPCAMembers($_.descriptor,$OrgName)
+            }
+            else{
+                if([ContextHelper]::isCurrentUserPCA -eq $false -and [ContextHelper]::GetCurrentSessionUser() -eq $_.mailAddress){
+                    [ContextHelper]::isCurrentUserPCA=$true;
+                }
+                [ContextHelper]::TotalPCAMembers++
+            }
+            }
+        }
+        catch {
+            Write-Host $_
+        }
+		
+
+    }
+
+    static [void] FindPAMembers([string]$descriptor,[string] $OrgName){
+        $url="https://{0}.visualstudio.com/_apis/Contribution/HierarchyQuery?api-version=5.1-preview" -f $($OrgName);
+        $postbody=@'
+        {"contributionIds":["ms.vss-admin-web.org-admin-members-data-provider"],"dataProviderContext":{"properties":{"subjectDescriptor":"{0}","sourcePage":{"url":"https://{2}.visualstudio.com/_settings/groups?subjectDescriptor={1}","routeId":"ms.vss-admin-web.collection-admin-hub-route","routeValues":{"adminPivot":"groups","controller":"ContributedPage","action":"Execute","serviceHost":"cdcc3dee-d62a-41ee-aded-daf587e1851b (MicrosoftIT)"}}}}}
+'@
+        $postbody=$postbody.Replace("{0}",$descriptor)
+        $postbody=$postbody.Replace("{1}",$OrgName)
+        $post='{"contributionIds":["ms.vss-admin-web.org-admin-members-data-provider"],"dataProviderContext":{"properties":{"subjectDescriptor":"{0}","sourcePage":{"url":"https://{2}.visualstudio.com/_settings/groups?subjectDescriptor={1}","routeId":"ms.vss-admin-web.collection-admin-hub-route","routeValues":{"adminPivot":"groups","controller":"ContributedPage","action":"Execute","serviceHost":"cdcc3dee-d62a-41ee-aded-daf587e1851b (MicrosoftIT)"}}}}}' | ConvertFrom-Json
+		$post.dataProviderContext.properties.subjectDescriptor = $descriptor;
+		$post.dataProviderContext.properties.sourcePage.url = "https://$($OrgName).visualstudio.com/_settings/groups?subjectDescriptor=$($descriptor)";
+        $rmContext = [ContextHelper]::GetCurrentContext();
+		$user = "";
+        $base64AuthInfo = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(("{0}:{1}" -f $user,$rmContext.AccessToken)))
+        try {
+            $response = Invoke-RestMethod -Uri $url -Method Post -ContentType "application/json" -Headers @{Authorization=("Basic {0}" -f $base64AuthInfo)} -Body $postbody
+            $data=$response.dataProviders.'ms.vss-admin-web.org-admin-members-data-provider'.identities
+            $data | ForEach-Object{
+    
+            if($_.subjectKind -eq "group"){
+                return [ContextHelper]::FindPCAMembers($_.descriptor,$OrgName)
+            }
+            else{
+                if([ContextHelper]::isCurrentUserPA -eq $false -and [ContextHelper]::GetCurrentSessionUser() -eq $_.mailAddress){
+                    [ContextHelper]::isCurrentUserPA=$true;
+                }
+                [ContextHelper]::TotalPAMembers++
+            }
+            }
+        }
+        catch {
+            Write-Host $_
+        }
+		
+
+    }
+
+    static [int] GetTotalPCAMembers(){
+        return [ContextHelper]::TotalPCAMembers
+    }
+    static [bool] GetIsCurrentUserPCA(){
+        return [ContextHelper]::isCurrentUserPCA
+    }
+    static [bool] GetIsCurrentUserPA(){
+        return [ContextHelper]::isCurrentUserPA
     }
 }

@@ -155,7 +155,8 @@
     "WhitelistedExtensionPublishers":[
       "Microsoft",
       "Microsoft DevLabs"
-    ]
+    ],
+    "MaxPCAMembersPermissible":10
   },
   "ServiceConnection":{
     "WhitelistedGroupIdentities": [
