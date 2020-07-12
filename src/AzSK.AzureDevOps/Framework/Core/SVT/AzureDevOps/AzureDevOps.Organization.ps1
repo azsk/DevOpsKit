@@ -709,68 +709,30 @@ class Organization: ADOSVTBase
 
     hidden [ControlResult] CheckMinPCACount([ControlResult] $controlResult)
     {
-        try{
-        $url= "https://{0}.visualstudio.com/_apis/Contribution/HierarchyQuery?api-version=5.1-preview.1" -f $($this.SubscriptionContext.SubscriptionName);
-        $body="{'contributionIds':['ms.vss-admin-web.org-admin-groups-data-provider'],'dataProviderContext':{'properties':{'sourcePage':{'url':'https://$($this.SubscriptionContext.SubscriptionName).visualstudio.com/_settings/groups','routeId':'ms.vss-admin-web.collection-admin-hub-route','routeValues':{'adminPivot':'groups','controller':'ContributedPage','action':'Execute'}}}}}" | ConvertFrom-JSON
-        $responseObj = [WebRequestHelper]::InvokePostWebRequest($url,$body);
-        
-        $accname = "Project Collection Administrators"; 
-        $prcollobj = $responseObj | where {$_.displayName -eq $accname}
-        
-        
-
-        if(($prcollobj | Measure-Object).Count -gt 0){
-            [ContextHelper]::FindPCAMembers($prcollobj.descriptor,$this.SubscriptionContext.SubscriptionName)
-            $TotalPCAMembers=[ContextHelper]::GetTotalPCAMembers()
+        $TotalPCAMembers=[ContextHelper]::GetTotalPCAMembers($this.SubscriptionContext.SubscriptionName)
              
-             if($TotalPCAMembers -lt 2){
-                $controlResult.AddMessage([VerificationResult]::Failed,"Less than two Project Collection Administrators were found");
-             }
-             else{
-                $controlResult.AddMessage([VerificationResult]::Passed,"More than two Project Collection Administrators were found");
-             }
+        if($TotalPCAMembers -lt 2){
+            $controlResult.AddMessage([VerificationResult]::Failed,"Less than two Project Collection Administrators found");
         }
         else{
-            $controlResult.AddMessage([VerificationResult]::Failed,"No Project Collection Administrator Group was found");
-        } 
-    }
-    catch {
-        
-    }
+            $controlResult.AddMessage([VerificationResult]::Passed,"More than two Project Collection Administrators found");
+        }
         return $controlResult
 }
 
 hidden [ControlResult] CheckMaxPCACount([ControlResult] $controlResult)
     {
-        try{
-        $url= "https://{0}.visualstudio.com/_apis/Contribution/HierarchyQuery?api-version=5.1-preview.1" -f $($this.SubscriptionContext.SubscriptionName);
-        $body="{'contributionIds':['ms.vss-admin-web.org-admin-groups-data-provider'],'dataProviderContext':{'properties':{'sourcePage':{'url':'https://$($this.SubscriptionContext.SubscriptionName).visualstudio.com/_settings/groups','routeId':'ms.vss-admin-web.collection-admin-hub-route','routeValues':{'adminPivot':'groups','controller':'ContributedPage','action':'Execute'}}}}}" | ConvertFrom-JSON
-        $responseObj = [WebRequestHelper]::InvokePostWebRequest($url,$body);
         
-        $accname = "Project Collection Administrators"; 
-        $prcollobj = $responseObj.dataProviders.'ms.vss-admin-web.org-admin-groups-data-provider'.identities | where {$_.displayName -eq $accname}
-        
-        
-
-        if(($prcollobj | Measure-Object).Count -gt 0){
-            [ContextHelper]::FindPCAMembers($prcollobj.descriptor,$this.SubscriptionContext.SubscriptionName)
-            $TotalPCAMembers=[ContextHelper]::GetTotalPCAMembers()
-            $b=[ContextHelper]::GetIsCurrentUserPCA()
+        $TotalPCAMembers=[ContextHelper]::GetTotalPCAMembers($this.SubscriptionContext.SubscriptionName)
              
-             if($TotalPCAMembers -gt $this.ControlSettings.Organization.MaxPCAMembersPermissible){
-                $controlResult.AddMessage([VerificationResult]::Failed,"Project Collection Administrators max limit exceeded");
-             }
-             else{
-                $controlResult.AddMessage([VerificationResult]::Passed,"Project Collection Administrators under max limit");
-             }
+        if($TotalPCAMembers -gt $this.ControlSettings.Organization.MaxPCAMembersPermissible){
+            $controlResult.AddMessage([VerificationResult]::Failed,"Project Collection Administrators max limit exceeded");
         }
         else{
-            $controlResult.AddMessage([VerificationResult]::Failed,"No Project Collection Administrator Group was found");
-        } 
-    }
-    catch {
+            $controlResult.AddMessage([VerificationResult]::Passed,"Project Collection Administrators under max limit");
+        }
         
-    }
+    
         return $controlResult
 }
 
