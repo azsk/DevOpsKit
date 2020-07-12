@@ -1,7 +1,7 @@
 {
     "manifestVersion": 1,
     "id": "ADOSecurityScanner",
-    "publisher": "ADOScannner",
+    "publisher": "ADOScanner",
     "public": false,
     "version": "0.9.15",
     "name": "ADO Security Scanner",

@@ -20,14 +20,13 @@ $MaxObject = Get-VstsTaskVariable -Name -mo
 $ResourceTypeName = Get-VstsTaskVariable -Name ResourceTypeName
 
 $varPrjName = Get-VstsTaskVariable -Name system.teamProject;
-$varBuildId = Get-VstsTaskVariable -Name system.definitionId;
+$JobId = Get-VstsTaskVariable -Name system.definitionId;
 
 $extensionName = "ADOSecurityScanner"
 $publisherName = "azsdktm"
 $AzSKModuleName = Get-VstsTaskVariable -Name ModuleName
 $AzSKExtendedCommand = Get-VstsTaskVariable -Name "ExtendedCommand"
 $AzSKPartialCommit = Get-VstsTaskVariable -Name "UsePartialCommit"
-$JobId = Get-VstsTaskVariable -Name System.JobId
 $CollectionUri = Get-VstsTaskVariable -Name System.CollectionUri
 
 if(!$ResourceTypeName)
@@ -125,11 +124,15 @@ try {
 	Set-AzSKPrivacyNoticeResponse -AcceptPrivacyNotice "yes"
 	Set-AzSKMonitoringSettings -Source "CICD"
 
-
+	# Fetch Organization name if default system variable is used
 	If ($OrgName -match "https://")
 	{ 
 		$Uri = $OrgName.Substring(0,$OrgName.Length-1)
 		$OrgName = $Uri -replace '.*\/'
+		if ($OrgName -match ".visualstudio.com")
+        {
+          $OrgName= $OrgName -replace '.visualstudio.com',''
+        }
 	}
 	$ReportFolderPath;
 
@@ -260,7 +263,10 @@ try {
 		$scanCommand += " -UPC "
 		$CollectionUri = $CollectionUri.Substring(0,$CollectionUri.Length-1)
 		$TaskOrg = $CollectionUri -replace '.*\/'
-		$partialScanURI =  "https://extmgmt.dev.azure.com/{0}/_apis/extensionmanagement/installedextensions/ArvTestAzSK/ADOSecurityScanner/Data/Scopes/Default/Current/Collections/{1}/Documents/{2}?api-version=5.1-preview.1" -f $TaskOrg, $OrgName,  ("ResourceTrackerFile_" + $JobId)
+		if($env:BUILD_BUILDID){ $JobId = "ResourceTrackerFile_Build_" + $JobId }
+		else { $JobId = "ResourceTrackerFile_Release_" + $JobId	}
+		
+		$partialScanURI =  "https://extmgmt.dev.azure.com/$TaskOrg/_apis/extensionmanagement/installedextensions/$publisherName/$extensionName/Data/Scopes/Default/Current/Collections/$OrgName/Documents/$JobId?api-version=5.1-preview.1"
 		$env:PartialScanURI = $partialScanURI
 	}
 	
