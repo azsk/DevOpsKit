@@ -25,7 +25,21 @@ class AutoCloseBugManager {
         #collect all passed control results
         $ControlResults | ForEach-Object {
             if ($_.ControlResults[0].VerificationResult -eq "Passed") {
-                $PassedControlResults += $_
+                #to check if org level bugs should be auto closed based on control settings
+                if($_.FeatureName -eq "Organization"){
+                    if($this.ControlSettings.BugLogging.AutoCloseOrgBug){
+                        $PassedControlResults += $_
+                    }
+                }
+                #to check if proj level bugs should be auto closed based on control settings
+                elseif($_.FeatureName -eq "Project"){
+                    if($this.ControlSettings.BugLogging.AutoCloseProjectBug){
+                        $PassedControlResults += $_
+                    }
+                }
+                else {
+                    $PassedControlResults += $_
+                }
             }
         }
 

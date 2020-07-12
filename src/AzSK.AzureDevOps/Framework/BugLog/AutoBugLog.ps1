@@ -161,6 +161,11 @@ class AutoBugLog {
                     return $false
                 }
             }
+            'User' {
+                #TODO: User controls dont have a project associated with them, can be rectified in future versions
+                Write-Host "`nAuto bug logging for user control failures is currently unavailable" -ForegroundColor Red
+                return $false
+            }
         }
         return $true
     }
@@ -381,7 +386,6 @@ class AutoBugLog {
                     try {
                         $responseObj = Invoke-RestMethod -Uri $url -Method Patch -ContentType "application/json-patch+json ; charset=utf-8" -Headers $header -Body $body
                         $bugUrl = "https://{0}.visualstudio.com/_workitems/edit/{1}" -f $($this.SubscriptionContext.SubscriptionName), $responseObj.id
-                        Write-Host "Reactivated an active bug" -ForegroundColor Green
                     }
                     catch {
                         Write-Host "Could not reactivate the bug" -ForegroundColor Red
@@ -479,7 +483,6 @@ class AutoBugLog {
                 try {
                     $responseObj = Invoke-RestMethod -Uri $apiurl -Method Post -ContentType "application/json-patch+json ; charset=utf-8" -Headers $header -Body $BugTemplate
                     $bugUrl = "https://{0}.visualstudio.com/_workitems/edit/{1}" -f $($this.SubscriptionContext.SubscriptionName), $responseObj.id
-                    Write-Host "Logged a new bug" -ForegroundColor Green
                     $control.ControlResults.AddMessage("New Bug", $bugUrl)
                 }
                 catch {

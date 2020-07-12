@@ -199,6 +199,8 @@
     "BugLogAreaPath":"RootDefaultProject",
     "BugLogIterationPath":"RootDefaultProject",
     "ResolvedBugLogBehaviour":"ReactiveOldBug",
-    "MaxKeyWordsToQueryForBugClose":100
+    "MaxKeyWordsToQueryForBugClose":100,
+    "AutoCloseProjectBug":false,
+    "AutoCloseOrgBug":false
    }
 }
