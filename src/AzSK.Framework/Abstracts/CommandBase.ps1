@@ -148,6 +148,9 @@ class CommandBase: AzSKRoot {
 
 		
 		$folderPath = $this.GetOutputFolderPath();
+
+		#the next two bug log classes have been called here as we need all the control results at one place for
+		#dumping them in json file and auto closing them(to minimize api calls and auto close them in batches)
 		#if bug logging is enabled and path is valid, create the JSON file for bugs
 		if($this.InvocationContext.BoundParameters["AutoBugLog"] -and [BugLogPathManager]::GetIsPathValid()){
 			[PublishToJSON]::new($methodResult,$folderPath)
