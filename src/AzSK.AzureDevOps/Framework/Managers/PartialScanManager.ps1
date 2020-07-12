@@ -301,18 +301,14 @@ class PartialScanManager
                         $uri = $env:partialScanURI
                         $JobId ="";
                         $JobId = $uri.Replace('?','/').Split('/')[$JobId.Length -2]
-						$body = @{"id" = $Jobid; "value"= $scanObject;} | ConvertTo-Json
+						$body = @{"id" = $Jobid;"__etag"=-1; "value"= $scanObject;} | ConvertTo-Json
                     }
                     else {
 					    $uri = [Constants]::StorageUri -f $this.subId, $this.subId, "ResourceTrackerFile"
-                        $body = @{"id" = "ResourceTrackerFile"; "value"= $scanObject;} | ConvertTo-Json
+                        $body = @{"id" = "ResourceTrackerFile";"__etag"=-1; "value"= $scanObject;} | ConvertTo-Json
                     }
 
 					try {
-						if ($this.isRTFAlreadyAvailable -eq $true){
-                            $this.isRTFAlreadyAvailable = $false;
-							$webRequestResult = Invoke-WebRequest -Uri $uri -Method Delete -ContentType "application/json" -Headers @{Authorization = ("Basic {0}" -f $base64AuthInfo) }
-						}
 						$webRequestResult = Invoke-WebRequest -Uri $uri -Method Put -ContentType "application/json" -Headers @{Authorization = ("Basic {0}" -f $base64AuthInfo) } -Body $body 
 						write-host "Resource tracker updated successfully"
                         $this.isRTFAlreadyAvailable = $true;
