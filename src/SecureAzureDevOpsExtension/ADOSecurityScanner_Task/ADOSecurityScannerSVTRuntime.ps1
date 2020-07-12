@@ -124,7 +124,7 @@ try {
 	Set-AzSKPrivacyNoticeResponse -AcceptPrivacyNotice "yes"
 	Set-AzSKMonitoringSettings -Source "CICD"
 
-	# Fetch Organization name if default system variable is used
+	# Fetch Organization name if default system variable is used. (scan will be performed for this organisation)
 	If ($OrgName -match "https://")
 	{ 
 		$Uri = $OrgName.Substring(0,$OrgName.Length-1)
@@ -263,6 +263,8 @@ try {
 		$scanCommand += " -UPC "
 		$CollectionUri = $CollectionUri.Substring(0,$CollectionUri.Length-1)
 		$TaskOrg = $CollectionUri -replace '.*\/'
+		# Org where pipeline is created.
+		if ($TaskOrg -match ".visualstudio.com"){ $TaskOrg= $TaskOrg -replace '.visualstudio.com','' }
 		if($env:BUILD_BUILDID){ $JobId = "ResourceTrackerFile_Build_" + $JobId }
 		else { $JobId = "ResourceTrackerFile_Release_" + $JobId	}
 		
