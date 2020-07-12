@@ -54,7 +54,7 @@ class AutoBugLog {
                         $hash = $this.GetHashedTag($control.ControlItem.Id, $control.ResourceContext.ResourceId)
                         #check if a bug with the computed hash exists
                         $workItem = $this.GetWorkItemByHash($hash, $ProjectName)
-                        if ($workItem[0].results.count -eq 1) {
+                        if ($workItem[0].results.count -gt 0) {
                             #a work item with the hash exists, find if it's state and reactivate if resolved bug
                             $this.ManageActiveAndResolvedBugs($ProjectName, $control, $workItem, $AssignedTo)
                         }
@@ -353,8 +353,8 @@ class AutoBugLog {
     hidden [void] ManageActiveAndResolvedBugs([string]$ProjectName, [SVTEventContext[]] $control, [object] $workItem, [string] $AssignedTo) {
 		
 		
-        $state = ($workItem[0].results.values.fields | where { $_.name -eq "State" })
-        $id = ($workItem[0].results.values.fields | where { $_.name -eq "ID" }).value
+        $state = ($workItem[0].results.values[0].fields | where { $_.name -eq "State" })
+        $id = ($workItem[0].results.values[0].fields | where { $_.name -eq "ID" }).value
 
         #bug url that redirects user to bug logged in ADO, this is not available via the API response and thus has to be created via the ID of bug
         $bugUrl = "https://{0}.visualstudio.com/{1}/_workitems/edit/{2}" -f $($this.SubscriptionContext.SubscriptionName), $ProjectName , $id
@@ -379,7 +379,7 @@ class AutoBugLog {
                     $body[2].value = "";
                     $body = $body | ConvertTo-Json
                     try {
-                        $responseObj = Invoke-RestMethod -Uri $url -Method Post -ContentType "application/json-patch+json ; charset=utf-8" -Headers $header -Body $body
+                        $responseObj = Invoke-RestMethod -Uri $url -Method Patch -ContentType "application/json-patch+json ; charset=utf-8" -Headers $header -Body $body
                         $bugUrl = "https://{0}.visualstudio.com/_workitems/edit/{1}" -f $($this.SubscriptionContext.SubscriptionName), $responseObj.id
                         Write-Host "Reactivated an active bug" -ForegroundColor Green
                     }

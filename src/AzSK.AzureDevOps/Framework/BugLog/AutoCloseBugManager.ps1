@@ -18,7 +18,7 @@ class AutoCloseBugManager {
         #flag to check number of current keywords in the tag
         $QueryKeyWordCount = 0;
         #maximum no of keywords that need to be checked per batch     
-        $MaxKeyWordsToQuery = $this.ControlSettings.BugLoggin.MaxKeyWordsToQueryForBugClose;
+        $MaxKeyWordsToQuery = $this.ControlSettings.BugLogging.MaxKeyWordsToQueryForBugClose;
         #all passing control results go here
         $PassedControlResults = @();
 
@@ -119,7 +119,9 @@ class AutoCloseBugManager {
 		
         $url = "https://{0}.almsearch.visualstudio.com/_apis/search/workItemQueryResults?api-version=5.1-preview" -f $this.subscriptionContext.SubscriptionName
 
-        $body = "{'searchText':'{0}','skipResults':0,'takeResults':$($this.ControlSettings.BugLoggin.MaxKeyWordsToQueryForBugClose),'sortOptions':[],'summarizedHitCountsNeeded':true,'searchFilters':{'Projects':[],'Work Item Types':['Bug'],'States':['Active','New','Resolved']},'filters':[],'includeSuggestions':false}" | ConvertFrom-Json
+        #take results have been doubled, as their might be chances for a bug to be logged more than once, if the tag id is copied.
+        #in this case we want all the instances of this bug to be closed
+        $body = "{'searchText':'{0}','skipResults':0,'takeResults':$(($this.ControlSettings.BugLogging.MaxKeyWordsToQueryForBugClose)*2),'sortOptions':[],'summarizedHitCountsNeeded':true,'searchFilters':{'Projects':[],'Work Item Types':['Bug'],'States':['Active','New','Resolved']},'filters':[],'includeSuggestions':false}" | ConvertFrom-Json
   
         $body.searchText = $hash
     

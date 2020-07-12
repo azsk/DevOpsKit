@@ -22,7 +22,7 @@ class BugLogPathManager {
             #check if area and iteration path have been provided as a parameter in control scan
             if (![BugLogPathManager]::AreaPath) {
                 #if no parameter is passed, check in org policy
-                if ($ControlSettingsBugLogAreaPath -eq "RootProjectPath") {
+                if ($ControlSettingsBugLogAreaPath -eq "RootDefaultProject") {
                     #if path specified as RootProjectPath consider the project name as the area path
                     [BugLogPathManager]::AreaPath = $ProjectName
                 }
@@ -31,7 +31,7 @@ class BugLogPathManager {
                 }
             }
             if (![BugLogPathManager]::IterationPath) {
-                if ($ControlSettingsBugLogIterationPath -eq "RootProjectPath") {
+                if ($ControlSettingsBugLogIterationPath -eq "RootDefaultProject") {
                     [BugLogPathManager]::IterationPath = $ProjectName
                 }
                 else {
