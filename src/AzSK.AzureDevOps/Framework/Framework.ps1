@@ -21,7 +21,8 @@ Add-Type -Path "$libraryPath\Microsoft.IdentityModel.Clients.ActiveDirectory.dll
 . $FrameworkPath\Abstracts\EventBase.ps1
 . $FrameworkPath\Helpers\JsonHelper.ps1
 . $FrameworkPath\Helpers\Helpers.ps1
-. $PSScriptRoot\Helpers\ContextHelper.ps1  
+. $PSScriptRoot\Helpers\ContextHelper.ps1
+. $PSScriptRoot\Helpers\AdministratorHelper.ps1
 #Helpers (independent of models)
 
 . $FrameworkPath\Helpers\ConfigurationHelper.ps1
