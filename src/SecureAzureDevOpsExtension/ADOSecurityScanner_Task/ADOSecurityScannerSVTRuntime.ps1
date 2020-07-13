@@ -29,7 +29,7 @@ $extensionName = "ADOSecurityScanner"
 $publisherName = "azsdktm"
 $AzSKModuleName = Get-VstsTaskVariable -Name ModuleName
 $AzSKExtendedCommand = Get-VstsTaskVariable -Name "ExtendedCommand"
-$AzSKPartialCommit = Get-VstsTaskVariable -Name "UsePartialCommit"
+$AzSKPartialCommit = Get-VstsTaskVariable -Name "UsePartialCommits"
 $CollectionUri = Get-VstsTaskVariable -Name System.CollectionUri
 
 $AllowLongRunningScan = Get-VstsTaskVariable -Name AllowLongRunningScan;
