@@ -14,6 +14,9 @@ $EnableLAWSLoggingVal = Get-VstsInput -Name EnableOMSLogging
 $LAWSSharedKeyVal = Get-VstsTaskVariable -Name "LAWSSharedKey" -ErrorAction SilentlyContinue
 $LAWSIdVal = Get-VstsTaskVariable -Name "LAWSId" -ErrorAction SilentlyContinue
 
+$AltLAWSSharedKey = Get-VstsTaskVariable -Name "AltLAWSSharedKey" -ErrorAction SilentlyContinue
+$AltLAWSId = Get-VstsTaskVariable -Name "AltLAWSId" -ErrorAction SilentlyContinue
+
 $PreviewBaseLine = Get-VstsTaskVariable -Name -UPBC
 $Severity = Get-VstsTaskVariable -Name Severity
 $MaxObject = Get-VstsTaskVariable -Name -mo
@@ -28,6 +31,8 @@ $AzSKModuleName = Get-VstsTaskVariable -Name ModuleName
 $AzSKExtendedCommand = Get-VstsTaskVariable -Name "ExtendedCommand"
 $AzSKPartialCommit = Get-VstsTaskVariable -Name "UsePartialCommit"
 $CollectionUri = Get-VstsTaskVariable -Name System.CollectionUri
+
+$AllowLongRunningScan = Get-VstsTaskVariable -Name AllowLongRunningScan;
 
 if(!$ResourceTypeName)
 {
@@ -148,11 +153,27 @@ try {
 			$LAWSSharedKeyVal = Get-VstsTaskVariable -Name "OMSSharedKey"
 			$LAWSSharedKeyVal = $LAWSSharedKeyVal.Trim();
 		}
+		if([string]::IsNullOrWhiteSpace($AltLAWSId))
+		{
+			$AltLAWSId = Get-VstsTaskVariable -Name "AltOMSWorkspaceId"
+			$AltLAWSId = $AltLAWSId.Trim();
+		}
+		if([string]::IsNullOrWhiteSpace($AltLAWSSharedKey))
+		{
+			$AltLAWSSharedKey = Get-VstsTaskVariable -Name "AltOMSSharedKey"
+			$AltLAWSSharedKey = $AltLAWSSharedKey.Trim();
+		}
 
         if(-not [string]::IsNullOrWhiteSpace($LAWSIdVal) -and -not [string]::IsNullOrWhiteSpace($LAWSSharedKeyVal))
         {
-            Write-Host "Setting up Log Analytics workspace configuration..." -ForegroundColor Yellow
-			Set-AzSKOMSSettings -OMSSharedKey $LAWSSharedKeyVal -OMSWorkspaceID $LAWSIdVal -Source "CICD"
+			Write-Host "Setting up Log Analytics workspace configuration..." -ForegroundColor Yellow
+			if(-not [string]::IsNullOrWhiteSpace($AltLAWSId) -and -not [string]::IsNullOrWhiteSpace($AltLAWSSharedKey))
+            {
+				Set-AzSKOMSSettings -OMSSharedKey $LAWSSharedKeyVal -OMSWorkspaceID $LAWSIdVal -AltLAWSSharedKey $AltLAWSSharedKey -AltLAWSId $AltLAWSId -Source "CICD"
+			}
+			else {
+				Set-AzSKOMSSettings -OMSSharedKey $LAWSSharedKeyVal -OMSWorkspaceID $LAWSIdVal -Source "CICD"
+			}
 			
 			#clear session state
 	        Clear-AzSKSessionState
@@ -257,6 +278,10 @@ try {
 	{
 		$scanCommand += "-Severity ""$Severity"" ";
 	}
+	if(-not [string]::IsNullOrEmpty($AllowLongRunningScan))
+	{
+		$scanCommand += " -AllowLongRunningScan ";
+	}
 
 	if ($AzSKPartialCommit -eq $true)
 	{
@@ -320,7 +345,9 @@ try {
 	}
 	else
 	{
+		Write-Host "Could not perform ADO Security SVTs scan. Please check if task configurations are correct. Please download the log from pipeline and check for details." 
 		Write-Host "##vso[task.logissue type=error;]Could not perform ADO Security SVTs scan. Please check if task configurations are correct." 
+		throw
 	}
 }
 finally
