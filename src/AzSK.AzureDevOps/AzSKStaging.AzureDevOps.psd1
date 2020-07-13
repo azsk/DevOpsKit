@@ -48,7 +48,11 @@
     ProcessorArchitecture  = 'None'
 
     # Modules that must be imported into the global environment prior to importing this module
-    RequiredModules        = @()
+    RequiredModules        = @(
+        @{ModuleName = 'Az.Accounts'; RequiredVersion = '1.7.1'}
+        @{ModuleName = 'Az.OperationalInsights'; RequiredVersion = '1.3.4'}
+        @{ModuleName = 'Az.Resources'; RequiredVersion = '1.10.0'}
+        )
 
     # Assemblies that must be loaded prior to importing this module
     RequiredAssemblies = @('.\Lib\Newtonsoft.Json.dll','.\Lib\Microsoft.ApplicationInsights.dll','.\Lib\Microsoft.IdentityModel.Clients.ActiveDirectory.dll')
