@@ -262,7 +262,7 @@ class PartialScanManager
 				ResourceMapTable = $resourceIdMap;
 			}
 
-			if ($this.ScanPendingForResources -ne $null){
+			if ($this.ScanPendingForResources -ne $null -and $this.scanSource -eq "CICD"){
                 $this.ResourceScanTrackerObj = [PartialScanResourceMap]@{
 				    Id = $this.ScanPendingForResources.Id;
 				    CreatedDate = $this.ScanPendingForResources.CreatedDate;
