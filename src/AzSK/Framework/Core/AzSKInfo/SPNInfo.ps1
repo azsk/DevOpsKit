@@ -25,13 +25,13 @@ class SPNInfo: CommandBase
 			if($null -ne $ownedSPNDetails -and ($ownedSPNDetails | Measure-Object).Count -gt 0)
 			{
 				#Filter OwnedSPN start with AzSK_CA
-				$ownedSPNs = $ownedSPNDetails | Where-Object { $_.displayName -like "AzSK_CA*"}
+				$ownedSPNs += $ownedSPNDetails | Where-Object { $_.displayName -like "AzSK_CA*"}
 			}
 			
 			if($null -ne $ownedSPNs -and ($ownedSPNs | Measure-Object).Count -gt 0)
 			{
 				#Get SPNsResponse which contain list of used SPNs
-				$SPNsResponse = [RemoteApiHelper]::FetchUsedSPNList($ownedSPNs.appId);
+				$SPNsResponse = [RemoteApiHelper]::FetchUsedSPNList(@($ownedSPNs.appId));
 				#Convert SPNsResponse into usedSPNs, which contain list of CA used SPNs (active SPNs)
 				if(($null -ne $SPNsResponse) -and ($SPNsResponse -ne "ERROR") -and ( ($SPNsResponse | Get-Member StatusCode) -and  $SPNsResponse.StatusCode -eq 202))
 				{
