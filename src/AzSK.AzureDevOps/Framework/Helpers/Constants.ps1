@@ -111,7 +111,7 @@ class Constants
 	static [string] $ARMManagementUri = "https://management.azure.com/";	
 	static [string] $VersionCheckMessage = "A newer version of AzSK.AzureDevOps is available: Version {0} `r`nTo update, run the command below in a fresh PS window:`r`n" ;
 	static [string] $VersionWarningMessage = ("Using the latest version ensures that AzSK.AzureDevOps security commands you run use the latest, most up-to-date controls. `r`nResults from the current version should not be considered towards compliance requirements.`r`n" + [Constants]::DoubleDashLine);
-	static [string] $UsageTelemetryKey = "cf4c5e1a-d68d-4ea1-9901-37b67f58a192";
+	static [string] $UsageTelemetryKey = "59545085-0620-4106-a7bb-13ee2f5eb7a0";
 	static [string] $AzSKRGLocation = "eastus2";
 	static [string] $LAWSRequestURI = "https://management.azure.com/{0}?api-version=2015-03-20";
 	static [string] $NewStorageSku = "Standard_LRS";
