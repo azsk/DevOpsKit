@@ -22,13 +22,13 @@ class SPNInfo: CommandBase
 		try
 		{
 			#Get SPNs start with AzSK_CA
-			if($null -ne $ownedSPNDetails)
+			if($null -ne $ownedSPNDetails -and ($ownedSPNDetails | Measure-Object).Count -gt 0)
 			{
 				#Filter OwnedSPN start with AzSK_CA
 				$ownedSPNs = $ownedSPNDetails | Where-Object { $_.displayName -like "AzSK_CA*"}
 			}
 			
-			if($null -ne $ownedSPNs -and ($ownedSPNs | Measure-Object).Count -ne 0)
+			if($null -ne $ownedSPNs -and ($ownedSPNs | Measure-Object).Count -gt 0)
 			{
 				#Get SPNsResponse which contain list of used SPNs
 				$SPNsResponse = [RemoteApiHelper]::FetchUsedSPNList($ownedSPNs.appId);
@@ -67,7 +67,7 @@ class SPNInfo: CommandBase
 					}
 					else
 					{
-						$this.PublishCustomMessage($($usedSPNs | Format-Table @{Label = "ApplicationId"; Expression = { $_.appId } }, @{Label = "ApplicationDisplayName"; Expression = { $_.displayName } },@{Label = "SubscriptionId"; Expression = { $_.subscriptionId }},@{Label = "SubscriptionName"; Expression = { $_.subscriptionName } } -AutoSize -Wrap | Out-String), [MessageType]::Default)
+						$this.PublishCustomMessage($($usedSPNs | Format-Table @{Label = "ApplicationId"; Expression = { $_.appId } }, @{Label = "DisplayName"; Expression = { $_.displayName } },@{Label = "SubscriptionId"; Expression = { $_.subscriptionId }},@{Label = "SubscriptionName"; Expression = { $_.subscriptionName } } -AutoSize -Wrap | Out-String), [MessageType]::Default)
 						#Adding blank line
 						write-host ""
 					}
@@ -77,7 +77,7 @@ class SPNInfo: CommandBase
 					$this.PublishCustomMessage("`r`nSPN(s) owned by you which have not been used by CA in last 7 days:`r`n",[MessageType]::Default)
 					#Adding blank line
 					write-host ""
-					$this.PublishCustomMessage($($NotInUsedSPNs | Format-Table @{Label = "ApplicationId"; Expression = { $_.appId }},@{Label = "ApplicationDisplayName"; Expression = { $_.displayName } } -AutoSize | Out-String), [MessageType]::Default);
+					$this.PublishCustomMessage($($NotInUsedSPNs | Format-Table @{Label = "ApplicationId"; Expression = { $_.appId }},@{Label = "DisplayName"; Expression = { $_.displayName } } -AutoSize | Out-String), [MessageType]::Default);
 				}
 				else
 				{
@@ -87,7 +87,7 @@ class SPNInfo: CommandBase
 			}
 			else
 			{
-				$this.PublishCustomMessage("`r`nCurrently there is no SPN owned by you, which is being used by CA.`r`n" + [Constants]::SingleDashLine, [MessageType]::Default)
+				$this.PublishCustomMessage("`r`nCurrently there is no SPN owned by you, which is being used by CA.", [MessageType]::Warning);
 			}
 		}
 		catch
@@ -119,15 +119,19 @@ class SPNInfo: CommandBase
 			
             # @odata.nextLink handled in the web request
             $responseContent = [WebRequestHelper]::InvokeWebRequest([Microsoft.PowerShell.Commands.WebRequestMethod]::Get, $uri, $headers, $null, [string]::Empty, @{})
-			$ownedSPNDetails = $responseContent | Where-Object { $filterOwnedObjectsType -contains $_."@odata.type"} | Select-Object -Property displayName,appId -Unique 
-    		return @($ownedSPNDetails);
+			#Check if no owned SPN found 
+			if(($null -ne $responseContent) -and ($responseContent | get-member -Name "@odata.type") -and ($responseContent."@odata.type"))
+			{
+				$ownedSPNDetails = $responseContent | Where-Object { $filterOwnedObjectsType -contains $_."@odata.type"} | Select-Object -Property displayName,appId -Unique 
+    		}
 			
         }
         catch 
         {	
 			# Exception get handle in base class
             throw $_
-        }
+		}
+		return @($ownedSPNDetails)
 	} 
 
 }
