@@ -76,7 +76,7 @@ class AutoBugLog {
                             $Description = $Description.Replace("{4}", $control.ResourceContext.ResourceTypeName)
                             $Description = $Description.Replace("{5}", $control.ResourceContext.ResourceName)
                             $Description = $Description.Replace("{6}", $control.ControlResults[0].VerificationResult)
-                            $RunStepsForControl = " </br></br> <b>Control Scan Command</b> Run  {0}"
+                            $RunStepsForControl = " </br></br> <b>Control Scan Command:</b> Run:  {0}"
                             $RunStepsForControl = $RunStepsForControl.Replace("{0}", $this.GetControlReproStep($control))
                             $Description+=$RunStepsForControl
 				
@@ -201,7 +201,7 @@ class AutoBugLog {
                 $Project = $this.ControlStateExt.GetProject()
                 #user is a PCA member but the project has not been set for org control failures
                 if (!$Project) { 
-                    Write-Host "`nNo project defined to store bugs for organization-specific controls." -ForegroundColor Red
+                    Write-Host "`nNo project defined to log bugs for organization-specific controls." -ForegroundColor Red
                     Write-Host "Use the '-AttestationHostProjectName' parameter with this command to configure the project that will host bug logging details for organization level controls.`nRun 'Get-Help -Name Get-AzSKAzureDevOpsSecurityStatus -Full' for more info." -ForegroundColor Yellow
                     return $null
                 }
@@ -364,10 +364,11 @@ class AutoBugLog {
         #bug url that redirects user to bug logged in ADO, this is not available via the API response and thus has to be created via the ID of bug
         $bugUrl = "https://{0}.visualstudio.com/{1}/_workitems/edit/{2}" -f $($this.SubscriptionContext.SubscriptionName), $ProjectName , $id
 
-        #whether the bug is active or resolved, we have to ensure the state of the bug remains active after this function  
+        #TODO : whether the bug is active or resolved, we have to ensure the state of the bug remains active after this function  
         #if a PCA assigns this to a non PCA, the control can never be fixed for org/project controls. to tackle this, reassign it to the original owner PCA
         #do this for both active and resolved bugs, as we need it to be assigned to the actual person who can fix this control
-            $url = "https://dev.azure.com/{0}/{1}/_apis/wit/workitems/{2}?api-version=5.1" -f $($this.SubscriptionContext.SubscriptionName), $ProjectName, $id
+        #for other control results, we need not changed the assignee
+        <#    $url = "https://dev.azure.com/{0}/{1}/_apis/wit/workitems/{2}?api-version=5.1" -f $($this.SubscriptionContext.SubscriptionName), $ProjectName, $id
             $BugTemplate = [ConfigurationManager]::LoadServerConfigFile("TemplateForResolvedBug.json")
             $BugTemplate = $BugTemplate | ConvertTo-Json -Depth 10 
             $BugTemplate=$BugTemplate.Replace("{0}",$AssignedTo)           
@@ -404,6 +405,44 @@ class AutoBugLog {
         #if the bug state was initially active
         else {
             $control.ControlResults.AddMessage("Active Bug", $bugUrl)
+        }#>
+
+
+        #change the assignee for resolved bugs only
+        if ($state.value -eq "Resolved") {
+            $url = "https://dev.azure.com/{0}/{1}/_apis/wit/workitems/{2}?api-version=5.1" -f $($this.SubscriptionContext.SubscriptionName), $ProjectName, $id
+            $BugTemplate = [ConfigurationManager]::LoadServerConfigFile("TemplateForResolvedBug.json")
+            $BugTemplate = $BugTemplate | ConvertTo-Json -Depth 10 
+            $BugTemplate=$BugTemplate.Replace("{0}",$AssignedTo)           
+            $header = [WebRequestHelper]::GetAuthHeaderFromUriPatch($url)                
+            try {
+                #TODO: shift all this as a patch request in webrequesthelper class and manage accented characters as well
+                $responseObj = Invoke-RestMethod -Uri $url -Method Patch  -ContentType "application/json-patch+json ; charset=utf-8" -Headers $header -Body $BugTemplate
+                $control.ControlResults.AddMessage("Resolved Bug", $bugUrl)
+            }
+            catch {
+                #if the user to whom the bug has been assigneed is not a member of org any more
+                if ($_.ErrorDetails.Message -like '*System.AssignedTo*') {
+                    $body = $BugTemplate | ConvertFrom-Json
+                    #let it remain assigned
+                    $body[2].value = "";
+                    $body = $body | ConvertTo-Json
+                    try {
+                        $responseObj = Invoke-RestMethod -Uri $url -Method Patch -ContentType "application/json-patch+json ; charset=utf-8" -Headers $header -Body $body
+                        $control.ControlResults.AddMessage("Resolved Bug", $bugUrl)
+                    }
+                    catch {
+                        Write-Host "Could not reactivate the bug" -ForegroundColor Red
+                    }
+                }
+                else {
+                    Write-Host "Could not reactivate the bug" -ForegroundColor Red
+
+                }
+            }
+        }
+        else{
+            $control.ControlResults.AddMessage("Active Bug", $bugUrl)
         }
     
     }
@@ -413,6 +452,7 @@ class AutoBugLog {
 		
         $url = "https://{0}.almsearch.visualstudio.com/{1}/_apis/search/workItemQueryResults?api-version=5.1-preview" -f $($this.SubscriptionContext.SubscriptionName), $ProjectName;
 
+        #TODO: validate set to allow only two values : ReactiveOldBug and CreateNewBug
         #check for ResolvedBugBehaviour in control settings
         if ($this.ControlSettings.BugLogging.ResolvedBugLogBehaviour -ne "ReactiveOldBug") {
             #new bug is to be logged for every resolved bug, hence search for only new/active bug

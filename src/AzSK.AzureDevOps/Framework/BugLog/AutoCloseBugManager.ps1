@@ -17,23 +17,38 @@ class AutoCloseBugManager {
         $TagSearchKeyword = ""
         #flag to check number of current keywords in the tag
         $QueryKeyWordCount = 0;
-        #maximum no of keywords that need to be checked per batch     
-        $MaxKeyWordsToQuery = $this.ControlSettings.BugLogging.MaxKeyWordsToQueryForBugClose;
+        #maximum no of keywords that need to be checked per batch
+        $MaxKeyWordsToQuery=0;    
         #all passing control results go here
         $PassedControlResults = @();
+        $autoCloseOrgBugFlag=$true
+        $autoCloseProjBugFlag=$true;
+
+        
+
+        try {
+            $MaxKeyWordsToQuery = $this.ControlSettings.BugLogging.MaxKeyWordsToQueryForBugClose;
+            $autoCloseOrgBugFlag=$this.ControlSettings.BugLogging.AutoCloseOrgBug
+            $autoCloseProjBugFlag=$this.ControlSettings.BugLogging.AutoCloseProjectBug
+        }
+        catch {
+            $MaxKeyWordsToQuery=100
+            $autoCloseOrgBugFlag=$true
+            $autoCloseProjBugFlag=$true;
+        }
 
         #collect all passed control results
         $ControlResults | ForEach-Object {
             if ($_.ControlResults[0].VerificationResult -eq "Passed") {
                 #to check if org level bugs should be auto closed based on control settings
                 if($_.FeatureName -eq "Organization"){
-                    if($this.ControlSettings.BugLogging.AutoCloseOrgBug){
+                    if($autoCloseOrgBugFlag -eq $true){
                         $PassedControlResults += $_
                     }
                 }
                 #to check if proj level bugs should be auto closed based on control settings
                 elseif($_.FeatureName -eq "Project"){
-                    if($this.ControlSettings.BugLogging.AutoCloseProjectBug){
+                    if($autoCloseProjBugFlag -eq $true){
                         $PassedControlResults += $_
                     }
                 }
@@ -65,7 +80,7 @@ class AutoCloseBugManager {
                 if ($QueryKeyWordCount -eq $PassedControlResultsLength) {
                     #to remove OR from the last tag keyword. Ex: Tags: Tag1 OR Tags: Tag2 OR. Remove the last OR from this keyword
                     $TagSearchKeyword = $TagSearchKeyword.Substring(0, $TagSearchKeyword.length - 3)
-                    $response = $this.GetWorkItemByHash($TagSearchKeyword)
+                    $response = $this.GetWorkItemByHash($TagSearchKeyword,$MaxKeyWordsToQuery)
                     #if bug was present
                     if ($response[0].results.count -gt 0) {
                         $response.results.values | ForEach-Object {
@@ -129,13 +144,12 @@ class AutoCloseBugManager {
     }
 
     #function to retrieve all new/active/resolved bugs 
-    hidden [object] GetWorkItemByHash([string] $hash) {
-		
+    hidden [object] GetWorkItemByHash([string] $hash,[int] $MaxKeyWordsToQuery) {
         $url = "https://{0}.almsearch.visualstudio.com/_apis/search/workItemQueryResults?api-version=5.1-preview" -f $this.subscriptionContext.SubscriptionName
 
         #take results have been doubled, as their might be chances for a bug to be logged more than once, if the tag id is copied.
         #in this case we want all the instances of this bug to be closed
-        $body = "{'searchText':'{0}','skipResults':0,'takeResults':$(($this.ControlSettings.BugLogging.MaxKeyWordsToQueryForBugClose)*2),'sortOptions':[],'summarizedHitCountsNeeded':true,'searchFilters':{'Projects':[],'Work Item Types':['Bug'],'States':['Active','New','Resolved']},'filters':[],'includeSuggestions':false}" | ConvertFrom-Json
+        $body = "{'searchText':'{0}','skipResults':0,'takeResults':$(($MaxKeyWordsToQuery)*2),'sortOptions':[],'summarizedHitCountsNeeded':true,'searchFilters':{'Projects':[],'Work Item Types':['Bug'],'States':['Active','New','Resolved']},'filters':[],'includeSuggestions':false}" | ConvertFrom-Json
   
         $body.searchText = $hash
     
