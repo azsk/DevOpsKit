@@ -69,13 +69,15 @@ class ComplianceInfo: AzCommandBase {
         $settingStoreComplianceSummaryInUserSubscriptions = [ConfigurationManager]::GetAzSKSettings().StoreComplianceSummaryInUserSubscriptions;
         #return if feature is turned off at server config
         if (-not $azskConfig.StoreComplianceSummaryInUserSubscriptions -and -not $settingStoreComplianceSummaryInUserSubscriptions) {
-            $this.PublishCustomMessage("NOTE: This feature is currently disabled in your environment. Please contact the cloud security team for your org. ", [MessageType]::Warning);	
+            $this.PublishCustomMessage("Note: This feature is currently disabled for your environment. Please contact the cloud security team for your org.", [MessageType]::Warning);	
+            $this.DoNotOpenOutputFolder = $true;
             return;
         }
         # if IsLocalComplianceStoreEnabled is false, return message indicating Compliance state table caching is disabled by default	
         if(!$this.IsLocalComplianceStoreEnabled)
         {
-            $this.PublishCustomMessage([Constants]::ComplianceInfoCachingDisabled, [MessageType]::Warning);	
+            $this.PublishCustomMessage([Constants]::ComplianceInfoCachingDisabled, [MessageType]::Warning);
+            $this.DoNotOpenOutputFolder = $true;	
             return;
         }
         $this.PublishCustomMessage([Constants]::DoubleDashLine, [MessageType]::Default);
