@@ -177,7 +177,13 @@ try {
 			
 			#clear session state
 	        Clear-AzSKSessionState
-        }
+		}
+		elseif (-not [string]::IsNullOrWhiteSpace($AltLAWSId) -and -not [string]::IsNullOrWhiteSpace($AltLAWSSharedKey)) {
+			Write-Host "Setting up Log Analytics workspace configuration..." -ForegroundColor Yellow
+			Set-AzSKOMSSettings -AltLAWSSharedKey $AltLAWSSharedKey -AltLAWSId $AltLAWSId -Source "CICD"
+			#clear session state
+			Clear-AzSKSessionState
+		}
         else {
             Write-Host "Log Analytics workspace configuration is missing. Check variables..." -ForegroundColor Yellow
         }        
@@ -278,7 +284,7 @@ try {
 	{
 		$scanCommand += "-Severity ""$Severity"" ";
 	}
-	if(-not [string]::IsNullOrEmpty($AllowLongRunningScan))
+	if($AllowLongRunningScan -eq $true)
 	{
 		$scanCommand += " -AllowLongRunningScan ";
 	}
@@ -345,7 +351,7 @@ try {
 	}
 	else
 	{
-		Write-Host "Could not perform ADO Security SVTs scan. Please check if task configurations are correct. Please download the log from pipeline and check for details." 
+		Write-Host "Could not perform ADO Security SVTs scan. Please check if task configurations are correct. Please download the log from pipeline and check for details." -ForegroundColor Yellow
 		Write-Host "##vso[task.logissue type=error;]Could not perform ADO Security SVTs scan. Please check if task configurations are correct." 
 		throw
 	}
