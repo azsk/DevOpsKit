@@ -1,0 +1,19 @@
+[
+    {
+        "op": "add",
+        "path": "/fields/System.State",
+        "from": null,
+        "value": "Active"
+    },
+    {
+        "op": "add",
+        "path": "/fields/Microsoft.VSTS.Common.ResolvedReason",
+        "value": ""
+    },
+    {
+        "op": "add",
+        "path": "/fields/System.AssignedTo",
+        "from": null,
+        "value": "{0}"
+    }
+]

@@ -1,0 +1,13 @@
+[
+    {
+        "op": "add",
+        "path": "/fields/System.State",
+        "from": null,
+        "value": "Closed"
+    },
+    {
+        "op": "add",
+        "path": "/fields/Microsoft.VSTS.Common.ResolvedReason",
+        "value": ""
+    }
+]

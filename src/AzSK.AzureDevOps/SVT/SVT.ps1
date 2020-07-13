@@ -157,10 +157,27 @@ function Get-AzSKAzureDevOpsSecurityStatus
 		[Alias("atp")]
 		$AttestationHostProjectName,
 
+
+		[ValidateSet("All","BaselineControls","PreviewBaselineControls")]
+		[Parameter(Mandatory = $false)]
+		[Alias("abl")]		
+		[string] $AutoBugLog="All",		
+
+		[string]
+		[Parameter(Mandatory=$false)]
+		[Alias("apt")]
+		$AreaPath,
+
+		[string]
+		[Parameter(Mandatory=$false)]
+		[Alias("ipt")]
+		$IterationPath,
+
 		[switch]
 		[Parameter(HelpMessage="Allow long running scan.")]
 		[Alias("als")]
 		$AllowLongRunningScan
+
 
 
 	)
@@ -307,10 +324,29 @@ function Get-AzSKAzureDevOpsOrgSecurityStatus
 		[Alias("aex")]
 		$AddException,
 
+
+		[ValidateSet("All","BaselineControls","PreviewBaselineControls")]
+		[Parameter(Mandatory = $false)]
+		[Alias("abl")]
+		$AutoBugLog,
+
+		
+
+		[string]
+		[Parameter(Mandatory=$false)]
+		[Alias("arp")]
+		$AreaPath,
+
+		[string]
+		[Parameter(Mandatory=$false)]
+		[Alias("itp")]
+		$IterationPath,
+
 		[switch]
 		[Parameter(HelpMessage = "Allow long running scan.")]
 		[Alias("als")]
 		$AllowLongRunningScan
+
 
 	)
 	Begin
@@ -461,10 +497,29 @@ function Get-AzSKAzureDevOpsProjectSecurityStatus
 		[Alias("aex")]
 		$AddException,
 
+
+		[ValidateSet("All","BaselineControls","PreviewBaselineControls")]
+		[Parameter(Mandatory = $false)]
+		[Alias("abl")]
+		$AutoBugLog,
+
+		
+
+		[string]
+		[Parameter(Mandatory=$false)]
+		[Alias("arp")]
+		$AreaPath,
+
+		[string]
+		[Parameter(Mandatory=$false)]
+		[Alias("itp")]
+		$IterationPath,
+
 		[switch]
 		[Parameter(HelpMessage="Allow long running scan.")]
 		[Alias("als")]
 		$AllowLongRunningScan
+
 
 	)
 	Begin
@@ -594,6 +649,24 @@ function Get-AzSKAzureDevOpsBuildSecurityStatus
 		[Alias("dnof")]
 		$DoNotOpenOutputFolder,
 
+
+		[ValidateSet("All","BaselineControls","PreviewBaselineControls")]
+		[Parameter(Mandatory = $false)]
+		[Alias("abl")]
+		$AutoBugLog,
+
+		
+
+		[string]
+		[Parameter(Mandatory=$false)]
+		[Alias("arp")]
+		$AreaPath,
+
+		[string]
+		[Parameter(Mandatory=$false)]
+		[Alias("itp")]
+		$IterationPath,
+
 		[switch]
 		[Parameter(HelpMessage="Allow long running scan.")]
 		[Alias("als")]
@@ -722,10 +795,29 @@ function Get-AzSKAzureDevOpsReleaseSecurityStatus
 		[Alias("dnof")]
 		$DoNotOpenOutputFolder,
 
+
+		[ValidateSet("All","BaselineControls","PreviewBaselineControls")]
+		[Parameter(Mandatory = $false)]
+		[Alias("abl")]
+		$AutoBugLog,
+
+		
+
+		[string]
+		[Parameter(Mandatory=$false)]
+		[Alias("arp")]
+		$AreaPath,
+
+		[string]
+		[Parameter(Mandatory=$false)]
+		[Alias("itp")]
+		$IterationPath,
+
 		[switch]
 		[Parameter(HelpMessage="Allow long running scan.")]
 		[Alias("als")]
 		$AllowLongRunningScan
+
 
 
 	)

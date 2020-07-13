@@ -1,7 +1,6 @@
 class ADOSVTBase: SVTBase {
 
 	hidden [ControlStateExtension] $ControlStateExt;
-
 	ADOSVTBase() {
 
 	}
@@ -91,13 +90,15 @@ class ADOSVTBase: SVTBase {
 					$resourceType = $this.ResourceContext.ResourceTypeName
 				}
 				#Fetch control state for organization only if project is configured for org spesific control attestation (Check for Organization only, for other resource go inside without project check).
+
 				if($resourceType -ne "Organization" -or $this.ControlStateExt.GetProject())
 				{
 				$resourceStates = $this.ControlStateExt.GetControlState($this.ResourceId, $resourceType, $this.ResourceContext.ResourceName, $this.ResourceContext.ResourceGroupName, $isRescan)
 				if ($null -ne $resourceStates) {
 					$this.ResourceState += $resourceStates
+
 				}
-			    }
+			}
 				else {
 					return $null;
 				}				
@@ -449,5 +450,20 @@ class ADOSVTBase: SVTBase {
 		}
 		
 		$this.UpdateControlStates($ControlResults);
+
+		$BugLogParameterValue =$this.InvocationContext.BoundParameters["AutoBugLog"]
+		#perform bug logging after control scans for the current resource
+		if ($BugLogParameterValue) {
+			$this.BugLoggingPostEvaluation($ControlResults,$BugLogParameterValue)
+		}
 	}
+	
+	#function to call AutoBugLog class for performing bug logging
+	hidden [void] BugLoggingPostEvaluation([SVTEventContext []] $ControlResults,[string] $BugLogParameterValue){
+		$AutoBugLog=[AutoBugLog]::new($this.SubscriptionContext,$this.InvocationContext,$ControlResults,$this.ControlStateExt);
+		$AutoBugLog.LogBugInADO($ControlResults,$BugLogParameterValue)
+
+	}
+
+	
 }

@@ -15,6 +15,12 @@ class Constants
 "        d) If the control status says 'Manual', it means that AzSK.AzureDevOps (currently) does not cover the control via automation OR AzSK.AzureDevOps is not able to fetch the data. You need to manually implement/verify it.`r`n" +
 "`r`nNote: The 'Recommendation' column in the CSV file provides basic (generic) guidance that can help you fix a failed control. You can also use standard Azure product documentation. You should carefully consider the implications of making the required change in the context of your application. `r`n"
 
+	static [string] $BugLogMsg="** Bugs have been logged as per below: ** `r`n"+
+"	a) New bugs have been logged for fresh control failures.`r`n"+
+"	b) For control failures for which bugs were already present, the respective bugs have been marked 'Active' `r`n"
+
+
+
     static [string] $RemediationMsgForARMChekcer = "** Next steps **`r`n" + 
 "Look at the individual control evaluation status in the CSV file.`r`n" +
 "        a) If the control has passed, no action is necessary.`r`n" +

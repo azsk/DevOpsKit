@@ -247,6 +247,12 @@ class WritePsConsole: FileOutputBase
 						#$currentInstance.WriteMessage([Constants]::AttestationReadMsg + [ConfigurationManager]::GetAzSKConfigData().AzSKRGName, [MessageType]::Info)
 						
 					}
+
+					#if bug logging is enabled and the path is valid, print a summary all all bugs encountered
+					if($currentInstance.InvocationContext.BoundParameters["AutoBugLog"] -and [BugLogPathManager]::GetIsPathValid()){
+						$currentInstance.WriteMessage([Constants]::SingleDashLine, [MessageType]::Info)
+						$currentInstance.PrintBugSummaryData($Event);
+					}
 					$currentInstance.WriteMessage([Constants]::SingleDashLine, [MessageType]::Info)
 				}
 
@@ -526,6 +532,105 @@ class WritePsConsole: FileOutputBase
 			}
 		}
 	}
+
+	#function to print metrics summary for all kinds of bugs encountered
+
+	hidden [void] PrintBugSummaryData($event){
+		[PSCustomObject[]] $summary = @();
+
+		#gather all control results that have failed/verify as their control result
+		#obtain their control severities
+		$event.SourceArgs | ForEach-Object {
+			$item = $_
+			if ($item -and $item.ControlResults -and ($item.ControlResults[0].VerificationResult -eq "Failed" -or $item.ControlResults[0].VerificationResult -eq "Verify"))
+			{
+				$item
+				$item.ControlResults[0].Messages | ForEach-Object{
+					if($_.Message -eq "New Bug" -or $_.Message -eq "Active Bug" -or $_.Message -eq "Resolved Bug"){
+					$summary += [PSCustomObject]@{
+						BugStatus=$_.Message
+						ControlSeverity = $item.ControlItem.ControlSeverity;
+						
+					};
+				}
+				};
+			}
+		};
+
+		#if such bugs were found, print a summary table
+
+		if($summary.Count -ne 0)
+		{
+			$summaryResult = @();
+
+			$severities = @();
+			$severities += $summary | Select-Object -Property ControlSeverity | Select-Object -ExpandProperty ControlSeverity -Unique;
+
+			$bugStatusResult = @();
+			$bugStatusResult += $summary | Select-Object -Property BugStatus | Select-Object -ExpandProperty BugStatus -Unique;
+			$totalText = "Total";
+			$MarkerText = "MarkerText";
+			$rows = @();
+			$rows += $severities;
+			$rows += $MarkerText;
+			$rows += $totalText;
+			$rows += $MarkerText;
+			$rows | ForEach-Object {
+				$result = [PSObject]::new();
+				Add-Member -InputObject $result -Name "Summary" -MemberType NoteProperty -Value $_.ToString()
+				Add-Member -InputObject $result -Name $totalText -MemberType NoteProperty -Value 0
+				
+				$bugStatusResult |
+				ForEach-Object {
+					Add-Member -InputObject $result -Name $_.ToString() -MemberType NoteProperty -Value 0
+				};
+				$summaryResult += $result;
+			};
+			$totalRow = $summaryResult | Where-Object { $_.Summary -eq $totalText } | Select-Object -First 1;
+
+			$summary | Group-Object -Property ControlSeverity | ForEach-Object {
+				$item = $_;
+				$summaryItem = $summaryResult | Where-Object { $_.Summary -eq $item.Name } | Select-Object -First 1;
+				if($summaryItem)
+				{
+					$summaryItem.Total = $_.Count;
+					if($totalRow)
+					{
+						$totalRow.Total += $_.Count
+					}
+					$item.Group | Group-Object -Property BugStatus | ForEach-Object {
+						$propName = $_.Name;
+						$summaryItem.$propName += $_.Count;
+						if($totalRow)
+						{
+							$totalRow.$propName += $_.Count
+						}
+					};
+				}
+			};
+			$markerRows = $summaryResult | Where-Object { $_.Summary -eq $MarkerText } 
+				$markerRows | ForEach-Object { 
+					$markerRow = $_
+					Get-Member -InputObject $markerRow -MemberType NoteProperty | ForEach-Object {
+							$propName = $_.Name;
+							$markerRow.$propName = $this.SummaryMarkerText;				
+						}
+					};
+				if($summaryResult.Count -ne 0)
+				{		
+					$this.WriteMessage(($summaryResult | Format-Table | Out-String), [MessageType]::Info)
+				}
+				$currentInstance = [WritePsConsole]::GetInstance();
+				$currentInstance.WriteMessage([Constants]::DoubleDashLine, [MessageType]::Info)
+				$currentInstance.WriteMessage([Constants]::BugLogMsg, [MessageType]::Info)
+				$currentInstance.WriteMessage("A summary of the bugs logged has been written to the following file: $([WriteFolderPath]::GetInstance().FolderPath)\BugSummary.Json", [MessageType]::Info)
+
+			
+		}
+
+	}
+
+
 
 	hidden [void] CommandStartedAction($event)
 	{
