@@ -146,7 +146,7 @@ class PolicySetup: AzCommandBase
 			$this.MonitoringDashboardLocation = $this.ResourceGroupLocation
 		}
 		
-		$this.FolderPath = Join-Path $([System.Environment]::GetFolderPath([System.Environment+SpecialFolder]::Desktop, [System.Environment+SpecialFolderOption]::DoNotVerify)) ($prefix + "-Policy");
+		
 		if(-not [string]::IsNullOrWhiteSpace($localPolicyFolderPath))
 		{
 			try
@@ -162,6 +162,10 @@ class PolicySetup: AzCommandBase
 			{
 				throw ([SuppressedException]::new("Not able to access/modify the folder [$localPolicyFolderPath].`r`n$($_.ToString())", [SuppressedExceptionType]::InvalidOperation))
 			}
+		}
+		else{
+
+			$this.FolderPath = Join-Path $([System.Environment]::GetFolderPath([System.Environment+SpecialFolder]::Desktop, [System.Environment+SpecialFolderOption]::DoNotVerify)) ($prefix + "-Policy");
 		}
 
 		$this.StorageAccountInstance = [StorageHelper]::new($subscriptionId, $this.ResourceGroupName , $resourceGroupLocation, $this.StorageAccountName);
