@@ -99,11 +99,9 @@ class PartialScanManager
 						$webRequestResult = Invoke-RestMethod -Uri $uri -Method Get -ContentType "application/json" -Headers @{Authorization=("Basic {0}" -f $base64AuthInfo)}
 						$this.ScanPendingForResources = $webRequestResult.value | ConvertFrom-Json
                         $this.isRTFAlreadyAvailable = $true;
-						write-host "Get request ran successfully"
 					}
 					catch
 					{
-						write-host "error in Get request from extension storage :  $uri"
                         $this.ScanPendingForResources = $null
                         $this.isRTFAlreadyAvailable = $false;
 					}	
@@ -208,11 +206,10 @@ class PartialScanManager
 					if ($this.ResourceScanTrackerObj.ResourceMapTable -ne $null){
 						$webRequestResult = Invoke-WebRequest -Uri $uri -Method Delete -ContentType "application/json" -Headers @{Authorization = ("Basic {0}" -f $base64AuthInfo) } 
 						$this.ResourceScanTrackerObj = $null
-						write-host "Resource tracker removed successfully"
 					}
 				}
 				catch {
-					write-host "error in delete request from extension storage :  $uri"
+					#do nothing
 				}
 			}
 		}
@@ -310,12 +307,11 @@ class PartialScanManager
 
 					try {
 						$webRequestResult = Invoke-WebRequest -Uri $uri -Method Put -ContentType "application/json" -Headers @{Authorization = ("Basic {0}" -f $base64AuthInfo) } -Body $body 
-						write-host "Resource tracker updated successfully"
                         $this.isRTFAlreadyAvailable = $true;
 					}
 					catch
 					{
-						write-host "error in WriteToResourceTrackerFile method : $uri"
+						write-host "Could not update resource tracker file."
 					}		
 			    }
 			}
