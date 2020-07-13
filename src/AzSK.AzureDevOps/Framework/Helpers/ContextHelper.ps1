@@ -11,7 +11,6 @@ class ContextHelper {
     
     #This will be used to carry current org under current context.
     static hidden [string] $orgName;
-
     hidden static [PSObject] GetCurrentContext()
     {
         return [ContextHelper]::GetCurrentContext($false);
@@ -171,4 +170,5 @@ class ContextHelper {
             return "NO_ACTIVE_SESSION"
         }
     }
+
 }

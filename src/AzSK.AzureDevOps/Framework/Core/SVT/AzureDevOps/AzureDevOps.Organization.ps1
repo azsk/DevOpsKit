@@ -706,4 +706,34 @@ class Organization: ADOSVTBase
 
         return $controlResult
     }
+
+    hidden [ControlResult] CheckMinPCACount([ControlResult] $controlResult)
+    {
+        $TotalPCAMembers=[AdministratorHelper]::GetTotalPCAMembers($this.SubscriptionContext.SubscriptionName)
+        $controlResult.AddMessage("There are a total of $TotalPCAMembers Project Collection Administrators in your organization")
+        if($TotalPCAMembers -lt $this.ControlSettings.Organization.MinPCAMembersPermissible){
+            $controlResult.AddMessage([VerificationResult]::Failed,"Number of administrators configured are less than the minimum required administrators count : $($this.ControlSettings.Organization.MinPCAMembersPermissible)");
+        }
+        else{
+            $controlResult.AddMessage([VerificationResult]::Passed,"Number of administrators configured are more than the minimum required administrators count : $($this.ControlSettings.Organization.MinPCAMembersPermissible)");
+        }
+        return $controlResult
+}
+
+hidden [ControlResult] CheckMaxPCACount([ControlResult] $controlResult)
+    {
+        
+        $TotalPCAMembers=[AdministratorHelper]::GetTotalPCAMembers($this.SubscriptionContext.SubscriptionName)
+        $controlResult.AddMessage("There are a total of $TotalPCAMembers Project Collection Administrators in your organization")
+        if($TotalPCAMembers -gt $this.ControlSettings.Organization.MaxPCAMembersPermissible){
+            $controlResult.AddMessage([VerificationResult]::Failed,"Number of administrators configured are more than the approved limit : $($this.ControlSettings.Organization.MaxPCAMembersPermissible)");
+        }
+        else{
+            $controlResult.AddMessage([VerificationResult]::Passed,"Number of administrators configured are within than the approved limit : $($this.ControlSettings.Organization.MaxPCAMembersPermissible)");
+        }
+        
+    
+        return $controlResult
+}
+
 }

@@ -768,11 +768,12 @@ class ControlStateExtension
 	 
 			$allowedGrpForOrgAtt = $this.ControlSettings.AllowAttestationByGroups | where { $_.ResourceType -eq "Organization" } | select-object -property GroupNames 
 	    	
-            $url= "https://vssps.dev.azure.com/{0}/_apis/graph/groups?api-version=5.1-preview.1" -f $($this.SubscriptionContext.SubscriptionName);
-			$groupsOrgObj = [WebRequestHelper]::InvokeGetWebRequest($url);
-			$groupsOrgObj = $groupsOrgObj | where { $allowedGrpForOrgAtt.GroupNames -contains $_.displayName }
+            $url= "https://{0}.visualstudio.com/_apis/Contribution/HierarchyQuery?api-version=5.1-preview" -f $($this.SubscriptionContext.SubscriptionName);
+			$postbody="{'contributionIds':['ms.vss-admin-web.org-admin-groups-data-provider'],'dataProviderContext':{'properties':{'sourcePage':{'url':'https://$($this.SubscriptionContext.SubscriptionName).visualstudio.com/_settings/groups','routeId':'ms.vss-admin-web.collection-admin-hub-route','routeValues':{'adminPivot':'groups','controller':'ContributedPage','action':'Execute'}}}}}" | ConvertFrom-Json
+			$groupsOrgObj = [WebRequestHelper]::InvokePostWebRequest($url,$postbody);
+			$groupsOrgObj = $groupsOrgObj.dataProviders.'ms.vss-admin-web.org-admin-groups-data-provider'.identities | where { $allowedGrpForOrgAtt.GroupNames -contains $_.displayName }
 
-			if($this.CheckGroupMember($groupsOrgObj.descriptor)){
+			if($this.CheckGroupMemberPCA($groupsOrgObj.descriptor)){
 				return $true;
 			}
 
@@ -789,7 +790,7 @@ class ControlStateExtension
 
 	    	   foreach ($group in $groupsObj)
 	    	   { 
-                if($this.CheckGroupMember($group.descriptor)){
+                if($this.CheckGroupMemberPA($group.descriptor,$resourceName)){
 					return $true;
 				}	
 			   }
@@ -810,8 +811,9 @@ class ControlStateExtension
 	      }
 	}
 
-	[bool] CheckGroupMember($descriptor)
+	[bool] CheckGroupMemberPA($descriptor,[string] $resourceName)
 	{
+		<#
 		$inputbody =  '{"contributionIds":["ms.vss-admin-web.org-admin-members-data-provider"],"dataProviderContext":{"properties":{"subjectDescriptor":"","sourcePage":{"url":"","routeId":"ms.vss-admin-web.collection-admin-hub-route","routeValues":{"adminPivot":"groups","controller":"ContributedPage","action":"Execute"}}}}}' | ConvertFrom-Json
 	   
 		$inputbody.dataProviderContext.properties.subjectDescriptor = $descriptor;
@@ -837,7 +839,39 @@ class ControlStateExtension
 		else
 		{
 			return $false
+		}#>
+
+		$isUserPA=[AdministratorHelper]::GetIsCurrentUserPA($descriptor,$this.SubscriptionContext.SubscriptionName,$resourceName);
+		if($isUserPA -eq $true){
+			$this.HasControlStateWritePermissions = 1
+			return $true;
+		}
+		if($this.HasControlStateWritePermissions -gt 0)
+		{
+		  return $true
+		}
+		else
+		{
+			return $false
+		}
+
+	}
+
+	[bool] CheckGroupMemberPCA($descriptor){
+		$isUserPCA=[AdministratorHelper]::GetIsCurrentUserPCA($descriptor,$this.SubscriptionContext.SubscriptionName);
+		if($isUserPCA -eq $true){
+			$this.HasControlStateWritePermissions = 1
+			return $true;
+		}
+		if($this.HasControlStateWritePermissions -gt 0)
+		{
+		  return $true
+		}
+		else
+		{
+			return $false
 		}
 	}
+
 
 }

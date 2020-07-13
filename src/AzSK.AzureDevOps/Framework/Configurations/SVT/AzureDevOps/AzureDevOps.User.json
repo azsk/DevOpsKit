@@ -59,7 +59,7 @@
       "Description": "Alternate credentials must be disabled",
       "Id": "User130",
       "ControlSeverity": "Medium",
-      "Automated": "Yes",
+      "Automated": "No",
       "MethodName": "CheckAltCred",
       "Rationale": "Alternate credential allows user to create username and password to access your Git repository.Login with these credentials doesn't expire and can't be scoped to limit access to your Azure DevOps Services data.",
       "Recommendation": "Refer: https://docs.microsoft.com/en-us/azure/devops/repos/git/auth-overview?view=vsts#alternate-credentials",

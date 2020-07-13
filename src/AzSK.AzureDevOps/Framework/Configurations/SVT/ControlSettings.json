@@ -11,56 +11,56 @@
           "AzureDevOps_Organization_SI_Review_Shared_Extensions",
           "AzureDevOps_Organization_AuthZ_Review_Extension_Managers",
           "AzureDevOps_Organization_AuthZ_Review_Project_Collection_Service_Accounts",
-          "AzureDevOps_Organization_SI_Review_Auto_Injected_Extensions"
+          "AzureDevOps_Organization_SI_Review_Auto_Injected_Extensions",
+          "AzureDevOps_Organization_AuthZ_Limit_Job_Authorization_Scope_To_Current_Project",
+          "AzureDevOps_Organization_DP_Dont_Allow_Public_Projects"
         ]
-     },
-     {
-      "ResourceType": "Project",
-      "ControlIds": [
-        "AzureDevOps_Project_AuthZ_Set_Visibility_Private_Or_Enterprise",
-        "AzureDevOps_Project_AuthZ_Limit_Job_Scope_To_Current_Project"
-      ]
-     },
-     {
-      "ResourceType": "ServiceConnection",
-      "ControlIds": [
-         "AzureDevOps_ServiceConnection_AuthZ_Dont_Use_Classic_Connections",
-         "AzureDevOps_ServiceConnection_AuthZ_Disable_InheritPermissions",
-         "AzureDevOps_ServiceConnection_AuthZ_Dont_Grant_All_Pipelines_Access",
-         "AzureDevOps_ServiceConnection_AuthZ_Dont_Allow_Global_Groups"
-      ]
-     },
-     {
-      "ResourceType": "Build",
-      "ControlIds": [
-        "AzureDevOps_Build_AuthZ_Disable_Inherited_Permissions"
-      ]
-     },
-     {
-      "ResourceType": "Release",
-      "ControlIds": [
-        "AzureDevOps_Release_AuthZ_Disable_Inherited_Permissions",
-        "AzureDevOps_Release_SI_Review_External_Sources"
-      ]
-     },
-     {
-      "ResourceType": "AgentPool",
-      "ControlIds": [
-        "AzureDevOps_AgentPool_AuthZ_Disable_Inherited_Permissions",
-        "AzureDevOps_AgentPool_AuthZ_Project_Dont_Grant_All_Pipeline_Access"
-      ]
-     }
+      },
+      {
+        "ResourceType": "Project",
+        "ControlIds": [
+          "AzureDevOps_Project_AuthZ_Set_Visibility_Private_Or_Enterprise",
+          "AzureDevOps_Project_AuthZ_Limit_Job_Scope_To_Current_Project"
+        ]
+      },
+      {
+        "ResourceType": "ServiceConnection",
+        "ControlIds": [
+          "AzureDevOps_ServiceConnection_AuthZ_Dont_Use_Classic_Connections",
+          "AzureDevOps_ServiceConnection_AuthZ_Disable_InheritPermissions",
+          "AzureDevOps_ServiceConnection_AuthZ_Dont_Grant_All_Pipelines_Access",
+          "AzureDevOps_ServiceConnection_AuthZ_Dont_Allow_Global_Groups"
+        ]
+      },
+      {
+        "ResourceType": "Build",
+        "ControlIds": [
+          "AzureDevOps_Build_AuthZ_Disable_Inherited_Permissions"
+        ]
+      },
+      {
+        "ResourceType": "Release",
+        "ControlIds": [
+          "AzureDevOps_Release_AuthZ_Disable_Inherited_Permissions",
+          "AzureDevOps_Release_SI_Review_External_Sources"
+        ]
+      },
+      {
+        "ResourceType": "AgentPool",
+        "ControlIds": [
+          "AzureDevOps_AgentPool_AuthZ_Disable_Inherited_Permissions",
+          "AzureDevOps_AgentPool_AuthZ_Project_Dont_Grant_All_Pipeline_Access"
+        ]
+      }
     ]
   },
   "PreviewBaselineControls": {
-    "ResourceTypeControlIdMappingList": [
-    ]
+    "ResourceTypeControlIdMappingList": []
   },
-  "PartialScan":{
-    "ResourceTrackerValidforDays":3,
+  "PartialScan": {
+    "ResourceTrackerValidforDays": 3,
     "StoreResourceTrackerLocally": "True"
   },
-
   "AllowAttestationResourceType": [
     "Organization",
     "Project",
@@ -68,7 +68,7 @@
     "Release",
     "ServiceConnection",
     "AgentPool"
-   ],
+  ],
   "AttestationExpiryPeriodInDays": {
     "Default": 90,
     "ControlSeverity": {
@@ -84,18 +84,22 @@
       "GroupNames": [
         "Project Collection Administrators"
       ]
-   },
-   {
-    "ResourceType": "Project",
-    "GroupNames": [
-      "Project Collection Administrators",
-      "Project Administrators"
-    ]
- }
+    },
+    {
+      "ResourceType": "Project",
+      "GroupNames": [
+        "Project Collection Administrators",
+        "Project Administrators"
+      ]
+    }
   ],
   "IsAllowLongRunningScan": true,
   "LongRunningScanCheckPoint": 1000,
-  "DefaultValidAttestationStates": [ "NotAnIssue", "WillFixLater", "WillNotFix" ],
+  "DefaultValidAttestationStates": [
+    "NotAnIssue",
+    "WillFixLater",
+    "WillNotFix"
+  ],
   "NewControlGracePeriodInDays": {
     "Default": 60,
     "ControlSeverity": {
@@ -120,24 +124,24 @@
     "Medium": "Medium",
     "Low": "Low"
   },
-  "Build":{
+  "Build": {
     "BuildHistoryPeriodInDays": 180,
-    "WhitelistedUserIdentities":[
+    "WhitelistedUserIdentities": [
       {
-        "Domain" : "Build",
-        "DisplayName" : [
+        "Domain": "Build",
+        "DisplayName": [
           "OneITVSO Build Service (MicrosoftIT)",
           "Project Collection Build Service (MicrosoftIT)"
         ]
       }
     ]
   },
-  "Release":{
+  "Release": {
     "ReleaseHistoryPeriodInDays": 180,
-    "WhitelistedUserIdentities":[
+    "WhitelistedUserIdentities": [
       {
-        "Domain" : "Build",
-        "DisplayName" : [
+        "Domain": "Build",
+        "DisplayName": [
           "OneITVSO Build Service (MicrosoftIT)",
           "Project Collection Build Service (MicrosoftIT)"
         ]
@@ -150,18 +154,24 @@
       "Pre-Prod"
     ]
   },
-  "Organization":{
+  "Organization": {
     "InActiveUserActivityLogsPeriodInDays": 365,
-    "WhitelistedExtensionPublishers":[
+    "WhitelistedExtensionPublishers": [
       "Microsoft",
       "Microsoft DevLabs"
-    ]
+    ],
+    "MaxPCAMembersPermissible": 5,
+    "MinPCAMembersPermissible": 2
   },
-  "ServiceConnection":{
+  "Project": {
+    "MaxPAMembersPermissible": 5,
+    "MinPAMembersPermissible": 2
+  },
+  "ServiceConnection": {
     "WhitelistedGroupIdentities": [
       "Endpoint Administrators"
     ],
-    "RestrictedGlobalGroupsForSerConn":[
+    "RestrictedGlobalGroupsForSerConn": [
       "Microsoft IT Build Admins (msitbuildadm@microsoft.com)",
       "Everyone Microsoft FTE",
       "Project Collection Administrators",
@@ -179,28 +189,36 @@
       "Readers"
     ]
   },
-  "Patterns" : [ 
-    {"RegexCode": "Build", "RegexList": ["(?=^.{6,12}$)((?=.*\\d)(?=.*[A-Z])(?=.*[a-z])|(?=.*\\d)(?=.*[^A-Za-z0-9])(?=.*[a-z])&(?=.*[^A-Za-z0-9])(?=.*[A-Z])(?=.*[a-z])&(?=.*\\d)(?=.*[A-Z])(?=.*[^A-Za-z0-9]))^.*",
-                                "(pwd|password)\\s*=\\s*(?<pwd>('(([^'])|(''))+'|[^';]+))",
-                                "^(?=.*\\d)(?=.*[a-z])(?=.*[A-Z])(?!.*\\s).{6,18}$",
-                                "^(?=.*\\d)(?=.*[a-z])(?=.*[A-Z]).{4,8}$",
-                                "(?=^.{6,10}$)(?=.*\\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&amp;*()_+}{&quot;:;'?/&gt;.&lt;,])(?!.*\\s).*$",
-                                "(?=^.{7,20}$)(?=.*\\d)(?=.*[a-zA-Z])(?!.*\\s)[0-9a-zA-Z*$-+?_&=!%{}/'.]*$"
-                                ] },
-    {"RegexCode": "Release", "RegexList": ["(?=^.{6,12}$)((?=.*\\d)(?=.*[A-Z])(?=.*[a-z])|(?=.*\\d)(?=.*[^A-Za-z0-9])(?=.*[a-z])&(?=.*[^A-Za-z0-9])(?=.*[A-Z])(?=.*[a-z])&(?=.*\\d)(?=.*[A-Z])(?=.*[^A-Za-z0-9]))^.*",
-                                  "(pwd|password)\\s*=\\s*(?<pwd>('(([^'])|(''))+'|[^';]+))",
-                                  "^(?=.*\\d)(?=.*[a-z])(?=.*[A-Z])(?!.*\\s).{6,18}$",
-                                  "^(?=.*\\d)(?=.*[a-z])(?=.*[A-Z]).{4,8}$",
-                                  "(?=^.{6,10}$)(?=.*\\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&amp;*()_+}{&quot;:;'?/&gt;.&lt;,])(?!.*\\s).*$",
-                                  "(?=^.{7,20}$)(?=.*\\d)(?=.*[a-zA-Z])(?!.*\\s)[0-9a-zA-Z*$-+?_&=!%{}/'.]*$"
-                                  ] }                         
-   ],
-   "BugLogging":{
-    "BugLogAreaPath":"RootDefaultProject",
-    "BugLogIterationPath":"RootDefaultProject",
-    "ResolvedBugLogBehaviour":"ReactiveOldBug",
-    "MaxKeyWordsToQueryForBugClose":100,
-    "AutoCloseProjectBug":true,
-    "AutoCloseOrgBug":true
-   }
+  "Patterns": [
+    {
+      "RegexCode": "Build",
+      "RegexList": [
+        "(?=^.{6,12}$)((?=.*\\d)(?=.*[A-Z])(?=.*[a-z])|(?=.*\\d)(?=.*[^A-Za-z0-9])(?=.*[a-z])&(?=.*[^A-Za-z0-9])(?=.*[A-Z])(?=.*[a-z])&(?=.*\\d)(?=.*[A-Z])(?=.*[^A-Za-z0-9]))^.*",
+        "(pwd|password)\\s*=\\s*(?<pwd>('(([^'])|(''))+'|[^';]+))",
+        "^(?=.*\\d)(?=.*[a-z])(?=.*[A-Z])(?!.*\\s).{6,18}$",
+        "^(?=.*\\d)(?=.*[a-z])(?=.*[A-Z]).{4,8}$",
+        "(?=^.{6,10}$)(?=.*\\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&amp;*()_+}{&quot;:;'?/&gt;.&lt;,])(?!.*\\s).*$",
+        "(?=^.{7,20}$)(?=.*\\d)(?=.*[a-zA-Z])(?!.*\\s)[0-9a-zA-Z*$-+?_&=!%{}/'.]*$"
+      ]
+    },
+    {
+      "RegexCode": "Release",
+      "RegexList": [
+        "(?=^.{6,12}$)((?=.*\\d)(?=.*[A-Z])(?=.*[a-z])|(?=.*\\d)(?=.*[^A-Za-z0-9])(?=.*[a-z])&(?=.*[^A-Za-z0-9])(?=.*[A-Z])(?=.*[a-z])&(?=.*\\d)(?=.*[A-Z])(?=.*[^A-Za-z0-9]))^.*",
+        "(pwd|password)\\s*=\\s*(?<pwd>('(([^'])|(''))+'|[^';]+))",
+        "^(?=.*\\d)(?=.*[a-z])(?=.*[A-Z])(?!.*\\s).{6,18}$",
+        "^(?=.*\\d)(?=.*[a-z])(?=.*[A-Z]).{4,8}$",
+        "(?=^.{6,10}$)(?=.*\\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&amp;*()_+}{&quot;:;'?/&gt;.&lt;,])(?!.*\\s).*$",
+        "(?=^.{7,20}$)(?=.*\\d)(?=.*[a-zA-Z])(?!.*\\s)[0-9a-zA-Z*$-+?_&=!%{}/'.]*$"
+      ]
+    }
+  ],
+  "BugLogging": {
+    "BugLogAreaPath": "RootDefaultProject",
+    "BugLogIterationPath": "RootDefaultProject",
+    "ResolvedBugLogBehaviour": "ReactiveOldBug",
+    "MaxKeyWordsToQueryForBugClose": 100,
+    "AutoCloseProjectBug": true,
+    "AutoCloseOrgBug": true
+  }
 }
