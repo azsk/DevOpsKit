@@ -481,6 +481,12 @@ class AzSVTBase: SVTBase{
     {   
     try
      {
+		 #populating MaximumAllowedGraceDays irrespective of whether compliance state is enabled/not
+		$singleControlResult.ControlResults | ForEach-Object {
+			$currentControl=$_
+			$currentControl.MaximumAllowedGraceDays = $this.CalculateGraceInDays($singleControlResult);
+		}
+		
          $azskConfig = [ConfigurationManager]::GetAzSKConfigData();	
          $settingStoreComplianceSummaryInUserSubscriptions = [ConfigurationManager]::GetAzSKSettings().StoreComplianceSummaryInUserSubscriptions;
          #return if feature is turned off at server config
