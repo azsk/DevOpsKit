@@ -1085,7 +1085,6 @@ class SubscriptionCore: AzSVTBase
 					
 					"Manual"{
 						$controlResult.AddMessage([VerificationResult]::Manual,"")
-						$controlResult.AddMessage("Unable to query compliance state results")
 					}
                     Default
                     {
