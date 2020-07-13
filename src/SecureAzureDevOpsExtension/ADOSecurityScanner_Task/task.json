@@ -31,17 +31,17 @@
       "name": "OrgName",
       "type": "string",
       "label": "Organization Name",
-      "defaultValue": "",
+      "defaultValue": "$(System.CollectionUri)",
       "required": true,
-      "helpMarkDown": "Org name for which scan needs to be performed."
+      "helpMarkDown": "Org name for which scan needs to be performed. Default value is set to current org."
     },
     {
       "name": "ProjectNames",
       "type": "string",
       "label": "Project Names",
-      "defaultValue": "",
+      "defaultValue": "$(System.TeamProject)",
       "required": true,
-      "helpMarkDown": "Comma-separated list of projects against which Security Verification should be run."
+      "helpMarkDown": "Comma-separated list of projects against which Security Verification should be run. Default value is set to current project."
     },
     {
       "name": "ScanFilter",
