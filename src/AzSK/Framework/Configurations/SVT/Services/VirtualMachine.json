@@ -97,6 +97,7 @@
           "DataObjectProperties": [
              "Id"
           ],
+          "IsAttestationDriftExpected": true,
           "OnAttestationDrift": {
             "ApplyToVersionsUpto": "4.10.0",
             "ActionOnAttestationDrift": "RespectExistingAttestationExpiryPeriod"
