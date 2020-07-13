@@ -11,7 +11,7 @@ class ControlStateExtension
 	hidden [int] $HasControlStateReadPermissions = 1;
 	hidden [int] $HasControlStateWritePermissions = -1;
 	hidden [string]	$IndexerBlobName ="Resource.index.json"
-
+	
 	hidden [int] $retryCount = 3;
 	hidden [string] $UniqueRunId;
 
@@ -24,11 +24,14 @@ class ControlStateExtension
 	hidden [PSObject] $AttestationBody;
 	[bool] $IsPersistedControlStates = $false;
 	[bool] $IsExceptionCheckingControlStateIndexerPresent = $false
+	
+
 
 	ControlStateExtension([SubscriptionContext] $subscriptionContext, [InvocationInfo] $invocationContext)
 	{
 		$this.SubscriptionContext = $subscriptionContext;
 		$this.InvocationContext = $invocationContext;	
+		
 		$this.ControlSettings = [ConfigurationManager]::LoadServerConfigFile("ControlSettings.json");	
 		$this.AttestationBody = [ConfigurationManager]::LoadServerConfigFile("ADOAttestation.json");
 	}
@@ -836,4 +839,5 @@ class ControlStateExtension
 			return $false
 		}
 	}
+
 }

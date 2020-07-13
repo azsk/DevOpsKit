@@ -71,6 +71,13 @@ Add-Type -Path "$libraryPath\Microsoft.IdentityModel.Clients.ActiveDirectory.dll
 . $FrameworkPath\Abstracts\PrivacyNotice.ps1
 
 
+#BugLog
+. $PSScriptRoot\BugLog\BugLogPathManager.ps1
+. $PSScriptRoot\BugLog\AutoBugLog.ps1
+. $PSScriptRoot\BugLog\PublishToJSON.ps1
+. $PSScriptRoot\BugLog\AutoCloseBugManager.ps1
+
+
 #Abstracts
 . $FrameworkPath\Abstracts\AzSKRoot.ps1
 . $FrameworkPath\Abstracts\SVTBase.ps1

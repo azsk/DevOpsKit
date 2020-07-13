@@ -110,6 +110,22 @@ class WebRequestHelper {
 		return @{ "Content-Type"="application/json" };
 	}
 
+	hidden static [Hashtable] GetAuthHeaderFromUriPatch([string] $uri) {
+        [System.Uri] $validatedUri = $null;
+        if ([System.Uri]::TryCreate($uri, [System.UriKind]::Absolute, [ref] $validatedUri)) {
+
+            $token = [ContextHelper]::GetAccessToken($validatedUri.GetLeftPart([System.UriPartial]::Authority));
+
+            $user = ""
+            $base64AuthInfo = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(("{0}:{1}" -f $user, $token)))
+            return @{
+				"Authorization" = ("Basic " + $base64AuthInfo)
+				
+            };
+        }
+		return @{};
+	}
+
 	static [System.Object[]] InvokePostWebRequest([string] $uri, [Hashtable] $headers, [System.Object] $body) 
 	{
         return [WebRequestHelper]::InvokeWebRequest([Microsoft.PowerShell.Commands.WebRequestMethod]::Post, $uri, $headers, $body);

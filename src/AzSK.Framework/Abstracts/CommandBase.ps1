@@ -143,8 +143,25 @@ class CommandBase: AzSKRoot {
 				@{"TimeTakenInMs" = $sw.ElapsedMilliseconds; "SuccessCount" = 0},
 				$this.InvocationContext);
             $this.CommandError($_.Exception.InnerException.ErrorRecord);
-        }
+		}
+		
 
+		
+		$folderPath = $this.GetOutputFolderPath();
+
+		#the next two bug log classes have been called here as we need all the control results at one place for
+		#dumping them in json file and auto closing them(to minimize api calls and auto close them in batches)
+		#if bug logging is enabled and path is valid, create the JSON file for bugs
+		if($this.InvocationContext.BoundParameters["AutoBugLog"] -and [BugLogPathManager]::GetIsPathValid()){
+			[PublishToJSON]::new($methodResult,$folderPath)
+		}
+
+		#auto close passed bugs
+		if($this.InvocationContext.BoundParameters["AutoBugLog"]){
+			#call the AutoCloseBugManager
+			$AutoClose=[AutoCloseBugManager]::new($this.SubscriptionContext,$methodResult);
+			$AutoClose.AutoCloseBug($methodResult)
+		}
 		# Publish command complete events
         $this.CommandCompleted($methodResult);
 		[AIOrgTelemetryHelper]::TrackCommandExecution("Command Completed",
@@ -153,7 +170,6 @@ class CommandBase: AzSKRoot {
 			$this.InvocationContext)
         $this.PostCommandCompletedAction($methodResult);
 
-        $folderPath = $this.GetOutputFolderPath();
 
 		# <TODO Framework: Move PDF generation method based on listener>
         #Generate PDF report
@@ -212,6 +228,8 @@ class CommandBase: AzSKRoot {
         return $folderPath;
 	}
 	#EndRegion
+
+	
 
 	
 	# Function to get output log folder from WriteFolder listener 
