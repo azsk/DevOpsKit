@@ -709,13 +709,13 @@ class Organization: ADOSVTBase
 
     hidden [ControlResult] CheckMinPCACount([ControlResult] $controlResult)
     {
-        $TotalPCAMembers=[ContextHelper]::GetTotalPCAMembers($this.SubscriptionContext.SubscriptionName)
-             
-        if($TotalPCAMembers -lt 2){
-            $controlResult.AddMessage([VerificationResult]::Failed,"Less than two Project Collection Administrators found");
+        $TotalPCAMembers=[AdministratorHelper]::GetTotalPCAMembers($this.SubscriptionContext.SubscriptionName)
+        $controlResult.AddMessage("There are a total of $TotalPCAMembers Project Collection Administrators in your organization")
+        if($TotalPCAMembers -lt $this.ControlSettings.Organization.MinPCAMembersPermissible){
+            $controlResult.AddMessage([VerificationResult]::Failed,"Number of administrators configured are less than the minimum required administrators count : $($this.ControlSettings.Organization.MinPCAMembersPermissible)");
         }
         else{
-            $controlResult.AddMessage([VerificationResult]::Passed,"More than two Project Collection Administrators found");
+            $controlResult.AddMessage([VerificationResult]::Passed,"Number of administrators configured are more than the minimum required administrators count : $($this.ControlSettings.Organization.MinPCAMembersPermissible)");
         }
         return $controlResult
 }
@@ -723,13 +723,13 @@ class Organization: ADOSVTBase
 hidden [ControlResult] CheckMaxPCACount([ControlResult] $controlResult)
     {
         
-        $TotalPCAMembers=[ContextHelper]::GetTotalPCAMembers($this.SubscriptionContext.SubscriptionName)
-             
+        $TotalPCAMembers=[AdministratorHelper]::GetTotalPCAMembers($this.SubscriptionContext.SubscriptionName)
+        $controlResult.AddMessage("There are a total of $TotalPCAMembers Project Collection Administrators in your organization")
         if($TotalPCAMembers -gt $this.ControlSettings.Organization.MaxPCAMembersPermissible){
-            $controlResult.AddMessage([VerificationResult]::Failed,"Project Collection Administrators max limit exceeded");
+            $controlResult.AddMessage([VerificationResult]::Failed,"Number of administrators configured are more than the approved limit : $($this.ControlSettings.Organization.MaxPCAMembersPermissible)");
         }
         else{
-            $controlResult.AddMessage([VerificationResult]::Passed,"Project Collection Administrators under max limit");
+            $controlResult.AddMessage([VerificationResult]::Passed,"Number of administrators configured are within than the approved limit : $($this.ControlSettings.Organization.MaxPCAMembersPermissible)");
         }
         
     

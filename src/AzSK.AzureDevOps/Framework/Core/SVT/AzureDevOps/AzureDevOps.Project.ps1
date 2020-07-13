@@ -256,4 +256,34 @@ class Project: ADOSVTBase
 
         return $controlResult
     }
+
+    hidden [ControlResult] CheckMinPACount([ControlResult] $controlResult)
+    {
+        $TotalPAMembers=[AdministratorHelper]::GetTotalPAMembers($this.SubscriptionContext.SubscriptionName,$this.ResourceContext.ResourceName)
+        $controlResult.AddMessage("There are a total of $TotalPAMembers Project Administrators in your project.")
+        if($TotalPAMembers -lt $this.ControlSettings.Project.MinPAMembersPermissible){
+            $controlResult.AddMessage([VerificationResult]::Failed,"Number of administrators configured are less than the minimum required administrators count : $($this.ControlSettings.Project.MinPAMembersPermissible).");
+        }
+        else{
+            $controlResult.AddMessage([VerificationResult]::Passed,"Number of administrators configured are more than the minimum required administrators count : $($this.ControlSettings.Project.MinPAMembersPermissible).");
+        }
+        return $controlResult
+    }
+
+    hidden [ControlResult] CheckMaxPACount([ControlResult] $controlResult)
+    {
+        
+        $TotalPAMembers=[AdministratorHelper]::GetTotalPAMembers($this.SubscriptionContext.SubscriptionName,$this.ResourceContext.ResourceName)
+        $controlResult.AddMessage("There are a total of $TotalPAMembers Project Administrators in your project.")
+        if($TotalPAMembers -gt $this.ControlSettings.Project.MaxPAMembersPermissible){
+            $controlResult.AddMessage([VerificationResult]::Failed,"Number of administrators configured are more than the approved limit : $($this.ControlSettings.Project.MaxPAMembersPermissible).");
+        }
+        else{
+            $controlResult.AddMessage([VerificationResult]::Passed,"Number of administrators configured are within than the approved limit : $($this.ControlSettings.Project.MaxPAMembersPermissible).");
+        }
+        
+    
+        return $controlResult
+    }
+
 }

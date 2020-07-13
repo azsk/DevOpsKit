@@ -412,36 +412,36 @@
       "Enabled": true
     },
     {
-      "ControlID": "AzureDevOps_Organization_Min_PCA_Count",
-      "Description": "TBD",
+      "ControlID": "AzureDevOps_Organization_AuthZ_Min_Admin_Count",
+      "Description": "There should be atleast $($this.ControlSettings.Organization.MinPCAMembersPermissible) Project Collection Administrators in your organization",
       "Id": "Organization350",
       "ControlSeverity": "Medium",
-      "Automated": "Yes",
+      "Automated": "No",
       "MethodName": "CheckMinPCACount",
-      "Rationale": "TBD",
-      "Recommendation": "TBD",
+      "Rationale": "Having the minimum required number of administrators reduces the risk of losing admin access. This is useful in case of breakglass account scenarios.",
+      "Recommendation": "Go to Organization settings --> Security --> Permissions --> Groups --> Select the group : Project Collection Administrators --> Review the members of this group",
       "Tags": [
         "SDL",
-        "TCP",
-        "Manual",
-        "Audit"
+        "AuthZ",
+        "Automated",
+        "Best Practice"
       ],
       "Enabled": true
     },
     {
-      "ControlID": "AzureDevOps_Organization_Max_PCA_Count",
-      "Description": "TBD",
+      "ControlID": "AzureDevOps_Organization_AuthZ_Limit_Admin_Count",
+      "Description": "Minimize the number of Project Collection Administrators",
       "Id": "Organization360",
       "ControlSeverity": "Medium",
-      "Automated": "Yes",
+      "Automated": "No",
       "MethodName": "CheckMaxPCACount",
-      "Rationale": "TBD",
-      "Recommendation": "TBD",
+      "Rationale": "Each additional person in the administrator role increases the attack surface for the entire organization. The number of members in these roles should be kept to as low as possible.",
+      "Recommendation": "Go to Organization settings --> Security --> Permissions --> Groups --> Select the group : Project Collection Administrators --> Review the members of this group.",
       "Tags": [
         "SDL",
-        "TCP",
-        "Manual",
-        "Audit"
+        "AuthZ",
+        "Automated",
+        "Best Practice"
       ],
       "Enabled": true
     }

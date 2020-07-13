@@ -3,6 +3,7 @@ class AdministratorHelper{
     static [int] $TotalPAMembers=0; 
     static [bool] $isCurrentUserPCA=$false;
     static [bool] $isCurrentUserPA=$false;
+    
 
     static [void] GetPCADescriptorAndMembers([string] $OrgName){
         
