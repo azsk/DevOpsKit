@@ -37,7 +37,8 @@ class PersistedStateInfo: AzCommandBase
 				return $messages;
 			} 
 			# if IsLocalComplianceStoreEnabled is false, return message indicating Compliance state table caching is disabled by default	
-			if(!$this.IsLocalComplianceStoreEnabled)
+			$IsLocalComplianceStoreEnabled = [ComplianceReportHelper]::ValidateComplianceStateCaching() 
+			if(!$IsLocalComplianceStoreEnabled)
         	{
             	$this.PublishCustomMessage([Constants]::ComplianceInfoCachingDisabled, [MessageType]::Warning);	
 				$this.DoNotOpenOutputFolder = $true;

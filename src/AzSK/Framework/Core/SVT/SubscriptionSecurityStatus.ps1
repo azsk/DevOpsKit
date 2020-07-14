@@ -40,6 +40,8 @@ class SubscriptionSecurityStatus: AzSVTCommandBase
 		if($svtObject)
 		{
 			$svtObject.RunningLatestPSModule = $this.RunningLatestPSModule
+			#set svtobject properties
+			$svtObject.IsLocalComplianceStoreEnabled = $this.IsLocalComplianceStoreEnabled
 			$this.Severity = $this.ConvertToStringArray($this.Severity) # to handle case when no severity is passed to command
 			if($this.Severity)
 			{
