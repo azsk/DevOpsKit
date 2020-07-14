@@ -131,7 +131,7 @@ class SVTResourceResolver: AzSKRoot
 			}
 
 			#Check if this org wants IPAddress to be treated as its own resource.
-			if([Helpers]::CheckMember($ControlSettings,"PublicIpAddress",$null) -and [Helpers]::CheckMember($ControlSettings.PublicIpAddress,"EnablePublicIpResource",$null))
+			if([Helpers]::CheckMember($ControlSettings,"PublicIpAddress",$false) -and [Helpers]::CheckMember($ControlSettings.PublicIpAddress,"EnablePublicIpResource",$false))
 			{
 			#If not, let us remove the resource type entry from the mapping
 			$treatPublicIPasResource = $ControlSettings.PublicIpAddress.EnablePublicIpResource
