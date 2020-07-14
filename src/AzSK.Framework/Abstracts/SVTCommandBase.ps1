@@ -138,7 +138,7 @@ class SVTCommandBase: AzCommandBase {
         $resourceId = $svtObject.ResourceId; 
         # Changes for compliance table dependency removal
 		# if IsLocalComplianceStoreEnabled is false, do not fetch scan result from compliance state table
-        if($this.IsLocalComplianceStoreEnabled)
+        if($svtObject.IsLocalComplianceStoreEnabled)
 		{
             $svtObject.ComplianceStateData = $this.FetchComplianceStateData($resourceId);
         }
