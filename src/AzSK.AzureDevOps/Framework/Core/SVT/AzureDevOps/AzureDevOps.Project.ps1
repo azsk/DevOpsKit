@@ -259,7 +259,8 @@ class Project: ADOSVTBase
 
     hidden [ControlResult] CheckMinPACount([ControlResult] $controlResult)
     {
-        $TotalPAMembers=[AdministratorHelper]::GetTotalPAMembers($this.SubscriptionContext.SubscriptionName,$this.ResourceContext.ResourceName)
+        $PAMembers=[AdministratorHelper]::GetTotalPAMembers($this.SubscriptionContext.SubscriptionName,$this.ResourceContext.ResourceName)
+        $TotalPAMembers=$PAMembers.Length
         $controlResult.AddMessage("There are a total of $TotalPAMembers Project Administrators in your project.")
         if($TotalPAMembers -lt $this.ControlSettings.Project.MinPAMembersPermissible){
             $controlResult.AddMessage([VerificationResult]::Failed,"Number of administrators configured are less than the minimum required administrators count : $($this.ControlSettings.Project.MinPAMembersPermissible).");
@@ -267,13 +268,17 @@ class Project: ADOSVTBase
         else{
             $controlResult.AddMessage([VerificationResult]::Passed,"Number of administrators configured are more than the minimum required administrators count : $($this.ControlSettings.Project.MinPAMembersPermissible).");
         }
+        $controlResult.AddMessage("Verify the following Project Administrators : ",$PAMembers)
+        $controlResult.SetStateData("List of Project Administrators : ",$PAMembers)
+
         return $controlResult
     }
 
     hidden [ControlResult] CheckMaxPACount([ControlResult] $controlResult)
     {
         
-        $TotalPAMembers=[AdministratorHelper]::GetTotalPAMembers($this.SubscriptionContext.SubscriptionName,$this.ResourceContext.ResourceName)
+        $PAMembers=[AdministratorHelper]::GetTotalPAMembers($this.SubscriptionContext.SubscriptionName,$this.ResourceContext.ResourceName)
+        $TotalPAMembers=$PAMembers.Length
         $controlResult.AddMessage("There are a total of $TotalPAMembers Project Administrators in your project.")
         if($TotalPAMembers -gt $this.ControlSettings.Project.MaxPAMembersPermissible){
             $controlResult.AddMessage([VerificationResult]::Failed,"Number of administrators configured are more than the approved limit : $($this.ControlSettings.Project.MaxPAMembersPermissible).");
@@ -281,6 +286,9 @@ class Project: ADOSVTBase
         else{
             $controlResult.AddMessage([VerificationResult]::Passed,"Number of administrators configured are within than the approved limit : $($this.ControlSettings.Project.MaxPAMembersPermissible).");
         }
+        $controlResult.AddMessage("Verify the following Project Administrators : ",$PAMembers)
+        $controlResult.SetStateData("List of Project Administrators : ",$PAMembers)
+
         
     
         return $controlResult
