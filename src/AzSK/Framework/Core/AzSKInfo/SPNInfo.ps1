@@ -4,15 +4,23 @@ Set-StrictMode -Version Latest
 class SPNInfo: CommandBase
 {    
 	hidden $GraphOwnedObjectsAPIUri = [string]::Empty
+	hidden $ApiBaseEndpoint = [string]::Empty
 	SPNInfo([string] $subscriptionId, [InvocationInfo] $invocationContext): 
         Base($subscriptionId, $invocationContext) 
     { 
 		$this.DoNotOpenOutputFolder = $true;
 		$this.GraphOwnedObjectsAPIUri = 'https://graph.microsoft.com/v1.0/me/ownedObjects';
+		$this.ApiBaseEndpoint = [ConfigurationManager]::GetAzSKConfigData().AzSKApiBaseURL;
 	}
 	
 	GetSPNInfo()
 	{
+		if([string]::IsNullOrEmpty($this.ApiBaseEndpoint))
+        {
+			#This feature is currently available only for org in which Endpoint/backend API url is configured
+            $this.PublishCustomMessage("`r`nThis feature is currently not available for your environment.`r`n", [MessageType]::Warning)
+            return
+        }
 		$ownedSPNs = @()
 		$usedSPNs = @()
 		$notInUsedSPNs = @()
