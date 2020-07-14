@@ -298,11 +298,21 @@ class PartialScanManager
                         $uri = $env:partialScanURI
                         $JobId ="";
                         $JobId = $uri.Replace('?','/').Split('/')[$JobId.Length -2]
-						$body = @{"id" = $Jobid;"__etag"=-1; "value"= $scanObject;} | ConvertTo-Json
+			if ($this.isRTFAlreadyAvailable -eq $true){
+						    $body = @{"id" = $Jobid; "__etag"=-1; "value"= $scanObject;} | ConvertTo-Json
+                        }
+                        else{
+                            $body = @{"id" = $Jobid; "value"= $scanObject;} | ConvertTo-Json
+                        }
                     }
                     else {
-					    $uri = [Constants]::StorageUri -f $this.subId, $this.subId, "ResourceTrackerFile"
-                        $body = @{"id" = "ResourceTrackerFile";"__etag"=-1; "value"= $scanObject;} | ConvertTo-Json
+			$uri = [Constants]::StorageUri -f $this.subId, $this.subId, "ResourceTrackerFile"
+                        if ($this.isRTFAlreadyAvailable -eq $true){
+                            $body = @{"id" = "ResourceTrackerFile";"__etag"=-1; "value"= $scanObject;} | ConvertTo-Json
+                        }
+                        else{
+                            $body = @{"id" = "ResourceTrackerFile"; "value"= $scanObject;} | ConvertTo-Json
+                        }
                     }
 
 					try {
