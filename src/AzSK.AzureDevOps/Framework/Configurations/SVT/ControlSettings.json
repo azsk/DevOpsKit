@@ -13,14 +13,16 @@
           "AzureDevOps_Organization_AuthZ_Review_Project_Collection_Service_Accounts",
           "AzureDevOps_Organization_SI_Review_Auto_Injected_Extensions",
           "AzureDevOps_Organization_AuthZ_Limit_Job_Authorization_Scope_To_Current_Project",
-          "AzureDevOps_Organization_DP_Dont_Allow_Public_Projects"
+          "AzureDevOps_Organization_DP_Dont_Allow_Public_Projects",
+          "AzureDevOps_Organization_AuthZ_Min_Admin_Count"
         ]
       },
       {
         "ResourceType": "Project",
         "ControlIds": [
           "AzureDevOps_Project_AuthZ_Set_Visibility_Private_Or_Enterprise",
-          "AzureDevOps_Project_AuthZ_Limit_Job_Scope_To_Current_Project"
+          "AzureDevOps_Project_AuthZ_Limit_Job_Scope_To_Current_Project",
+          "AzureDevOps_Project_AuthZ_Min_Admin_Count"
         ]
       },
       {
