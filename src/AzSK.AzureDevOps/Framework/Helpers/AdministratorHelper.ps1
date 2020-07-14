@@ -1,8 +1,8 @@
 class AdministratorHelper{
     static [bool] $isCurrentUserPCA=$false;
     static [bool] $isCurrentUserPA=$false;
-    static $AllPCAMembers=@()
-    static $AllPAMembers=@()
+    static $AllPCAMembers = @()
+    static $AllPAMembers = @()
     
 
     static [void] GetPCADescriptorAndMembers([string] $OrgName){
@@ -83,7 +83,7 @@ class AdministratorHelper{
                 if([AdministratorHelper]::isCurrentUserPCA -eq $false -and [ContextHelper]::GetCurrentSessionUser() -eq $_.mailAddress){
                     [AdministratorHelper]::isCurrentUserPCA=$true;
                 }
-                [AdministratorHelper]::AllPCAMembers+=$_
+                [AdministratorHelper]::AllPCAMembers += $_
             }
             }
         }
@@ -117,7 +117,7 @@ class AdministratorHelper{
                 if([AdministratorHelper]::isCurrentUserPA -eq $false -and [ContextHelper]::GetCurrentSessionUser() -eq $_.mailAddress){
                     [AdministratorHelper]::isCurrentUserPA=$true;
                 }
-                [AdministratorHelper]::AllPAMembers+=$_
+                [AdministratorHelper]::AllPAMembers += $_
             }
             }
         }
@@ -137,7 +137,7 @@ class AdministratorHelper{
         }
 
         #get unique pca based on display name and mail address
-        [AdministratorHelper]::AllPCAMembers=[AdministratorHelper]::AllPCAMembers | Sort-Object 'displayName','mailAddress' | Get-Unique -AsString
+        [AdministratorHelper]::AllPCAMembers = [AdministratorHelper]::AllPCAMembers | Sort-Object 'displayName','mailAddress' | Get-Unique -AsString
         return [AdministratorHelper]::AllPCAMembers
     }
     static [object] GetTotalPAMembers([string] $OrgName,[string] $projName){
@@ -147,7 +147,7 @@ class AdministratorHelper{
             [AdministratorHelper]::GetPADescriptorAndMembers($OrgName,$projName)
         }
         #get unique pa based on display name and mail address
-        [AdministratorHelper]::AllPAMembers=[AdministratorHelper]::AllPAMembers | Sort-Object 'displayName','mailAddress' | Get-Unique -AsString
+        [AdministratorHelper]::AllPAMembers = [AdministratorHelper]::AllPAMembers | Sort-Object 'displayName','mailAddress' | Get-Unique -AsString
         return [AdministratorHelper]::AllPAMembers
     }
     static [bool] GetIsCurrentUserPCA([string] $descriptor,[string] $OrgName){

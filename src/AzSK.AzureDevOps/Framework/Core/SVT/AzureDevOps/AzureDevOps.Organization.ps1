@@ -710,9 +710,9 @@ class Organization: ADOSVTBase
     hidden [ControlResult] CheckMinPCACount([ControlResult] $controlResult)
     {
         $TotalPCAMembers=0
-        $PCAMembers=@()
+        $PCAMembers = @()
         $PCAMembers += [AdministratorHelper]::GetTotalPCAMembers($this.SubscriptionContext.SubscriptionName)
-        $TotalPCAMembers=($PCAMembers| Measure-Object).Count
+        $TotalPCAMembers = ($PCAMembers| Measure-Object).Count
         $PCAMembers = $PCAMembers | Select-Object displayName,mailAddress
         $controlResult.AddMessage("There are a total of $TotalPCAMembers Project Collection Administrators in your organization")
         if($TotalPCAMembers -lt $this.ControlSettings.Organization.MinPCAMembersPermissible){
@@ -732,9 +732,9 @@ hidden [ControlResult] CheckMaxPCACount([ControlResult] $controlResult)
     {
         
         $TotalPCAMembers=0
-        $PCAMembers=@()
+        $PCAMembers = @()
         $PCAMembers += [AdministratorHelper]::GetTotalPCAMembers($this.SubscriptionContext.SubscriptionName)
-        $TotalPCAMembers=($PCAMembers| Measure-Object).Count
+        $TotalPCAMembers = ($PCAMembers| Measure-Object).Count
         $PCAMembers = $PCAMembers | Select-Object displayName,mailAddress
         $controlResult.AddMessage("There are a total of $TotalPCAMembers Project Collection Administrators in your organization")
         if($TotalPCAMembers -gt $this.ControlSettings.Organization.MaxPCAMembersPermissible){
