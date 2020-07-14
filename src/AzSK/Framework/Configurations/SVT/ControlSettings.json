@@ -549,7 +549,7 @@
     }
   },
   "PublicIpAddress": {
-    "EnablePublicIpResource": "false"
+    "EnablePublicIpResource": false
    },
   "MaxResourceInventoryObjectsCount": 20000,
   "AlernateAccountRegularExpressionForOrg": ""
