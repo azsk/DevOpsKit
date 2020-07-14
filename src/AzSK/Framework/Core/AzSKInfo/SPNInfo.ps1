@@ -17,7 +17,7 @@ class SPNInfo: CommandBase
 	{
 		if([string]::IsNullOrEmpty($this.ApiBaseEndpoint))
         {
-			#This feature is currently available for CSE org only, so ApiBaseEndpoint get populate only in case of CSE org
+			#This feature is currently available for only org, only for which Endpoint/backend API url is configure
             $this.PublishCustomMessage("`r`nThis feature is currently not available for your environment.`r`n", [MessageType]::Warning)
             return
         }
