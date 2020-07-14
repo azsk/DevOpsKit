@@ -490,57 +490,60 @@ class AzSVTBase: SVTBase{
          $azskConfig = [ConfigurationManager]::GetAzSKConfigData();	
          $settingStoreComplianceSummaryInUserSubscriptions = [ConfigurationManager]::GetAzSKSettings().StoreComplianceSummaryInUserSubscriptions;
          #return if feature is turned off at server config
-         if(-not $azskConfig.StoreComplianceSummaryInUserSubscriptions -and -not $settingStoreComplianceSummaryInUserSubscriptions) {return;}
+		 if(-not $azskConfig.StoreComplianceSummaryInUserSubscriptions -and -not $settingStoreComplianceSummaryInUserSubscriptions) 
+		 {
+			 return;
+		 }
+		 if($this.IsLocalComplianceStoreEnabled)
+		 {
+			if(($this.ComplianceStateData | Measure-Object).Count -gt 0)
+			{
+				$ResourceData = @();
+				$PersistedControlScanResult=@();								
+			
+				#$ResourceScanResult=$ResourceData.ResourceScanResult
+				[ControlResult[]] $controlsResults = @();
+				$singleControlResult.ControlResults | ForEach-Object {
+					$currentControl=$_
+					$partsToHash = $singleControlResult.ControlItem.Id;
+					if(-not [string]::IsNullOrWhiteSpace($currentControl.ChildResourceName))
+					{
+						$partsToHash = $partsToHash + ":" + $currentControl.ChildResourceName;
+					}
+					$rowKey = [Helpers]::ComputeHash($partsToHash.ToLower());
 
-            if(($this.ComplianceStateData | Measure-Object).Count -gt 0)
-         {
-             $ResourceData = @();
-             $PersistedControlScanResult=@();								
-         
-             #$ResourceScanResult=$ResourceData.ResourceScanResult
-             [ControlResult[]] $controlsResults = @();
-             $singleControlResult.ControlResults | ForEach-Object {
-                 $currentControl=$_
-                 $partsToHash = $singleControlResult.ControlItem.Id;
-                 if(-not [string]::IsNullOrWhiteSpace($currentControl.ChildResourceName))
-                 {
-                     $partsToHash = $partsToHash + ":" + $currentControl.ChildResourceName;
-                 }
-                 $rowKey = [Helpers]::ComputeHash($partsToHash.ToLower());
+					$matchedControlResult = $this.ComplianceStateData | Where-Object { $_.RowKey -eq $rowKey}
 
-                 $matchedControlResult = $this.ComplianceStateData | Where-Object { $_.RowKey -eq $rowKey}
+					# initialize default values
+					$currentControl.FirstScannedOn = [DateTime]::UtcNow
+					if($currentControl.ActualVerificationResult -ne [VerificationResult]::Passed)
+					{
+						$currentControl.FirstFailedOn = [DateTime]::UtcNow
+					}
+					if($null -ne $matchedControlResult -and ($matchedControlResult | Measure-Object).Count -gt 0)
+					{
+						$currentControl.UserComments = $matchedControlResult.UserComments
+						$currentControl.FirstFailedOn = [datetime] $matchedControlResult.FirstFailedOn
+						$currentControl.FirstScannedOn = [datetime] $matchedControlResult.FirstScannedOn						
+					}
 
-                 # initialize default values
-                 $currentControl.FirstScannedOn = [DateTime]::UtcNow
-                 if($currentControl.ActualVerificationResult -ne [VerificationResult]::Passed)
-                 {
-                     $currentControl.FirstFailedOn = [DateTime]::UtcNow
-                 }
-                 if($null -ne $matchedControlResult -and ($matchedControlResult | Measure-Object).Count -gt 0)
-                 {
-                     $currentControl.UserComments = $matchedControlResult.UserComments
-                     $currentControl.FirstFailedOn = [datetime] $matchedControlResult.FirstFailedOn
-                     $currentControl.FirstScannedOn = [datetime] $matchedControlResult.FirstScannedOn						
-                 }
+					$scanFromDays = [System.DateTime]::UtcNow.Subtract($currentControl.FirstScannedOn)
 
-                 $scanFromDays = [System.DateTime]::UtcNow.Subtract($currentControl.FirstScannedOn)
-
-                 $currentControl.MaximumAllowedGraceDays = $this.CalculateGraceInDays($singleControlResult);
-
-                 # Setting isControlInGrace Flag		
-                 if($scanFromDays.Days -le $currentControl.MaximumAllowedGraceDays)
-                 {
-                     $currentControl.IsControlInGrace = $true
-                 }
-                 else
-                 {
-                     $currentControl.IsControlInGrace = $false
-                 }
-                 
-                 $controlsResults+=$currentControl
-             }
-             $singleControlResult.ControlResults=$controlsResults 
-         }
+					# Setting isControlInGrace Flag		
+					if($scanFromDays.Days -le $currentControl.MaximumAllowedGraceDays)
+					{
+						$currentControl.IsControlInGrace = $true
+					}
+					else
+					{
+						$currentControl.IsControlInGrace = $false
+					}
+					
+					$controlsResults+=$currentControl
+				}
+				$singleControlResult.ControlResults=$controlsResults 
+			}
+		}
      }
      catch
      {
