@@ -24,7 +24,7 @@ class AzSVTCommandBase: SVTCommandBase {
          #Initiate Compliance State
          $this.InitializeControlState();
          #call static method from Compliacereport helper
-         $this.IsLocalComplianceStoreEnabled = [ComplianceReportHelper]::ValidateComplianceStateCaching() -or $this.IsLocalComplianceStoreEnabled
+         $this.IsLocalComplianceStoreEnabled = [ComplianceReportHelper]::ValidateComplianceStateCaching()
          #Create necessary resources to save compliance data in user's subscription
          #<TODO Perf Issue - ComplianceReportHelper fetch RG/Storage. Then creates RG/Storage/table if not exists. Check permissions for write etc>
          if($this.IsLocalComplianceStoreEnabled)
