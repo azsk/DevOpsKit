@@ -1576,6 +1576,7 @@ class SubscriptionCore: AzSVTBase
 		else
 		{
 			$controlResult.VerificationResult = [VerificationResult]::Manual
+			$controlResult.AddMessage("Note: `n This control is not currently automated. Please validate that Conditional Access policy is enabled on each RG for User Access Administrator and Owner roles.'")
 		}
 		return $controlResult;
 	}
