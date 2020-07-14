@@ -106,7 +106,7 @@ class SVTCommandBase: AzCommandBase {
                     $this.PublishCustomMessage(([Constants]::HashLine))
                     $this.PublishCustomMessage(([Constants]::AttestedControlsScanMsg))
                     $this.PublishCustomMessage(([Constants]::DoubleDashLine))
-                    if([FeatureFlightingManager]::GetFeatureStatus("DisableAdditionalResourceIndexCalls",$($this.SubscriptionContext.SubscriptionId)))
+                    if(![FeatureFlightingManager]::GetFeatureStatus("DisableAdditionalResourceIndexCalls",$($this.SubscriptionContext.SubscriptionId)))
                     {
                         $this.ControlStateExt.ControlStateIndexer = $null
                     }
