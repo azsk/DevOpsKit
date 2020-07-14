@@ -107,18 +107,18 @@ class AutoBugLog {
     hidden [string] GetControlReproStep([SVTEventContext []] $ControlResult){
         $StepsForRepro=""
         if ($ControlResult.FeatureName -eq "Organization") {
-            $StepsForRepro="Get-AzSKAzureDevOpsOrgSecurityStatus -OrganizationName '{0}' -ControlIds '{1}'"
+            $StepsForRepro="Get-AzSKAzureDevOpsSecurityStatus -OrganizationName '{0}' -ControlIds '{1}'"
             $StepsForRepro=$StepsForRepro.Replace("{0}",$ControlResult.ResourceContext.ResourceName)
             $StepsForRepro=$StepsForRepro.Replace("{1}",$ControlResult.ControlItem.ControlID)
         }
         elseif ($ControlResult.ResourceContext.ResourceTypeName -eq "Project") {
-            $StepsForRepro="Get-AzSKAzureDevOpsOrgSecurityStatus -OrganizationName '{0}' -ProjectNames '{1}' -ControlIds '{2}'"
+            $StepsForRepro="Get-AzSKAzureDevOpsSecurityStatus -OrganizationName '{0}' -ProjectNames '{1}' -ControlIds '{2}'"
             $StepsForRepro=$StepsForRepro.Replace("{0}",$ControlResult.ResourceContext.ResourceGroupName)
             $StepsForRepro=$StepsForRepro.Replace("{1}",$ControlResult.ResourceContext.ResourceName)
             $StepsForRepro=$StepsForRepro.Replace("{2}",$ControlResult.ControlItem.ControlID)
         }
         else {
-            $StepsForRepro="Get-AzSKAzureDevOpsOrgSecurityStatus -OrganizationName '{0}' -ProjectNames '{1}' -{2}Names '{3}' -ControlIds '{4}'"
+            $StepsForRepro="Get-AzSKAzureDevOpsSecurityStatus -OrganizationName '{0}' -ProjectNames '{1}' -{2}Names '{3}' -ControlIds '{4}'"
             $StepsForRepro=$StepsForRepro.Replace("{0}",$this.SubscriptionContext.SubscriptionName)
             $StepsForRepro=$StepsForRepro.Replace("{1}",$ControlResult.ResourceContext.ResourceGroupName)
             $StepsForRepro=$StepsForRepro.Replace("{2}",$ControlResult.FeatureName)
