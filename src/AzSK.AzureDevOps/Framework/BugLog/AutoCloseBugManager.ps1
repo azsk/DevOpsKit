@@ -32,7 +32,7 @@ class AutoCloseBugManager {
             $autoCloseProjBugFlag=$this.ControlSettings.BugLogging.AutoCloseProjectBug
         }
         catch {
-            $MaxKeyWordsToQuery=100
+            $MaxKeyWordsToQuery=30
             $autoCloseOrgBugFlag=$true
             $autoCloseProjBugFlag=$true;
         }
@@ -59,7 +59,7 @@ class AutoCloseBugManager {
         }
 
         #number of passed controls
-        $PassedControlResultsLength = $PassedControlResults.Length
+        $PassedControlResultsLength = ($PassedControlResults | Measure-Object).Count
         #the following loop will call api for bug closing in batches of size as defined in control settings,
         #first check if passed controls length is less than the batch size, if yes then we have to combine all tags in one go
         #and call the api
@@ -100,7 +100,7 @@ class AutoCloseBugManager {
                     if ($QueryKeyWordCount -eq $MaxKeyWordsToQuery) {
                         #query for all these tags and their bugs
                         $TagSearchKeyword = $TagSearchKeyword.Substring(0, $TagSearchKeyword.length - 3)
-                        $response = $this.GetWorkItemByHash($TagSearchKeyword)
+                        $response = $this.GetWorkItemByHash($TagSearchKeyword,$MaxKeyWordsToQuery)
                         if ($response[0].results.count -gt 0) {
                             $response.results.values | ForEach-Object {
                                 $id = ($_.fields | where { $_.name -eq "ID" }).value
