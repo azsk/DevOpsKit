@@ -64,12 +64,13 @@ class WriteCAStatus: ListenerBase
                     $scanSource = [RemoteReportHelper]::GetScanSource();
                     if($scanSource -ne [ScanSource]::Runbook) { return; }                                             			                             
                     [ComplianceStateTableEntity[]] $ResourceFlatEntries = @();
-                    $complianceReportHelper = [ComplianceReportHelper]::GetInstance($props.SubscriptionContext, $version); 
+                    $IsLocalComplianceStoreEnabled = [ComplianceReportHelper]::ValidateComplianceStateCaching(); 
                     $complianceData = $null;
                     # Changes for compliance table dependency removal
 				    # if IsLocalComplianceStoreEnabled is false, do not persist/fetch scan result in compliance state table
-                    if($complianceReportHelper.IsLocalComplianceStoreEnabled)
+                    if($IsLocalComplianceStoreEnabled)
                     {
+                        $complianceReportHelper = [ComplianceReportHelper]::GetInstance($props.SubscriptionContext, $version);
                         if($complianceReportHelper.HaveRequiredPermissions())
                         {
                             $selectColumns = @("PartitionKey","RowKey");
@@ -168,10 +169,12 @@ class WriteCAStatus: ListenerBase
                 {
                     $ResourceControlsData = $CustomObjectData.Value;
                     # Changes for compliance table dependency removal
+                    # TODO: Perf Optimization 
 				    # if IsLocalComplianceStoreEnabled is false, do not persist/fetch scan result in compliance state table
-                    $complianceReportHelper = [ComplianceReportHelper]::GetInstance($props.SubscriptionContext, $currentInstance.InvocationContext.MyCommand.Version); 
-                    if($complianceReportHelper.IsLocalComplianceStoreEnabled)
+                    $IsLocalComplianceStoreEnabled = [ComplianceReportHelper]::ValidateComplianceStateCaching(); 
+                    if($IsLocalComplianceStoreEnabled)
                     {
+                        $complianceReportHelper = [ComplianceReportHelper]::GetInstance($props.SubscriptionContext, $version);
                         if($null -ne $ResourceControlsData.ResourceContext -and ($ResourceControlsData.Controls | Measure-Object).Count -gt 0)
                         {
                             
