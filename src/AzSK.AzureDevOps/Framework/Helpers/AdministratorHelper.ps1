@@ -52,7 +52,7 @@ class AdministratorHelper{
         
 
         if(($prcollobj | Measure-Object).Count -gt 0){
-            [AdministratorHelper]::FindPAMembers($prcollobj.descriptor,$OrgName)
+            [AdministratorHelper]::FindPAMembers($prcollobj.descriptor,$OrgName,$projName)
         }
     }
     catch {
@@ -144,7 +144,7 @@ class AdministratorHelper{
         #checking if pa members have already been found. If not first find all the members. If the length is not zero, the function had
         #already been run before, hence we have a list and we need not repeat the computation again
         if([AdministratorHelper]::AllPAMembers.Length -eq 0){
-            [AdministratorHelper]::GetPADescriptorAndMembers($OrgName)
+            [AdministratorHelper]::GetPADescriptorAndMembers($OrgName,$projName)
         }
         #get unique pa based on display name and mail address
         [AdministratorHelper]::AllPAMembers=[AdministratorHelper]::AllPAMembers | Sort-Object 'displayName','mailAddress' | Get-Unique -AsString

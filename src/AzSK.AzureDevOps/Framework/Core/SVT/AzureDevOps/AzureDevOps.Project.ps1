@@ -260,8 +260,10 @@ class Project: ADOSVTBase
     hidden [ControlResult] CheckMinPACount([ControlResult] $controlResult)
     {
         $TotalPAMembers=0
-        $PAMembers=[AdministratorHelper]::GetTotalPAMembers($this.SubscriptionContext.SubscriptionName,$this.ResourceContext.ResourceName)
-        $TotalPAMembers=$PAMembers.Length
+        $PAMembers=@()
+        $PAMembers += [AdministratorHelper]::GetTotalPAMembers($this.SubscriptionContext.SubscriptionName,$this.ResourceContext.ResourceName)
+        $TotalPAMembers=($PAMembers | Measure-Object).Count
+        $PAMembers = $PAMembers | Select-Object displayName,mailAddress
         $controlResult.AddMessage("There are a total of $TotalPAMembers Project Administrators in your project.")
         if($TotalPAMembers -lt $this.ControlSettings.Project.MinPAMembersPermissible){
             $controlResult.AddMessage([VerificationResult]::Failed,"Number of administrators configured are less than the minimum required administrators count : $($this.ControlSettings.Project.MinPAMembersPermissible).");
@@ -280,8 +282,10 @@ class Project: ADOSVTBase
     {
         
         $TotalPAMembers=0
-        $PAMembers=[AdministratorHelper]::GetTotalPAMembers($this.SubscriptionContext.SubscriptionName,$this.ResourceContext.ResourceName)
-        $TotalPAMembers=$PAMembers.Length
+        $PAMembers=@()
+        $PAMembers += [AdministratorHelper]::GetTotalPAMembers($this.SubscriptionContext.SubscriptionName,$this.ResourceContext.ResourceName)
+        $TotalPAMembers=($PAMembers | Measure-Object).Count
+        $PAMembers = $PAMembers | Select-Object displayName,mailAddress
         $controlResult.AddMessage("There are a total of $TotalPAMembers Project Administrators in your project.")
         if($TotalPAMembers -gt $this.ControlSettings.Project.MaxPAMembersPermissible){
             $controlResult.AddMessage([VerificationResult]::Failed,"Number of administrators configured are more than the approved limit : $($this.ControlSettings.Project.MaxPAMembersPermissible).");
