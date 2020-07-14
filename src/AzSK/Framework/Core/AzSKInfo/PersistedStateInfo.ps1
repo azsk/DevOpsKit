@@ -28,22 +28,15 @@ class PersistedStateInfo: AzCommandBase
 			$azskConfig = [ConfigurationManager]::GetAzSKConfigData();	
 			$successCount = 0;
 			$totalCount = 0;
-			$settingStoreComplianceSummaryInUserSubscriptions = [ConfigurationManager]::GetAzSKSettings().StoreComplianceSummaryInUserSubscriptions;
+			# if IsLocalComplianceStoreEnabled is false, return message indicating Compliance state table caching is disabled by default	
+			$IsLocalComplianceStoreEnabled = [ComplianceReportHelper]::ValidateComplianceStateCaching() 
 			#return if feature is turned off at server config
-			if(-not $azskConfig.StoreComplianceSummaryInUserSubscriptions -and -not $settingStoreComplianceSummaryInUserSubscriptions) 	
+			if(!$IsLocalComplianceStoreEnabled) 	
 			{
 				$this.PublishCustomMessage("Note: This feature is currently disabled for your environment. Please contact the cloud security team for your org.", [MessageType]::Warning);	
 				$this.DoNotOpenOutputFolder = $true;
 				return $messages;
 			} 
-			# if IsLocalComplianceStoreEnabled is false, return message indicating Compliance state table caching is disabled by default	
-			$IsLocalComplianceStoreEnabled = [ComplianceReportHelper]::ValidateComplianceStateCaching() 
-			if(!$IsLocalComplianceStoreEnabled)
-        	{
-            	$this.PublishCustomMessage([Constants]::ComplianceInfoCachingDisabled, [MessageType]::Warning);	
-				$this.DoNotOpenOutputFolder = $true;
-				return $messages;
-        	}
 			#Check for file path exist
 			if(-not (Test-Path -path $filePath))
 			{  

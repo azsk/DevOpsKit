@@ -487,13 +487,6 @@ class AzSVTBase: SVTBase{
 			$currentControl.MaximumAllowedGraceDays = $this.CalculateGraceInDays($singleControlResult);
 		}
 		
-         $azskConfig = [ConfigurationManager]::GetAzSKConfigData();	
-         $settingStoreComplianceSummaryInUserSubscriptions = [ConfigurationManager]::GetAzSKSettings().StoreComplianceSummaryInUserSubscriptions;
-         #return if feature is turned off at server config
-		 if(-not $azskConfig.StoreComplianceSummaryInUserSubscriptions -and -not $settingStoreComplianceSummaryInUserSubscriptions) 
-		 {
-			 return;
-		 }
 		 if($this.IsLocalComplianceStoreEnabled)
 		 {
 			if(($this.ComplianceStateData | Measure-Object).Count -gt 0)
@@ -543,7 +536,7 @@ class AzSVTBase: SVTBase{
 				}
 				$singleControlResult.ControlResults=$controlsResults 
 			}
-		}
+		 }
      }
      catch
      {
