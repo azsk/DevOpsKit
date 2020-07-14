@@ -17,7 +17,7 @@ class SPNInfo: CommandBase
 	{
 		if([string]::IsNullOrEmpty($this.ApiBaseEndpoint))
         {
-			#This feature is currently available for only org, only for which Endpoint/backend API url is configure
+			#This feature is currently available only for org in which Endpoint/backend API url is configured
             $this.PublishCustomMessage("`r`nThis feature is currently not available for your environment.`r`n", [MessageType]::Warning)
             return
         }
