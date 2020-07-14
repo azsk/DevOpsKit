@@ -709,6 +709,7 @@ class Organization: ADOSVTBase
 
     hidden [ControlResult] CheckMinPCACount([ControlResult] $controlResult)
     {
+        $TotalPCAMembers=0
         $PCAMembers=[AdministratorHelper]::GetTotalPCAMembers($this.SubscriptionContext.SubscriptionName)
         $TotalPCAMembers=$PCAMembers.Length
         $PCAMembers = $PCAMembers | Select-Object displayName,mailAddress
@@ -719,14 +720,17 @@ class Organization: ADOSVTBase
         else{
             $controlResult.AddMessage([VerificationResult]::Passed,"Number of administrators configured are more than the minimum required administrators count : $($this.ControlSettings.Organization.MinPCAMembersPermissible)");
         }
-        $controlResult.AddMessage("Verify the following Project Collection Administrators : ",$PCAMembers)
-        $controlResult.SetStateData("List of Project Collection Administrators : ",$PCAMembers)
+        if($TotalPCAMembers -gt 0){
+            $controlResult.AddMessage("Verify the following Project Collection Administrators : ",$PCAMembers)
+            $controlResult.SetStateData("List of Project Collection Administrators : ",$PCAMembers)
+        }        
         return $controlResult
 }
 
 hidden [ControlResult] CheckMaxPCACount([ControlResult] $controlResult)
     {
         
+        $TotalPCAMembers=0
         $PCAMembers=[AdministratorHelper]::GetTotalPCAMembers($this.SubscriptionContext.SubscriptionName)
         $TotalPCAMembers=$PCAMembers.Length
         $PCAMembers = $PCAMembers | Select-Object displayName,mailAddress
@@ -737,8 +741,10 @@ hidden [ControlResult] CheckMaxPCACount([ControlResult] $controlResult)
         else{
             $controlResult.AddMessage([VerificationResult]::Passed,"Number of administrators configured are within than the approved limit : $($this.ControlSettings.Organization.MaxPCAMembersPermissible)");
         }
-        $controlResult.AddMessage("Verify the following Project Collection Administrators : ",$PCAMembers)
-        $controlResult.SetStateData("List of Project Collection Administrators : ",$PCAMembers)
+        if($TotalPCAMembers -gt 0){
+            $controlResult.AddMessage("Verify the following Project Collection Administrators : ",$PCAMembers)
+            $controlResult.SetStateData("List of Project Collection Administrators : ",$PCAMembers)
+        }
     
         return $controlResult
 }

@@ -259,6 +259,7 @@ class Project: ADOSVTBase
 
     hidden [ControlResult] CheckMinPACount([ControlResult] $controlResult)
     {
+        $TotalPAMembers=0
         $PAMembers=[AdministratorHelper]::GetTotalPAMembers($this.SubscriptionContext.SubscriptionName,$this.ResourceContext.ResourceName)
         $TotalPAMembers=$PAMembers.Length
         $controlResult.AddMessage("There are a total of $TotalPAMembers Project Administrators in your project.")
@@ -268,15 +269,17 @@ class Project: ADOSVTBase
         else{
             $controlResult.AddMessage([VerificationResult]::Passed,"Number of administrators configured are more than the minimum required administrators count : $($this.ControlSettings.Project.MinPAMembersPermissible).");
         }
-        $controlResult.AddMessage("Verify the following Project Administrators : ",$PAMembers)
-        $controlResult.SetStateData("List of Project Administrators : ",$PAMembers)
-
+        if($TotalPAMembers -gt 0){
+            $controlResult.AddMessage("Verify the following Project Administrators : ",$PAMembers)
+            $controlResult.SetStateData("List of Project Administrators : ",$PAMembers)
+        }    
         return $controlResult
     }
 
     hidden [ControlResult] CheckMaxPACount([ControlResult] $controlResult)
     {
         
+        $TotalPAMembers=0
         $PAMembers=[AdministratorHelper]::GetTotalPAMembers($this.SubscriptionContext.SubscriptionName,$this.ResourceContext.ResourceName)
         $TotalPAMembers=$PAMembers.Length
         $controlResult.AddMessage("There are a total of $TotalPAMembers Project Administrators in your project.")
@@ -286,11 +289,10 @@ class Project: ADOSVTBase
         else{
             $controlResult.AddMessage([VerificationResult]::Passed,"Number of administrators configured are within than the approved limit : $($this.ControlSettings.Project.MaxPAMembersPermissible).");
         }
-        $controlResult.AddMessage("Verify the following Project Administrators : ",$PAMembers)
-        $controlResult.SetStateData("List of Project Administrators : ",$PAMembers)
-
-        
-    
+        if($TotalPAMembers -gt 0){
+            $controlResult.AddMessage("Verify the following Project Administrators : ",$PAMembers)
+            $controlResult.SetStateData("List of Project Administrators : ",$PAMembers)
+        }         
         return $controlResult
     }
 

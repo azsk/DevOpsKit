@@ -129,26 +129,38 @@ class AdministratorHelper{
     }
 
     static [object] GetTotalPCAMembers([string] $OrgName){
+
+        #checking if pca members have already been found. If not first find all the members. If the length is not zero, the function had
+        #already been run before, hence we have a list and we need not repeat the computation again
         if([AdministratorHelper]::AllPCAMembers.Length -eq 0){
             [AdministratorHelper]::GetPCADescriptorAndMembers($OrgName)
         }
+
+        #get unique pca based on display name and mail address
         [AdministratorHelper]::AllPCAMembers=[AdministratorHelper]::AllPCAMembers | Sort-Object 'displayName','mailAddress' | Get-Unique -AsString
         return [AdministratorHelper]::AllPCAMembers
     }
     static [object] GetTotalPAMembers([string] $OrgName,[string] $projName){
+        #checking if pa members have already been found. If not first find all the members. If the length is not zero, the function had
+        #already been run before, hence we have a list and we need not repeat the computation again
         if([AdministratorHelper]::AllPAMembers.Length -eq 0){
             [AdministratorHelper]::GetPADescriptorAndMembers($OrgName)
         }
+        #get unique pa based on display name and mail address
         [AdministratorHelper]::AllPAMembers=[AdministratorHelper]::AllPAMembers | Sort-Object 'displayName','mailAddress' | Get-Unique -AsString
         return [AdministratorHelper]::AllPAMembers
     }
     static [bool] GetIsCurrentUserPCA([string] $descriptor,[string] $OrgName){
+        #checking if pca members have already been found. If not first find all the members. If the length is not zero, the function had
+        #already been run before, hence we have a list and have already found if the user is pca and we need not repeat the computation again
         if([AdministratorHelper]::AllPCAMembers.Length -eq 0){
             [AdministratorHelper]::FindPCAMembers($descriptor,$OrgName)
         }
         return [AdministratorHelper]::isCurrentUserPCA
     }
     static [bool] GetIsCurrentUserPA([string] $descriptor,[string] $OrgName,[string] $projName){
+        #checking if pa members have already been found. If not first find all the members. If the length is not zero, the function had
+        #already been run before, hence we have a list and have already found if the user is pa and we need not repeat the computation again
         if([AdministratorHelper]::AllPAMembers.Length -eq 0){
             [AdministratorHelper]::FindPAMembers($descriptor,$OrgName,$projName)
         }
