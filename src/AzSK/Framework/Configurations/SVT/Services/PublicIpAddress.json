@@ -1,6 +1,6 @@
 {
-    "FeatureName": "PublicIpAddresses",
-    "Reference": "aka.ms/azsktcp/publicipaddresses",
+    "FeatureName": "PublicIpAddress",
+    "Reference": "aka.ms/azsktcp/publicipaddress",
     "IsMaintenanceMode": false,
      "Controls": [
         {
