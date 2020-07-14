@@ -25,11 +25,16 @@ class PublicIpAddress: AzSVTBase
 
     hidden [ControlResult] VerifyPublicIp([ControlResult] $controlResult)
 	{	
-		
-			$ip = $this.ResourceObject | Select-Object ResourceGroupName, Name, Location, PublicIpAllocationMethod, PublicIpAddressVersion
+		    
+            $ip = $this.ResourceObject | Select-Object AssociatedResourceId,PublicIpAllocationMethod, PublicIpAddressVersion
+           $ipConfig = $this.ResourceObject.IpConfiguration
+           if($null -ne $ipConfig -and ![string]::IsNullOrWhiteSpace($ipConfig.Id))
+           {
+            $ip.AssociatedResourceId = $ipConfig.Id
+           }
 
 		if($ip)
-        {
+        { 
 			$controlResult.SetStateData("Public IP details", $ip);
             $controlResult.AddMessage([VerificationResult]::Verify, "Found public IP:", $ip)
         }

@@ -6,7 +6,6 @@ class ComplianceReportHelper: ComplianceBase
 	hidden [System.Version] $ScannerVersion
 	hidden [string] $ScanKind
 	static [ComplianceReportHelper] $Instance
-	hidden [bool] $IsLocalComplianceStoreEnabled
 	
     ComplianceReportHelper([SubscriptionContext] $subscriptionContext,[System.Version] $ScannerVersion):
     Base([SubscriptionContext] $subscriptionContext) 
@@ -14,8 +13,6 @@ class ComplianceReportHelper: ComplianceBase
 		$this.ScanSource = [RemoteReportHelper]::GetScanSource();
 		$this.ScannerVersion = $ScannerVersion
 		$this.ScanKind = [ServiceScanKind]::Partial;
-		$azskConfig = [ConfigurationManager]::GetAzSKConfigData();
-		$this.IsLocalComplianceStoreEnabled =($this.ValidateComplianceStateCaching()) -or ($azskConfig.StoreComplianceSummaryInUserSubscriptions) -or ([ConfigurationManager]::GetAzSKSettings().StoreComplianceSummaryInUserSubscriptions);
 	}
 	
 	#Get cached instance for compliance. This is to avoid repeatative calls for base constructor which fetch details of AzSK resources on every resource
@@ -29,23 +26,26 @@ class ComplianceReportHelper: ComplianceBase
     }
 	#Function to check if ComplianceStateCaching tag is present on "AzSKRG" resource group
 	#if this tag is missing, Compliance state table will not be used to store/fetch compliance data(default case)
-	hidden [bool] ValidateComplianceStateCaching()
+	static [bool] ValidateComplianceStateCaching()
 	{
 		$AzSKConfigData = [ConfigurationManager]::GetAzSKConfigData()
-		$tagsOnSub =  [ResourceGroupHelper]::GetResourceGroupTags($AzSKConfigData.AzSKRGName)
-		if($tagsOnSub)
-		{
-			$ComplianceCacheTag = $tagsOnSub.GetEnumerator() | Where-Object {$_.Name -like "ComplianceStateCaching*"}
-			if(($ComplianceCacheTag | Measure-Object).Count -gt 0)
+		$IsLocalComplianceStoreEnabled = ($AzSKConfigData.StoreComplianceSummaryInUserSubscriptions) -or ([ConfigurationManager]::GetAzSKSettings().StoreComplianceSummaryInUserSubscriptions);
+		if(!$IsLocalComplianceStoreEnabled)
+			{$tagsOnSub =  [ResourceGroupHelper]::GetResourceGroupTags($AzSKConfigData.AzSKRGName)
+			if($tagsOnSub)
 			{
-				$ComplianceCacheTagValue =$ComplianceCacheTag.Value		
-				if(-not [string]::IsNullOrWhiteSpace($ComplianceCacheTagValue) -and  $ComplianceCacheTagValue -eq "true")
+				$ComplianceCacheTag = $tagsOnSub.GetEnumerator() | Where-Object {$_.Name -like "ComplianceStateCaching*"}
+				if(($ComplianceCacheTag | Measure-Object).Count -gt 0)
 				{
-					return $true
-				}
-			}			
+					$ComplianceCacheTagValue =$ComplianceCacheTag.Value		
+					if(-not [string]::IsNullOrWhiteSpace($ComplianceCacheTagValue) -and  $ComplianceCacheTagValue -eq "true")
+					{
+						$IsLocalComplianceStoreEnabled = $true
+					}
+				}			
+			}
 		}
-		return $false
+		return $IsLocalComplianceStoreEnabled
 	}
 
 	hidden [ComplianceStateTableEntity[]] GetSubscriptionComplianceReport()

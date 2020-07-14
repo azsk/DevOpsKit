@@ -24,8 +24,8 @@ class SPNInfo: CommandBase
 			#Get SPNs start with AzSK_CA
 			if($null -ne $ownedSPNDetails -and ($ownedSPNDetails | Measure-Object).Count -gt 0)
 			{
-				#Filter OwnedSPN start with AzSK_CA
-				$ownedSPNs += $ownedSPNDetails | Where-Object { $_.displayName -like "AzSK_CA*"}
+				#Filter OwnedSPN start with AzSK_CA or AzSDK_CA
+				$ownedSPNs += $ownedSPNDetails | Where-Object { ($_.displayName -like "AzSK_CA*") -or ($_.displayName -like "AzSDK_CA*")}
 			}
 			
 			if($null -ne $ownedSPNs -and ($ownedSPNs | Measure-Object).Count -gt 0)

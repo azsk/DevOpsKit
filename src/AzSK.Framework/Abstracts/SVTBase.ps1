@@ -34,6 +34,7 @@ class SVTBase: AzSKRoot
 	[string] $PartialScanIdentifier = [string]::Empty
 	[ComplianceStateTableEntity[]] $ComplianceStateData = @();
 	[PSObject[]] $ChildSvtObjects = @();
+	[bool] $IsLocalComplianceStoreEnabled = $false;
 	#EndRegion
 
 	SVTBase([string] $subscriptionId):
@@ -356,8 +357,8 @@ class SVTBase: AzSKRoot
 		else {
 			Write-Host "No attested control found.`n$([Constants]::SingleDashLine)" 
 		}
-         return $resourceScanResult;
-	}
+			return $resourceScanResult;
+		}
 
 	[SVTEventContext[]] ComputeApplicableControlsWithContext()
     {
@@ -1183,7 +1184,7 @@ class SVTBase: AzSKRoot
 				else
 				{
 					# Expire WillFixLater if GracePeriod has expired
-					if(-not($isControlInGrace) -and $controlState.AttestationStatus -eq [AttestationStatus]::WillFixLater)
+					if($this.IsLocalComplianceStoreEnabled -and -not($isControlInGrace) -and $controlState.AttestationStatus -eq [AttestationStatus]::WillFixLater)
 					{
 						$expiryInDays=0;
 					}

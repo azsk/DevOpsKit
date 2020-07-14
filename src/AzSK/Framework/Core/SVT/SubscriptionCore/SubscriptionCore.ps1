@@ -1091,6 +1091,10 @@ class SubscriptionCore: AzSVTBase
 				} 
 				
 			}
+			else{
+				$controlResult.AddMessage("Note: `n By default, this control is not evaluated in manual scan mode as it takes substantial amount of time to scan. To determine control status please look at the detailed log files in the AzSK storage account in AzSKRG under a container named 'ca-scan-logs' `n If you would like to override this behavior and evaluate the control from PS console, you can specify the control id explicitly in the scan cmdlet (e.g., gss -s <sub_id> -cids 'Azure_Subscription_AuthZ_Dont_Grant_Persistent_Access_RG '")
+				$controlResult.VerificationResult = [VerificationResult]::Manual
+			}
 		}
 
 		return $controlResult
@@ -1466,95 +1470,113 @@ class SubscriptionCore: AzSVTBase
 
 	hidden [ControlResult] CheckPIMCATagRGScope([ControlResult] $controlResult)
 	{
-		$resourceId =""
-		$resourceGroupIDs = @()
-		$validRoles = @();
-		$missingCAPolicyOnRoles = @();
-		$nonCompliantPIMCAPolicyTagRoles = @();
-
-		$ResourceAppIdURI = [WebRequestHelper]::GetServiceManagementUrl()
-		$accessToken = [ContextHelper]::GetAccessToken($ResourceAppIdURI)
-		$authorisationToken = "Bearer " + $accessToken
-		$headers = @{"Authorization"=$authorisationToken;"Content-Type"="application/json"}
-		
-		try
+		if([FeatureFlightingManager]::GetFeatureStatus("EnableConditionalAccessRGControlEvaluation",$($this.SubscriptionContext.SubscriptionId)))
 		{
-			#Fetch details of all resourcegroups in the subscription
-			$uri=[Constants]::PIMAPIUri +"?`$filter=(type%20eq%20%27resourcegroup%27)%20and%20contains(tolower(externalId),%20%27{0}%27)&`$orderby=displayName" -f $this.SubscriptionContext.SubscriptionId.ToLower()
-			$response=[WebRequestHelper]::InvokeGetWebRequest($uri, $headers)
-			$subId=$this.SubscriptionContext.SubscriptionId;
-			$extID=$response| Where-Object{$_.externalId.split('/') -contains $subId}
-			$resourceGroupIDs=$extID.id;
-				
-			if(($resourceGroupIDs | Measure-Object).Count -gt 0 )
+			$resourceId =""
+			$resourceGroupIDs = @()
+			$validRoles = @();
+			$missingCAPolicyOnRoles = @();
+			$nonCompliantPIMCAPolicyTagRoles = @();
+
+			$ResourceAppIdURI = [WebRequestHelper]::GetServiceManagementUrl()
+			$accessToken = [ContextHelper]::GetAccessToken($ResourceAppIdURI)
+			$authorisationToken = "Bearer " + $accessToken
+			$headers = @{"Authorization"=$authorisationToken;"Content-Type"="application/json"}
+			
+			# Check if the scan is run in  CA mode or in SDL mode explicity ran for this control or user is getting into an attestation mode
+			# The logic being this control is only scanned in CA mode and if user needs to attest then they would otherwise need to manually set scan source in client as 'CA'
+			if(-not([string]::IsNullOrEmpty($this.InvocationContext.BoundParameters['ControlIds'])) -or  -not( [string]::IsNullOrEmpty($this.InvocationContext.BoundParameters['ControlsToAttest'])) -or [AzSKSettings]::GetInstance().GetScanSource() -eq 'CA')
 			{
-				foreach($rgID in $resourceGroupIDs)
+				try
 				{
-					#Get applicable roles of RG, which will also provide role ids for role secific api call
-					$roleurl = "https://api.azrbac.mspim.azure.com/api/v2/privilegedAccess/azureResources/resources/" + $rgID + "/roleDefinitions?`$select=id,displayName,type,templateId,resourceId,externalId,subjectCount,eligibleAssignmentCount,activeAssignmentCount&`$orderby=activeAssignmentCount%20desc"
-					$roles = [WebRequestHelper]::InvokeGetWebRequest($roleurl, $headers)
-					$roles= $roles | Where-Object{$_.DisplayName -in $this.ControlSettings.CriticalPIMRoles.ResourceGroup}
-
-					foreach($role in $roles)
-					{
-						#API call to fetch existing role settings with respect to ACRS Rule
-						$url = "https://api.azrbac.mspim.azure.com/api/v2/privilegedAccess/azureResources/roleSettingsV2?`$expand=resource,roleDefinition(`$expand=resource)&`$filter=(resource/id+eq+%27$($rgID)%27)+and+(roleDefinition/id+eq+%27$($role.id)%27)"
-						$rolesettings = [WebRequestHelper]::InvokeGetWebRequest($url, $headers)
-						$CAPolicyOnRoles = ($($($rolesettings.lifeCycleManagement | Where-Object {$_.caller -eq 'EndUser' -and $_.level -eq 'Member'}).value) | Where-Object{$_.RuleIdentifier -eq 'AcrsRule'}).setting | ConvertFrom-Json
+					#Fetch details of all resourcegroups in the subscription
+					$uri=[Constants]::PIMAPIUri +"?`$filter=(type%20eq%20%27resourcegroup%27)%20and%20contains(tolower(externalId),%20%27{0}%27)&`$orderby=displayName" -f $this.SubscriptionContext.SubscriptionId.ToLower()
+					$response=[WebRequestHelper]::InvokeGetWebRequest($uri, $headers)
+					$subId=$this.SubscriptionContext.SubscriptionId;
+					$extID=$response| Where-Object{$_.externalId.split('/') -contains $subId}
+					$resourceGroupIDs=$extID.id;
 						
-						#Create custom object to display only required information in detail logs
-						$item = New-Object psobject -Property @{
-							RoleId    			= $role.id
-							RoleName  			= $role.displayName
-							Type     			= $role.type
-							ResourceGroupName   = $rolesettings.resource.displayName
-							SubjectCount 		= $role.subjectCount
-						}
-
-						# If Conditional Access is enabled then check if correct CA policy is applied
-						if($CAPolicyOnRoles.acrsRequired)
+					if(($resourceGroupIDs | Measure-Object).Count -gt 0 )
+					{
+						foreach($rgID in $resourceGroupIDs)
 						{
-							$validRoles +=$item
-							if([Helpers]::CheckMember($this.ControlSettings,"CheckPIMCAPolicyTags"))
+							#Get applicable roles of RG, which will also provide role ids for role secific api call
+							$roleurl = "https://api.azrbac.mspim.azure.com/api/v2/privilegedAccess/azureResources/resources/" + $rgID + "/roleDefinitions?`$select=id,displayName,type,templateId,resourceId,externalId,subjectCount,eligibleAssignmentCount,activeAssignmentCount&`$orderby=activeAssignmentCount%20desc"
+							$roles = [WebRequestHelper]::InvokeGetWebRequest($roleurl, $headers)
+							$roles= $roles | Where-Object{$_.DisplayName -in $this.ControlSettings.CriticalPIMRoles.ResourceGroup}
+
+							foreach($role in $roles)
 							{
-								if([Helpers]::CheckMember($this.ControlSettings,"PIMCAPolicyTags"))
+								#API call to fetch existing role settings with respect to ACRS Rule
+								$url = "https://api.azrbac.mspim.azure.com/api/v2/privilegedAccess/azureResources/roleSettingsV2?`$expand=resource,roleDefinition(`$expand=resource)&`$filter=(resource/id+eq+%27$($rgID)%27)+and+(roleDefinition/id+eq+%27$($role.id)%27)"
+								$rolesettings = [WebRequestHelper]::InvokeGetWebRequest($url, $headers)
+								$CAPolicyOnRoles = ($($($rolesettings.lifeCycleManagement | Where-Object {$_.caller -eq 'EndUser' -and $_.level -eq 'Member'}).value) | Where-Object{$_.RuleIdentifier -eq 'AcrsRule'}).setting | ConvertFrom-Json
+								
+								#Create custom object to display only required information in detail logs
+								$item = New-Object psobject -Property @{
+									RoleId    			= $role.id
+									RoleName  			= $role.displayName
+									Type     			= $role.type
+									ResourceGroupName   = $rolesettings.resource.displayName
+									SubjectCount 		= $role.subjectCount
+								}
+
+								# If Conditional Access is enabled then check if correct CA policy is applied
+								if($CAPolicyOnRoles.acrsRequired)
 								{
-									if($CAPolicyOnRoles.acrs -notin $this.ControlSettings.PIMCAPolicyTags)
+									$validRoles +=$item
+									if([Helpers]::CheckMember($this.ControlSettings,"CheckPIMCAPolicyTags"))
 									{
-										# Invalid CA POlicy applied
-										$nonCompliantPIMCAPolicyTagRoles +=$item;
+										if([Helpers]::CheckMember($this.ControlSettings,"PIMCAPolicyTags"))
+										{
+											if($CAPolicyOnRoles.acrs -notin $this.ControlSettings.PIMCAPolicyTags)
+											{
+												# Invalid CA POlicy applied
+												$nonCompliantPIMCAPolicyTagRoles +=$item;
+											}
+										}
 									}
 								}
-							}
+								else 
+								{
+									#CA policy is not enabled
+									$missingCAPolicyOnRoles +=$item
+								}
+							}	
 						}
-						else 
-						{
-							#CA policy is not enabled
-							$missingCAPolicyOnRoles +=$item
-						}
-					}	
+					}
+
+					if(($nonCompliantPIMCAPolicyTagRoles | Measure-Object).Count -gt 0 )
+					{
+						$controlResult.VerificationResult = [VerificationResult]::Failed
+						$controlResult.AddMessage("Roles that do not have required CA policy tags $($this.ControlSetting,"PIMCAPolicyTags" -join ',') `n $($nonCompliantPIMCAPolicyTagRoles | Format-List) ");
+					}
+					elseif(($missingCAPolicyOnRoles | Measure-Object).Count -gt 0 )
+					{
+						$controlResult.VerificationResult = [VerificationResult]::Failed
+						$controlResult.AddMessage("Role with Acr required turned off `n $($missingCAPolicyOnRoles | Format-List | Out-String) ");
+					}
+					else
+					{
+						$controlResult.VerificationResult = [VerificationResult]::Passed	
+					}		
+				}
+				catch
+				{
+					$controlResult.AddMessage($_);
+					$controlResult.VerificationResult = [VerificationResult]::Manual
 				}
 			}
-
-			if(($nonCompliantPIMCAPolicyTagRoles | Measure-Object).Count -gt 0 )
-			{
-				$controlResult.VerificationResult = [VerificationResult]::Failed
-				$controlResult.AddMessage("Roles that do not have required CA policy tags $($this.ControlSetting,"PIMCAPolicyTags" -join ',') `n $($nonCompliantPIMCAPolicyTagRoles | Format-List) ");
+			else{
+				$controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false;
+				$controlResult.AddMessage("Note: `n By default, this control is not evaluated in manual scan mode as it takes substantial amount of time to scan. To determine control status please look at the detailed log files in the AzSK storage account in AzSKRG under a container named 'ca-scan-logs' `n If you would like to override this behavior and evaluate the control from PS console, you can specify the control id explicitly in the scan cmdlet (e.g., gss -s <sub_id> -cids 'Azure_Subscription_Configure_Conditional_Access_for_PIM_RG '")
+				$controlResult.VerificationResult = [VerificationResult]::Manual
 			}
-			elseif(($missingCAPolicyOnRoles | Measure-Object).Count -gt 0 )
-			{
-				$controlResult.VerificationResult = [VerificationResult]::Failed
-				$controlResult.AddMessage("Role with Acr required turned off `n $($missingCAPolicyOnRoles | Format-List | Out-String) ");
-			}
-			else
-			{
-				$controlResult.VerificationResult = [VerificationResult]::Passed	
-			}		
 		}
-		catch
+		else
 		{
-			$controlResult.AddMessage($_);
 			$controlResult.VerificationResult = [VerificationResult]::Manual
+			$controlResult.AddMessage("Note: `n This control is not currently automated. Please validate that Conditional Access policy is enabled on each RG for User Access Administrator and Owner roles.'")
 		}
 		return $controlResult;
 	}
@@ -1661,6 +1683,10 @@ class SubscriptionCore: AzSVTBase
 					$controlResult.AddMessage("Unable to query compliance state results")
 				}
 				
+			}
+			else{
+				$controlResult.AddMessage("Note: `n By default, this control is not evaluated in manual scan mode as it takes substantial amount of time to scan. To determine control status please look at the detailed log files in the AzSK storage account in AzSKRG under a container named 'ca-scan-logs' `n If you would like to override this behavior and evaluate the control from PS console, you can specify the control id explicitly in the scan cmdlet (e.g., gss -s <sub_id> -cids 'Azure_Subscription_Use_Only_Alt_Credentials '")
+				$controlResult.VerificationResult = [VerificationResult]::Manual
 			}
 		}
 		return $controlResult;
