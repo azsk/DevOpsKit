@@ -294,26 +294,29 @@ class ControlStateExtension
 				#merge with the exiting if found
 				$persistedControlStates = $this.GetPersistedControlStates("$hash.json");
 				$finalControlStates = $this.MergeControlStates($persistedControlStates, $finalControlStates);
-				$finalControl = @();
-				#convert state data object to encoded string
-				foreach ($controls in $finalControlStates) {
-					# checking If state.DataObject is not empty and dataobject is not encode string, if control is already attested it will have encoded string
-					if ($controls.state.DataObject -and !($controls.state.DataObject -is [string]) ) {
-						try {
-							#when dataobject is empty it comes like {} and null check does not work it alwasys count 1
-							if ($controls.state.DataObject.count -gt 0) {
-								$stateData = $controls.state.DataObject | ConvertTo-Json -Depth 10
-								$encodedStateData =[Convert]::ToBase64String([System.Text.Encoding]::Unicode.GetBytes($stateData))
-								$controls.state.DataObject = $encodedStateData;
-							}
-						}
-						catch {
-							#eat the exception
-						}
-					}
-					$finalControl += $controls;
-				}
-				$finalControlStates = $finalControl;
+
+				# COmmenting this code out. We will be handling encoding-decoding to b64 at SetStateData and WriteDetailedLogs.ps1
+				
+				#$finalControl = @();
+				##convert state data object to encoded string
+				#foreach ($controls in $finalControlStates) {
+				#	# checking If state.DataObject is not empty and dataobject is not encode string, if control is already attested it will have encoded string
+				#	if ($controls.state.DataObject -and !($controls.state.DataObject -is [string]) ) {
+				#		try {
+				#			#when dataobject is empty it comes like {} and null check does not work it alwasys count 1
+				#			if ($controls.state.DataObject.count -gt 0) {
+				#				$stateData = $controls.state.DataObject | ConvertTo-Json -Depth 10
+				#				$encodedStateData =[Convert]::ToBase64String([System.Text.Encoding]::Unicode.GetBytes($stateData))
+				#				$controls.state.DataObject = $encodedStateData;
+				#			}
+				#		}
+				#		catch {
+				#			#eat the exception
+				#		}
+				#	}
+				#	$finalControl += $controls;
+				#}
+				#$finalControlStates = $finalControl;
 				$this.UpdateControlIndexer($id, $finalControlStates, $false);
 				
 			}
@@ -509,20 +512,22 @@ class ControlStateExtension
 		   $uri = [Constants]::GetAttRepoStorageUri -f $this.SubscriptionContext.subscriptionid, $projectName, [Constants]::AttestationRepo, $fileName, $branchName 
 		   $webRequestResult = Invoke-RestMethod -Uri $uri -Method Get -ContentType "application/json" -Headers @{Authorization=("Basic {0}" -f $base64AuthInfo)}
            if ($webRequestResult) {
-			if($fileName -ne $this.IndexerBlobName)
-			{   
-			    #convert back state data from encoded string
-			    $attestationData = @();
-				foreach ($controls in $webRequestResult) 
-				{
-			    	if($controls.State.DataObject -is [string])
-			        {
-			        	$controls.State.DataObject = [System.Text.Encoding]::Unicode.GetString([System.Convert]::FromBase64String($controls.State.DataObject)) | ConvertFrom-Json
-			        }
-			    	$attestationData += $controls;
-			    }
-			    $webRequestResult = $attestationData;
-		    }
+			# COmmenting this code out. We will be handling encoding-decoding to b64 at SetStateData and WriteDetailedLogs.ps1
+
+			#if($fileName -ne $this.IndexerBlobName)
+			#{   
+			#    #convert back state data from encoded string
+			#    $attestationData = @();
+			#	foreach ($controls in $webRequestResult) 
+			#	{
+			#    	if($controls.State.DataObject -is [string])
+			#        {
+			#        	$controls.State.DataObject = [System.Text.Encoding]::Unicode.GetString([System.Convert]::FromBase64String($controls.State.DataObject)) | ConvertFrom-Json
+			#        }
+			#    	$attestationData += $controls;
+			#    }
+			#    $webRequestResult = $attestationData;
+		    #}
 			return $webRequestResult
 		   }
 		   return $null;

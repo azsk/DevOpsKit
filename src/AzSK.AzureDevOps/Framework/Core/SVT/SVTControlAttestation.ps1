@@ -79,8 +79,10 @@ class SVTControlAttestation
 		#display the current state only if the state object is not empty
 		if($null -ne $tempCurrentStateObject -and $null -ne $tempCurrentStateObject.DataObject)
 		{
+			#Current state object was converted to b64 in SetStateData. We need to decode it back to print it in plaintext in PS console.
 			Write-Host "Configuration data to be attested:" -ForegroundColor Cyan
-			Write-Host "$([JsonHelper]::ConvertToPson($tempCurrentStateObject.DataObject))"
+			$decodedDataObj = [System.Text.Encoding]::Unicode.GetString([System.Convert]::FromBase64String($tempCurrentStateObject.DataObject))  | ConvertFrom-Json 
+			Write-Host "$([JsonHelper]::ConvertToPson($decodedDataObj))"
 		}
 
 		if($isPrevAttested -and ($this.AttestControlsChoice -eq [AttestControls]::All -or $this.AttestControlsChoice -eq [AttestControls]::AlreadyAttested))
