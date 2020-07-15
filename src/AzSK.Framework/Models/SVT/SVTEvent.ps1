@@ -99,7 +99,11 @@ class ControlResult
 
 	[void] SetStateData([string] $message, [PSObject] $dataObject)
 	{
-		$this.StateManagement.CurrentStateData = [StateData]::new($message, $dataObject);
+		# We will convert state data to b64 here itself and use it in the same format throughout the framework for comparison with attested state data read from repo.
+		$stateData = $dataObject | ConvertTo-Json -Depth 10
+        $encodedStateData =[Convert]::ToBase64String([System.Text.Encoding]::Unicode.GetBytes($stateData))
+		
+		$this.StateManagement.CurrentStateData = [StateData]::new($message, $encodedStateData);
 	}
 }
 

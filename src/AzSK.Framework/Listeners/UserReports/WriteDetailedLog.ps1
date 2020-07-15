@@ -244,7 +244,19 @@ class WriteDetailedLog: FileOutputBase
 						if ($stateObject.DataObject) 
 						{							
 							$this.AddOutputLog("Attestation Data");
-							$this.AddOutputLog([Helpers]::ConvertObjectToString($stateObject.DataObject, $false));                    
+
+							#Bootstrapping the conversion from b64 as older attestation state data might be PSObject. b64 attestted state data will be a string.
+
+							if($stateObject.DataObject -is [string])
+							{
+								$decodedDataObj = [System.Text.Encoding]::Unicode.GetString([System.Convert]::FromBase64String($stateObject.DataObject))  | ConvertFrom-Json 
+							}
+							else
+							{
+								$decodedDataObj = $stateObject.DataObject
+							}
+							
+							$this.AddOutputLog([Helpers]::ConvertObjectToString($decodedDataObj, $false));                    
 						}
 					}
 					else
