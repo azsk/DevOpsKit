@@ -106,7 +106,7 @@ class SVTCommandBase: AzCommandBase {
                     $this.PublishCustomMessage(([Constants]::HashLine))
                     $this.PublishCustomMessage(([Constants]::AttestedControlsScanMsg))
                     $this.PublishCustomMessage(([Constants]::DoubleDashLine))
-
+                    $this.ControlStateExt.ControlStateIndexer = $null
                     ([CommandBase]$this).InvokeFunction($this.ScanAttestedControls,$null);
                 }
             }
