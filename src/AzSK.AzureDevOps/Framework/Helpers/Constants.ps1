@@ -104,7 +104,8 @@ class Constants
 	static [string] $AttestationRepo = "ADOScanner_Attestation"; 
 	static [string] $AttestationBranch = "master"; 
 	static [string] $OrgPolicyRepo = "ADOScanner_Policy_"; 
-	static [string] $OrgAttPrjExtFile = "Org_Config"; 
+	static [string] $OrgAttPrjExtFile = "Org_Config";
+	static [string] $ModuleAutoUpdateAvailableMsg = "A new version of AzSK.AzureDevOps is available. Starting the auto-update workflow...`nTo prepare for auto-update, please:`n`t a) Save your work from all active PS sessions including the current one and`n`t b) Close all PS sessions other than the current one. "; 
 
 	static [string] $AttestedControlsScanMsg = "You are almost done...we will perform a quick scan of controls attested within the last 24 hrs so that the backend will get the latest control status."
 	static [string] $LongRunningScanStopMsg = "`nThe set of parameters provided would result in scanning a large number of objects (> {0}). `nIf this is not what you intended, use a parameter set that would narrow down your target set. `nIf you would still like to scan all objects, rerun this command with the '-AllowLongRunningScan' switch.";
