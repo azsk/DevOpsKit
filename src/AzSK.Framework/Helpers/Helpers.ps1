@@ -758,7 +758,7 @@ class Helpers {
 	{
 		if($file)
 		{
-			$fileContent = Get-Content -Path $file.FullName;
+			$fileContent = Get-Content -Path $file.FullName -Encoding utf8;
 			if($fileContent)
 			{
 				Out-File -InputObject $fileContent -Force -FilePath $file.FullName -Encoding utf8
