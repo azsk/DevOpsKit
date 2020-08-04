@@ -200,22 +200,10 @@ class ControlStateExtension
 		{
 			return $false;
 		}
-		$fetchIndexFile = $false
-		if(-not $this.ControlStateIndexer -and $this.IsControlStateIndexerPresent) {
-			$fetchIndexFile = $true
-		}
-
-		if($this.IsControlStateIndexerPresent ){ 
-				$fetchIndexFile = $true
-			}
-			else{
-				$fetchIndexFile = $false
-			}
-		
 		
 		#Cache code: Fetch index file only if index file is null and it is present on storage blob
 		#if(-not $this.ControlStateIndexer -and $this.IsControlStateIndexerPresent)
-		if ($fetchIndexFile)
+		if(-not $this.ControlStateIndexer -and $this.IsControlStateIndexerPresent) 
 		{
 
 			$StorageAccount = $this.AzSKStorageAccount;
