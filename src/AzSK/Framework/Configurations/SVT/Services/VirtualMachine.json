@@ -119,7 +119,8 @@
              "DP",
              "Windows",
              "ERvNet",
-             "VirtualMachine"
+             "VirtualMachine",
+             "ExcludeEphemeralDisk"
           ],
           "Enabled": true,
           "PolicyDefinitionGuid": "0961003e-5a0a-4549-abde-af6a37f2724d"
