@@ -212,6 +212,8 @@ function Set-AzSKPIMConfiguration {
         [Parameter(Mandatory = $true, ParameterSetName = "Deactivate")]
         [Parameter(Mandatory = $true, ParameterSetName = "ConfigureRoleSettings")]
         [Parameter(Mandatory = $true, ParameterSetName = "ExtendExpiringAssignmentForUsers")]
+        [Parameter(Mandatory = $true, ParameterSetName = "ExtendExpiringAssignments")] 
+        [Parameter(Mandatory = $true, ParameterSetName = "ExtendExpiringForManagementGroup")]
         [Parameter(Mandatory = $true, ParameterSetName = "AssignForManagementGroup")]
         [Parameter(Mandatory = $true, ParameterSetName = "RemovePIMAssignmentForManagementGroup")]
         [Parameter(Mandatory = $true, ParameterSetName = "ActivateForManagementGroup")]
@@ -224,10 +226,8 @@ function Set-AzSKPIMConfiguration {
 
         [Parameter(Mandatory = $true, ParameterSetName = "AssignEligibleforPermanentAssignments")]
         [Parameter(Mandatory = $true, ParameterSetName = "RemovePermanentAssignment")]
-        [Parameter(Mandatory = $true, ParameterSetName = "ExtendExpiringAssignments")]
         [Parameter(Mandatory = $true, ParameterSetName = "AssignEligibleForManagementGroup")]
         [Parameter(Mandatory = $true, ParameterSetName = "RemovePermanentForManagementGroup")]
-        [Parameter(Mandatory = $true, ParameterSetName = "ExtendExpiringForManagementGroup")]
         [ValidateNotNullOrEmpty()]
 	    [Alias("rlns")]
         [string[]]
@@ -396,11 +396,11 @@ function Set-AzSKPIMConfiguration {
             elseif ($PSCmdlet.ParameterSetName -eq 'ExtendExpiringAssignments'-or $PSCmdlet.ParameterSetName -eq 'ExtendExpiringForManagementGroup') {
                 if([string]::IsNullOrEmpty($ManagementGroupId))
                 {
-                    $pimconfig.InvokeFunction($pimconfig.ExtendSoonToExpireAssignments, @($null, $SubscriptionId, $ResourceGroupName, $ResourceName, $RoleNames, $ExpiringInDays, $DurationInDays, $Force))
+                    $pimconfig.InvokeFunction($pimconfig.ExtendSoonToExpireAssignments, @($null, $SubscriptionId, $ResourceGroupName, $ResourceName, $RoleName, $ExpiringInDays, $DurationInDays, $Force))
                 }
                 else
                 { 
-                    $pimconfig.InvokeFunction($pimconfig.ExtendSoonToExpireAssignments, @($ManagementGroupId, $null, $null, $null, $RoleNames, $ExpiringInDays, $DurationInDays, $Force))
+                    $pimconfig.InvokeFunction($pimconfig.ExtendSoonToExpireAssignments, @($ManagementGroupId, $null, $null, $null, $RoleName, $ExpiringInDays, $DurationInDays, $Force))
                 }
             }
             
