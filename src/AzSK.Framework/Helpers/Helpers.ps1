@@ -758,7 +758,7 @@ class Helpers {
 	{
 		if($file)
 		{
-            # using utf8 encoding to read file content in order to avoid introduction of special chars, which occurs when there is a discrepancy in encoding used to read and write a file.
+                        # using utf8 encoding to read file content in order to avoid introduction of special chars, which occurs when there is a discrepancy in encoding used to read and write a file.
 			$fileContent = Get-Content -Path $file.FullName -Encoding utf8;
 			if($fileContent)
 			{
