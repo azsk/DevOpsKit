@@ -38,12 +38,41 @@ class CDN: AzSVTBase
 					$httpEndpointObj | Add-Member -NotePropertyName IsHttpAllowed -NotePropertyValue $_.IsHttpAllowed
 					$httpEndpointObj | Add-Member -NotePropertyName IsHttpsAllowed -NotePropertyValue $_.IsHttpsAllowed
 					$httpEndpointObjList+=$httpEndpointObj
+				}
+				$httpEndpointsWithRedirectRule = @()
+				$httpEndpointsWithoutRedirectRule = @()
+				$httpAllowedEndpointList | Foreach-Object {
+					$currentEndpoint = $_
+					$isRedirectRuleConfigured = $false
+					$currentEndpoint.DeliveryPolicy.Rules | Foreach-Object {
+						$currentRule = $_
+						$requiredHttpCondition = $currentRule.Conditions | Where-Object { $_.MatchVariable -eq "RequestScheme" -and $_.MatchValue -eq "HTTP"}
+						$requiredRedirectAction = $currentRule.Actions | Where-Object { $_.RedirectType -eq "Found" -and $_.DestinationProtocol -eq "HTTPS"}
+						if($null -ne $requiredHttpCondition -and $null -ne $requiredRedirectAction){
+							$isRedirectRuleConfigured = $true
+						}
 					}
+					  
+					if($isRedirectRuleConfigured)
+					{
+						$httpEndpointsWithRedirectRule += $currentEndpoint
+					}
+					else
+					{
+						$httpEndpointsWithoutRedirectRule += $currentEndpoint
+					}
+				}	
 
-				$controlResult.SetStateData("Http Enabled Endpoints", $httpEndpointObjList);
-				$controlResult.EnableFixControl = $true;
-				$controlResult.AddMessage([VerificationResult]::Failed,
-										[MessageData]::new("Below CDN endpoints in the CDN profile [" + $this.ResourceContext.ResourceName + "] are using HTTP protocol - ", ($httpAllowedEndpointList | Select-Object -Property Name, HostName, OriginHostHeader, IsHttpAllowed, IsHttpsAllowed))); 
+				if(($httpEndpointsWithoutRedirectRule | Measure-Object).Count -gt 0){
+					$controlResult.SetStateData("Http Enabled Endpoints", $httpEndpointObjList);
+					$controlResult.EnableFixControl = $true;
+					$controlResult.AddMessage([VerificationResult]::Failed,
+											[MessageData]::new("Below CDN endpoints in the CDN profile [" + $this.ResourceContext.ResourceName + "] are using HTTP protocol and don't have HTTP to HTTPS redirection rule configured - ", ($httpEndpointsWithoutRedirectRule | Select-Object -Property Name, HostName, OriginHostHeader, IsHttpAllowed, IsHttpsAllowed))); 
+				}else{
+					$controlResult.AddMessage([VerificationResult]::Passed,
+					[MessageData]::new("For all the CDN endpoints (using HTTP protocol) in the CDN profile, HTTP to HTTPs redirection rule is configured in rules engine - ", ($httpEndpointsWithRedirectRule | Select-Object -Property Name, HostName, OriginHostHeader, IsHttpAllowed, IsHttpsAllowed))); 
+				}
+
 			}
 		}
  
