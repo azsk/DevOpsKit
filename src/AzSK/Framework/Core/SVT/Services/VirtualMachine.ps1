@@ -47,7 +47,7 @@ class VirtualMachine: AzSVTBase
 	[ControlItem[]] ApplyServiceFilters([ControlItem[]] $controls)
 	{
 		$result = @();
-		#Check VM type
+		# Get Applicable controls based on VM OS type 
 		$VMType = $this.ResourceObject.StorageProfile.OsDisk.OsType
         if($VMType -eq [Microsoft.Azure.Management.Compute.Models.OperatingSystemTypes]::Linux)
         {
@@ -72,6 +72,12 @@ class VirtualMachine: AzSVTBase
 			}
 		}
 		
+		# Filter not applicable control for VM with ephemeral OS disk
+		if($this.IsVMHasEphemeralOSDisk()){
+			$result = $result | Where-Object { $_.Tags -notcontains "ExcludeEphemeralDisk" };
+		}
+		
+		# Return all applicable controls for current VM instance
 		return $result;
 	}
 
@@ -185,6 +191,21 @@ class VirtualMachine: AzSVTBase
 		}
 	}
 	 
+	hidden [bool] IsVMHasEphemeralOSDisk()
+	{
+		$hasEphemeralOSDisk = $false
+
+		if([Helpers]::CheckMember($this.ResourceObject.StorageProfile.OsDisk,"DiffDiskSettings.Option") -and [Helpers]::CheckMember($this.ResourceObject.StorageProfile.OsDisk,"Caching")){
+			$diskDiffSettingOption = $this.ResourceObject.StorageProfile.OsDisk.DiffDiskSettings.Option
+			$cachingPolicy = $this.ResourceObject.StorageProfile.OsDisk.Caching
+			if($diskDiffSettingOption -eq "Local" -and $cachingPolicy -eq "ReadOnly"){
+				$hasEphemeralOSDisk = $true
+			} 
+		}
+		
+		return $hasEphemeralOSDisk
+	}
+
     hidden [PSVirtualMachine] GetResourceObject()
     {
         if (-not $this.ResourceObject) {
