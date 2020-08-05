@@ -1,8 +1,10 @@
 ﻿Set-StrictMode -Version Latest
+Write-Host "Importing Az modules. This may take a while..." -ForegroundColor Yellow
+Import-Module Az.Accounts -RequiredVersion 1.8.0 -WarningAction SilentlyContinue
 
 . $PSScriptRoot\Framework\Framework.ps1
 
-@("$PSScriptRoot\SVT", "$PSScriptRoot\AlertMonitoring") |
+@("$PSScriptRoot\SVT", "$PSScriptRoot\AlertMonitoring", "$PSScriptRoot\ContinuousAssurance") |
     ForEach-Object {
     (Get-ChildItem -Path $_ -Recurse -File -Include "*.ps1") |
         ForEach-Object {

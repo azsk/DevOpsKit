@@ -2,7 +2,7 @@ Set-StrictMode -Version Latest
 
 $libraryPath = (Get-Item $PSScriptRoot).Parent.FullName+ "\Lib";
 $FrameworkPath =  ((Get-Item $PSScriptRoot).Parent.Parent).FullName +"\AzSK.Framework"
-Add-Type -Path "$libraryPath\Microsoft.IdentityModel.Clients.ActiveDirectory.dll"
+#Add-Type -Path "$libraryPath\Microsoft.IdentityModel.Clients.ActiveDirectory.dll"
 
 . $FrameworkPath\Models\Enums.ps1
 . $FrameworkPath\Models\Common\Context.ps1
@@ -114,6 +114,7 @@ Add-Type -Path "$libraryPath\Microsoft.IdentityModel.Clients.ActiveDirectory.dll
 
 #Remaining Abstracts
 . $PSScriptRoot\Core\SVT\SVTControlAttestation.ps1
+. $PSScriptRoot\Core\ContinuousAssurance\CAAutomation.ps1
 . $FrameworkPath\Abstracts\CommandBase.ps1
 
 #Remaining Abstracts
