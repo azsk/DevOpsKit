@@ -162,10 +162,10 @@ class SVTResourceResolver: AzSKRoot
 			#If not, let us remove the resource type entry from the mapping
 			$treatPublicIPasResource = $ControlSettings.PublicIpAddress.EnablePublicIpResource
 			if( -not $treatPublicIPasResource)
-			{
-				[SVTMapping]::Mapping = ([SVTMapping]::Mapping | Where-Object { $_.ResourceType -ne 'Microsoft.Network/publicIPAddresses'});
+				{
+					[SVTMapping]::Mapping = ([SVTMapping]::Mapping | Where-Object { $_.ResourceType -ne 'Microsoft.Network/publicIPAddresses'});
+				}
 			}
-		}
 			
 			
 			if(($resources | Measure-Object).Count -eq 0)
