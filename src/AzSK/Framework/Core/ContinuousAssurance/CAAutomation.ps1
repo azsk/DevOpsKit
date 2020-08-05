@@ -1835,7 +1835,7 @@ class CCAutomation: AzCommandBase
 		$detailedMsg = $Null				
 		#endregion
 
-		#region: step 6: Check if certificate expiry is in near future(in next 1 month) or it's expired
+		#region: step 6: Check if certificate expiry is in near future(in next 1 month or 7 days) or it's expired
 		$stepcount++
 		$resolvemsg = "To resolve this please run command '$($this.updateCommandName) -SubscriptionId <SubscriptionId> -RenewCertificate'."
 		$checkDescription = "Inspecting CA RunAs Certificate."
@@ -1847,11 +1847,17 @@ class CCAutomation: AzCommandBase
 			$ADapp = Get-AzADApplication -ApplicationId $runAsConnection.FieldDefinitionValues.ApplicationId -ErrorAction SilentlyContinue
 			if(($runAsCertificate.ExpiryTime.UtcDateTime - $(get-date).ToUniversalTime()).TotalMinutes -lt 0)
 			{
-				
 				$failMsg = "CA Certificate is expired on $($runAsCertificate.ExpiryTime.ToString("yyyy-MM-dd")). CA SPN: [$($ADapp.DisplayName)]"
 				$resultMsg = "$failmsg`r`n$resolveMsg"			
 				$resultStatus = "Failed"
 				$shouldReturn = $true				
+			}
+			elseif(($runAsCertificate.ExpiryTime - $(get-date)).TotalDays -ge 0 -and ($runAsCertificate.ExpiryTime - $(get-date)).TotalDays -le 7)
+			{
+				$resolvemsg = "To avoid CA disruption due to credential expiry, please run command '$($this.updateCommandName) -RenewCertificate'."
+				$failMsg = "CA Certificate is going to expire within next 7 days. Expiry date: [$($runAsCertificate.ExpiryTime.ToString("yyyy-MM-dd"))]. CA SPN: [$($ADapp.DisplayName)]"
+				$resultMsg = "$failmsg`r`n$resolveMsg"			
+				$resultStatus = "Failed"
 			}
 			elseif(($runAsCertificate.ExpiryTime - $(get-date)).TotalDays -gt 0 -and ($runAsCertificate.ExpiryTime - $(get-date)).TotalDays -le 30)
 			{
