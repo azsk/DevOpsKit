@@ -4,7 +4,6 @@ class ServiceConnection: ADOSVTBase
     hidden [PSObject] $ServiceEndpointsObj = $null;
     hidden [string] $SecurityNamespaceId;
     hidden [PSObject] $ProjectId;
-    hidden [PSObject] $ServiceConnEndPointDetail = $null;
 
     ServiceConnection([string] $subscriptionId, [SVTResource] $svtResource): Base($subscriptionId,$svtResource)
     {
@@ -28,22 +27,7 @@ class ServiceConnection: ADOSVTBase
         if(($this.ServiceEndpointsObj | Measure-Object).Count -eq 0)
         {
             throw [SuppressedException] "Unable to find active service connection(s) under [$($this.ResourceContext.ResourceGroupName)] project."
-        }
-
-        try {
-            $apiURL = "https://{0}.visualstudio.com/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1" -f $($this.SubscriptionContext.SubscriptionName)
-            $sourcePageUrl = "https://{0}.visualstudio.com/{1}/_settings/adminservices" -f $($this.SubscriptionContext.SubscriptionName), $this.ResourceContext.ResourceGroupName;
-            $inputbody = "{'contributionIds':['ms.vss-serviceEndpoints-web.service-endpoints-details-data-provider'],'dataProviderContext':{'properties':{'serviceEndpointId':'$($this.ServiceEndpointsObj.id)','projectId':'$($this.projectId)','sourcePage':{'url':'$($sourcePageUrl)','routeId':'ms.vss-admin-web.project-admin-hub-route','routeValues':{'project':'$($this.ResourceContext.ResourceGroupName)','adminPivot':'adminservices','controller':'ContributedPage','action':'Execute'}}}}}" | ConvertFrom-Json
-    
-            $responseObj = [WebRequestHelper]::InvokePostWebRequest($apiURL,$inputbody); 
-            if([Helpers]::CheckMember($responseObj, "dataProviders") -and $responseObj.dataProviders."ms.vss-serviceEndpoints-web.service-endpoints-details-data-provider")
-            {
-                $this.ServiceConnEndPointDetail = $responseObj.dataProviders."ms.vss-serviceEndpoints-web.service-endpoints-details-data-provider"
-            }
-        }
-        catch {
-            
-        }            
+        }          
     }
 
     hidden [ControlResult] CheckServiceConnectionAccess([ControlResult] $controlResult)
@@ -336,73 +320,4 @@ class ServiceConnection: ADOSVTBase
         }
         return $controlResult;
     }
-
-    hidden [ControlResult] CheckInActiveConnection([ControlResult] $controlResult)
-	{             
-        try {
-        if($this.ServiceConnEndPointDetail -and [Helpers]::CheckMember($this.ServiceConnEndPointDetail, "serviceEndpointExecutionHistory") ) 
-        {
-            #Get the last run dat of the servic econneciton
-            $svcLastRunDate = $this.ServiceConnEndPointDetail.serviceEndpointExecutionHistory[0].data.finishTime;
-            #if last run is still running then finish time would not be there, so take start time.
-            if (!$svcLastRunDate) {
-              $svcLastRunDate = $this.ServiceConnEndPointDetail.serviceEndpointExecutionHistory[0].data.startTime;
-            } 
-            #format date
-            $formatLastRunDate = ([datetime]::parseexact($svcLastRunDate.Split('T')[0], 'yyyy-MM-dd', $null))
-            
-            if ((((Get-Date) - $formatLastRunDate).Days) -gt 180)
-            {
-                $controlResult.AddMessage([VerificationResult]::Failed,
-                "Service connection is not in use from last 180 days. Verify the service connection and remove if no longer required.");
-            }
-            else {
-                $controlResult.AddMessage([VerificationResult]::Passed,"");
-            }  
-        }
-        else  #service conneciton is cerated and never run
-        { 
-            $controlResult.AddMessage([VerificationResult]::Verify,"Servic econneciton never run. Verify the service connection and remove if not in use.");
-        }
-        }
-        catch {
-            $controlResult.AddMessage([VerificationResult]::Error,
-                                            "Service connection details not found. Verify service connection manually.");
-        }
-        
-        return $controlResult;
-    }
-
-    hidden [ControlResult] CheckCrossProjectConnection([ControlResult] $controlResult)
-	{  
-        try {
-            if($this.ServiceConnEndPointDetail -and [Helpers]::CheckMember($this.ServiceConnEndPointDetail, "serviceEndpoint") ) 
-            {
-                #Get the project list which are accessible to the service connection. 
-                $svcProjectReferences = $this.ServiceConnEndPointDetail.serviceEndpoint.serviceEndpointProjectReferences
-                if ($svcProjectReferences -and $svcProjectReferences.Count -gt 1) {
-                    $svcConnAccessProjectList = @();
-                    $svcConnAccessProjectList = ($svcProjectReferences.projectReference | Select name) 
-                
-                    $controlResult.AddMessage([VerificationResult]::Failed,
-                    "Service connectin is shared with multiple projects: [$($svcConnAccessProjectList.name -join ", ")].");
-                }
-                else {
-                    $controlResult.AddMessage([VerificationResult]::Passed,
-                    "Service connectin is not shared with multiple project.");
-                }
-            }
-            else
-            {
-                $controlResult.AddMessage([VerificationResult]::Verify,
-                                            "Service connection details not found. Verify connection access is configured at resource group scope.");
-            }
-        }
-        catch {
-            $controlResult.AddMessage([VerificationResult]::Error,
-                                            "Service connection details not found. Verify service connection manually.");
-        }       
-        return $controlResult;
-    }
-
 }

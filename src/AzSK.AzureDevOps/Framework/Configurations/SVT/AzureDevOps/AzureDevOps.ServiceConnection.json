@@ -177,42 +177,6 @@
         "AuthZ"
       ],
       "Enabled": true
-    },
-    {
-      "ControlID": "AzureDevOps_ServiceConnection_SI_Review_Inactive_Connection",
-      "Description": "Inactive service connection must be removed if no more required.",
-      "Id": "ServiceConnection210",
-      "ControlSeverity": "High",
-      "Automated": "Yes",
-      "MethodName": "CheckInActiveConnection",
-      "Rationale": "",
-      "Recommendation": "To remove inactive service connection, follow the steps given here: 1.Navigate to the service connection settings. 2. Select a service connection. 3. Select three dots (present at right top). 4. Click on Delete.",
-      "Tags": [
-        "SDL",
-        "Best Practice",
-        "Automated",
-        "SI"
-      ],
-      "Enabled": true
-    },
-    {
-      "ControlID": "AzureDevOps_ServiceConnection_SI_Review_Cross_Project_Connection",
-      "Description": "Do not make service connections accessible to multiple project.",
-      "Id": "ServiceConnection220",
-      "ControlSeverity": "High",
-      "Automated": "Yes",
-      "MethodName": "CheckCrossProjectConnection",
-      "Rationale": "",
-      "Recommendation": "To remediate this, navigate to the service connections settings page for your project -> select your service connection from the list -> click Security -> Revoke access from the 'Project Permission'.",
-      "Tags": [
-        "SDL",
-        "TCP",
-        "Automated",
-        "AuthZ",
-        "RBAC"
-      ],
-      "Enabled": true
     }
-
   ]
 }

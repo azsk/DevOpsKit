@@ -108,23 +108,6 @@
         "RBAC"
       ],
       "Enabled": true
-    },
-    {
-      "ControlID": "AzureDevOps_AgentPool_SI_Review_Inactive_Agent_Pool",
-      "Description": "Inactive agent pool must be removed if no more required.",
-      "Id": "AgentPool170",
-      "ControlSeverity": "Medium",
-      "Automated": "Yes",
-      "MethodName": "CheckInActivePool",
-      "Rationale": "",
-      "Recommendation": "To remove inactive agent pool, follow the steps given here: 1.Navigate to the agent pool settings. 3. Click on Delete.",
-      "Tags": [
-        "SDL",
-        "TCP",
-        "Manual",
-        "SI"
-      ],
-      "Enabled": true
     }
   ]
 }
