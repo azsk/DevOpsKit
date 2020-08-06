@@ -100,7 +100,7 @@
                                         "Subtitle": "AzSK.AzureDevOps Compliance"
                                     },
                                     "Donut": {
-                                        "Query": "AzSK_ADO_CL | where TimeGenerated > ago(3d) | summarize arg_max(TimeGenerated, *) by ResourceId,ControlId_s | where ${Baseline} and ${PreviewBaseline} and ${ResourceName} and ${ResourceType} and ${Severity} | where FeatureName_s == \"Organization\" | extend ControlStatus=iff(ControlStatus_s!= \"Passed\",\"Failed\",\"Passed\") | summarize count() by ResourceId,ControlId_s,ControlStatus | summarize AggregatedValue = count() by ControlStatus | sort by AggregatedValue desc",
+                                        "Query": "AzSK_ADO_CL | where TimeGenerated > ago(3d) | summarize arg_max(TimeGenerated, *) by ResourceId,ControlId_s | where ${Baseline} and ${PreviewBaseline} and ${OrganizationName} and ${ResourceName} and ${ResourceType} and ${Severity} | where FeatureName_s == \"Organization\" | extend ControlStatus=iff(ControlStatus_s!= \"Passed\",\"Failed\",\"Passed\") | summarize count() by ResourceId,ControlId_s,ControlStatus | summarize AggregatedValue = count() by ControlStatus | sort by AggregatedValue desc",
                                         "CenterLegend": {
                                             "Text": "Total",
                                             "Operation": "Sum",
@@ -134,7 +134,7 @@
                                         "NavigationSelect": {}
                                     },
                                     "List": {
-                                        "Query": "AzSK_ADO_CL | where TimeGenerated > ago(3d) | summarize arg_max(TimeGenerated, *) by SubscriptionName_s,ControlId_s | where ${Baseline} and ${PreviewBaseline} and ${ResourceType} and ${Severity} | where FeatureName_s == \"Organization\" | extend ControlStatus=iff(ControlStatus_s!= \"Passed\",\"Failed\",\"Passed\") | where ControlStatus==\"Failed\"| summarize count() by SubscriptionName_s,ControlId_s,ControlStatus_s | summarize AggregatedValue = count() by SubscriptionName_s | sort by AggregatedValue desc",
+                                        "Query": "AzSK_ADO_CL | where TimeGenerated > ago(3d) | summarize arg_max(TimeGenerated, *) by SubscriptionName_s,ControlId_s | where ${Baseline} and ${PreviewBaseline} and ${OrganizationName} and ${ResourceType} and ${Severity} | where FeatureName_s == \"Organization\" | extend ControlStatus=iff(ControlStatus_s!= \"Passed\",\"Failed\",\"Passed\") | where ControlStatus==\"Failed\"| summarize count() by SubscriptionName_s,ControlId_s,ControlStatus_s | summarize AggregatedValue = count() by SubscriptionName_s | sort by AggregatedValue desc",
                                         "HideGraph": false,
                                         "enableSparklines": false,
                                         "operation": "Summary",
@@ -167,9 +167,9 @@
                                             ]
                                         },
                                         "NameDSVSeparator": "",
-                                        "NavigationQuery": "AzSK_ADO_CL | where TimeGenerated > ago(3d) | summarize arg_max(TimeGenerated, *) by SubscriptionName_s,ControlId_s | where ${Baseline} and ${PreviewBaseline} and ${ResourceType} and ${Severity} | where FeatureName_s == \"Organization\" and {selected item} | extend ControlStatus=iff(ControlStatus_s!= \"Passed\",\"Failed\",\"Passed\")| where ControlStatus==\"Failed\"",
+                                        "NavigationQuery": "AzSK_ADO_CL | where TimeGenerated > ago(3d) | summarize arg_max(TimeGenerated, *) by SubscriptionName_s,ControlId_s | where ${Baseline} and ${PreviewBaseline} and ${OrganizationName} and ${ResourceType} and ${Severity} | where FeatureName_s == \"Organization\" and {selected item} | extend ControlStatus=iff(ControlStatus_s!= \"Passed\",\"Failed\",\"Passed\")| where ControlStatus==\"Failed\"",
                                         "NavigationSelect": {
-                                            "NavigationQuery": "AzSK_ADO_CL | where TimeGenerated > ago(3d) | summarize arg_max(TimeGenerated, *) by SubscriptionName_s,ControlId_s | where ${Baseline} and ${PreviewBaseline} and ${ResourceType} and ${Severity} | where FeatureName_s == \"Organization\" and {selected item} | extend ControlStatus=iff(ControlStatus_s!= \"Passed\",\"Failed\",\"Passed\")| where ControlStatus==\"Failed\""
+                                            "NavigationQuery": "AzSK_ADO_CL | where TimeGenerated > ago(3d) | summarize arg_max(TimeGenerated, *) by SubscriptionName_s,ControlId_s | where ${Baseline} and ${PreviewBaseline} and ${OrganizationName} and ${ResourceType} and ${Severity} | where FeatureName_s == \"Organization\" and {selected item} | extend ControlStatus=iff(ControlStatus_s!= \"Passed\",\"Failed\",\"Passed\")| where ControlStatus==\"Failed\""
                                         }
                                     }
                                 }
@@ -190,7 +190,7 @@
                                         "Subtitle": "AzSK.AzureDevOps Project Security Compliance"
                                     },
                                     "Donut": {
-                                        "Query": "AzSK_ADO_CL | where TimeGenerated > ago(3d) | where ${Baseline} and ${PreviewBaseline} and ${SubscriptionName} and ${ResourceType} and ${Severity} | where FeatureName_s == \"Project\" | extend ControlStatus=iff(ControlStatus_s!= \"Passed\",\"Failed\",\"Passed\") | summarize arg_max(TimeGenerated,*) by SubscriptionName_s,ResourceId,ControlId_s | summarize AggregatedValue = count() by ControlStatus | sort by AggregatedValue desc",
+                                        "Query": "AzSK_ADO_CL | where TimeGenerated > ago(3d) | where ${Baseline} and ${PreviewBaseline} and ${OrganizationName} and ${ResourceType} and ${Severity} | where FeatureName_s == \"Project\" | extend ControlStatus=iff(ControlStatus_s!= \"Passed\",\"Failed\",\"Passed\") | summarize arg_max(TimeGenerated,*) by SubscriptionName_s,ResourceId,ControlId_s | summarize AggregatedValue = count() by ControlStatus | sort by AggregatedValue desc",
                                         "CenterLegend": {
                                             "Text": "Total",
                                             "Operation": "Sum",
@@ -224,7 +224,7 @@
                                         "NavigationSelect": {}
                                     },
                                     "List": {
-                                        "Query": "AzSK_ADO_CL | where TimeGenerated > ago(3d) | where ${Baseline} and ${PreviewBaseline} and ${ResourceType} and ${Severity} | where FeatureName_s == \"Project\" | extend ControlStatus=iff(ControlStatus_s!= \"Passed\",\"Failed\",\"Passed\") | summarize arg_max(TimeGenerated,*) by SubscriptionName_s,ResourceId,ControlId_s | where ControlStatus ==\"Failed\" | summarize AggregatedValue = count() by SubscriptionName_s, ResourceName_s | sort by AggregatedValue desc",
+                                        "Query": "AzSK_ADO_CL | where TimeGenerated > ago(3d) | where ${Baseline} and ${PreviewBaseline} and ${OrganizationName} and ${ResourceType} and ${Severity} | where FeatureName_s == \"Project\" | extend ControlStatus=iff(ControlStatus_s!= \"Passed\",\"Failed\",\"Passed\") | summarize arg_max(TimeGenerated,*) by SubscriptionName_s,ResourceId,ControlId_s | where ControlStatus ==\"Failed\" | summarize AggregatedValue = count() by SubscriptionName_s, ResourceName_s | sort by AggregatedValue desc",
                                         "HideGraph": false,
                                         "enableSparklines": false,
                                         "operation": "Summary",
@@ -257,9 +257,9 @@
                                             ]
                                         },
                                         "NameDSVSeparator": "",
-                                        "NavigationQuery": "AzSK_ADO_CL | where TimeGenerated > ago(3d) | where ${Baseline} and ${PreviewBaseline} and ${ResourceType} and ${Severity} | where FeatureName_s == \"Project\" and {selected item} | extend ControlStatus=iff(ControlStatus_s!= \"Passed\",\"Failed\",\"Passed\") | where ControlStatus ==\"Failed\" | summarize arg_max(TimeGenerated,*) by SubscriptionName_s,ResourceId,ControlId_s",
+                                        "NavigationQuery": "AzSK_ADO_CL | where TimeGenerated > ago(3d) | where ${Baseline} and ${PreviewBaseline} and ${OrganizationName} and ${ResourceType} and ${Severity} | where FeatureName_s == \"Project\" and {selected item} | extend ControlStatus=iff(ControlStatus_s!= \"Passed\",\"Failed\",\"Passed\") | where ControlStatus ==\"Failed\" | summarize arg_max(TimeGenerated,*) by SubscriptionName_s,ResourceId,ControlId_s",
                                         "NavigationSelect": {
-                                            "NavigationQuery": "AzSK_ADO_CL | where TimeGenerated > ago(3d) | where ${Baseline} and ${PreviewBaseline} and ${ResourceType} and ${Severity} | where FeatureName_s == \"Project\" and {selected item} | extend ControlStatus=iff(ControlStatus_s!= \"Passed\",\"Failed\",\"Passed\") | where ControlStatus ==\"Failed\" | summarize arg_max(TimeGenerated,*) by SubscriptionName_s,ResourceId,ControlId_s"
+                                            "NavigationQuery": "AzSK_ADO_CL | where TimeGenerated > ago(3d) | where ${Baseline} and ${PreviewBaseline} and ${OrganizationName} and ${ResourceType} and ${Severity} | where FeatureName_s == \"Project\" and {selected item} | extend ControlStatus=iff(ControlStatus_s!= \"Passed\",\"Failed\",\"Passed\") | where ControlStatus ==\"Failed\" | summarize arg_max(TimeGenerated,*) by SubscriptionName_s,ResourceId,ControlId_s"
                                         }
                                     }
                                 }
@@ -280,7 +280,7 @@
                                         "Subtitle": "AzSK.AzureDevOps Resource Security Compliance "
                                     },
                                     "Donut": {
-                                        "Query": "AzSK_ADO_CL | where TimeGenerated > ago(3d) | where ${Baseline} and ${PreviewBaseline} and ${ResourceType} and ${Severity} | where FeatureName_s != \"Organization\" and FeatureName_s != \"Project\" | extend ControlStatus = iff(ControlStatus_s == \"Passed\", \"Passed\",\"Failed\") | summarize arg_max(TimeGenerated, *) by SubscriptionName_s, ResourceId, ControlId_s | summarize AggregatedValue = count() by ControlStatus | sort by AggregatedValue desc",
+                                        "Query": "AzSK_ADO_CL | where TimeGenerated > ago(3d) | where ${Baseline} and ${PreviewBaseline} and ${OrganizationName} and ${ResourceType} and ${Severity} | where FeatureName_s != \"Organization\" and FeatureName_s != \"Project\" | extend ControlStatus = iff(ControlStatus_s == \"Passed\", \"Passed\",\"Failed\") | summarize arg_max(TimeGenerated, *) by SubscriptionName_s, ResourceId, ControlId_s | summarize AggregatedValue = count() by ControlStatus | sort by AggregatedValue desc",
                                         "CenterLegend": {
                                             "Text": "Total",
                                             "Operation": "Sum",
@@ -314,7 +314,7 @@
                                         "NavigationSelect": {}
                                     },
                                     "List": {
-                                        "Query": "AzSK_ADO_CL | where TimeGenerated > ago(3d) | where ${Baseline} and ${PreviewBaseline} and ${SubscriptionName} and ${ResourceType} and ${Severity} | where FeatureName_s != \"Organization\" and FeatureName_s != \"Project\" | extend ControlStatus = iff(ControlStatus_s == \"Passed\", \"Passed\",\"Failed\") | summarize arg_max(TimeGenerated, *) by SubscriptionId, ResourceId, ControlId_s | where ControlStatus == \"Failed\" | summarize AggregatedValue = count() by FeatureName_s | sort by AggregatedValue desc",
+                                        "Query": "AzSK_ADO_CL | where TimeGenerated > ago(3d) | where ${Baseline} and ${PreviewBaseline} and ${OrganizationName} and ${ResourceType} and ${Severity} | where FeatureName_s != \"Organization\" and FeatureName_s != \"Project\" | extend ControlStatus = iff(ControlStatus_s == \"Passed\", \"Passed\",\"Failed\") | summarize arg_max(TimeGenerated, *) by SubscriptionId, ResourceId, ControlId_s | where ControlStatus == \"Failed\" | summarize AggregatedValue = count() by FeatureName_s | sort by AggregatedValue desc",
                                         "HideGraph": false,
                                         "enableSparklines": false,
                                         "operation": "Summary",
@@ -347,9 +347,9 @@
                                             ]
                                         },
                                         "NameDSVSeparator": "",
-                                        "NavigationQuery": "AzSK_ADO_CL | where TimeGenerated > ago(3d) | where ${Baseline} and ${PreviewBaseline} and ${SubscriptionName} and ${ResourceType} and ${Severity} | where {selected item} | extend ControlStatus = iff(ControlStatus_s == \"Passed\", \"Passed\",\"Failed\") | summarize arg_max(TimeGenerated, *) by SubscriptionId, ResourceId, ControlId_s | where ControlStatus == \"Failed\" ",
+                                        "NavigationQuery": "AzSK_ADO_CL | where TimeGenerated > ago(3d) | where ${Baseline} and ${PreviewBaseline} and ${OrganizationName} and ${ResourceType} and ${Severity} | where {selected item} | extend ControlStatus = iff(ControlStatus_s == \"Passed\", \"Passed\",\"Failed\") | summarize arg_max(TimeGenerated, *) by SubscriptionId, ResourceId, ControlId_s | where ControlStatus == \"Failed\" ",
                                         "NavigationSelect": {
-                                            "NavigationQuery": "AzSK_ADO_CL | where TimeGenerated > ago(3d) | where ${Baseline} and ${PreviewBaseline} and ${SubscriptionName} and ${ResourceType} and ${Severity} | where {selected item} | extend ControlStatus = iff(ControlStatus_s == \"Passed\", \"Passed\",\"Failed\") | summarize arg_max(TimeGenerated, *) by SubscriptionId, ResourceId, ControlId_s | where ControlStatus == \"Failed\" "
+                                            "NavigationQuery": "AzSK_ADO_CL | where TimeGenerated > ago(3d) | where ${Baseline} and ${PreviewBaseline} and ${OrganizationName} and ${ResourceType} and ${Severity} | where {selected item} | extend ControlStatus = iff(ControlStatus_s == \"Passed\", \"Passed\",\"Failed\") | summarize arg_max(TimeGenerated, *) by SubscriptionId, ResourceId, ControlId_s | where ControlStatus == \"Failed\" "
                                         }
                                     }
                                 }
@@ -366,12 +366,12 @@
                                         "useIcon": false
                                     },
                                     "Tile": {
-                                        "Query": "AzSK_ADO_CL | where TimeGenerated >ago(3d) | where ${Baseline} and ${PreviewBaseline} and ${SubscriptionName} and ${ResourceType} and ${Severity} | where FeatureName_s != \"Organization\" | extend ControlStatus = iff(ControlStatus_s == \"Passed\", \"Passed\",\"Failed\") | summarize arg_max(TimeGenerated, *) by SubscriptionId, ResourceId, ControlId_s | where ControlStatus == \"Failed\" | summarize AggregatedValue = count() by ResourceName_s | count ",
+                                        "Query": "AzSK_ADO_CL | where TimeGenerated >ago(3d) | where ${Baseline} and ${PreviewBaseline} and ${OrganizationName} and ${ResourceType} and ${Severity} | where FeatureName_s != \"Organization\" | extend ControlStatus = iff(ControlStatus_s == \"Passed\", \"Passed\",\"Failed\") | summarize arg_max(TimeGenerated, *) by SubscriptionId, ResourceId, ControlId_s | where ControlStatus == \"Failed\" | summarize AggregatedValue = count() by ResourceName_s | count ",
                                         "Legend": "Unique Resources with Security Issues",
                                         "NavigationSelect": {}
                                     },
                                     "List": {
-                                        "Query": "AzSK_ADO_CL | where TimeGenerated >ago(3d) | where ${Baseline} and ${PreviewBaseline} and ${SubscriptionName} and ${ResourceType} and ${Severity} | where FeatureName_s != \"Organization\" | extend ControlStatus = iff(ControlStatus_s == \"Passed\", \"Passed\",\"Failed\") | summarize arg_max(TimeGenerated, *) by SubscriptionId, ResourceId, ControlId_s | where ControlStatus == \"Failed\" | summarize AggregatedValue = count() by ResourceName_s, FeatureName_s , ResourceGroup ",
+                                        "Query": "AzSK_ADO_CL | where TimeGenerated >ago(3d) | where ${Baseline} and ${PreviewBaseline} and ${OrganizationName} and ${ResourceType} and ${Severity} | where FeatureName_s != \"Organization\" | extend ControlStatus = iff(ControlStatus_s == \"Passed\", \"Passed\",\"Failed\") | summarize arg_max(TimeGenerated, *) by SubscriptionId, ResourceId, ControlId_s | where ControlStatus == \"Failed\" | summarize AggregatedValue = count() by ResourceName_s, FeatureName_s , ResourceGroup ",
                                         "HideGraph": false,
                                         "enableSparklines": false,
                                         "operation": "Summary",
@@ -404,9 +404,9 @@
                                             ]
                                         },
                                         "NameDSVSeparator": "",
-                                        "NavigationQuery": "AzSK_ADO_CL | where TimeGenerated >ago(3d) | where ${Baseline} and ${PreviewBaseline} and ${SubscriptionName} and ${ResourceType} and ${Severity} | where FeatureName_s != \"Organization\" and {selected item} | extend ControlStatus = iff(ControlStatus_s == \"Passed\", \"Passed\",\"Failed\") | summarize arg_max(TimeGenerated, *) by SubscriptionId, ResourceId, ControlId_s | where ControlStatus == \"Failed\" ",
+                                        "NavigationQuery": "AzSK_ADO_CL | where TimeGenerated >ago(3d) | where ${Baseline} and ${PreviewBaseline} and ${OrganizationName} and ${ResourceType} and ${Severity} | where FeatureName_s != \"Organization\" and {selected item} | extend ControlStatus = iff(ControlStatus_s == \"Passed\", \"Passed\",\"Failed\") | summarize arg_max(TimeGenerated, *) by SubscriptionId, ResourceId, ControlId_s | where ControlStatus == \"Failed\" ",
                                         "NavigationSelect": {
-                                            "NavigationQuery": "AzSK_ADO_CL | where TimeGenerated >ago(3d) | where ${Baseline} and ${PreviewBaseline} and ${SubscriptionName} and ${ResourceType} and ${Severity} | where FeatureName_s != \"Organization\" and {selected item} | extend ControlStatus = iff(ControlStatus_s == \"Passed\", \"Passed\",\"Failed\") | summarize arg_max(TimeGenerated, *) by SubscriptionId, ResourceId, ControlId_s | where ControlStatus == \"Failed\" "
+                                            "NavigationQuery": "AzSK_ADO_CL | where TimeGenerated >ago(3d) | where ${Baseline} and ${PreviewBaseline} and ${OrganizationName} and ${ResourceType} and ${Severity} | where FeatureName_s != \"Organization\" and {selected item} | extend ControlStatus = iff(ControlStatus_s == \"Passed\", \"Passed\",\"Failed\") | summarize arg_max(TimeGenerated, *) by SubscriptionId, ResourceId, ControlId_s | where ControlStatus == \"Failed\" "
                                         }
                                     }
                                 }
@@ -423,12 +423,12 @@
                                         "useIcon": false
                                     },
                                     "Tile": {
-                                        "Query": "AzSK_ADO_CL | where TimeGenerated > ago(3d) | where ${Baseline} and ${PreviewBaseline} and ${SubscriptionName} and ${ResourceType} and ${Severity} | extend ControlStatus = iff(ControlStatus_s == \"Passed\", \"Passed\",\"Failed\") | summarize arg_max(TimeGenerated, *) by SubscriptionId, ResourceId, ControlId_s | where ControlStatus == \"Failed\" | summarize AggregatedValue = count() by ControlId_s | count ",
+                                        "Query": "AzSK_ADO_CL | where TimeGenerated > ago(3d) | where ${Baseline} and ${PreviewBaseline} and ${OrganizationName} and ${ResourceType} and ${Severity} | extend ControlStatus = iff(ControlStatus_s == \"Passed\", \"Passed\",\"Failed\") | summarize arg_max(TimeGenerated, *) by SubscriptionId, ResourceId, ControlId_s | where ControlStatus == \"Failed\" | summarize AggregatedValue = count() by ControlId_s | count ",
                                         "Legend": "Unique security failures across all resources",
                                         "NavigationSelect": {}
                                     },
                                     "List": {
-                                        "Query": "AzSK_ADO_CL | where TimeGenerated > ago(3d) | where ${Baseline} and ${PreviewBaseline} and ${SubscriptionName} and ${ResourceType} and ${Severity} | extend ControlStatus = iff(ControlStatus_s == \"Passed\", \"Passed\",\"Failed\") | summarize arg_max(TimeGenerated, *) by SubscriptionId, ResourceId, ControlId_s | where ControlStatus == \"Failed\" | summarize AggregatedValue = count() by ControlId_s",
+                                        "Query": "AzSK_ADO_CL | where TimeGenerated > ago(3d) | where ${Baseline} and ${PreviewBaseline} and ${OrganizationName} and ${ResourceType} and ${Severity} | extend ControlStatus = iff(ControlStatus_s == \"Passed\", \"Passed\",\"Failed\") | summarize arg_max(TimeGenerated, *) by SubscriptionId, ResourceId, ControlId_s | where ControlStatus == \"Failed\" | summarize AggregatedValue = count() by ControlId_s",
                                         "HideGraph": false,
                                         "enableSparklines": false,
                                         "operation": "Summary",
@@ -461,9 +461,9 @@
                                             ]
                                         },
                                         "NameDSVSeparator": "",
-                                        "NavigationQuery": "AzSK_ADO_CL | where TimeGenerated > ago(3d) | where ${Baseline} and ${PreviewBaseline} and ${SubscriptionName} and ${ResourceType} and ${Severity} | extend ControlStatus = iff(ControlStatus_s == \"Passed\", \"Passed\",\"Failed\") | summarize arg_max(TimeGenerated, *) by SubscriptionId, ResourceId, ControlId_s | where ControlStatus == \"Failed\" ",
+                                        "NavigationQuery": "AzSK_ADO_CL | where TimeGenerated > ago(3d) | where ${Baseline} and ${PreviewBaseline} and ${OrganizationName} and ${ResourceType} and ${Severity} | extend ControlStatus = iff(ControlStatus_s == \"Passed\", \"Passed\",\"Failed\") | summarize arg_max(TimeGenerated, *) by SubscriptionId, ResourceId, ControlId_s | where ControlStatus == \"Failed\" ",
                                         "NavigationSelect": {
-                                            "NavigationQuery": "AzSK_ADO_CL | where TimeGenerated > ago(3d) | where ${Baseline} and ${PreviewBaseline} and ${SubscriptionName} and ${ResourceType} and ${Severity} | extend ControlStatus = iff(ControlStatus_s == \"Passed\", \"Passed\",\"Failed\") | summarize arg_max(TimeGenerated, *) by SubscriptionId, ResourceId, ControlId_s | where ControlStatus == \"Failed\" "
+                                            "NavigationQuery": "AzSK_ADO_CL | where TimeGenerated > ago(3d) | where ${Baseline} and ${PreviewBaseline} and ${OrganizationName} and ${ResourceType} and ${Severity} | extend ControlStatus = iff(ControlStatus_s == \"Passed\", \"Passed\",\"Failed\") | summarize arg_max(TimeGenerated, *) by SubscriptionId, ResourceId, ControlId_s | where ControlStatus == \"Failed\" "
                                         }
                                     }
                                 }
@@ -522,7 +522,7 @@
                             {
                                 "FieldName": "SubscriptionName_s",
                                 "QueryForValues": "AzSK_ADO_CL | distinct tostring(SubscriptionName_s)",
-                                "Title": "SubscriptionName"
+                                "Title": "OrganizationName"
                             },
                             {
                                 "FieldName": "ControlSeverity_s",

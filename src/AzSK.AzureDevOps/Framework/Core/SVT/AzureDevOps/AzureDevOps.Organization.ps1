@@ -64,33 +64,44 @@ class Organization: ADOSVTBase
     {
         try
         {
-            $url= "https://vssps.dev.azure.com/{0}/_apis/graph/groups?api-version=5.1-preview.1" -f $($this.SubscriptionContext.SubscriptionName);
-            $responseObj = [WebRequestHelper]::InvokeGetWebRequest($url);
+            #api call to get PCSA descriptor which used to get PCSA members api call.
+            $url = "https://{0}.visualstudio.com/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1" -f $($this.SubscriptionContext.SubscriptionName);
+            $body = '{"contributionIds":["ms.vss-admin-web.org-admin-groups-data-provider"],"dataProviderContext":{"properties":{"sourcePage":{"url":"https://{0}.visualstudio.com/_settings/groups","routeId":"ms.vss-admin-web.collection-admin-hub-route","routeValues":{"adminPivot":"groups","controller":"ContributedPage","action":"Execute"}}}}}' 
+            $body = ($body.Replace("{0}", $this.SubscriptionContext.SubscriptionName)) | ConvertFrom-Json
+            $response = [WebRequestHelper]::InvokePostWebRequest($url,$body);    
        
             $accname = "Project Collection Service Accounts"; #Enterprise Service Accounts
-            $prcollobj = $responseObj | where {$_.displayName -eq $accname}
-            
-            if(($prcollobj | Measure-Object).Count -gt 0)
-            {
-
-                $prmemberurl = "https://{0}.visualstudio.com/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1" -f $($this.SubscriptionContext.SubscriptionName);
-                $inputbody = '{"contributionIds":["ms.vss-admin-web.org-admin-members-data-provider"],"dataProviderContext":{"properties":{"subjectDescriptor":"{0}","sourcePage":{"url":"https://{1}.visualstudio.com/_settings/groups?subjectDescriptor={0}","routeId":"ms.vss-admin-web.collection-admin-hub-route","routeValues":{"adminPivot":"groups","controller":"ContributedPage","action":"Execute"}}}}}'
-                $inputbody = $inputbody.Replace("{0}",$prcollobj.descriptor)
-                $inputbody = $inputbody.Replace("{1}",$this.SubscriptionContext.SubscriptionName) | ConvertFrom-Json
+            if ($response -and [Helpers]::CheckMember($response[0],"dataProviders") -and $response[0].dataProviders."ms.vss-admin-web.org-admin-groups-data-provider") {
                 
-                $responsePrCollObj = [WebRequestHelper]::InvokePostWebRequest($prmemberurl,$inputbody);
-                $responsePrCollData = $responsePrCollObj.dataProviders.'ms.vss-admin-web.org-admin-members-data-provider'.identities
-            
-                if(($responsePrCollData | Measure-Object).Count -gt 0){
-                    $responsePrCollData = $responsePrCollData | Select-Object displayName,mailAddress,subjectKind
-                    $stateData = @();
-                    $stateData += $responsePrCollData
-                    $controlResult.AddMessage([VerificationResult]::Verify, "Review the members of the group Project Collection Service Accounts : ", $stateData); 
-                    $controlResult.SetStateData("Members of the Project Collection Service Accounts group : ", $stateData); 
+                $prcollobj = $response.dataProviders."ms.vss-admin-web.org-admin-groups-data-provider".identities | where {$_.displayName -eq $accname}
+                #$prcollobj = $responseObj | where {$_.displayName -eq $accname}
+                
+                if(($prcollobj | Measure-Object).Count -gt 0)
+                {
+                    #pai call to get PCSA members
+                    $prmemberurl = "https://{0}.visualstudio.com/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1" -f $($this.SubscriptionContext.SubscriptionName);
+                    $inputbody = '{"contributionIds":["ms.vss-admin-web.org-admin-members-data-provider"],"dataProviderContext":{"properties":{"subjectDescriptor":"{0}","sourcePage":{"url":"https://{1}.visualstudio.com/_settings/groups?subjectDescriptor={0}","routeId":"ms.vss-admin-web.collection-admin-hub-route","routeValues":{"adminPivot":"groups","controller":"ContributedPage","action":"Execute"}}}}}'
+                    $inputbody = $inputbody.Replace("{0}",$prcollobj.descriptor)
+                    $inputbody = $inputbody.Replace("{1}",$this.SubscriptionContext.SubscriptionName) | ConvertFrom-Json
+                    
+                    $responsePrCollObj = [WebRequestHelper]::InvokePostWebRequest($prmemberurl,$inputbody);
+                    $responsePrCollData = $responsePrCollObj.dataProviders.'ms.vss-admin-web.org-admin-members-data-provider'.identities
+                
+                    if(($responsePrCollData | Measure-Object).Count -gt 0){
+                        $responsePrCollData = $responsePrCollData | Select-Object displayName,mailAddress,subjectKind
+                        $stateData = @();
+                        $stateData += $responsePrCollData
+                        $controlResult.AddMessage([VerificationResult]::Verify, "Review the members of the group Project Collection Service Accounts : ", $stateData); 
+                        $controlResult.SetStateData("Members of the Project Collection Service Accounts group : ", $stateData); 
+                    }
+                    else
+                    { #count is 0 then there is no member in the prj coll ser acc group
+                        $controlResult.AddMessage([VerificationResult]::Passed, "Project Collection Service Accounts group does not have any member.");
+                    }
                 }
                 else
-                { #count is 0 then there is no member in the prj coll ser acc group
-                    $controlResult.AddMessage([VerificationResult]::Passed, "Project Collection Service Accounts group does not have any member.");
+                {
+                    $controlResult.AddMessage([VerificationResult]::Error, "Project Collection Service Accounts group could not be fetched.");
                 }
             }
             else
