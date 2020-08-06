@@ -20,7 +20,7 @@ class AzSKSettings {
 	[string] $WebhookType;
 	[string] $WebhookSource;
 	[string] $AutoUpdateCommand;
-	[AutoUpdate] $AutoUpdateSwitch = [AutoUpdate]::On;
+	[AutoUpdate] $AutoUpdateSwitch = [AutoUpdate]::NotSet;
 
 	[string] $OutputFolderPath;
 
