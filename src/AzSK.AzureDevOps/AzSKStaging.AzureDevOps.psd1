@@ -78,7 +78,7 @@
         'Set-AzSKAzureDevOpsPolicySettings',
         'Set-AzSKPrivacyNoticeResponse',
         'Install-AzSKMonitoringSolution',
-	'Set-AzSKPolicySettings'
+	    'Set-AzSKPolicySettings'
     )
 
     # Cmdlets to export from this module
