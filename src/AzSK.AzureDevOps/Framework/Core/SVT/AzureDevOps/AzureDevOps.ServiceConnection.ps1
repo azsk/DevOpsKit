@@ -141,7 +141,7 @@ class ServiceConnection: ADOSVTBase
 
     hidden [ControlResult] CheckInactiveEndpoints([ControlResult] $controlResult)
 	{
-        $apiURL = "https://dev.azure.com/organization/project/_apis/serviceendpoint/$($this.ServiceEndpointsObj.Id)/executionhistory?api-version=4.1-preview.1"
+        $apiURL = "https://dev.azure.com/organization/project/_apis/serviceendpoint/$($this.ServiceEndpointsObj.Id)/executionhistory/?api-version=4.1-preview.1"
         $serverFileContent = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
 
         if($serverFileContent.Count -gt 0)
