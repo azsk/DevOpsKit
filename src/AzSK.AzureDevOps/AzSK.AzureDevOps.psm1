@@ -2,7 +2,8 @@
 
 . $PSScriptRoot\Framework\Framework.ps1
 
-@("$PSScriptRoot\SVT", "$PSScriptRoot\AlertMonitoring") |
+#These are the topmost folder PS1 files that load 
+@("$PSScriptRoot\SVT", "$PSScriptRoot\AlertMonitoring","$PSScriptRoot\AzSKADOInfo") |
     ForEach-Object {
     (Get-ChildItem -Path $_ -Recurse -File -Include "*.ps1") |
         ForEach-Object {

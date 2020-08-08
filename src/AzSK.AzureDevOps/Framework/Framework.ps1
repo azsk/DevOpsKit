@@ -127,6 +127,9 @@ Add-Type -Path "$libraryPath\Microsoft.IdentityModel.Clients.ActiveDirectory.dll
     . $_.FullName
 }
 
+. $PSScriptRoot\Core\AzSKADOInfo\HostInfo.ps1
+. $PSScriptRoot\Core\AzSKADOInfo\ControlsInfo.ps1
+
 . $PSScriptRoot\Core\SVT\SVTResourceResolver.ps1
 . $PSScriptRoot\Abstracts\ServicesSecurityStatus.ps1
 . $PSScriptRoot\Core\ADOMonitoring\LogAnalyticsMonitoring.ps1
