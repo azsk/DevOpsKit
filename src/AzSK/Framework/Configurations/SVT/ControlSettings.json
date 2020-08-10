@@ -552,5 +552,6 @@
     "EnablePublicIpResource": false
    },
   "MaxResourceInventoryObjectsCount": 20000,
-  "AlernateAccountRegularExpressionForOrg": ""
+  "AlernateAccountRegularExpressionForOrg": "",
+  "GenerateSecurityEvaluationJsonFile": false
 }

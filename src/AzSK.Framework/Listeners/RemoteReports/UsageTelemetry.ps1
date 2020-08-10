@@ -30,29 +30,6 @@ class UsageTelemetry: ListenerBase {
             {
                 $currentInstance.PublishException($_);
             }
-        });
-
-		$this.RegisterEvent([SVTEvent]::EvaluationCompleted, {
-			if(-not [UsageTelemetry]::IsAnonymousTelemetryActive()) { return; }
-			$currentInstance = [UsageTelemetry]::GetInstance();
-			try
-			{
-				$invocationContext = [System.Management.Automation.InvocationInfo] $currentInstance.InvocationContext
-				$SVTEventContexts = [SVTEventContext[]] $Event.SourceArgs
-				$featureGroup = [RemoteReportHelper]::GetFeatureGroup($SVTEventContexts)
-				if($featureGroup -eq [FeatureGroup]::Subscription){
-					[UsageTelemetry]::PushSubscriptionScanResults($currentInstance, $SVTEventContexts)
-				}elseif($featureGroup -eq [FeatureGroup]::Service){
-					[UsageTelemetry]::PushServiceScanResults($currentInstance, $SVTEventContexts)
-				}else{
-
-				}
-			}
-			catch
-			{
-				$currentInstance.PublishException($_);
-			}
-			$currentInstance.TelemetryClient.Flush()
 		});
 
 		$this.RegisterEvent([AzSKGenericEvent]::Exception, {
@@ -99,6 +76,130 @@ class UsageTelemetry: ListenerBase {
 				# Handling error while registration of CommandError event at SVT.
 				# No need to break execution
             }
+		});
+		
+		$this.RegisterEvent([AzSKRootEvent]::CommandStarted, {
+			if(-not [UsageTelemetry]::IsAnonymousTelemetryActive()) { return; }
+            $currentInstance = [UsageTelemetry]::GetInstance();
+			try
+			{
+				$Properties = @{ "Command" = $currentInstance.invocationContext.MyCommand.Name }
+				$params = @{}
+				$invocationContext.BoundParameters.Keys | ForEach-Object {
+					$value = "MASKED"
+					$params.Add("$_", $value)
+				}
+				$Properties.Add("Params", [JsonHelper]::ConvertToJsonCustomCompressed($params))
+				[UsageTelemetry]::SetCommonProperties($currentInstance, $Properties);
+				$event = [Microsoft.ApplicationInsights.DataContracts.EventTelemetry]::new()
+				$event.Name = "Command Completed"
+				$Properties.Keys | ForEach-Object {
+					try{
+						$event.Properties.Add($_, $Properties[$_].ToString());
+					}
+					catch{
+						#Eat the current exception which typically happens when the property already exist in the object and try to add the same property again
+						#No need to break execution
+					}
+				}			
+				$currentInstance.TelemetryClient.TrackEvent($event);
+			}
+			catch{
+				#No need to break execution
+			}
+        });
+
+		$this.RegisterEvent([SVTEvent]::CommandStarted, {
+			if(-not [UsageTelemetry]::IsAnonymousTelemetryActive()) { return; }
+            $currentInstance = [UsageTelemetry]::GetInstance();
+			try
+			{
+				$Properties = @{ "Command" = $currentInstance.invocationContext.MyCommand.Name }
+				$params = @{}
+				$invocationContext.BoundParameters.Keys | ForEach-Object {
+					$value = "MASKED"
+					$params.Add("$_", $value)
+				}
+				$Properties.Add("Params", [JsonHelper]::ConvertToJsonCustomCompressed($params))
+				[UsageTelemetry]::SetCommonProperties($currentInstance, $Properties);
+				$event = [Microsoft.ApplicationInsights.DataContracts.EventTelemetry]::new()
+				$event.Name = "Command Started"
+				$Properties.Keys | ForEach-Object {
+					try{
+						$event.Properties.Add($_, $Properties[$_].ToString());
+					}
+					catch{
+						#Eat the current exception which typically happens when the property already exist in the object and try to add the same property again
+						#No need to break execution
+					}
+				}			
+				$currentInstance.TelemetryClient.TrackEvent($event);
+			}
+			catch{
+				#No need to break execution
+			}
+        });
+
+		$this.RegisterEvent([AzSKRootEvent]::CommandCompleted, {
+			if(-not [UsageTelemetry]::IsAnonymousTelemetryActive()) { return; }
+            $currentInstance = [UsageTelemetry]::GetInstance();
+			try
+			{
+				$Properties = @{ "Command" = $currentInstance.invocationContext.MyCommand.Name }
+				$params = @{}
+				$invocationContext.BoundParameters.Keys | ForEach-Object {
+					$value = "MASKED"
+					$params.Add("$_", $value)
+				}
+				$Properties.Add("Params", [JsonHelper]::ConvertToJsonCustomCompressed($params))
+				[UsageTelemetry]::SetCommonProperties($currentInstance, $Properties);
+				$event = [Microsoft.ApplicationInsights.DataContracts.EventTelemetry]::new()
+				$event.Name = "Command Completed"
+				$Properties.Keys | ForEach-Object {
+					try{
+						$event.Properties.Add($_, $Properties[$_].ToString());
+					}
+					catch{
+						#Eat the current exception which typically happens when the property already exist in the object and try to add the same property again
+						#No need to break execution
+					}
+				}			
+				$currentInstance.TelemetryClient.TrackEvent($event);
+			}
+			catch{
+				#No need to break execution
+			}
+        });
+
+		$this.RegisterEvent([SVTEvent]::CommandCompleted, {
+			if(-not [UsageTelemetry]::IsAnonymousTelemetryActive()) { return; }
+            $currentInstance = [UsageTelemetry]::GetInstance();
+			try
+			{
+				$Properties = @{ "Command" = $currentInstance.invocationContext.MyCommand.Name }
+				$params = @{}
+				$invocationContext.BoundParameters.Keys | ForEach-Object {
+					$value = "MASKED"
+					$params.Add("$_", $value)
+				}
+				$Properties.Add("Params", [JsonHelper]::ConvertToJsonCustomCompressed($params))
+				[UsageTelemetry]::SetCommonProperties($currentInstance, $Properties);
+				$event = [Microsoft.ApplicationInsights.DataContracts.EventTelemetry]::new()
+				$event.Name = "Command Completed"
+				$Properties.Keys | ForEach-Object {
+					try{
+						$event.Properties.Add($_, $Properties[$_].ToString());
+					}
+					catch{
+						#Eat the current exception which typically happens when the property already exist in the object and try to add the same property again
+						#No need to break execution
+					}
+				}			
+				$currentInstance.TelemetryClient.TrackEvent($event);
+			}
+			catch{
+				#No need to break execution
+			}
         });
 
 		$this.RegisterEvent([SVTEvent]::EvaluationError, {
@@ -137,7 +238,7 @@ class UsageTelemetry: ListenerBase {
            	try{
 			$Properties = @{			
 			"OrgName" = [RemoteReportHelper]::Mask($Event.SourceArgs[0]);			
-		}
+		    }
 			[UsageTelemetry]::SetCommonProperties($currentInstance, $Properties);
 			$event = [Microsoft.ApplicationInsights.DataContracts.EventTelemetry]::new()
 			$event.Name = "Policy Migration Started"
@@ -491,6 +592,17 @@ class UsageTelemetry: ListenerBase {
 				# Eat the current exception which typically happens when the property already exist in the object and try to add the same property again
 				# No need to break execution
 			}
+		}
+		catch{
+			# Eat the current exception which typically happens when the property already exist in the object and try to add the same property again
+			# No need to break execution
+		}
+	}
+
+	hidden static [void] SetCommandInvocationProperties([UsageTelemetry] $Publisher, [hashtable] $Properties)
+	{
+		try{
+			
 		}
 		catch{
 			# Eat the current exception which typically happens when the property already exist in the object and try to add the same property again
