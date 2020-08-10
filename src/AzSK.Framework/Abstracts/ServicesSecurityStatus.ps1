@@ -188,19 +188,32 @@ class ServicesSecurityStatus: AzSVTCommandBase
 				try
 				{
 					$extensionSVTClassName = $svtClassName + "Ext";
-					if(-not ($extensionSVTClassName -as [type]))
+                    # Resetting $extensionSVTClassFilePath to null as PS session holds the previous value
+                    $extensionSVTClassFilePath = $null
+
+                    # Checks if $extensionSVTClassName type is not loaded in memory
+					if (-not ($extensionSVTClassName -as [type])) 
 					{
-						$extensionSVTClassFilePath = [ConfigurationManager]::LoadExtensionFile($svtClassName); 
-					}	
-					if([string]::IsNullOrWhiteSpace($extensionSVTClassFilePath))
-					{
-						$svtObject = New-Object -TypeName $svtClassName -ArgumentList $this.SubscriptionContext.SubscriptionId, $_
-					}
-					else {
-						# file has to be loaded here due to scope contraint
-						. $extensionSVTClassFilePath
-						$svtObject = New-Object -TypeName $extensionSVTClassName -ArgumentList $this.SubscriptionContext.SubscriptionId, $_
-					}
+   
+                        # Looking for Extension class using configuration
+                        $extensionSVTClassFilePath = [ConfigurationManager]::LoadExtensionFile($svtClassName); 
+						if ([string]::IsNullOrWhiteSpace($extensionSVTClassFilePath)) 
+						{
+                            $svtObject = New-Object -TypeName $svtClassName -ArgumentList $this.SubscriptionContext.SubscriptionId, $_
+                        }
+						else 
+						{
+                            # Loading Extension class, if Extension class is already present
+                            Write-Warning "########## Loading extended type [$extensionSVTClassName] into session... ##########"
+                            . $extensionSVTClassFilePath
+                            $svtObject = New-Object -TypeName $extensionSVTClassName -ArgumentList $this.SubscriptionContext.SubscriptionId, $_
+                        }
+                    }   
+                    else 
+                    {
+                        # Create the instance of Extension class
+                        $svtObject = New-Object -TypeName $extensionSVTClassName -ArgumentList $this.SubscriptionContext.SubscriptionId, $_
+                    }
 				}
 				catch
 				{
@@ -214,6 +227,8 @@ class ServicesSecurityStatus: AzSVTCommandBase
 				{
 					$svtObject.RunningLatestPSModule = $this.RunningLatestPSModule;
 					$this.SetSVTBaseProperties($svtObject);
+					#Setting up svtObject property
+					$svtObject.IsLocalComplianceStoreEnabled = $this.IsLocalComplianceStoreEnabled
 					$childResources += $svtObject.ChildSvtObjects;
 					$currentResourceResults += $svtObject.$methodNameToCall();
 					$result += $currentResourceResults;
@@ -227,37 +242,35 @@ class ServicesSecurityStatus: AzSVTCommandBase
 					}					
 				}
 
+				# Changes for compliance table dependency removal
+				# if IsLocalComplianceStoreEnabled is false, do not persist scan result in compliance state table
 				if($this.IsLocalComplianceStoreEnabled -and ($currentResourceResults | Measure-Object).Count -gt 0)
-				{	
+				{
 					# Persist scan data to subscription
-					try 
-					{
-						if($null -eq $this.ComplianceReportHelper)
+						try 
 						{
-							$this.ComplianceReportHelper = [ComplianceReportHelper]::new($this.SubscriptionContext, $this.GetCurrentModuleVersion())
+							if($null -eq $this.ComplianceReportHelper)
+							{
+								$this.ComplianceReportHelper = [ComplianceReportHelper]::new($this.SubscriptionContext, $this.GetCurrentModuleVersion())
+							}
+							if($this.ComplianceReportHelper.HaveRequiredPermissions())
+							{
+								$this.ComplianceReportHelper.StoreComplianceDataInUserSubscription($currentResourceResults)
+							}
+							else
+							{
+								$this.IsLocalComplianceStoreEnabled = $false;
+							}
 						}
-						if($this.ComplianceReportHelper.HaveRequiredPermissions())
+						catch 
 						{
-							$this.ComplianceReportHelper.StoreComplianceDataInUserSubscription($currentResourceResults)
+							$this.PublishException($_);
 						}
-						else
-						{
-							$this.IsLocalComplianceStoreEnabled = $false;
-						}
-					}
-					catch 
-					{
-						$this.PublishException($_);
-					}
+					
 
 				}
 				
-					
-				# Register/Deregister all listeners to cleanup the memory
-				if([FeatureFlightingManager]::GetFeatureStatus("EnableListenerReset","*") -eq $true)
-				{
-					[AzListenerHelper]::RegisterListeners();
-				}
+				
 			}
             catch
             {

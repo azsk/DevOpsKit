@@ -173,14 +173,27 @@ class ERvNet : SVTIaasBase
 							{
 								$tempIpConfigurations = [array]($tempNIC.IpConfigurations)
 								$tempIpConfigurations | ForEach-Object{
-									Set-Variable -Name tempIPConfig -Value $_
-									if($null -ne $tempIPConfig.properties.Subnet)
-									{
-										if(-not $tempIPConfig.properties.Subnet.Id.StartsWith($this.ResourceObject.Id,"CurrentCultureIgnoreCase"))
-										{
-											$hasTCPPassed = $false
-										}
-									}
+                                    Set-Variable -Name tempIPConfig -Value $_
+                                    if([FeatureFlightingManager]::GetFeatureStatus("EnableVnetFixForSub",$($this.SubscriptionContext.SubscriptionId)))
+                                    {
+                                        if($null -ne $tempIPConfig.Subnet)
+                                        {
+                                            if(-not $tempIPConfig.Subnet.Id.StartsWith($this.ResourceObject.Id,"CurrentCultureIgnoreCase"))
+                                            {
+                                                $hasTCPPassed = $false
+                                            }
+                                        }
+                                    }
+                                    else 
+                                    {
+                                        if($null -ne $tempIPConfig.properties.Subnet)
+                                        {
+                                            if(-not $tempIPConfig.properties.Subnet.Id.StartsWith($this.ResourceObject.Id,"CurrentCultureIgnoreCase"))
+                                            {
+                                                $hasTCPPassed = $false
+                                            }
+                                        }
+                                    }
 								}
 							}
 						}

@@ -22,7 +22,7 @@ class ComplianceInfo: AzCommandBase {
         $ComplianceReportData = $null
         if ($ComplianceRptHelper.HaveRequiredPermissions() -and -not($UseBaselineControls -or $UsePreviewBaselineControls)) {
             $ComplianceReportData = $ComplianceRptHelper.GetSubscriptionComplianceReport();
-			
+            			
         }	
         else {
             $selectColumns = New-Object System.Collections.ArrayList;
@@ -67,12 +67,13 @@ class ComplianceInfo: AzCommandBase {
 		
         $azskConfig = [ConfigurationManager]::GetAzSKConfigData();	
         $settingStoreComplianceSummaryInUserSubscriptions = [ConfigurationManager]::GetAzSKSettings().StoreComplianceSummaryInUserSubscriptions;
+        $IsLocalComplianceStoreEnabled = [ComplianceReportHelper]::ValidateComplianceStateCaching()       
         #return if feature is turned off at server config
-        if (-not $azskConfig.StoreComplianceSummaryInUserSubscriptions -and -not $settingStoreComplianceSummaryInUserSubscriptions) {
-            $this.PublishCustomMessage("NOTE: This feature is currently disabled in your environment. Please contact the cloud security team for your org. ", [MessageType]::Warning);	
+        if (!$IsLocalComplianceStoreEnabled) {
+            $this.PublishCustomMessage("Note: This feature is currently disabled for your environment. Please contact the cloud security team for your org.", [MessageType]::Warning);	
+            $this.DoNotOpenOutputFolder = $true;
             return;
-        }		
-
+        }
         $this.PublishCustomMessage([Constants]::DoubleDashLine, [MessageType]::Default);
         $this.PublishCustomMessage("`r`nFetching compliance info for subscription [" + $this.SubscriptionId + "] ...", [MessageType]::Default);
         $this.PublishCustomMessage([Constants]::SingleDashLine, [MessageType]::Default);

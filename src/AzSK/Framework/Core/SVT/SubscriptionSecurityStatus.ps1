@@ -40,6 +40,8 @@ class SubscriptionSecurityStatus: AzSVTCommandBase
 		if($svtObject)
 		{
 			$svtObject.RunningLatestPSModule = $this.RunningLatestPSModule
+			#set svtobject properties
+			$svtObject.IsLocalComplianceStoreEnabled = $this.IsLocalComplianceStoreEnabled
 			$this.Severity = $this.ConvertToStringArray($this.Severity) # to handle case when no severity is passed to command
 			if($this.Severity)
 			{
@@ -80,28 +82,32 @@ class SubscriptionSecurityStatus: AzSVTCommandBase
 		}
 
 		#save result into local compliance report
+		# Changes for compliance table dependency removal
+		# if IsLocalComplianceStoreEnabled is false, do not persist scan result in compliance state table
 		if($this.IsLocalComplianceStoreEnabled -and ($result | Measure-Object).Count -gt 0)
 		{
 			# Persist scan data to subscription
-			try 
-			{
-				if($null -eq $this.ComplianceReportHelper)
+				try 
 				{
-					$this.ComplianceReportHelper = [ComplianceReportHelper]::new($this.SubscriptionContext, $this.GetCurrentModuleVersion())
+					if($null -eq $this.ComplianceReportHelper)
+					{
+						$this.ComplianceReportHelper = [ComplianceReportHelper]::new($this.SubscriptionContext, $this.GetCurrentModuleVersion())
+					}
+					if($this.ComplianceReportHelper.HaveRequiredPermissions())
+					{
+						$this.ComplianceReportHelper.StoreComplianceDataInUserSubscription($result);
+						
+					}
+					else
+					{
+						$this.IsLocalComplianceStoreEnabled = $false;
+					}
 				}
-				if($this.ComplianceReportHelper.HaveRequiredPermissions())
+				catch 
 				{
-					$this.ComplianceReportHelper.StoreComplianceDataInUserSubscription($result)
+					$this.PublishException($_);
 				}
-				else
-				{
-					$this.IsLocalComplianceStoreEnabled = $false;
-				}
-			}
-			catch 
-			{
-				$this.PublishException($_);
-			}
+			
 		}		
 		[AzListenerHelper]::RegisterListeners();
 		

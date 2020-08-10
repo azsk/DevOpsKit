@@ -295,6 +295,12 @@ class SVTMapping
         ResourceTypeName = "VirtualMachineScaleSet";
     },
     [ResourceTypeMapping]@{
+        ResourceType = "Microsoft.Network/publicIPAddresses";
+        JsonFileName = "PublicIpAddress.json";
+        ClassName = "PublicIpAddress";
+        ResourceTypeName = "PublicIpAddress";
+    },
+    [ResourceTypeMapping]@{
         ResourceType     = "Microsoft.OperationalInsights/workspaces";
         JsonFileName     = "LogAnalytics.json";
         ClassName        = "LogAnalytics";

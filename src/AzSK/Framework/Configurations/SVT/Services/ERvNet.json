@@ -28,7 +28,12 @@
         "PublicIpAddress",
         "PrivateIpAddress"
       ],
-      "PolicyDefinitionGuid": "ERvNet110"
+      "PolicyDefinitionGuid": "ERvNet110",
+      "IsAttestationDriftExpected": true,
+      "OnAttestationDrift": {
+        "ApplyToVersionsUpto": "4.10.0",
+        "ActionOnAttestationDrift": "CheckIfSubset"
+    }
     },
     {
       "ControlID": "Azure_ERvNet_NetSec_Dont_Use_Multi_NIC_VMs",
@@ -69,7 +74,12 @@
         "NICName",
         "EnableIPForwarding"
       ],
-      "PolicyDefinitionGuid": "ERvNet130"
+      "PolicyDefinitionGuid": "ERvNet130",
+      "IsAttestationDriftExpected": true,
+      "OnAttestationDrift": {
+        "ApplyToVersionsUpto": "4.10.0",
+        "ActionOnAttestationDrift": "CheckIfSubset"
+    }
     },
     {
       "ControlID": "Azure_ERvNet_NetSec_Dont_Use_NSGs_on_GatewaySubnet",
@@ -152,7 +162,23 @@
         "ERvNet"
       ],
       "Enabled": true,
-      "PolicyDefinitionGuid": "ERvNet170"
+      "PolicyDefinitionGuid": "ERvNet170",
+      "DataObjectProperties": [
+        "AllowForwardedTraffic",
+        "AllowGatewayTransit",
+        "AllowVirtualNetworkAccess",
+        "Id",
+        "PeeringState",
+        "RemoteGateways",
+        "RemoteVirtualNetwork",
+        "RemoteVirtualNetworkAddressSpace",
+        "UseRemoteGateways"
+      ],
+      "IsAttestationDriftExpected": true,
+      "OnAttestationDrift": {
+            "ApplyToVersionsUpto" : "4.9.0",
+            "ActionOnAttestationDrift": "CheckOnlySelectPropertiesInDataObject"
+      }
     },
     {
       "ControlID": "Azure_ERvNet_NetSec_Use_Only_Internal_Load_Balancers",

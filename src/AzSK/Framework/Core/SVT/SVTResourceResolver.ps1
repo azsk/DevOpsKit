@@ -96,6 +96,7 @@ class SVTResourceResolver: AzSKRoot
 
 	[void] LoadAzureResources()
 	{
+		$ControlSettings = [ConfigurationManager]::LoadServerConfigFile("ControlSettings.json");
 		#Lazy load the SVT resource array
 		if($this.SVTResources.Count -eq 0)
 		{
@@ -128,6 +129,17 @@ class SVTResourceResolver: AzSKRoot
 					$AzSKCfgResource=$null 
 				}
 			}
+
+			#Check if this org wants IPAddress to be treated as its own resource.
+			if([Helpers]::CheckMember($ControlSettings,"PublicIpAddress",$false) -and [Helpers]::CheckMember($ControlSettings.PublicIpAddress,"EnablePublicIpResource",$false))
+			{
+			#If not, let us remove the resource type entry from the mapping
+			$treatPublicIPasResource = $ControlSettings.PublicIpAddress.EnablePublicIpResource
+			if( -not $treatPublicIPasResource)
+			{
+				[SVTMapping]::Mapping = ([SVTMapping]::Mapping | Where-Object { $_.ResourceType -ne 'Microsoft.Network/publicIPAddresses'});
+			}
+		}
 			
 			#Fetch Resources from Azure
 			if($this.ResourceGroups.Count -eq 0 -or ($this.ResourceGroups.Count -eq 1 -and $this.ResourceGroups[0].Trim() -eq "*"))
@@ -231,6 +243,8 @@ class SVTResourceResolver: AzSKRoot
 				{
 					$this.SVTResources += $svtResource;
 				}
+
+				
 			}
 			$this.SVTResourcesFoundCount = ($this.SVTResources | Measure-Object).Count
 				

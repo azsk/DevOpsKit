@@ -180,7 +180,12 @@ class SVTControlAttestation
 								$proposedExceptionApprovalExpiryDate = $ExpiryDate
 								#([DateTime]::UtcNow).AddDays($numberOfDays)
 
-								if($proposedExceptionApprovalExpiryDate -gt $maxAllowedExceptionApprovalExpiryDate)
+								if($proposedExceptionApprovalExpiryDate -le [DateTime]::UtcNow) 
+								{
+									Write-Host "ExpiryDate should be greater than current date. To attest control using ApprovedException status add ApprovedExceptionExpiryDate parameter. Please provide this param in the command with mm/dd/yy date format. For example: -ApprovedExceptionExpiryDate '11/25/20'" -ForegroundColor Yellow;
+									break;
+								}
+								elseif($proposedExceptionApprovalExpiryDate -gt $maxAllowedExceptionApprovalExpiryDate)
 								{
 									Write-Host "`nNote: The exception approval expiry will be set to 180 days from today.`n" -ForegroundColor Yellow
 									$exceptionApprovalExpiryDate = $maxAllowedExceptionApprovalExpiryDate								
@@ -341,7 +346,12 @@ class SVTControlAttestation
 								$proposedExceptionApprovalExpiryDate = $ExpiryDate
 								#([DateTime]::UtcNow).AddDays($numberOfDays)
 
-								if($proposedExceptionApprovalExpiryDate -gt $maxAllowedExceptionApprovalExpiryDate)
+								if($proposedExceptionApprovalExpiryDate -le [DateTime]::UtcNow) 
+								{
+									Write-Host "ExpiryDate should be greater than current date. To attest control using ApprovedException status add ApprovedExceptionExpiryDate parameter. Please provide this param in the command with mm/dd/yy date format. For example: -ApprovedExceptionExpiryDate '11/25/20'" -ForegroundColor Yellow;
+									break;
+								}
+								elseif($proposedExceptionApprovalExpiryDate -gt $maxAllowedExceptionApprovalExpiryDate)
 								{
 									Write-Host "`nNote: The exception approval expiry will be set to 180 days from today.`n" -ForegroundColor Yellow
 									$exceptionApprovalExpiryDate = $maxAllowedExceptionApprovalExpiryDate								
@@ -633,14 +643,16 @@ class SVTControlAttestation
 			$ValidAttestationStates += $controlItem.ControlItem.ValidAttestationStates | Select-Object -Unique
 		}
 		$ValidAttestationStates = $ValidAttestationStates.Trim() | Select-Object -Unique
-	    #if control not in grace, disable WillFixLater option		
-		if(-not $controlResult.IsControlInGrace)
-		{
-		    if(($ValidAttestationStates | Where-Object { $_ -eq [AttestationStatus]::WillFixLater} | Measure-Object).Count -gt 0)
-		    {
-		        $ValidAttestationStates.Remove("WillFixLater")
-		    }
-		}
+		#Allowing WillFixLater even if control is not grace
+		#Changes for compliance table dependency removal
+		#if control not in grace, disable WillFixLater option		
+		# if(-not $controlResult.IsControlInGrace)
+		# {
+		#     if(($ValidAttestationStates | Where-Object { $_ -eq [AttestationStatus]::WillFixLater} | Measure-Object).Count -gt 0)
+		#     {
+		#         $ValidAttestationStates.Remove("WillFixLater")
+		#     }
+		# }
 		$ValidAttestationStatesHashTable = [Constants]::AttestationStatusHashMap.GetEnumerator() | Where-Object { $_.Name -in $ValidAttestationStates } | Sort-Object value
 		
 		if($this.attestOptions.IsExemptModeOn)

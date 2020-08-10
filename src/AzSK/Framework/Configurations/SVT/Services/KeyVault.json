@@ -1,272 +1,277 @@
 {
-    "FeatureName":  "KeyVault",
-    "Reference":  "aka.ms/azsktcp/keyvault",
-    "IsMaintenanceMode":  false,
-    "Controls":  [
-      {
-        "ControlID": "Azure_KeyVault_AuthN_Use_Cert_Auth_for_Apps",
-        "Description": "Azure Active Directory applications, which have access to Key Vault, must use certificate to authenticate to Key Vault",
-        "Id": "KeyVault110",
-        "ControlSeverity": "High",
-        "Automated": "Yes",
-        "MethodName": "CheckAppAuthenticationCertificate",
-        "Rationale": "Password/shared secret credentials can be easily shared and hence can be easily compromised. Certificate credentials offer better security.",
-        "Recommendation": "Remove any password credentials from Azure AD Applications and use certificate credentials instead. Run command Remove-AzureADApplicationPasswordCredential -InformationAction '{ActionPreference}' -InformationVariable '{InformationVariable}' -KeyId '{KeyId}' -ObjectId '{ObjectId}'. Refer: https://docs.microsoft.com/en-us/powershell/module/azuread/remove-azureadapplicationpasswordcredential?view=azureadps-2.0, https://docs.microsoft.com/en-us/azure/active-directory/develop/active-directory-certificate-credentials#register-your-certificate-with-azure-ad",
-        "Tags": [
-          "SDL",
-          "TCP",
-          "Automated",
-          "AuthN",
-          "OwnerAccess",
-          "KeyVault"
-        ],
-        "Enabled": true
-      },
-                     {
-                         "ControlID":  "Azure_KeyVault_AuthN_Dont_Share_KeyVault_Unless_Trust",
-                         "Description":  "Applications must not share a Key Vault unless they trust each other and they need access to the same secrets at runtime",
-                         "Id":  "KeyVault120",
-                         "ControlSeverity": "High",
-                         "Automated":  "Yes",
-                         "MethodName":  "CheckAppsSharingKeyVault",
-                         "Rationale":  "Key Vault contains critical information like credentials/secrets etc. All applications can access all secrets from a given Key Vault. This can violate trust boundaries between applications.",
-                         "Recommendation":  "Ensure that there is a clear need for apps to share secrets if they are sharing a Key Vault. Else setup independent Key Vaults for each application.",
-                         "Tags":  [
-                                      "SDL",
-                                      "TCP",
-                                      "Automated",
-                                      "AuthN",
-                                      "KeyVault",
-                                      "OwnerAccess",
-                                      "GraphRead"
-                                  ],
-                         "Enabled":  true
-                     },
-                     {
-                         "ControlID":  "Azure_KeyVault_AuthZ_Grant_Min_RBAC_Access",
-                         "Description":  "All users/identities must be granted minimum required permissions using Role Based Access Control (RBAC)",
-                         "Id":  "KeyVault130",
-                         "ControlSeverity": "High",
-                         "Automated":  "Yes",
-                         "MethodName":  "CheckRBACAccess",
-                         "Rationale":  "Granting minimum access by leveraging RBAC feature ensures that users are granted just enough permissions to perform their tasks. This minimizes exposure of the resources in case of user/service account compromise.",
-                         "Recommendation":  "Remove any excessive privileges granted on the Key Vault. Run command Remove-AzRoleAssignment -SignInName '{signInName}' -Scope '{scope}' -RoleDefinitionName '{role definition name}'. Run 'Get-Help Remove-AzRoleAssignment -full' for more help. Assign 'Key Vault Contributor' RBAC role to developers who need to manage Key Vault configurations. Refer: https://docs.microsoft.com/en-us/azure/key-vault/key-vault-secure-your-key-vault, https://docs.microsoft.com/en-us/azure/active-directory/role-based-access-control-manage-access-powershell",
-                         "Tags":  [
-                                      "SDL",
-                                      "TCP",
-                                      "Automated",
-                                      "AuthZ",
-                                      "RBAC",
-                                      "KeyVault"
-                                  ],
-                         "Enabled":  true
-                     },
-                     {
-                         "ControlID":  "Azure_KeyVault_AuthZ_Grant_Min_Access_policies",
-                         "Description":  "All Key Vault access policies must be defined with minimum required permissions to keys and secrets",
-                         "Id":  "KeyVault140",
-                         "ControlSeverity": "High",
-                         "Automated":  "Yes",
-                         "MethodName":  "CheckAccessPolicies",
-                         "Rationale":  "Granting minimum access by defining Key Vault access policies ensures that applications/users are granted just enough permissions to perform their tasks. This minimizes exposure of the resources in case of user/service account compromise.",
-                         "Recommendation":  "Use command Set-AzKeyVaultAccessPolicy -VaultName '{VaultName}' -ResourceGroupName '{ResourceGroupName}'  -PermissionsToKeys '{PermissionsToKeys}' -PermissionsToSecrets '{PermissionsToSecrets}'  -PermissionsToCertificates '{PermissionsToCertificates}' -ObjectId '{ObjectId}'. Refer:  https://docs.microsoft.com/en-us/powershell/module/az.keyvault/Set-AzKeyVaultAccessPolicy",
-                         "Tags":  [
-                                      "SDL",
-                                      "TCP",
-                                      "Automated",
-                                      "AuthZ",
-                                      "RBAC",
-                                      "KeyVault"
-                                  ],
-                         "Enabled":  true
-                     },
-                     {
-                         "ControlID":  "Azure_KeyVault_AuthZ_Configure_Advanced_Access_Policies",
-                         "Description":  "Advanced access policies must be configured on a need basis",
-                         "Id":  "KeyVault150",
-                        "ControlSeverity": "Medium",
-                         "Automated":  "Yes",
-                         "MethodName":  "CheckAdvancedAccessPolicies",
-                         "Rationale":  "Advanced access policy allows Azure services (Azure Resource Manager, Virtual Machine, Disk Encryption etc.) to seamlessly access Key Vault. To avoid unintentional access to Key Vault from Azure services, advanced access policies must be configured only as required.",
-                         "Recommendation":  "Remove any advanced policies that are not required using the command: Remove-AzKeyVaultAccessPolicy -VaultName '{VaultName}' -ResourceGroupName '{ResourceGroupName}' -EnabledForDeployment -EnabledForTemplateDeployment -EnabledForDiskEncryption. Refer: https://docs.microsoft.com/en-us/powershell/module/az.keyvault/Remove-AzKeyVaultAccessPolicy",
-                         "Tags":  [
-                                      "SDL",
-                                      "TCP",
-                                      "Automated",
-                                      "AuthZ",
-                                      "KeyVault"
-                                  ],
-                         "Enabled":  true
-                     },
-                     {
-                         "ControlID":  "Azure_KeyVault_DP_Keys_Protect_By_HSM",
-                         "Description":  "All Keys in Key Vault must be protected by HSM [Key Type = HSM Protected Key]",
-                         "Id":  "KeyVault160",
-                         "ControlSeverity": "Medium",
-                         "Automated":  "Yes",
-                         "MethodName":  "CheckKeyHSMProtected",
-                         "Rationale":  "A hardware security module (HSM) is a physical device that provides extra security for sensitive data like Keys. HSMs make sure that the keys never leave the HSM boundary throughout their lifecycle. Using HSMs for key protection is required for keys that encrypt highly sensitive data (often in regulated environments).",
-                         "Recommendation":  "Remove the non-HSM keys and recreate the removed ones within a destination Key Vault of type HSM. Run command Remove-AzKeyVaultKey -VaultName '{KeyVaultName}' -Name '{KeyName}' to remove non-HSM key. Use command Add-AzKeyVaultKey -VaultName  '{VaultName}' -Name '{KeyName}' -Expires '{ExpiryDate}' -Destination 'HSM' -KeyOps '{KeyOps}'. Refer: https://docs.microsoft.com/en-us/powershell/module/az.keyvault/remove-azkeyvaultkey, https://docs.microsoft.com/en-us/powershell/module/az.keyvault/add-azkeyvaultkey",
-                         "Tags":  [
-                                      "SDL",
-                                      "TCP",
-                                      "Automated",
-                                      "DP",
-                                      "KeyVault",
-                                      "KeySecretPermissions"
-                                  ],
-                         "Enabled":  true
-                     },
-      {
-         "ControlID": "Azure_KeyVault_DP_Keys_Secrets_Check_Expiry_Date",
-         "Description": "All Keys and Secrets in Key Vault must have expiration dates",
-         "Id": "KeyVault170",
-         "ControlSeverity": "Medium",
-         "Automated": "Yes",
-         "MethodName": "CheckKeyExpirationDate",
-         "Rationale": "Expiration dates on keys ensure that keys are rotated on a periodic basis. Key rotation is an important security hygiene activity.",
-         "Recommendation": "To add an expiry date to keys, run command: Update-AzKeyVaultKey -VaultName '{KeyVaultName}' -Name '{KeyName}' -Expires '{ExpiryDate}'. Expiry date should not be more than 365 days for keys. To add an expiry date to secrets, run command: Update-AzKeyVaultSecret -VaultName '{KeyVaultName}' -Name '{SecretName}' -Expires '{ExpiryDate}', Expiry date should not be more than 180 days for secrets.",
-         "Tags": [
-            "SDL",
-            "TCP",
-            "Automated",
-            "DP",
-            "KeyRotation",
-            "OwnerAccess",
-            "KeyVaultAccess",
-            "KeyVault",
-            "KeySecretPermissions"
-         ],
-         "Enabled": true
-      },
-                     {
-                         "ControlID":  "Azure_KeyVault_Audit_Enable_Diagnostics_Log",
-                         "Description":  "Diagnostics logs must be enabled with a retention period of at least $($this.ControlSettings.Diagnostics_RetentionPeriod_Min) days.",
-                         "Id":  "KeyVault180",
-                         "ControlSeverity": "Medium",
-                         "Automated":  "Yes",
-                         "MethodName":  "CheckDiagnosticsSettings",
-                         "Rationale":  "Logs should be retained for a long enough period so that activity trail can be recreated when investigations are required in the event of an incident or a compromise. A period of 1 year is typical for several compliance requirements as well.",
-                         "Recommendation":  "You can change the diagnostic settings from the Azure Portal by following the steps given here: https://docs.microsoft.com/en-us/azure/monitoring-and-diagnostics/monitoring-archive-diagnostic-logs#archive-diagnostic-logs-using-the-portal",
-                         "Tags":  [
-                                      "SDL",
-                                      "TCP",
-                                      "Automated",
-                                      "Audit",
-                                      "Diagnostics",
-                                      "KeyVault"
-                                  ],
-                         "PolicyDefinitionGuid":"cf820ca0-f99e-4f3e-84fb-66e913812d21",   
-                         "policyDefinitionId": "/providers/Microsoft.Authorization/policyDefinitions/cf820ca0-f99e-4f3e-84fb-66e913812d21",     
-                         "Enabled":  true
-                     },
-                     {
-                         "ControlID":  "Azure_KeyVault_AuthN_Key_Min_Operation",
-                         "Description":  "Restrict the cryptographic operations permitted using keys to the ones actually required",
-                         "Id":  "KeyVault190",
-                         "ControlSeverity": "High",
-                         "Automated":  "Yes",
-                         "MethodName":  "CheckKeyMinimumOperations",
-                         "Rationale":  "Restricting the operations to be performed on Keys ensures that applications/users can perform only intended operations. This minimizes exposure of the Keys in case of user/service account compromise.",
-                         "Recommendation":  "Run command Update-AzKeyVaultKey -VaultName '{KeyVaultName}' -Name '{KeyName}' -KeyOps '{KeyOps}'. Refer: https://docs.microsoft.com/en-us/powershell/module/az.keyvault/update-azkeyvaultkey",
-                         "Tags":  [
-                                      "SDL",
-                                      "TCP",
-                                      "Automated",
-                                      "AuthN",
-                                      "KeyVault",
-                                      "KeySecretPermissions"
-                                  ],
-                         "Enabled":  true
-                     },
-                     {
-                         "ControlID":  "Azure_KeyVault_DP_Identify_Roles",
-                         "Description":  "Key Vault owner must grant minimum required access to keys/secrets based on individual roles (Developer/Operator/Auditor/Security Team)",
-                         "Id":  "KeyVault200",
-                         "ControlSeverity": "High",
-                         "Automated":  "No",
-                         "MethodName":  "",
-                         "Rationale":  "Identifying and assigning various roles ensures proper separation of duties.",
-                         "Recommendation":  "Key Vault owner must identify different roles that need various levels of access on keyvault keys/secrets and configure them using a least privilege model. Refer: https://docs.microsoft.com/en-us/azure/key-vault/key-vault-secure-your-key-vault",
-                         "Tags":  [
-                                      "SDL",
-                                      "TCP",
-                                      "Manual",
-                                      "DP",
-                                      "KeyVault"
-                                  ],
-                         "Enabled":  true
-                     },
-                     {
-                         "ControlID":  "Azure_KeyVault_DP_Rotate_Key_Periodocally",
-                         "Description":  "Keys/secrets must be rotated periodically",
-                         "Id":  "KeyVault210",
-                         "ControlSeverity": "Medium",
-                         "Automated":  "No",
-                         "MethodName":  "",
-                         "Rationale":  "Periodic key/password rotation is a good security hygiene practice as, over time, it minimizes the likelihood of data loss/compromise which can arise from key theft/brute forcing/recovery attacks.",
-                         "Recommendation":  "Rotate the keys and secrets at regular intervals. Run command: Update-AzKeyVaultKey -VaultName '{KeyVaultName}' -Name '{KeyName}' -Expires '{ExpiryDate}' -Version '{Version}' to generate new version for key. Run command: Update-AzKeyVaultSecret -VaultName '{KeyVaultName}' -Name '{KeyName}' -Expires '{ExpiryDate}'  -Version  '{Version}'  to generate new version for secret.",
-                         "Tags":  [
-                                      "SDL",
-                                      "TCP",
-                                      "Manual",
-                                      "DP",
-                                      "KeyVault"
-                                  ],
-                         "Enabled":  true
-                     },
-      {
-        "ControlID": "Azure_KeyVault_Audit_Review_Logs",
-        "Description": "Diagnostic logs for Key Vault must be reviewed periodically",
-        "Id": "KeyVault220",
-        "ControlSeverity": "Medium",
-        "Automated": "No",
-        "MethodName": "",
-        "Rationale": "Periodic reviews of diagnostics, activity and audit logs ensures that anomalous activity can be identified early enough instead of after a major compromise.",
-        "Recommendation": "Review diagnostic logs at regular intervals for different operations carried out on keys and secrets. Refer: https://docs.microsoft.com/en-us/azure/log-analytics/log-analytics-azure-key-vault",
-        "Tags": [
-          "SDL",
-          "TCP",
-          "Manual",
-          "Audit",
-          "KeyVault"
-        ],
-        "Enabled": true
-      },
-      {
-      "ControlID": "Azure_KeyVault_SI_Enable_SoftDelete",
-      "Description": "Soft delete must be enabled to allow recovery of deleted Key Vault and any objects (keys, secrets, etc.) contained in it.",
-      "Id": "KeyVault230",
-      "ControlSeverity": "Medium",
-      "Automated": "Yes",
-      "MethodName": "CheckKeyVaultSoftDelete",
-      "Rationale": "Enabling soft delete feature on Key Vault acts as a safety measure to recover inadvertently or maliciously deleted Key Vault and any objects (keys, secrets, etc.) contained in it.",
-      "Recommendation": "Refer: https://docs.microsoft.com/en-us/azure/key-vault/key-vault-soft-delete-powershell to enable soft delete feature on Key Vault.",
-      "Tags": [
-         "SDL",
-         "TCP",
-         "Automated",
-         "KeyVault"
-      ],
-      "Enabled": true
-   },
-   {
-    "ControlID": "Azure_KeyVault_Avoid_Excessive_Versions_Keys_Secrets",
-    "Description": "Too many versions of keys or secrets should not be in use.",
-    "Id": "KeyVault240",
-    "ControlSeverity": "Medium",
-    "Automated": "Yes",
-    "MethodName": "CheckExcessVersions",
-    "Rationale": "Having too many active versions can lead to increased complexity of solutions due to difficulty of tracking what is in use where, indirectly leading to security vulnerability due to oversight. Additionally, it can also adversely affect performance and availability.",
-    "Recommendation": "Disable older versions of keys and secrets that are no longer required. Go to the Azure Portal > Key Vault > Settings > Keys or Secrets. Select the key or secret that has too many versions, and choose the version that needs to be disabled. Set 'Enabled' attribute as 'No'. For more on the Azure Key Vault service limits, refer: https://docs.microsoft.com/en-us/azure/key-vault/key-vault-service-limits",
-    "Tags": [
-      "SDL",
-      "TCP",
-      "Automated",
-      "KeySecretPermissions",
-      "KeyVault"
-    ],
-    "Enabled": true
-  }
-                 ]
+    "FeatureName": "KeyVault",
+    "Reference": "aka.ms/azsktcp/keyvault",
+    "IsMaintenanceMode": false,
+    "Controls": [
+        {
+            "ControlID": "Azure_KeyVault_AuthN_Use_Cert_Auth_for_Apps",
+            "Description": "Azure Active Directory applications, which have access to Key Vault, must use certificate to authenticate to Key Vault",
+            "Id": "KeyVault110",
+            "ControlSeverity": "High",
+            "Automated": "Yes",
+            "MethodName": "CheckAppAuthenticationCertificate",
+            "Rationale": "Password/shared secret credentials can be easily shared and hence can be easily compromised. Certificate credentials offer better security.",
+            "Recommendation": "Remove any password credentials from Azure AD Applications and use certificate credentials instead. Run command Remove-AzureADApplicationPasswordCredential -InformationAction '{ActionPreference}' -InformationVariable '{InformationVariable}' -KeyId '{KeyId}' -ObjectId '{ObjectId}'. Refer: https://docs.microsoft.com/en-us/powershell/module/azuread/remove-azureadapplicationpasswordcredential?view=azureadps-2.0, https://docs.microsoft.com/en-us/azure/active-directory/develop/active-directory-certificate-credentials#register-your-certificate-with-azure-ad",
+            "Tags": [
+                "SDL",
+                "TCP",
+                "Automated",
+                "AuthN",
+                "OwnerAccess",
+                "KeyVault"
+            ],
+            "Enabled": true
+        },
+        {
+            "ControlID": "Azure_KeyVault_AuthN_Dont_Share_KeyVault_Unless_Trust",
+            "Description": "Applications must not share a Key Vault unless they trust each other and they need access to the same secrets at runtime",
+            "Id": "KeyVault120",
+            "ControlSeverity": "High",
+            "Automated": "Yes",
+            "MethodName": "CheckAppsSharingKeyVault",
+            "Rationale": "Key Vault contains critical information like credentials/secrets etc. All applications can access all secrets from a given Key Vault. This can violate trust boundaries between applications.",
+            "Recommendation": "Ensure that there is a clear need for apps to share secrets if they are sharing a Key Vault. Else setup independent Key Vaults for each application.",
+            "Tags": [
+                "SDL",
+                "TCP",
+                "Automated",
+                "AuthN",
+                "KeyVault",
+                "OwnerAccess",
+                "GraphRead"
+            ],
+            "Enabled": true,
+            "IsAttestationDriftExpected": true,
+            "OnAttestationDrift": {
+                "ApplyToVersionsUpto": "4.9.0",
+                "ActionOnAttestationDrift": "RespectExistingAttestationExpiryPeriod"
+            }
+        },
+        {
+            "ControlID": "Azure_KeyVault_AuthZ_Grant_Min_RBAC_Access",
+            "Description": "All users/identities must be granted minimum required permissions using Role Based Access Control (RBAC)",
+            "Id": "KeyVault130",
+            "ControlSeverity": "High",
+            "Automated": "Yes",
+            "MethodName": "CheckRBACAccess",
+            "Rationale": "Granting minimum access by leveraging RBAC feature ensures that users are granted just enough permissions to perform their tasks. This minimizes exposure of the resources in case of user/service account compromise.",
+            "Recommendation": "Remove any excessive privileges granted on the Key Vault. Run command Remove-AzRoleAssignment -SignInName '{signInName}' -Scope '{scope}' -RoleDefinitionName '{role definition name}'. Run 'Get-Help Remove-AzRoleAssignment -full' for more help. Assign 'Key Vault Contributor' RBAC role to developers who need to manage Key Vault configurations. Refer: https://docs.microsoft.com/en-us/azure/key-vault/key-vault-secure-your-key-vault, https://docs.microsoft.com/en-us/azure/active-directory/role-based-access-control-manage-access-powershell",
+            "Tags": [
+                "SDL",
+                "TCP",
+                "Automated",
+                "AuthZ",
+                "RBAC",
+                "KeyVault"
+            ],
+            "Enabled": true
+        },
+        {
+            "ControlID": "Azure_KeyVault_AuthZ_Grant_Min_Access_policies",
+            "Description": "All Key Vault access policies must be defined with minimum required permissions to keys and secrets",
+            "Id": "KeyVault140",
+            "ControlSeverity": "High",
+            "Automated": "Yes",
+            "MethodName": "CheckAccessPolicies",
+            "Rationale": "Granting minimum access by defining Key Vault access policies ensures that applications/users are granted just enough permissions to perform their tasks. This minimizes exposure of the resources in case of user/service account compromise.",
+            "Recommendation": "Use command Set-AzKeyVaultAccessPolicy -VaultName '{VaultName}' -ResourceGroupName '{ResourceGroupName}' -PermissionsToKeys '{PermissionsToKeys}' -PermissionsToSecrets '{PermissionsToSecrets}' -PermissionsToCertificates '{PermissionsToCertificates}' -ObjectId '{ObjectId}'. Refer: https://docs.microsoft.com/en-us/powershell/module/az.keyvault/Set-AzKeyVaultAccessPolicy",
+            "Tags": [
+                "SDL",
+                "TCP",
+                "Automated",
+                "AuthZ",
+                "RBAC",
+                "KeyVault"
+            ],
+            "Enabled": true
+        },
+        {
+            "ControlID": "Azure_KeyVault_AuthZ_Configure_Advanced_Access_Policies",
+            "Description": "Advanced access policies must be configured on a need basis",
+            "Id": "KeyVault150",
+            "ControlSeverity": "Medium",
+            "Automated": "Yes",
+            "MethodName": "CheckAdvancedAccessPolicies",
+            "Rationale": "Advanced access policy allows Azure services (Azure Resource Manager, Virtual Machine, Disk Encryption etc.) to seamlessly access Key Vault. To avoid unintentional access to Key Vault from Azure services, advanced access policies must be configured only as required.",
+            "Recommendation": "Remove any advanced policies that are not required using the command: Remove-AzKeyVaultAccessPolicy -VaultName '{VaultName}' -ResourceGroupName '{ResourceGroupName}' -EnabledForDeployment -EnabledForTemplateDeployment -EnabledForDiskEncryption. Refer: https://docs.microsoft.com/en-us/powershell/module/az.keyvault/Remove-AzKeyVaultAccessPolicy",
+            "Tags": [
+                "SDL",
+                "TCP",
+                "Automated",
+                "AuthZ",
+                "KeyVault"
+            ],
+            "Enabled": true
+        },
+        {
+            "ControlID": "Azure_KeyVault_DP_Keys_Protect_By_HSM",
+            "Description": "All Keys in Key Vault must be protected by HSM [Key Type = HSM Protected Key]",
+            "Id": "KeyVault160",
+            "ControlSeverity": "Medium",
+            "Automated": "Yes",
+            "MethodName": "CheckKeyHSMProtected",
+            "Rationale": "A hardware security module (HSM) is a physical device that provides extra security for sensitive data like Keys. HSMs make sure that the keys never leave the HSM boundary throughout their lifecycle. Using HSMs for key protection is required for keys that encrypt highly sensitive data (often in regulated environments).",
+            "Recommendation": "Remove the non-HSM keys and recreate the removed ones within a destination Key Vault of type HSM. Run command Remove-AzKeyVaultKey -VaultName '{KeyVaultName}' -Name '{KeyName}' to remove non-HSM key. Use command Add-AzKeyVaultKey -VaultName '{VaultName}' -Name '{KeyName}' -Expires '{ExpiryDate}' -Destination 'HSM' -KeyOps '{KeyOps}'. Refer: https://docs.microsoft.com/en-us/powershell/module/az.keyvault/remove-azkeyvaultkey, https://docs.microsoft.com/en-us/powershell/module/az.keyvault/add-azkeyvaultkey",
+            "Tags": [
+                "SDL",
+                "TCP",
+                "Automated",
+                "DP",
+                "KeyVault",
+                "KeySecretPermissions"
+            ],
+            "Enabled": true
+        },
+        {
+            "ControlID": "Azure_KeyVault_DP_Keys_Secrets_Check_Expiry_Date",
+            "Description": "All Keys and Secrets in Key Vault must have expiration dates",
+            "Id": "KeyVault170",
+            "ControlSeverity": "Medium",
+            "Automated": "Yes",
+            "MethodName": "CheckKeyExpirationDate",
+            "Rationale": "Expiration dates on keys ensure that keys are rotated on a periodic basis. Key rotation is an important security hygiene activity.",
+            "Recommendation": "To add an expiry date to keys, run command: Update-AzKeyVaultKey -VaultName '{KeyVaultName}' -Name '{KeyName}' -Expires '{ExpiryDate}'. Expiry date should not be more than 365 days for keys. To add an expiry date to secrets, run command: Update-AzKeyVaultSecret -VaultName '{KeyVaultName}' -Name '{SecretName}' -Expires '{ExpiryDate}', Expiry date should not be more than 180 days for secrets.",
+            "Tags": [
+                "SDL",
+                "TCP",
+                "Automated",
+                "DP",
+                "KeyRotation",
+                "OwnerAccess",
+                "KeyVaultAccess",
+                "KeyVault",
+                "KeySecretPermissions"
+            ],
+            "Enabled": true
+        },
+        {
+            "ControlID": "Azure_KeyVault_Audit_Enable_Diagnostics_Log",
+            "Description": "Diagnostics logs must be enabled with a retention period of at least $($this.ControlSettings.Diagnostics_RetentionPeriod_Min) days.",
+            "Id": "KeyVault180",
+            "ControlSeverity": "Medium",
+            "Automated": "Yes",
+            "MethodName": "CheckDiagnosticsSettings",
+            "Rationale": "Logs should be retained for a long enough period so that activity trail can be recreated when investigations are required in the event of an incident or a compromise. A period of 1 year is typical for several compliance requirements as well.",
+            "Recommendation": "You can change the diagnostic settings from the Azure Portal by following the steps given here: https://docs.microsoft.com/en-us/azure/monitoring-and-diagnostics/monitoring-archive-diagnostic-logs#archive-diagnostic-logs-using-the-portal",
+            "Tags": [
+                "SDL",
+                "TCP",
+                "Automated",
+                "Audit",
+                "Diagnostics",
+                "KeyVault"
+            ],
+            "PolicyDefinitionGuid": "cf820ca0-f99e-4f3e-84fb-66e913812d21",
+            "policyDefinitionId": "/providers/Microsoft.Authorization/policyDefinitions/cf820ca0-f99e-4f3e-84fb-66e913812d21",
+            "Enabled": true
+        },
+        {
+            "ControlID": "Azure_KeyVault_AuthN_Key_Min_Operation",
+            "Description": "Restrict the cryptographic operations permitted using keys to the ones actually required",
+            "Id": "KeyVault190",
+            "ControlSeverity": "High",
+            "Automated": "Yes",
+            "MethodName": "CheckKeyMinimumOperations",
+            "Rationale": "Restricting the operations to be performed on Keys ensures that applications/users can perform only intended operations. This minimizes exposure of the Keys in case of user/service account compromise.",
+            "Recommendation": "Run command Update-AzKeyVaultKey -VaultName '{KeyVaultName}' -Name '{KeyName}' -KeyOps '{KeyOps}'. Refer: https://docs.microsoft.com/en-us/powershell/module/az.keyvault/update-azkeyvaultkey",
+            "Tags": [
+                "SDL",
+                "TCP",
+                "Automated",
+                "AuthN",
+                "KeyVault",
+                "KeySecretPermissions"
+            ],
+            "Enabled": true
+        },
+        {
+            "ControlID": "Azure_KeyVault_DP_Identify_Roles",
+            "Description": "Key Vault owner must grant minimum required access to keys/secrets based on individual roles (Developer/Operator/Auditor/Security Team)",
+            "Id": "KeyVault200",
+            "ControlSeverity": "High",
+            "Automated": "No",
+            "MethodName": "",
+            "Rationale": "Identifying and assigning various roles ensures proper separation of duties.",
+            "Recommendation": "Key Vault owner must identify different roles that need various levels of access on keyvault keys/secrets and configure them using a least privilege model. Refer: https://docs.microsoft.com/en-us/azure/key-vault/key-vault-secure-your-key-vault",
+            "Tags": [
+                "SDL",
+                "TCP",
+                "Manual",
+                "DP",
+                "KeyVault"
+            ],
+            "Enabled": true
+        },
+        {
+            "ControlID": "Azure_KeyVault_DP_Rotate_Key_Periodocally",
+            "Description": "Keys/secrets must be rotated periodically",
+            "Id": "KeyVault210",
+            "ControlSeverity": "Medium",
+            "Automated": "No",
+            "MethodName": "",
+            "Rationale": "Periodic key/password rotation is a good security hygiene practice as, over time, it minimizes the likelihood of data loss/compromise which can arise from key theft/brute forcing/recovery attacks.",
+            "Recommendation": "Rotate the keys and secrets at regular intervals. Run command: Update-AzKeyVaultKey -VaultName '{KeyVaultName}' -Name '{KeyName}' -Expires '{ExpiryDate}' -Version '{Version}' to generate new version for key. Run command: Update-AzKeyVaultSecret -VaultName '{KeyVaultName}' -Name '{KeyName}' -Expires '{ExpiryDate}' -Version '{Version}' to generate new version for secret.",
+            "Tags": [
+                "SDL",
+                "TCP",
+                "Manual",
+                "DP",
+                "KeyVault"
+            ],
+            "Enabled": true
+        },
+        {
+            "ControlID": "Azure_KeyVault_Audit_Review_Logs",
+            "Description": "Diagnostic logs for Key Vault must be reviewed periodically",
+            "Id": "KeyVault220",
+            "ControlSeverity": "Medium",
+            "Automated": "No",
+            "MethodName": "",
+            "Rationale": "Periodic reviews of diagnostics, activity and audit logs ensures that anomalous activity can be identified early enough instead of after a major compromise.",
+            "Recommendation": "Review diagnostic logs at regular intervals for different operations carried out on keys and secrets. Refer: https://docs.microsoft.com/en-us/azure/log-analytics/log-analytics-azure-key-vault",
+            "Tags": [
+                "SDL",
+                "TCP",
+                "Manual",
+                "Audit",
+                "KeyVault"
+            ],
+            "Enabled": true
+        },
+        {
+            "ControlID": "Azure_KeyVault_SI_Enable_SoftDelete",
+            "Description": "Soft delete must be enabled to allow recovery of deleted Key Vault and any objects (keys, secrets, etc.) contained in it.",
+            "Id": "KeyVault230",
+            "ControlSeverity": "Medium",
+            "Automated": "Yes",
+            "MethodName": "CheckKeyVaultSoftDelete",
+            "Rationale": "Enabling soft delete feature on Key Vault acts as a safety measure to recover inadvertently or maliciously deleted Key Vault and any objects (keys, secrets, etc.) contained in it.",
+            "Recommendation": "Refer: https://docs.microsoft.com/en-us/azure/key-vault/key-vault-soft-delete-powershell to enable soft delete feature on Key Vault.",
+            "Tags": [
+                "SDL",
+                "TCP",
+                "Automated",
+                "KeyVault"
+            ],
+            "Enabled": true
+        },
+        {
+            "ControlID": "Azure_KeyVault_Avoid_Excessive_Versions_Keys_Secrets",
+            "Description": "Too many versions of keys or secrets should not be in use.",
+            "Id": "KeyVault240",
+            "ControlSeverity": "Medium",
+            "Automated": "Yes",
+            "MethodName": "CheckExcessVersions",
+            "Rationale": "Having too many active versions can lead to increased complexity of solutions due to difficulty of tracking what is in use where, indirectly leading to security vulnerability due to oversight. Additionally, it can also adversely affect performance and availability.",
+            "Recommendation": "Disable older versions of keys and secrets that are no longer required. Go to the Azure Portal > Key Vault > Settings > Keys or Secrets. Select the key or secret that has too many versions, and choose the version that needs to be disabled. Set 'Enabled' attribute as 'No'. For more on the Azure Key Vault service limits, refer: https://docs.microsoft.com/en-us/azure/key-vault/key-vault-service-limits",
+            "Tags": [
+                "SDL",
+                "TCP",
+                "Automated",
+                "KeySecretPermissions",
+                "KeyVault"
+            ],
+            "Enabled": true
+        }
+    ]
 }

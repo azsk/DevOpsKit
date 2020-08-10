@@ -12,7 +12,9 @@ class CsvOutputItem
     [string] $ControlSeverity = ""
     [string] $IsBaselineControl = ""
     [string] $IsPreviewBaselineControl = ""
-	[string] $IsControlInGrace=""
+    #Changes for compliance table dependency removal
+    #removing IsControlInGrace from csv output
+	#[string] $IsControlInGrace=""
     [string] $SupportsAutoFix = ""    
     [string] $Description = ""
 	[string] $ActualStatus = ""

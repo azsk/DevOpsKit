@@ -412,6 +412,10 @@
       "facebookAppId",
       "twitterConsumerKey",
       "microsoftAccountClientId"
+    ],
+    "AllowedAuthenticationProviders": [
+    ],
+    "AllowedExternalRedirectURLs": [
     ]
   },
   "DataBricksFilters":{
@@ -544,6 +548,9 @@
       "RequiredImageTag": "latest"
     }
   },
+  "PublicIpAddress": {
+    "EnablePublicIpResource": false
+   },
   "MaxResourceInventoryObjectsCount": 20000,
   "AlernateAccountRegularExpressionForOrg": ""
 }
