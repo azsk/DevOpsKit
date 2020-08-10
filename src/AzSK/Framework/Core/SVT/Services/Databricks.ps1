@@ -401,19 +401,19 @@ class Databricks: AzSVTBase
 						$this.PublishCustomMessage("Successfully read value of PAT(personal access token)", [MessageType]::Update);
 					}else{
 						$pat = $null
-						$this.PublishCustomMessage("Set PAT(personal access token) for '$($wsName)' Databricks workspace in local variable 'adbpatsforazsk', for details refer: ShortLink", [MessageType]::Warning);
+						$this.PublishCustomMessage("Set PAT(personal access token) for '$($wsName)' Databricks workspace in local variable 'adbpatsforazsk', for details refer: https://aka.ms/azsk/scanadbresource", [MessageType]::Warning);
 					}
 					
 				}
 				# Else print warning to set 'adbpatsforazsk' hastable with workspace name as key and PAT as value in current pwsh session
 				else{
-					$this.PublishCustomMessage("Set PAT(personal access token) for '$($wsName)' Databricks workspace in local variable 'adbpatsforazsk', for details refer: ShortLink", [MessageType]::Warning);
+					$this.PublishCustomMessage("Set PAT(personal access token) for '$($wsName)' Databricks workspace in local variable 'adbpatsforazsk', for details refer: https://aka.ms/azsk/scanadbresource", [MessageType]::Warning);
 					$pat = $null
 				}
 
 			}
 			catch{
-				$this.PublishCustomMessage("Error occurred while reading PAT(personal access token) for '$($wsName)' Databricks workspace from local variable 'adbpatsforazsk', for details refer: ShortLink", [MessageType]::Warning);
+				$this.PublishCustomMessage("Error occurred while reading PAT(personal access token) for '$($wsName)' Databricks workspace from local variable 'adbpatsforazsk', for details refer: https://aka.ms/azsk/scanadbresource", [MessageType]::Warning);
 				$pat = $null
 			}
 		}
