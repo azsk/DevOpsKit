@@ -1464,6 +1464,7 @@ class SubscriptionCore: AzSVTBase
 		{
 			$controlResult.AddMessage($_);
 			$controlResult.VerificationResult = [VerificationResult]::Manual
+			$controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false;
 		}
 		return $controlResult;
 	}
@@ -1565,6 +1566,7 @@ class SubscriptionCore: AzSVTBase
 				{
 					$controlResult.AddMessage($_);
 					$controlResult.VerificationResult = [VerificationResult]::Manual
+					$controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false;
 				}
 			}
 			else{
@@ -1637,6 +1639,7 @@ class SubscriptionCore: AzSVTBase
 					if($messageSub -ne 'OK' -or $messageRG -ne 'OK' )
 					{
 						$controlResult.AddMessage("Unable to fetch PIM data, please verify manually.")
+						$controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false;
 						$controlResult.AddMessage($message);
 						return $controlResult;
 					}
