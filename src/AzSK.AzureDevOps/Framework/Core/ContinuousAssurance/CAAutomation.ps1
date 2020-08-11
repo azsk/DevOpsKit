@@ -104,6 +104,8 @@ class CAAutomation : ADOSVTCommandBase
 			$this.SetupComplete = $false
 			$this.ControlSettings = [ConfigurationManager]::LoadServerConfigFile("ControlSettings.json");
 			$this.ImageName = $this.ControlSettings.DockerImage.ImageName
+			$this.LAWSId = $LAWorkspaceId
+			$this.LAWSSharedKey = $LAWorkspaceKey
 
 			if ([string]::IsNullOrWhiteSpace($ResourceGroupName)) 
 			{
