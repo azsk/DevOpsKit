@@ -607,12 +607,13 @@ class ControlStateExtension
 				
 				$deletedResourcesWithAttestation = @();
 				$filteredIndexerObject= @();
+				$deletedResourceCount = 0;
 
 				$deletedResourcesWithAttestation = $resourcesWithAttestation| Where-Object{$AzSKScannableResourceIds -notcontains $_ -and $_ -match 'resourceGroups'} # matching with 'resourceGroups' to avoid deleting attestattion for subscription level controls
-			
 				# if any deleted resources found , having attestation for those
 				if($null -ne $deletedResourcesWithAttestation)
 				{		
+					$deletedResourceCount = $deletedResourcesWithAttestation.Count;
 					$filteredIndexerObject = $this.ControlStateIndexer  | Where-Object {$deletedResourcesWithAttestation -notcontains $_.ResourceId}
 					# Rewrite trimmed $this.ControlStateIndexer values to Resource.index.json file
 					[JsonHelper]::ConvertToJsonCustom($filteredIndexerObject) | Out-File $IndexFileLocalTempPath -Force
@@ -620,7 +621,7 @@ class ControlStateExtension
 					[AzHelper]::UploadStorageBlobContent($IndexFileLocalTempPath, $this.IndexerBlobName , $ContainerName, $StorageAccount.Context)
 				}
 				$event = "" | Select-Object Name, Properties, Metrics
-				$properties = @{"SubscriptionId"= $this.SubscriptionContext.SubscriptionId;"UniquRunIdentifier"=$this.UniqueRunId;"NumberOfResourcesTrimmed"=$deletedResourcesWithAttestation.Count;}
+				$properties = @{"SubscriptionId"= $this.SubscriptionContext.SubscriptionId;"UniquRunIdentifier"=$this.UniqueRunId;"NumberOfResourcesTrimmed"=$deletedResourceCount;}
 				$event.Name = "Trim attestation flow completed"
 				$event.Properties = $properties
 				$trimAttestationEvents.Add($event) | Out-Null
