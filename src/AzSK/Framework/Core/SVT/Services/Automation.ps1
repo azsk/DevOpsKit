@@ -121,7 +121,7 @@ class Automation: AzSVTBase
 		$foundWS = $false
         if($null -ne $diaSettings)
         {
-            $diaSettings | % {if ( Get-Member -InputObject $_ -Name WorkSpaceId -MemberType Property) { if($_.WorkspaceId -ne $null) {$foundWS = $true}}}
+            $diaSettings | ForEach-Object {if ( Get-Member -InputObject $_ -Name WorkSpaceId -MemberType Property) { if($_.WorkspaceId -ne $null) {$foundWS = $true}}}
         }
 
         if($foundWS)
