@@ -89,6 +89,9 @@ class CommandBase: AzSKRoot {
     # Dummy function declaration to define the function signature
     [void] PostCommandCompletedAction([SVTEventContext[]] $arguments)
 	{ }
+
+	[void] PostCommandCompletedAction([MessageData[]] $messages)
+	{ }
 	#EndRegion
 
 	#Region: Helper function to invoke function based on method name. 

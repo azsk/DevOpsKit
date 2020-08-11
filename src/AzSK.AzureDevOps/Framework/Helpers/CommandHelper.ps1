@@ -53,8 +53,14 @@ class CommandHelper
 		},
 		[CommandDetails]@{
             Verb = "Install";
-            Noun = "AzSKAzureDevOpsContinuousAssurance";
+            Noun = "AzSKADOContinuousAssurance";
             ShortName = "ICA";
+			IsLatestRequired = $false;
+        },
+		[CommandDetails]@{
+            Verb = "Update";
+            Noun = "AzSKADOContinuousAssurance";
+            ShortName = "UCA";
 			IsLatestRequired = $false;
         }
     );

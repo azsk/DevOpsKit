@@ -1,26 +1,26 @@
 Set-StrictMode -Version Latest
-function Install-AzSKAzureDevOpsContinuousAssurance 
+function Install-AzSKADOContinuousAssurance 
 {
 	<#
 	.SYNOPSIS
-	This command would help in installing Automation Account in your subscription to setup Continuous Assurance feature of AzSK 
+	This command would help in setting Continuous Assurance feature of AzSK.AzureDevOps in your subscription
 	.DESCRIPTION
-	This command will install an Automation Account (Name: AzSKContinuousAssurance) which runs security scan on subscription and resource groups which are specified during installation.
-	Security scan results will be populated in Log Analytics workspace which is configured during installation. Also, detailed logs will be stored in storage account (Name: azskyyyyMMddHHmmss format).  
+	This command will create a resource group (Name: ADOScannerRG) which runs security scan on organization and projects which are specified during installation.
+	Security scan results will be populated in Log Analytics workspace which is configured during installation. Also, detailed logs will be stored in storage account (Name: adoscannersayyMMddHHmmss format).  
 	
 	.PARAMETER SubscriptionId
-		Subscription id in which Automation Account needs to be installed.
+		Subscription id in which CA setup needs to be done.
 	.PARAMETER Location
-		Location in which all resources need to be setup.
+		Location in which all resources need to be setup. 
 	.PARAMETER ResourceGroupName
-		Resource group name where CA setup need to be done.
+		Resource group name where CA setup need to be done. (Default : ADOSCannerRG)
 	.PARAMETER LAWSId
 		Workspace ID of Log Analytics workspace where security scan results will be sent
 	.PARAMETER LAWSSharedKey
 		Shared key of Log Analytics workspace which is used to monitor security scan results.
 	.PARAMETER OrganizationName
 		Orgnanization name for which scan will be performed.
-	.PARAMETER PATTokenSecureString
+	.PARAMETER PATToken
 		PAT token secure string for organization to be scanned.
 	.PARAMETER ProjectNames
 		Project names to be scanned within the organization. If not provided then all projects will be scanned.
@@ -34,7 +34,7 @@ function Install-AzSKAzureDevOpsContinuousAssurance
 
 	#>
 	Param(
-		[Parameter(Mandatory = $true, ParameterSetName = "Default", HelpMessage="Id of the subscription in which Automation Account needs to be installed.")]
+		[Parameter(Mandatory = $true, ParameterSetName = "Default", HelpMessage="Subscription id in which CA setup needs to be done.")]
         [string]
 		[Alias("sid")]
 		$SubscriptionId ,
@@ -72,8 +72,8 @@ function Install-AzSKAzureDevOpsContinuousAssurance
 		[Parameter(Mandatory = $true, ParameterSetName = "Default", HelpMessage = "PAT token secure string for organization to be scanned.")]
 		[ValidateNotNullOrEmpty()]
 		[Alias("pat")]
-		[string]
-		$PATTokenSecureString,
+		[System.Security.SecureString]
+		$PATToken,
 
 		[Parameter(Mandatory = $false, ParameterSetName = "Default", HelpMessage = "Project names to be scanned within the organization. If not provided then all projects will be scanned.")]
 		[Alias("pns")]
@@ -88,7 +88,7 @@ function Install-AzSKAzureDevOpsContinuousAssurance
 		[switch]
 		[Parameter(Mandatory = $false, HelpMessage = "Switch to create and map new log analytics workspace with CA setup.")]
 		[Alias("cws")]
-		$CreateWorkspace,
+		$CreateLAWorkspace,
 
 		[switch]
 		[Parameter(Mandatory = $false, HelpMessage = "Switch to specify whether to open output folder or not.")]
@@ -106,11 +106,114 @@ function Install-AzSKAzureDevOpsContinuousAssurance
 	{
 		try 
 		{
+			$resolver = [Resolver]::new($SubscriptionId,$PATToken)
 			$caAccount = [CAAutomation]::new($SubscriptionId, $Location,`
-				$OrganizationName, $PATTokenSecureString, $ResourceGroupName, $LAWSId,`
-				$LAWSSharedKey, $ProjectNames, $ExtendedCommand, $CreateWorkspace);
+				$OrganizationName, $PATToken, $ResourceGroupName, $LAWSId,`
+				$LAWSSharedKey, $ProjectNames, $ExtendedCommand, $PSCmdlet.MyInvocation, $CreateLAWorkspace);
+            
+			return $caAccount.InvokeFunction($caAccount.InstallAzSKContinuousAssurance);
+		}
+		catch 
+		{
+			[EventBase]::PublishGenericException($_);
+		}  
+	}
+	End
+	{
+		[ListenerHelper]::UnregisterListeners();
+	}
+}
 
-			return $caAccount.InstallAzSKContinuousAssurance();
+function Update-AzSKADOContinuousAssurance 
+{
+	<#
+	.SYNOPSIS
+	This command would help in updating user configurable properties of Continuous Assurance in your subscription
+	.DESCRIPTION
+	This command will update configurations of existing AzureDEvOps CA setup in your subscription.
+	Security scan results will be populated in Log Analytics workspace which is configured during installation. Also, detailed logs will be stored in storage account (Name: adoscannersayyMMddHHmmss format).  
+	
+	.PARAMETER SubscriptionId
+		Subscription id in which CA setup is present.
+	.PARAMETER ResourceGroupName
+		Resource group name where CA setup is available. (Default : ADOSCannerRG)
+	.PARAMETER LAWSId
+		Workspace ID of Log Analytics workspace where security scan results will be sent
+	.PARAMETER LAWSSharedKey
+		Shared key of Log Analytics workspace which is used to monitor security scan results.
+	.PARAMETER OrganizationName
+		Orgnanization name for which scan will be performed.
+	.PARAMETER PATToken
+		PAT token secure string for organization to be scanned.
+	.PARAMETER ProjectNames
+		Project names to be scanned within the organization. If not provided then all projects will be scanned.
+	.PARAMETER ExtendedCommand
+		Extended command to narrow down the scans.
+
+	#>
+	Param(
+		[Parameter(Mandatory = $true, ParameterSetName = "Default", HelpMessage="Subscription id in which CA setup is present.")]
+        [string]
+		[Alias("sid")]
+		$SubscriptionId ,
+
+		[Parameter(Mandatory = $false, ParameterSetName = "Default", HelpMessage="Resource group name where CA setup is available. (Default : ADOSCannerRG)")]
+        [string]
+		[Alias("rgn")]
+		$ResourceGroupName ,       
+
+        [Parameter(Mandatory = $false, ParameterSetName = "Default", HelpMessage="Workspace ID of Log Analytics workspace where security scan results will be populated.")]
+        [string]
+		[Alias("lwid","wid","OMSWorkspaceId")]
+		$LAWSId,
+
+        [Parameter(Mandatory = $false, ParameterSetName = "Default", HelpMessage="Shared key of Log Analytics workspace which is used to monitor security scan results.")]
+        [string]
+		[Alias("lwkey","wkey","OMSSharedKey")]
+		$LAWSSharedKey,
+
+		[Parameter(Mandatory = $false, ParameterSetName = "Default", HelpMessage = "Orgnanization name for which scan will be performed.")]
+		[Alias("oz")]
+		[string]
+		$OrganizationName,
+
+		[Parameter(Mandatory = $false, ParameterSetName = "Default", HelpMessage = "PAT token secure string for organization to be scanned.")]
+		[Alias("pat")]
+		[System.Security.SecureString]
+		$PATToken,
+
+		[Parameter(Mandatory = $false, ParameterSetName = "Default", HelpMessage = "Project names to be scanned within the organization. If not provided then all projects will be scanned.")]
+		[Alias("pns")]
+		[string]
+		$ProjectNames,
+		
+		[Parameter(Mandatory = $false, ParameterSetName = "Default", HelpMessage = "Use extended command to narrow down the scans.")]
+		[Alias("ex")]
+		[string]
+		$ExtendedCommand
+
+    )
+	Begin
+	{
+		[CommandHelper]::BeginCommand($PSCmdlet.MyInvocation);
+		[ListenerHelper]::RegisterListeners();
+	}
+	Process
+	{
+		try 
+		{
+			if ([string]::IsNullOrEmpty($PATToken))
+			{
+				$resolver = [Resolver]::new($SubscriptionId)
+				$caAccount = [CAAutomation]::new($SubscriptionId,$OrganizationName, $null, $ResourceGroupName, $LAWSId,	$LAWSSharedKey, $ProjectNames, $ExtendedCommand, $PSCmdlet.MyInvocation);
+			}
+			else
+			{
+				$resolver = [Resolver]::new($SubscriptionId,$PATToken)
+				$caAccount = [CAAutomation]::new($SubscriptionId,$OrganizationName, $PATToken, $ResourceGroupName, $LAWSId,	$LAWSSharedKey, $ProjectNames, $ExtendedCommand, $PSCmdlet.MyInvocation);
+			}
+            
+			return $caAccount.InvokeFunction($caAccount.UpdateAzSKContinuousAssurance);
 		}
 		catch 
 		{
