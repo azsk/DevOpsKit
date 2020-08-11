@@ -134,7 +134,19 @@ class WriteCAStatus: ListenerBase
 				if ($currentInstance.InvocationContext.BoundParameters["UsePartialCommits"] -or ($baselineControlsDetails.SupportedSources -contains $scanSource))
 				{
 					$partialScanMngr.RemovePartialScanData();   
-				}
+                }
+                if($currentInstance.InvocationContext.BoundParameters["UsePartialCommits"] -and $scanSource -eq "CA" )
+                {
+                    #trim attestation file for attestation entries for deleted resource
+                    [ControlStateExtension] $ControlStateExt = [ControlStateExtension]::new($Event.SourceArgs[0].SubscriptionContext, $currentInstance.InvocationContext);
+                    $ControlStateExt.UniqueRunId = $currentInstance.RunIdentifier;
+		            $ControlStateExt.Initialize($false);
+                    $trimAttestationEvents = $ControlStateExt.TrimAttestationFile();
+                    #Push events to AI telemetry
+                    if($trimAttestationEvents.Count -gt 0 ){
+                        [AIOrgTelemetryHelper]::TrackEvents($trimAttestationEvents);
+                    }					
+                }
             }
             catch 
             {
