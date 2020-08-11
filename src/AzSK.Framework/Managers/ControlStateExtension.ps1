@@ -28,7 +28,7 @@ class ControlStateExtension
 		# Azure occasionally sends resource provider name in the resource id with different char casing  
 		# This causes HashId for the resource to change and existing attestation is not respected in such a case
 		# Following feature flag enables fetching attestation by resource id if the HashId is not found  
-		if( ([FeatureFlightingManager]::GetFeatureStatus("GetControlStateByResourceId","*"))) 
+		if([FeatureFlightingManager]::GetFeatureStatus("GetControlStateByResourceId",$($this.SubscriptionContext.SubscriptionId))) 
 		{
 			$this.GetControlStateByResourceId = $true;
 		}
