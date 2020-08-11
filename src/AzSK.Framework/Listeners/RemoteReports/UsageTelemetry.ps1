@@ -88,7 +88,7 @@ class UsageTelemetry: ListenerBase {
 				[UsageTelemetry]::TrackCommandUsageEvent($currentInstance, "Command Started", $Properties, @{});
 			}
 			catch{
-				#No need to break execution
+				#No need to break execution, If any occurs while sending anonymous telemetry
 			}
         });
 
@@ -102,7 +102,7 @@ class UsageTelemetry: ListenerBase {
 				[UsageTelemetry]::TrackCommandUsageEvent($currentInstance, "Command Started", $Properties, @{});
 			}
 			catch{
-				#No need to break execution
+				#No need to break execution, If any occurs while sending anonymous telemetry
 			}
         });
 
@@ -116,7 +116,7 @@ class UsageTelemetry: ListenerBase {
 				[UsageTelemetry]::TrackCommandUsageEvent($currentInstance, "Command Completed", $Properties, @{});
 			}
 			catch{
-				#No need to break execution
+				#No need to break execution, If any occurs while sending anonymous telemetry
 			}
         });
 
@@ -130,7 +130,7 @@ class UsageTelemetry: ListenerBase {
 				[UsageTelemetry]::TrackCommandUsageEvent($currentInstance, "Command Completed", $Properties, @{});
 			}
 			catch{
-				#No need to break execution
+				#No need to break execution, If any occurs while sending anonymous telemetry
 			}
         });
 
@@ -689,31 +689,20 @@ class UsageTelemetry: ListenerBase {
             $event = [Microsoft.ApplicationInsights.DataContracts.EventTelemetry]::new()
             $event.Name = $Name
             $Properties.Keys | ForEach-Object {
-                try {
-                    $event.Properties[$_] = $Properties[$_].ToString();
-                }
-                catch
-				{
-					# Eat the current exception which typically happens when the property already exist in the object and try to add the same property again
-					# No need to break execution
+				if(-not $event.Properties.ContainsKey($_)){
+					$event.Properties[$_] = $Properties[$_].ToString();
 				}
             }
             $Metrics.Keys | ForEach-Object {
-                try {
-                    $event.Metrics[$_] = $Metrics[$_].ToString();
-                }
-                catch
-				{
-					# Eat the current exception which typically happens when the property already exist in the object and try to add the same property again
-					# No need to break execution
+				if(-not $event.Properties.ContainsKey($_)){
+					$event.Metrics[$_] = $Metrics[$_].ToString();
 				}
 			}
 			
             $currentInstance.TelemetryClient.TrackEvent($event);
         }
-        catch{
-				# Eat the current exception which typically happens when network or other API issue while sending telemetry events 
-				# No need to break execution
+        catch{ 
+				# No need to break execution, if any occurs while sending telemetry
 		}
     }
 
