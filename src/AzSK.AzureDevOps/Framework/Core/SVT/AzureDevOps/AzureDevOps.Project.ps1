@@ -120,11 +120,11 @@ class Project: ADOSVTBase
 
             if($prjLevelScope -eq $true )
             {
-                $controlResult.AddMessage([VerificationResult]::Passed, "Job authorization scope is limited to current project.");
+                $controlResult.AddMessage([VerificationResult]::Passed, "Job authorization scope is limited to current project for non-release pipelines.");
             }
             else
             {
-                $controlResult.AddMessage([VerificationResult]::Failed, "Job authorization scope is set to project collection.");
+                $controlResult.AddMessage([VerificationResult]::Failed, "Job authorization scope is set to project collection for non-release pipelines.");
             }     
             
             if($orgLevelScope -eq $true )
@@ -139,6 +139,38 @@ class Project: ADOSVTBase
         else
         {
             $controlResult.AddMessage([VerificationResult]::Error, "There was an error accessing the project pipeline settings.");
+        }       
+        return $controlResult
+    }
+
+    hidden [ControlResult] CheckScopeToDevOpsRepo([ControlResult] $controlResult)
+    {
+        if($this.PipelineSettingsObj)
+        {
+            $orgLevelScope = $this.PipelineSettingsObj.enforceReferencedRepoScopedToken.orgEnabled;
+            $prjLevelScope = $this.PipelineSettingsObj.enforceReferencedRepoScopedToken.enabled;
+
+            if($prjLevelScope -eq $true )
+            {
+                $controlResult.AddMessage([VerificationResult]::Passed, "Job authorization scope is limited to referenced azure devops repositories.");
+            }
+            else
+            {
+                $controlResult.AddMessage([VerificationResult]::Failed, "Job authorization scope is not set to referenced azure devops repositories.");
+            }     
+            
+            if($orgLevelScope -eq $true )
+            {
+                $controlResult.AddMessage("This setting is enabled (limited to azure devops repositories) at organization level.");
+            }
+            else
+            {
+                $controlResult.AddMessage("This setting is disabled (set to project collection) at organization level.");
+            }     
+        }
+        else
+        {
+            $controlResult.AddMessage([VerificationResult]::Error, "There was an error accessing the project settings.");
         }       
         return $controlResult
     }

@@ -12,7 +12,7 @@
           "AzureDevOps_Organization_AuthZ_Review_Extension_Managers",
           "AzureDevOps_Organization_AuthZ_Review_Project_Collection_Service_Accounts",
           "AzureDevOps_Organization_SI_Review_Auto_Injected_Extensions",
-          "AzureDevOps_Organization_AuthZ_Limit_Job_Authorization_Scope_To_Current_Project",
+          "AzureDevOps_Organization_AuthZ_Limit_Job_Authorization_Scope_To_Current_Project_Non_Release_Pipeline",
           "AzureDevOps_Organization_DP_Dont_Allow_Public_Projects",
           "AzureDevOps_Organization_AuthZ_Min_Admin_Count"
         ]
@@ -21,7 +21,7 @@
         "ResourceType": "Project",
         "ControlIds": [
           "AzureDevOps_Project_AuthZ_Set_Visibility_Private_Or_Enterprise",
-          "AzureDevOps_Project_AuthZ_Limit_Job_Scope_To_Current_Project",
+          "AzureDevOps_Project_AuthZ_Limit_Job_Scope_To_Current_Project_Non_Release_Pipeline",
           "AzureDevOps_Project_AuthZ_Min_Admin_Count"
         ]
       },
@@ -29,7 +29,7 @@
         "ResourceType": "ServiceConnection",
         "ControlIds": [
           "AzureDevOps_ServiceConnection_AuthZ_Dont_Use_Classic_Connections",
-          "AzureDevOps_ServiceConnection_AuthZ_Disable_InheritPermissions",
+          "AzureDevOps_ServiceConnection_AuthZ_Disable_Inherited_Permissions",
           "AzureDevOps_ServiceConnection_AuthZ_Dont_Grant_All_Pipelines_Access",
           "AzureDevOps_ServiceConnection_AuthZ_Dont_Allow_Global_Groups"
         ]
@@ -157,13 +157,19 @@
     ]
   },
   "Organization": {
-    "InActiveUserActivityLogsPeriodInDays": 365,
+    "InActiveUserActivityLogsPeriodInDays": 90,
+    "TopInActiveUserCount": 500,
     "WhitelistedExtensionPublishers": [
       "Microsoft",
       "Microsoft DevLabs"
     ],
     "MaxPCAMembersPermissible": 5,
-    "MinPCAMembersPermissible": 2
+    "MinPCAMembersPermissible": 2,
+    "GroupsToCheckForSCAltMembers": [
+      "Project Collection Administrators",
+      "Project Collection Service Accounts",
+      "Project Administrators"
+    ]
   },
   "Project": {
     "MaxPAMembersPermissible": 5,

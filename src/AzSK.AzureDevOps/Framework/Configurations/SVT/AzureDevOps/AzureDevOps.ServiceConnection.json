@@ -23,11 +23,11 @@
     },
     {
       "ControlID": "AzureDevOps_ServiceConnection_AuthZ_RG_Level",
-      "Description": "Service Connection should not be provided access at subscription level",
+      "Description": "Service Connection should not be provided access at subscription level.",
       "Id": "ServiceConnection120",
       "ControlSeverity": "High",
       "Automated": "No",
-      "MethodName": "",
+      "MethodName": "CheckServiceConnectionAccess",
       "Rationale": "Just like AD-based service accounts, SPNs have a single credential and most scenarios that use them cannot support multi-factor authentication. As a result, adding SPNs to a subscription in 'Owners' or 'Contributors' roles is risky.",
       "Recommendation": "Make sure you add SPN at the specific permission scope and role required for your scenario. For example, sometimes 'Contributor' access at 'Resource Group' scope might work. Exact permission will vary based on your use case. If you want to remove the SPN, run command Remove-AzRoleAssignment -ObjectId '{objectId}' -Scope '{scope}' -RoleDefinitionName '{role definition name}'. Run 'Get-Help Remove-AzRoleAssignment -full' for more help.",
       "Tags": [
@@ -90,7 +90,7 @@
       "Enabled": true
     },
     {
-      "ControlID": "AzureDevOps_ServiceConnection_AuthZ_Disable_InheritPermissions",
+      "ControlID": "AzureDevOps_ServiceConnection_AuthZ_Disable_Inherited_Permissions",
       "Description": "Do not allow inherited permissions on service connections",
       "Id": "ServiceConnection160",
       "ControlSeverity": "High",
@@ -177,6 +177,60 @@
         "AuthZ"
       ],
       "Enabled": true
+    },
+    {
+      "ControlID": "AzureDevOps_ServiceConnection_SI_Review_Inactive_Connection",
+      "Description": "Inactive service connection must be removed if no more required.",
+      "Id": "ServiceConnection210",
+      "ControlSeverity": "High",
+      "Automated": "Yes",
+      "MethodName": "CheckInActiveConnection",
+      "Rationale": "",
+      "Recommendation": "To remove inactive service connection, follow the steps given here: 1.Navigate to the service connection settings. 2. Select a service connection. 3. Select three dots (present at right top). 4. Click on Delete.",
+      "Tags": [
+        "SDL",
+        "Best Practice",
+        "Automated",
+        "SI"
+      ],
+      "Enabled": true
+    },
+    {
+      "ControlID": "AzureDevOps_ServiceConnection_SI_Review_Cross_Project_Connection",
+      "Description": "Do not make service connections accessible to multiple project.",
+      "Id": "ServiceConnection220",
+      "ControlSeverity": "High",
+      "Automated": "Yes",
+      "MethodName": "CheckCrossProjectConnection",
+      "Rationale": "",
+      "Recommendation": "To remediate this, navigate to the service connections settings page for your project -> select your service connection from the list -> click Security -> Revoke access from the 'Project Permission'.",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Automated",
+        "AuthZ",
+        "RBAC"
+      ],
+      "Enabled": true
+    },
+    {
+      "ControlID": "AzureDevOps_ServiceConnection_SI_Review_Cross_Pipeline_Connection",
+      "Description": "Do not make service connections accessible to multiple pipelines.",
+      "Id": "ServiceConnection230",
+      "ControlSeverity": "High",
+      "Automated": "Yes",
+      "MethodName": "CheckCrossPipelineConnection",
+      "Rationale": "",
+      "Recommendation": "To remediate this, navigate to the service connections settings page for your project -> select your service connection from the list -> click Security -> Remove access from the 'Pipeline Permission'.",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Automated",
+        "AuthZ",
+        "RBAC"
+      ],
+      "Enabled": true
     }
+
   ]
 }

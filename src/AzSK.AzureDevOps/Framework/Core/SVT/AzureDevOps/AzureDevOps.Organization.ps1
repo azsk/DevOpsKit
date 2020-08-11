@@ -14,16 +14,24 @@ class Organization: ADOSVTBase
 
     GetOrgPolicyObject()
     {
-        $apiURL = "https://{0}.vsaex.visualstudio.com/_apis/Contribution/dataProviders/query?api-version=5.0-preview.1" -f $($this.SubscriptionContext.SubscriptionName);
-
-        $orgUrl = "https://{0}.visualstudio.com" -f $($this.SubscriptionContext.SubscriptionName);
-        $inputbody =  "{'contributionIds':['ms.vss-org-web.collection-admin-policy-data-provider'],'context':{'properties':{'sourcePage':{'url':'$orgUrl/_settings/policy','routeId':'ms.vss-admin-web.collection-admin-hub-route','routeValues':{'adminPivot':'policy','controller':'ContributedPage','action':'Execute'}}}}}" | ConvertFrom-Json
+        $uri ="https://{0}.visualstudio.com/_settings/organizationPolicy?__rt=fps&__ver=2" -f $($this.SubscriptionContext.SubscriptionName);
+        $response = [WebRequestHelper]::InvokeGetWebRequest($uri);
         
-        $responseObj = [WebRequestHelper]::InvokePostWebRequest($apiURL,$inputbody);
-      
-        if([Helpers]::CheckMember($responseObj,"data") -and $responseObj.data.'ms.vss-org-web.collection-admin-policy-data-provider')
+        if($response -and [Helpers]::CheckMember($response.fps.dataProviders,"data") -and $response.fps.dataProviders.data.'ms.vss-admin-web.organization-policies-data-provider')
         {
-            $this.OrgPolicyObj = $responseObj.data.'ms.vss-org-web.collection-admin-policy-data-provider'.policies
+            $this.OrgPolicyObj = $response.fps.dataProviders.data.'ms.vss-admin-web.organization-policies-data-provider'.policies
+        }
+        # Added above new api to get User policy settings, old api is not returning
+        if (!$this.OrgPolicyObj) {
+            $apiURL = "https://{0}.vsaex.visualstudio.com/_apis/Contribution/dataProviders/query?api-version=5.0-preview.1" -f $($this.SubscriptionContext.SubscriptionName);
+
+            $orgUrl = "https://{0}.visualstudio.com" -f $($this.SubscriptionContext.SubscriptionName);
+            $inputbody =  "{'contributionIds':['ms.vss-org-web.collection-admin-policy-data-provider'],'context':{'properties':{'sourcePage':{'url':'$orgUrl/_settings/policy','routeId':'ms.vss-admin-web.collection-admin-hub-route','routeValues':{'adminPivot':'policy','controller':'ContributedPage','action':'Execute'}}}}}" | ConvertFrom-Json
+            $responseObj = [WebRequestHelper]::InvokePostWebRequest($apiURL,$inputbody);
+            if([Helpers]::CheckMember($responseObj,"data") -and $responseObj.data.'ms.vss-org-web.collection-admin-policy-data-provider')
+            {
+                $this.OrgPolicyObj = $responseObj.data.'ms.vss-org-web.collection-admin-policy-data-provider'.policies
+            }
         }
     }
     
@@ -64,33 +72,98 @@ class Organization: ADOSVTBase
     {
         try
         {
-            $url= "https://vssps.dev.azure.com/{0}/_apis/graph/groups?api-version=5.1-preview.1" -f $($this.SubscriptionContext.SubscriptionName);
-            $responseObj = [WebRequestHelper]::InvokeGetWebRequest($url);
+            #api call to get PCSA descriptor which used to get PCSA members api call.
+            $url = "https://{0}.visualstudio.com/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1" -f $($this.SubscriptionContext.SubscriptionName);
+            $body = '{"contributionIds":["ms.vss-admin-web.org-admin-groups-data-provider"],"dataProviderContext":{"properties":{"sourcePage":{"url":"https://{0}.visualstudio.com/_settings/groups","routeId":"ms.vss-admin-web.collection-admin-hub-route","routeValues":{"adminPivot":"groups","controller":"ContributedPage","action":"Execute"}}}}}' 
+            $body = ($body.Replace("{0}", $this.SubscriptionContext.SubscriptionName)) | ConvertFrom-Json
+            $response = [WebRequestHelper]::InvokePostWebRequest($url,$body);    
        
             $accname = "Project Collection Service Accounts"; #Enterprise Service Accounts
-            $prcollobj = $responseObj | where {$_.displayName -eq $accname}
-            
-            if(($prcollobj | Measure-Object).Count -gt 0)
-            {
-
-                $prmemberurl = "https://{0}.visualstudio.com/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1" -f $($this.SubscriptionContext.SubscriptionName);
-                $inputbody = '{"contributionIds":["ms.vss-admin-web.org-admin-members-data-provider"],"dataProviderContext":{"properties":{"subjectDescriptor":"{0}","sourcePage":{"url":"https://{1}.visualstudio.com/_settings/groups?subjectDescriptor={0}","routeId":"ms.vss-admin-web.collection-admin-hub-route","routeValues":{"adminPivot":"groups","controller":"ContributedPage","action":"Execute"}}}}}'
-                $inputbody = $inputbody.Replace("{0}",$prcollobj.descriptor)
-                $inputbody = $inputbody.Replace("{1}",$this.SubscriptionContext.SubscriptionName) | ConvertFrom-Json
+            if ($response -and [Helpers]::CheckMember($response[0],"dataProviders") -and $response[0].dataProviders."ms.vss-admin-web.org-admin-groups-data-provider") {
                 
-                $responsePrCollObj = [WebRequestHelper]::InvokePostWebRequest($prmemberurl,$inputbody);
-                $responsePrCollData = $responsePrCollObj.dataProviders.'ms.vss-admin-web.org-admin-members-data-provider'.identities
-            
-                if(($responsePrCollData | Measure-Object).Count -gt 0){
-                    $responsePrCollData = $responsePrCollData | Select-Object displayName,mailAddress,subjectKind
-                    $stateData = @();
-                    $stateData += $responsePrCollData
-                    $controlResult.AddMessage([VerificationResult]::Verify, "Review the members of the group Project Collection Service Accounts : ", $stateData); 
-                    $controlResult.SetStateData("Members of the Project Collection Service Accounts group : ", $stateData); 
+                $prcollobj = $response.dataProviders."ms.vss-admin-web.org-admin-groups-data-provider".identities | where {$_.displayName -eq $accname}
+                #$prcollobj = $responseObj | where {$_.displayName -eq $accname}
+                
+                if(($prcollobj | Measure-Object).Count -gt 0)
+                {
+                    #pai call to get PCSA members
+                    $prmemberurl = "https://{0}.visualstudio.com/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1" -f $($this.SubscriptionContext.SubscriptionName);
+                    $inputbody = '{"contributionIds":["ms.vss-admin-web.org-admin-members-data-provider"],"dataProviderContext":{"properties":{"subjectDescriptor":"{0}","sourcePage":{"url":"https://{1}.visualstudio.com/_settings/groups?subjectDescriptor={0}","routeId":"ms.vss-admin-web.collection-admin-hub-route","routeValues":{"adminPivot":"groups","controller":"ContributedPage","action":"Execute"}}}}}'
+                    $inputbody = $inputbody.Replace("{0}",$prcollobj.descriptor)
+                    $inputbody = $inputbody.Replace("{1}",$this.SubscriptionContext.SubscriptionName) | ConvertFrom-Json
+                    
+                    $responsePrCollObj = [WebRequestHelper]::InvokePostWebRequest($prmemberurl,$inputbody);
+                    $responsePrCollData = $responsePrCollObj.dataProviders.'ms.vss-admin-web.org-admin-members-data-provider'.identities
+                
+                    if(($responsePrCollData | Measure-Object).Count -gt 0){
+                        $responsePrCollData = $responsePrCollData | Select-Object displayName,mailAddress,subjectKind
+                        $stateData = @();
+                        $stateData += $responsePrCollData
+                        $controlResult.AddMessage([VerificationResult]::Verify, "Review the members of the group Project Collection Service Accounts : ", $stateData); 
+                        $controlResult.SetStateData("Members of the Project Collection Service Accounts group : ", $stateData); 
+                    }
+                    else
+                    { #count is 0 then there is no member in the prj coll ser acc group
+                        $controlResult.AddMessage([VerificationResult]::Passed, "Project Collection Service Accounts group does not have any member.");
+                    }
                 }
                 else
-                { #count is 0 then there is no member in the prj coll ser acc group
-                    $controlResult.AddMessage([VerificationResult]::Passed, "Project Collection Service Accounts group does not have any member.");
+                {
+                    $controlResult.AddMessage([VerificationResult]::Error, "Project Collection Service Accounts group could not be fetched.");
+                }
+            }
+            else
+            {
+                $controlResult.AddMessage([VerificationResult]::Error, "Project Collection Service Accounts group could not be fetched.");
+            }
+        }
+        catch
+        {
+            $controlResult.AddMessage([VerificationResult]::Error, "Could not fetch the list of groups in the organization.");
+        }
+       
+        return $controlResult
+    }
+
+    hidden [ControlResult] CheckACALTForPCSAMembers([ControlResult] $controlResult)
+    {
+        try
+        {
+            #api call to get descriptor which used to get grops members in other api call.
+            $url = "https://{0}.visualstudio.com/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1" -f $($this.SubscriptionContext.SubscriptionName);
+            $body = '{"contributionIds":["ms.vss-admin-web.org-admin-groups-data-provider"],"dataProviderContext":{"properties":{"sourcePage":{"url":"https://{0}.visualstudio.com/_settings/groups","routeId":"ms.vss-admin-web.collection-admin-hub-route","routeValues":{"adminPivot":"groups","controller":"ContributedPage","action":"Execute"}}}}}' 
+            $body = ($body.Replace("{0}", $this.SubscriptionContext.SubscriptionName)) | ConvertFrom-Json
+            $response = [WebRequestHelper]::InvokePostWebRequest($url,$body);    
+            
+            
+            $accname = $this.ControlSettings.Organization.GroupsToCheckForSCAltMembers;
+            if ($response -and [Helpers]::CheckMember($response[0],"dataProviders") -and $response[0].dataProviders."ms.vss-admin-web.org-admin-groups-data-provider") 
+            {
+                $prcollobj = $response.dataProviders."ms.vss-admin-web.org-admin-groups-data-provider".identities | where { $_.displayName -in $accname }
+                
+                if(($prcollobj | Measure-Object).Count -gt 0)
+                {
+                    [AdministratorHelper]::AllPCAMembers = @();
+                    [AdministratorHelper]::FindPCAMembers($prcollobj.descriptor,$this.SubscriptionContext.SubscriptionName)
+                    $allPCSAMembers = [AdministratorHelper]::AllPCAMembers
+                    if(($allPCSAMembers | Measure-Object).Count -gt 0)
+                    {
+                        $nonSCMembers = $allPCSAMembers | Where-Object { $_.mailAddress -notmatch "(sc|SC)-\w*@\w*.com|COM" }
+                        $result = ([regex]::matches($allPCSAMembers.mailAddress, "(sc|SC)-\w*@\w*.com|COM") | % {$_})
+                        $nonSCMembers = $nonSCMembers | Select-Object displayName,mailAddress,subjectKind
+                        $stateData = @();
+                        $stateData += $nonSCMembers
+                        $controlResult.AddMessage([VerificationResult]::Verify, "Review the members of the group Project Collection Service Accounts : ", $stateData); 
+                        $controlResult.SetStateData("Members of the Project Collection Service Accounts group : ", $stateData); 
+                    }
+                    else
+                    { #count is 0 then there is no member in the prj coll ser acc group
+                        $controlResult.AddMessage([VerificationResult]::Passed, "Project Collection Service Accounts group does not have any member.");
+                    }
+                }
+                else
+                {
+                    $controlResult.AddMessage([VerificationResult]::Error, "Project Collection Service Accounts group could not be fetched.");
                 }
             }
             else
@@ -387,7 +460,8 @@ class Organization: ADOSVTBase
     hidden [ControlResult] CheckInActiveUsers([ControlResult] $controlResult)
     {
 
-        $apiURL = "https://{0}.vsaex.visualstudio.com/_apis/UserEntitlements?top=50&filter=&sortOption=lastAccessDate+ascending" -f $($this.SubscriptionContext.SubscriptionName);
+        $topInActiveUsers = $this.ControlSettings.Organization.TopInActiveUserCount 
+        $apiURL = "https://{0}.vsaex.visualstudio.com/_apis/UserEntitlements?top={1}&filter=&sortOption=lastAccessDate+ascending" -f $($this.SubscriptionContext.SubscriptionName), $topInActiveUsers;
         $responseObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
 
         if($responseObj.Count -gt 0)
@@ -401,14 +475,19 @@ class Organization: ADOSVTBase
             }
             if(($inactiveUsers | Measure-Object).Count -gt 0)
             {
-                if($inactiveUsers.Count -gt 50)
+                if($inactiveUsers.Count -gt $topInActiveUsers)
                 {
-                    $controlResult.AddMessage("Displaying top 50 inactive users")
+                    $controlResult.AddMessage("Displaying top $($topInActiveUsers) inactive users")
                 }
-                $inactiveUsersNames = ($inactiveUsers | Select-Object -Property @{Name="Name"; Expression = {$_.User.displayName}},@{Name="mailAddress"; Expression = {$_.User.mailAddress}})
+                #inactive user with days from how many days user is inactive, if user account created and was never active, in this case lastaccessdate is default 01-01-0001
+                $inactiveUsersWithDays = ($inactiveUsers | Select-Object -Property @{Name="Name"; Expression = {$_.User.displayName}},@{Name="mailAddress"; Expression = {$_.User.mailAddress}},@{Name="InactiveFromDays"; Expression = { if (((Get-Date) -[datetime]::Parse($_.lastAccessedDate)).Days -gt 10000){return "User was never active"} else {return ((Get-Date) -[datetime]::Parse($_.lastAccessedDate)).Days} }})
+            
+                #set data for attestation
+                $inactiveUsers = ($inactiveUsers | Select-Object -Property @{Name="Name"; Expression = {$_.User.displayName}},@{Name="mailAddress"; Expression = {$_.User.mailAddress}})
+                
                 $controlResult.AddMessage([VerificationResult]::Failed,
-                                        "Review inactive users present in the organization",$inactiveUsersNames);
-                $controlResult.SetStateData("Inactive users list: ", $inactiveUsersNames);
+                                        "Review inactive users present in the organization",$inactiveUsersWithDays);
+                $controlResult.SetStateData("Inactive users list: ", $inactiveUsers);
             }
             else {
                 $controlResult.AddMessage([VerificationResult]::Passed,
@@ -654,15 +733,106 @@ class Organization: ADOSVTBase
             
             if($orgLevelScope -eq $true )
             {
-                $controlResult.AddMessage([VerificationResult]::Passed, "Job authorization scope is limited to current project at organization level.");
+                $controlResult.AddMessage([VerificationResult]::Passed, "Job authorization scope is limited to current project for non-release pipeline at organization level.");
             }
             else{
-                $controlResult.AddMessage([VerificationResult]::Failed, "Job authorization scope is set to project collection at organization level.");
+                $controlResult.AddMessage([VerificationResult]::Failed, "Job authorization scope is set to project collection for non-release pipeline at organization level.");
             }       
        }
        else{
              $controlResult.AddMessage([VerificationResult]::Error, "Could not fetch the organization pipeline settings.");
        }       
+        return $controlResult
+    }
+
+    hidden [ControlResult] CheckJobScopeToADORepos([ControlResult] $controlResult)
+    {
+       if($this.PipelineSettingsObj)
+       {
+            $orgLevelScope = $this.PipelineSettingsObj.enforceReferencedRepoScopedToken
+            
+            if($orgLevelScope -eq $true )
+            {
+                $controlResult.AddMessage([VerificationResult]::Passed, "Job authorization scope is limited to referenced Azure DevOps repositories at organization level.");
+            }
+            else{
+                $controlResult.AddMessage([VerificationResult]::Failed, "Job authorization scope is set to referenced Azure DevOps repositories at organization level.");
+            }       
+       }
+       else{
+             $controlResult.AddMessage([VerificationResult]::Error, "Could not fetch the organization settings.");
+       }       
+        return $controlResult
+    }
+
+    hidden [ControlResult] CheckBuiltInTask([ControlResult] $controlResult)
+    {
+       if($this.PipelineSettingsObj)
+       {
+            $orgLevelScope = $this.PipelineSettingsObj.disableInBoxTasksVar
+            
+            if($orgLevelScope -eq $true )
+            {
+                $controlResult.AddMessage([VerificationResult]::Passed, "Built-in task is disabled at organization level.");
+            }
+            else{
+                $controlResult.AddMessage([VerificationResult]::Failed, "Built-in task is not disabled at organization level.");
+            }       
+       }
+       else{
+             $controlResult.AddMessage([VerificationResult]::Error, "Could not fetch the organization settings.");
+       }       
+        return $controlResult
+    }
+
+    hidden [ControlResult] CheckMarketplaceTask([ControlResult] $controlResult)
+    {
+       if($this.PipelineSettingsObj)
+       {
+            $orgLevelScope = $this.PipelineSettingsObj.disableMarketplaceTasksVar
+            
+            if($orgLevelScope -eq $true )
+            {
+                $controlResult.AddMessage([VerificationResult]::Passed, "Market place task is disabled at organization level.");
+            }
+            else{
+                $controlResult.AddMessage([VerificationResult]::Failed, "Market place task is not disabled at organization level.");
+            }       
+       }
+       else{
+             $controlResult.AddMessage([VerificationResult]::Error, "Could not fetch the organization settings.");
+       }       
+        return $controlResult
+    }
+
+    hidden [ControlResult] CheckPolicyAllowInviveUser([ControlResult] $controlResult)
+    {
+        if([Helpers]::CheckMember($this.OrgPolicyObj,"user"))
+        {
+            $userPolicyObj = $this.OrgPolicyObj.user
+            if(($userPolicyObj | Measure-Object).Count -gt 1)
+            {
+                $guestAuthObj = $userPolicyObj[1] | Where-Object {$_.Policy.Name -eq "Policy.AllowTeamAdminsInvitationsAccessToken"}
+            
+                if($guestAuthObj.policy.effectiveValue -eq $false )
+                {
+                    $controlResult.AddMessage([VerificationResult]::Passed,"Allow team and project administrators to invite new users is disabled in the organization.");
+                }
+                else 
+                {
+                    $controlResult.AddMessage([VerificationResult]::Failed, "Allow team and project administrators to invite new users is enabled in the organization.");
+                }
+            }
+            else 
+            {
+                #Manual control status because external guest access notion is not applicable when AAD is not configured. Instead invite GitHub user policy is available in non-AAD backed orgs.
+                $controlResult.AddMessage([VerificationResult]::Manual, "Could not fetch external guest access policy details of the organization.");    
+            }
+        }
+        else 
+        {
+            $controlResult.AddMessage([VerificationResult]::Error, "Could not fetch external guest access policy details of the organization.");
+        }
         return $controlResult
     }
     

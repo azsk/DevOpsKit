@@ -97,4 +97,70 @@ class AgentPool: ADOSVTBase
         }
         return $controlResult
     }
+
+    hidden [ControlResult] CheckInActivePool([ControlResult] $controlResult)
+    {
+        try 
+        {
+            $projectId = $this.ResourceContext.ResourceId.Split('/')[-1].Split('_')[0];
+            $agtPoolId = $this.ResourceContext.ResourceId.Split('/')[-1].Split('_')[1];    
+            $agentPoolsURL = "https://{0}.visualstudio.com/{1}/_settings/agentqueues?queueId={2}&__rt=fps&__ver=2" -f $($this.SubscriptionContext.SubscriptionName), $projectId, $agtPoolId
+            $agentPools = [WebRequestHelper]::InvokeGetWebRequest($agentPoolsURL);
+            
+            if (([Helpers]::CheckMember($agentPools, "fps.dataProviders.data") ) -and ($agentPools.fps.dataProviders.data."ms.vss-build-web.agent-jobs-data-provider")) 
+            {
+               $agentPoolJobs = $agentPools.fps.dataProviders.data."ms.vss-build-web.agent-jobs-data-provider";
+               #Agent pool qued at leat once, get last qued date and check for 180 days
+               if (($agentPoolJobs.jobs | Measure-Object).Count -gt 0) 
+               {
+                    #Get the last run dat of the agent pool
+                    $agtPoolLastRunDate = $agentPoolJobs.jobs[0].finishTime;
+                    #if last run is still running then finish time would not be there, so take start time.
+                    if (!$agtPoolLastRunDate) {
+                      $agtPoolLastRunDate = $agentPoolJobs.jobs[0].queueTime;
+                    } 
+                    
+                    if ((((Get-Date) - $agtPoolLastRunDate).Days) -gt 180)
+                    {
+                        $controlResult.AddMessage([VerificationResult]::Failed,
+                        "Agent pool is not in use from last 180 days. Verify the agent pool and remove if no longer required.");
+                    }
+                    else {
+                        $controlResult.AddMessage([VerificationResult]::Passed,"");
+                    }
+               }
+               else 
+               {
+                   #[else] Agent pool is created but nenver run, check creation date greated then 180
+                    if (([Helpers]::CheckMember($agentPools, "fps.dataProviders.data") ) -and ($agentPools.fps.dataProviders.data."ms.vss-build-web.agent-pool-data-provider")) 
+                    {
+                        $agentPoolDetails = $agentPools.fps.dataProviders.data."ms.vss-build-web.agent-pool-data-provider"
+                        
+                        if ((((Get-Date) - $agentPoolDetails.selectedAgentPool.createdOn).Days) -gt 180)
+                        {
+                            $controlResult.AddMessage([VerificationResult]::Failed,
+                            "Agent pool is not in use from last 180 days. Verify the agent pool and remove if no longer required.");
+                        }
+                        else {
+                            $controlResult.AddMessage([VerificationResult]::Verify,"Agent pool never used. Verify the agent pool and remove if not in use.");
+                        }
+                    }
+                    else {
+                        $controlResult.AddMessage([VerificationResult]::Error,
+                        "Agent pool details not found. Verify agent pool manually.");
+                    }                    
+               } 
+            }
+            else 
+            { 
+                $controlResult.AddMessage([VerificationResult]::Error,
+                "Agent pool details not found. Verify agent pool manually.");
+            }
+        }
+        catch {
+            $controlResult.AddMessage([VerificationResult]::Error,
+                                            "Agent pool details not found. Verify agent pool manually.");
+        }
+        return $controlResult
+    }
 }

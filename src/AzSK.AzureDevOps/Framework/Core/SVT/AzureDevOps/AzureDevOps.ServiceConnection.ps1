@@ -4,6 +4,7 @@ class ServiceConnection: ADOSVTBase
     hidden [PSObject] $ServiceEndpointsObj = $null;
     hidden [string] $SecurityNamespaceId;
     hidden [PSObject] $ProjectId;
+    hidden [PSObject] $ServiceConnEndPointDetail = $null;
 
     ServiceConnection([string] $subscriptionId, [SVTResource] $svtResource): Base($subscriptionId,$svtResource)
     {
@@ -28,6 +29,21 @@ class ServiceConnection: ADOSVTBase
         {
             throw [SuppressedException] "Unable to find active service connection(s) under [$($this.ResourceContext.ResourceGroupName)] project."
         }
+
+        try {
+            $apiURL = "https://{0}.visualstudio.com/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1" -f $($this.SubscriptionContext.SubscriptionName)
+            $sourcePageUrl = "https://{0}.visualstudio.com/{1}/_settings/adminservices" -f $($this.SubscriptionContext.SubscriptionName), $this.ResourceContext.ResourceGroupName;
+            $inputbody = "{'contributionIds':['ms.vss-serviceEndpoints-web.service-endpoints-details-data-provider'],'dataProviderContext':{'properties':{'serviceEndpointId':'$($this.ServiceEndpointsObj.id)','projectId':'$($this.projectId)','sourcePage':{'url':'$($sourcePageUrl)','routeId':'ms.vss-admin-web.project-admin-hub-route','routeValues':{'project':'$($this.ResourceContext.ResourceGroupName)','adminPivot':'adminservices','controller':'ContributedPage','action':'Execute'}}}}}" | ConvertFrom-Json
+    
+            $responseObj = [WebRequestHelper]::InvokePostWebRequest($apiURL,$inputbody); 
+            if([Helpers]::CheckMember($responseObj, "dataProviders") -and $responseObj.dataProviders."ms.vss-serviceEndpoints-web.service-endpoints-details-data-provider")
+            {
+                $this.ServiceConnEndPointDetail = $responseObj.dataProviders."ms.vss-serviceEndpoints-web.service-endpoints-details-data-provider"
+            }
+        }
+        catch {
+            
+        }            
     }
 
     hidden [ControlResult] CheckServiceConnectionAccess([ControlResult] $controlResult)
@@ -47,10 +63,14 @@ class ServiceConnection: ADOSVTBase
                     if([Helpers]::CheckMember($serviceEndPoint, "data.scopeLevel") -and ([Helpers]::CheckMember($serviceEndPoint.data, "creationMode") -or $serviceEndPoint.data.scopeLevel -eq "AzureMLWorkspace"  -or $serviceEndPoint.authorization.scheme -eq "PublishProfile" ))
                     {
                         #If Service connection scope is subcription, creation mode is automatic and no resource group is defined then only fail the control, else pass (scop peroperty comes, only if resource is set)
-                        if($serviceEndPoint.data.scopeLevel -eq "Subscription" -and $serviceEndPoint.data.creationMode -eq "Automatic" -and !([Helpers]::CheckMember($serviceEndPoint.authorization.parameters,"scope") ) )
+                        #Fail the control if it has access to management group (last condition)
+                        if(($serviceEndPoint.data.scopeLevel -eq "Subscription" -and $serviceEndPoint.data.creationMode -eq "Automatic" -and !([Helpers]::CheckMember($serviceEndPoint.authorization.parameters,"scope") )) -or $serviceEndPoint.data.scopeLevel -eq "ManagementGroup")
                         {
-                            $controlResult.AddMessage([VerificationResult]::Failed,
-                                                    "Service connection is configured in [$($serviceEndPoint.data.subscriptionName)] at subscription scope.");
+                            $controlFailedMsg = "Service connection is configured in [$($serviceEndPoint.data.subscriptionName)] at subscription scope."
+                            if ($serviceEndPoint.data.scopeLevel -eq "ManagementGroup") {
+                                $controlFailedMsg = "Service connection is configured in [$($serviceEndPoint.data.managementGroupName)] at management group scope."
+                            }
+                            $controlResult.AddMessage([VerificationResult]::Failed, $controlFailedMsg);
                         }
                         else{
                             $message = "Service connection is configured in [$($serviceEndPoint.data.subscriptionName)] at [{0}] scope.";
@@ -137,7 +157,7 @@ class ServiceConnection: ADOSVTBase
 
     hidden [ControlResult] CheckInactiveEndpoints([ControlResult] $controlResult)
 	{
-        $apiURL = "https://dev.azure.com/organization/project/_apis/serviceendpoint/$($this.ServiceEndpointsObj.Id)/executionhistory/?api-version=4.1-preview.1"
+        $apiURL = "https://dev.azure.com/organization/project/_apis/serviceendpoint/$($this.ServiceEndpointsObj.Id)/executionhistory?api-version=4.1-preview.1"
         $serverFileContent = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
 
         if($serverFileContent.Count -gt 0)
@@ -314,6 +334,114 @@ class ServiceConnection: ADOSVTBase
                 $controlResult.AddMessage([VerificationResult]::Failed, "Service connection $($this.ServiceEndpointsObj.name) is authenticated via $($this.ServiceEndpointsObj.authorization.scheme)");
             }
         }
+        return $controlResult;
+    }
+
+    hidden [ControlResult] CheckInActiveConnection([ControlResult] $controlResult)
+	{             
+        try {
+        if($this.ServiceConnEndPointDetail -and [Helpers]::CheckMember($this.ServiceConnEndPointDetail, "serviceEndpointExecutionHistory") ) 
+        {
+            #Get the last run dat of the servic econneciton
+            $svcLastRunDate = $this.ServiceConnEndPointDetail.serviceEndpointExecutionHistory[0].data.finishTime;
+            #if last run is still running then finish time would not be there, so take start time.
+            if (!$svcLastRunDate) {
+              $svcLastRunDate = $this.ServiceConnEndPointDetail.serviceEndpointExecutionHistory[0].data.startTime;
+            } 
+            #format date
+            $formatLastRunDate = ([datetime]::parseexact($svcLastRunDate.Split('T')[0], 'yyyy-MM-dd', $null))
+            
+            if ((((Get-Date) - $formatLastRunDate).Days) -gt 180)
+            {
+                $controlResult.AddMessage([VerificationResult]::Failed,
+                "Service connection is not in use from last 180 days. Verify the service connection and remove if no longer required.");
+            }
+            else {
+                $controlResult.AddMessage([VerificationResult]::Passed,"");
+            }  
+        }
+        else  #service conneciton is cerated and never run
+        { 
+            $controlResult.AddMessage([VerificationResult]::Verify,"Servic econneciton never run. Verify the service connection and remove if not in use.");
+        }
+        }
+        catch {
+            $controlResult.AddMessage([VerificationResult]::Error,
+                                            "Service connection details not found. Verify service connection manually.");
+        }
+        
+        return $controlResult;
+    }
+
+    hidden [ControlResult] CheckCrossProjectConnection([ControlResult] $controlResult)
+	{  
+        try {
+            if($this.ServiceConnEndPointDetail -and [Helpers]::CheckMember($this.ServiceConnEndPointDetail, "serviceEndpoint") ) 
+            {
+                #Get the project list which are accessible to the service connection. 
+                $svcProjectReferences = $this.ServiceConnEndPointDetail.serviceEndpoint.serviceEndpointProjectReferences
+                if ($svcProjectReferences -and $svcProjectReferences.Count -gt 1) {
+                    $svcConnAccessProjectList = @();
+                    $svcConnAccessProjectList = ($svcProjectReferences.projectReference | Select name) 
+                
+                    $controlResult.AddMessage([VerificationResult]::Failed,
+                    "Service connectin is shared with multiple projects: [$($svcConnAccessProjectList.name -join ", ")].");
+                }
+                else {
+                    $controlResult.AddMessage([VerificationResult]::Passed,
+                    "Service connectin is not shared with multiple project.");
+                }
+            }
+            else
+            {
+                $controlResult.AddMessage([VerificationResult]::Verify,
+                                            "Service connection details not found. Verify connection access is configured at resource group scope.");
+            }
+        }
+        catch {
+            $controlResult.AddMessage([VerificationResult]::Error,
+                                            "Service connection details not found. Verify service connection manually.");
+        }       
+        return $controlResult;
+    }
+
+    hidden [ControlResult] CheckCrossPipelineConnection([ControlResult] $controlResult)
+	{  
+        try
+           {
+               #Get pipeline access on svc conn
+               $apiURL = "https://dev.azure.com/{0}/{1}/_apis/pipelines/pipelinePermissions/endpoint/{2}?api-version=5.1-preview.1" -f $($this.SubscriptionContext.SubscriptionName),$($this.ProjectId),$($this.ServiceEndpointsObj.id) ;
+               $responseObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
+
+               #check if svc conn is set to "Grant access permission to all pipelines"
+               if([Helpers]::CheckMember($responseObj,"allPipelines")) 
+               {
+                    $controlResult.AddMessage([VerificationResult]::Failed,"Do not grant global security access to all pipeline.");        
+               }
+               elseif([Helpers]::CheckMember($responseObj[0],"pipelines") -and ($responseObj[0].pipelines | Measure-Object).Count -gt 1) #If multipe pipeline has access on svvc conn
+               {
+                    #get the pipelines ids in comma separated string to pass in api to get the pipeline name
+                    $pipelinesIds =  $responseObj[0].pipelines.id -join ","
+                    #api call to get the pipeline name
+                    $apiURL = "https://{0}.visualstudio.com/{1}/_apis/build/definitions?definitionIds={2}&api-version=5.0" -f $($this.SubscriptionContext.SubscriptionName),$($this.ProjectId), $pipelinesIds;
+                    $pipelineObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
+                    
+                    $pipelines = "";
+                    if ($pipelineObj -and ($pipelineObj | Measure-Object).Count -gt 0) {
+                        $pipelines = $pipelineObj.name -join ", "
+                    }
+
+                    $controlResult.AddMessage([VerificationResult]::Verify,"Service connection is granted access to multiple pipelines:[($pipelines)]");
+               } 
+               else{
+                    $controlResult.AddMessage([VerificationResult]::Passed, "Service connection is not granted access to multiple pipeline");
+               }
+               $responseObj = $null;
+           }
+        catch {
+            $controlResult.AddMessage([VerificationResult]::Error,"Unable to fetch service connection details. Please verify from portal that you are not granting multiple pipeline access to service connections");
+        }
+         
         return $controlResult;
     }
 
