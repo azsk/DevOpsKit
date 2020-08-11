@@ -130,16 +130,6 @@ class SVTResourceResolver: AzSKRoot
 				}
 			}
 
-			#Check if this org wants IPAddress to be treated as its own resource.
-			if([Helpers]::CheckMember($ControlSettings,"PublicIpAddress",$false) -and [Helpers]::CheckMember($ControlSettings.PublicIpAddress,"EnablePublicIpResource",$false))
-			{
-			#If not, let us remove the resource type entry from the mapping
-			$treatPublicIPasResource = $ControlSettings.PublicIpAddress.EnablePublicIpResource
-			if( -not $treatPublicIPasResource)
-			{
-				[SVTMapping]::Mapping = ([SVTMapping]::Mapping | Where-Object { $_.ResourceType -ne 'Microsoft.Network/publicIPAddresses'});
-			}
-		}
 			
 			#Fetch Resources from Azure
 			if($this.ResourceGroups.Count -eq 0 -or ($this.ResourceGroups.Count -eq 1 -and $this.ResourceGroups[0].Trim() -eq "*"))
@@ -163,6 +153,17 @@ class SVTResourceResolver: AzSKRoot
 					{
 						$resources += $resouresFound;
 					}
+				}
+			}
+
+			#Check if this org wants IPAddress to be treated as its own resource.
+			if([Helpers]::CheckMember($ControlSettings,"PublicIpAddress",$false) -and [Helpers]::CheckMember($ControlSettings.PublicIpAddress,"EnablePublicIpResource",$false))
+			{
+				#If not, let us remove the resource type entry from the mapping
+				$treatPublicIPasResource = $ControlSettings.PublicIpAddress.EnablePublicIpResource
+				if( -not $treatPublicIPasResource)
+				{
+					[SVTMapping]::Mapping = ([SVTMapping]::Mapping | Where-Object { $_.ResourceType -ne 'Microsoft.Network/publicIPAddresses'});
 				}
 			}
 			
