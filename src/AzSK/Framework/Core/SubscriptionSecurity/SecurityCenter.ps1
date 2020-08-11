@@ -209,13 +209,13 @@ class SecurityCenter: AzSKRoot
 			$securityContactsUri = $ResourceAppIdURI + "subscriptions/$($this.SubscriptionContext.SubscriptionId)/providers/$([SecurityCenterHelper]::ProviderNamespace)/$([SecurityCenterHelper]::SecurityContactsApi)/default$([SecurityCenterHelper]::NewApiVersionForSecContact)";
 			
 			try
-            {
-                $response = [WebRequestHelper]::InvokeGetWebRequest($securityContactsUri);
-            }
-            catch
-            {
+            		{
+                		$response = [WebRequestHelper]::InvokeGetWebRequest($securityContactsUri);
+            		}
+            		catch
+            		{
 				#return failure status if api throws exception.
-                return "SecurityContactsConfig: [Security contact details is either not configured or not able to fetch configuration due to access issue]"
+                		return "SecurityContactsConfig: [Security contact details is either not configured or not able to fetch configuration due to access issue]"
 			}
 			$secContactObject = $this.PolicyObject.securityContacts
 			if([Helpers]::CheckMember($response,"properties.emails") -and -not [string]::IsNullOrWhiteSpace($response.properties.emails) `
