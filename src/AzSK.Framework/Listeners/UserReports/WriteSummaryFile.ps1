@@ -298,7 +298,6 @@ class WriteSummaryFile: FileOutputBase
 						}
 					}
 					#Changes for compliance table dependency removal
-    				#removing IsControlInGrace from csv output
 					if($item.IsLocalComplianceStoreEnabled)
 					{
 						if($_.IsControlInGrace -eq $true)
