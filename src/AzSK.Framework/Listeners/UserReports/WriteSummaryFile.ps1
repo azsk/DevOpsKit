@@ -298,15 +298,17 @@ class WriteSummaryFile: FileOutputBase
 						}
 					}
 					#Changes for compliance table dependency removal
-    				#removing IsControlInGrace from csv output
-					# if($_.IsControlInGrace -eq $true)
-					# {
-					# 	$csvItem.IsControlInGrace = "Yes"
-					# }
-					# else 
-					# {
-					# 	$csvItem.IsControlInGrace = "No"
-					# }					
+					if($item.IsLocalComplianceStoreEnabled)
+					{
+						if($_.IsControlInGrace -eq $true)
+						{
+							$csvItem.IsControlInGrace = "Yes"
+						}
+						else 
+						{
+							$csvItem.IsControlInGrace = "No"
+						}
+					}					
                     $csvItems += $csvItem;
                 }                                
             }
@@ -327,7 +329,7 @@ class WriteSummaryFile: FileOutputBase
 			{
 			  $nonNullProps += "UserComments";
 			}
-            $csvItems | Select-Object -Property $nonNullProps | Export-Csv $this.FilePath -NoTypeInformation
+			 $csvItems | Select-Object -Property $nonNullProps | Export-Csv $this.FilePath -NoTypeInformation
         }
     }	
 
