@@ -84,25 +84,8 @@ class UsageTelemetry: ListenerBase {
 			try
 			{
 				$Properties = @{ "Command" = $currentInstance.invocationContext.MyCommand.Name }
-				$params = @{}
-				$invocationContext.BoundParameters.Keys | ForEach-Object {
-					$value = "MASKED"
-					$params.Add("$_", $value)
-				}
-				$Properties.Add("Params", [JsonHelper]::ConvertToJsonCustomCompressed($params))
-				[UsageTelemetry]::SetCommonProperties($currentInstance, $Properties);
-				$event = [Microsoft.ApplicationInsights.DataContracts.EventTelemetry]::new()
-				$event.Name = "Command Completed"
-				$Properties.Keys | ForEach-Object {
-					try{
-						$event.Properties.Add($_, $Properties[$_].ToString());
-					}
-					catch{
-						#Eat the current exception which typically happens when the property already exist in the object and try to add the same property again
-						#No need to break execution
-					}
-				}			
-				$currentInstance.TelemetryClient.TrackEvent($event);
+				[UsageTelemetry]::SetCommandInvocationProperties($currentInstance,$Properties);
+				[UsageTelemetry]::TrackCommandUsageEvent($currentInstance, "Command Started", $Properties, @{});
 			}
 			catch{
 				#No need to break execution
@@ -115,25 +98,8 @@ class UsageTelemetry: ListenerBase {
 			try
 			{
 				$Properties = @{ "Command" = $currentInstance.invocationContext.MyCommand.Name }
-				$params = @{}
-				$invocationContext.BoundParameters.Keys | ForEach-Object {
-					$value = "MASKED"
-					$params.Add("$_", $value)
-				}
-				$Properties.Add("Params", [JsonHelper]::ConvertToJsonCustomCompressed($params))
-				[UsageTelemetry]::SetCommonProperties($currentInstance, $Properties);
-				$event = [Microsoft.ApplicationInsights.DataContracts.EventTelemetry]::new()
-				$event.Name = "Command Started"
-				$Properties.Keys | ForEach-Object {
-					try{
-						$event.Properties.Add($_, $Properties[$_].ToString());
-					}
-					catch{
-						#Eat the current exception which typically happens when the property already exist in the object and try to add the same property again
-						#No need to break execution
-					}
-				}			
-				$currentInstance.TelemetryClient.TrackEvent($event);
+				[UsageTelemetry]::SetCommandInvocationProperties($currentInstance,$Properties);
+				[UsageTelemetry]::TrackCommandUsageEvent($currentInstance, "Command Started", $Properties, @{});
 			}
 			catch{
 				#No need to break execution
@@ -146,25 +112,8 @@ class UsageTelemetry: ListenerBase {
 			try
 			{
 				$Properties = @{ "Command" = $currentInstance.invocationContext.MyCommand.Name }
-				$params = @{}
-				$invocationContext.BoundParameters.Keys | ForEach-Object {
-					$value = "MASKED"
-					$params.Add("$_", $value)
-				}
-				$Properties.Add("Params", [JsonHelper]::ConvertToJsonCustomCompressed($params))
-				[UsageTelemetry]::SetCommonProperties($currentInstance, $Properties);
-				$event = [Microsoft.ApplicationInsights.DataContracts.EventTelemetry]::new()
-				$event.Name = "Command Completed"
-				$Properties.Keys | ForEach-Object {
-					try{
-						$event.Properties.Add($_, $Properties[$_].ToString());
-					}
-					catch{
-						#Eat the current exception which typically happens when the property already exist in the object and try to add the same property again
-						#No need to break execution
-					}
-				}			
-				$currentInstance.TelemetryClient.TrackEvent($event);
+				[UsageTelemetry]::SetCommandInvocationProperties($currentInstance,$Properties);
+				[UsageTelemetry]::TrackCommandUsageEvent($currentInstance, "Command Completed", $Properties, @{});
 			}
 			catch{
 				#No need to break execution
@@ -177,25 +126,8 @@ class UsageTelemetry: ListenerBase {
 			try
 			{
 				$Properties = @{ "Command" = $currentInstance.invocationContext.MyCommand.Name }
-				$params = @{}
-				$invocationContext.BoundParameters.Keys | ForEach-Object {
-					$value = "MASKED"
-					$params.Add("$_", $value)
-				}
-				$Properties.Add("Params", [JsonHelper]::ConvertToJsonCustomCompressed($params))
-				[UsageTelemetry]::SetCommonProperties($currentInstance, $Properties);
-				$event = [Microsoft.ApplicationInsights.DataContracts.EventTelemetry]::new()
-				$event.Name = "Command Completed"
-				$Properties.Keys | ForEach-Object {
-					try{
-						$event.Properties.Add($_, $Properties[$_].ToString());
-					}
-					catch{
-						#Eat the current exception which typically happens when the property already exist in the object and try to add the same property again
-						#No need to break execution
-					}
-				}			
-				$currentInstance.TelemetryClient.TrackEvent($event);
+				[UsageTelemetry]::SetCommandInvocationProperties($currentInstance,$Properties);
+				[UsageTelemetry]::TrackCommandUsageEvent($currentInstance, "Command Completed", $Properties, @{});
 			}
 			catch{
 				#No need to break execution
@@ -599,10 +531,15 @@ class UsageTelemetry: ListenerBase {
 		}
 	}
 
-	hidden static [void] SetCommandInvocationProperties([UsageTelemetry] $Publisher, [hashtable] $Properties)
+	hidden static [void] SetCommandInvocationProperties([UsageTelemetry] $CurrentInstance, [hashtable] $Properties)
 	{
 		try{
-			
+			$params = @{}
+			$CurrentInstance.invocationContext.BoundParameters.Keys | ForEach-Object {
+				$value = "MASKED"
+				$params.Add($_, $value)
+			}
+			$Properties.Add("Params", [JsonHelper]::ConvertToJsonCustomCompressed($params))
 		}
 		catch{
 			# Eat the current exception which typically happens when the property already exist in the object and try to add the same property again
@@ -745,6 +682,42 @@ class UsageTelemetry: ListenerBase {
 
 		return $eventObj;
 	}
+
+	hidden static [void] TrackCommandUsageEvent([UsageTelemetry] $currentInstance, [string] $Name, [hashtable] $Properties, [hashtable] $Metrics) {
+        [UsageTelemetry]::SetCommonProperties($currentInstance, $Properties);
+        try {
+            $event = [Microsoft.ApplicationInsights.DataContracts.EventTelemetry]::new()
+            $event.Name = $Name
+            $Properties.Keys | ForEach-Object {
+                try {
+                    $event.Properties[$_] = $Properties[$_].ToString();
+                }
+                catch
+				{
+                    $_
+					# Eat the current exception which typically happens when the property already exist in the object and try to add the same property again
+					# No need to break execution
+				}
+            }
+            $Metrics.Keys | ForEach-Object {
+                try {
+                    $event.Metrics[$_] = $Metrics[$_].ToString();
+                }
+                catch
+				{
+					# Eat the current exception which typically happens when the property already exist in the object and try to add the same property again
+					# No need to break execution
+				}
+			}
+			
+            $currentInstance.TelemetryClient.TrackEvent($event);
+        }
+        catch{
+				# Eat the current exception which typically happens when network or other API issue while sending telemetry events 
+				# No need to break execution
+				$exception = $_
+		}
+    }
 
 }
 

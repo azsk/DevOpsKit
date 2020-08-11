@@ -46,7 +46,7 @@ class WriteDataFile: FileOutputBase
             $currentInstance = [WriteDataFile]::GetInstance();
             try 
             {
-                if (!currentInstance.IsSecurityEvaluationJsonFileRequired()) { return; };
+                if (!$currentInstance.IsSecurityEvaluationJsonFileRequired()) { return; };
                 $currentInstance.WriteToJson($Event.SourceArgs);
                 $currentInstance.FilePath = "";
             }
