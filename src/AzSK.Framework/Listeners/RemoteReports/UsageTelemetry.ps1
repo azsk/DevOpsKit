@@ -694,7 +694,6 @@ class UsageTelemetry: ListenerBase {
                 }
                 catch
 				{
-                    $_
 					# Eat the current exception which typically happens when the property already exist in the object and try to add the same property again
 					# No need to break execution
 				}
@@ -715,7 +714,6 @@ class UsageTelemetry: ListenerBase {
         catch{
 				# Eat the current exception which typically happens when network or other API issue while sending telemetry events 
 				# No need to break execution
-				$exception = $_
 		}
     }
 
