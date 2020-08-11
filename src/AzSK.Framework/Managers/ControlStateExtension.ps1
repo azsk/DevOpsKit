@@ -556,7 +556,7 @@ class ControlStateExtension
 					
 			# Check if trim has been performed within period specified
 			$PeriodToCheckForLastTrim = [DateTime]::Now.AddDays(-$ControlSettings.AttestationTrimIntervalDays.Days)
-			$BackupFileCount = (Get-AzStorageBlob -Container $ContainerName -Context $StorageAccount.Context -Blob $this.BackupIndexerBlobPrefix | Where-Object { $_.LastModified -lt $PeriodToCheckForLastTrim} | Measure-Object).Count
+			$BackupFileCount = (Get-AzStorageBlob -Container $ContainerName -Context $StorageAccount.Context -Blob $this.BackupIndexerBlobPrefix | Where-Object { $_.LastModified -gt $PeriodToCheckForLastTrim} | Measure-Object).Count
 			if ($BackupFileCount -gt 0 )
 			{
 				$LastBackup = Get-AzStorageBlob -Container $ContainerName -Context $StorageAccount.Context -Blob $this.BackupIndexerBlobPrefix | Sort-Object -Property LastModified -Descending|Select-Object -First 1 
