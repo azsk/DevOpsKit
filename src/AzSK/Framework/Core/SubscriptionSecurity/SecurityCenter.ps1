@@ -217,7 +217,7 @@ class SecurityCenter: AzSKRoot
 				#return failure status if api throws exception.
                 		return "SecurityContactsConfig: [Security contact details is either not configured or not able to fetch configuration due to access issue]"
 			}
-			$secContactObject = $this.PolicyObject.securityContacts
+			$secContactObject = $this.PolicyObject.securityContacts #SecurityCenter Object
 			if([Helpers]::CheckMember($response,"properties.emails") -and -not [string]::IsNullOrWhiteSpace($response.properties.emails) `
 				-and [Helpers]::CheckMember($response,"properties.notificationsByRole.roles") -and -not [string]::IsNullOrWhiteSpace($response.properties.notificationsByRole.roles) `
 				-and [Helpers]::CheckMember($response,"properties.notificationsByRole.state") -and -not [string]::IsNullOrWhiteSpace($response.properties.notificationsByRole.state) `
