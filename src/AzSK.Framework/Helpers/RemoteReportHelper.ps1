@@ -7,6 +7,7 @@ class RemoteReportHelper
 	hidden static [string[]] $AllowedSubscriptionScanParamList = "SubscriptionId";
 	hidden static [int] $MaxServiceParamCount = [RemoteReportHelper]::IgnoreScanParamList.Count + [RemoteReportHelper]::AllowedServiceScanParamList.Count;
 	hidden static [int] $MaxSubscriptionParamCount = [RemoteReportHelper]::IgnoreScanParamList.Count + [RemoteReportHelper]::AllowedSubscriptionScanParamList.Count;
+	hidden static [System.Security.Cryptography.SHA384Managed] $sha384AlgForMasking = [System.Security.Cryptography.SHA384Managed]::new();
 
 	static [FeatureGroup] GetFeatureGroup([SVTEventContext[]] $SVTEventContexts)
 	{
@@ -191,8 +192,8 @@ class RemoteReportHelper
 	{
 		$settings = [ConfigurationManager]::GetAzSKConfigData();
 		$telemetryKey = $settings.ControlTelemetryKey
-		[guid]$key = [guid]::NewGuid()
-		if([guid]::TryParse($telemetryKey, [ref] $key) -and ![guid]::Empty.Equals($key))
+		[guid]$key = [guid]::Empty
+		if([guid]::TryParse($telemetryKey, [ref] $key) -and ![guid]::Empty.Equals($telemetryKey))
 		{
 			return $telemetryKey;
 		}
@@ -203,8 +204,8 @@ class RemoteReportHelper
 	{
 		$settings = [ConfigurationManager]::GetAzSKConfigData();
 		$telemetryKey = $settings.ControlTelemetryKey
-		[guid]$key = [guid]::NewGuid()
-		if([guid]::TryParse($telemetryKey, [ref] $key) -and ![guid]::Empty.Equals($key))
+		[guid]$key = [guid]::Empty
+		if([guid]::TryParse($telemetryKey, [ref] $key) -and ![guid]::Empty.Equals($telemetryKey))
 		{
 			return $settings.EnableControlTelemetry;
 		}
@@ -213,10 +214,8 @@ class RemoteReportHelper
 
 	static [string] Mask([psobject] $toMask)
 	{
-		$sha384 = [System.Security.Cryptography.SHA384Managed]::new()
 		$maskBytes = [System.Text.Encoding]::UTF8.GetBytes($toMask.ToString().ToLower())
-		$maskBytes = $sha384.ComputeHash($maskBytes)
-		$sha384.Dispose()
+		$maskBytes = ([RemoteReportHelper]::sha384AlgForMasking).ComputeHash($maskBytes)
 		$take = 16
 		$sb = [System.Text.StringBuilder]::new($take)
 		for($i = 0; $i -lt ($take/2); $i++){

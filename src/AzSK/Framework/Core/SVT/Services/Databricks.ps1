@@ -384,41 +384,40 @@ class Databricks: AzSVTBase
 
 	hidden [string] ReadAccessToken()
 	{ 
-	   $scanSource = [RemoteReportHelper]::GetScanSource();
-     if($scanSource -eq [ScanSource]::SpotCheck)
-		 { 
+		$scanSource = [RemoteReportHelper]::GetScanSource();
+		$pat = $null
+        if($scanSource -eq [ScanSource]::SpotCheck)
+		{ 
 			$wsName = $this.ResourceContext.ResourceName
-			# If variable 'adbpatsforazsk' is set in session
-			# Then skip the prompt to input PAT, and read value of PAT from variable 
-			if ($adbpatsVar = Get-Variable 'adbpatsforazsk' -Scope Global -ErrorAction 'Ignore')
-			{
-				$this.PublishCustomMessage("Reading value of PAT(personal access token) for '$($wsName)' Databricks workspace from local variable 'adbpatsforazsk'.", [MessageType]::Warning);
-				if ($adbpatsVar.Value -eq '*')
+			# If variable 'adbpatsforazsk' is set in session, read value of PAT from variable 
+			try{
+
+				if ($adbpatsVar = Get-Variable 'adbpatsforazsk' -Scope Global -ErrorAction 'Ignore')
 				{
-					return $null 
+					$this.PublishCustomMessage("Reading value of PAT(personal access token) for '$($wsName)' Databricks workspace from local variable 'adbpatsforazsk'", [MessageType]::Info);
+					if(($adbpatsVar.Value).ContainsKey($wsName))
+					{
+						$pat = ($adbpatsVar.Value)[$wsName]
+						$this.PublishCustomMessage("Successfully read value of PAT(personal access token)", [MessageType]::Update);
+					}else{
+						$pat = $null
+						$this.PublishCustomMessage("Set PAT(personal access token) for '$($wsName)' Databricks workspace in local variable 'adbpatsforazsk', for details refer: https://aka.ms/azsk/scanadbresource", [MessageType]::Warning);
+					}
+					
 				}
-				else
-				{
-					$pat = ($adbpatsVar.Value)[$wsName]
-					return $pat
+				# Else print warning to set 'adbpatsforazsk' hastable with workspace name as key and PAT as value in current pwsh session
+				else{
+					$this.PublishCustomMessage("Set PAT(personal access token) for '$($wsName)' Databricks workspace in local variable 'adbpatsforazsk', for details refer: https://aka.ms/azsk/scanadbresource", [MessageType]::Warning);
+					$pat = $null
 				}
+
 			}
-	    else{
-				$input = ""
-				$input = Read-Host "Enter PAT (personal access token) for '$($this.ResourceContext.ResourceName)' Databricks workspace"
-				if($null -ne $input)
-				{
-					$input = $input.Trim()
-				}  
-				return $input;
+			catch{
+				$this.PublishCustomMessage("Error occurred while reading PAT(personal access token) for '$($wsName)' Databricks workspace from local variable 'adbpatsforazsk', for details refer: https://aka.ms/azsk/scanadbresource", [MessageType]::Warning);
+				$pat = $null
 			}
-			
-		 }
-		 else
-		 { 
-			return $null;
-		 }
-	   
+		}
+		return $pat
 	}
 
 	hidden InitializeRequiredVariables()
@@ -427,6 +426,7 @@ class Databricks: AzSVTBase
 		$count = $this.ResourceObject.Properties.managedResourceGroupId.Split("/").Count
 		$this.ManagedResourceGroupName = $this.ResourceObject.Properties.managedResourceGroupId.Split("/")[$count-1]
 		$this.WorkSpaceBaseUrl=[system.string]::Format($this.WorkSpaceBaseUrl,$this.WorkSpaceLoction)
+		$this.IsTokenAvailable()
 		#$this.HasAdminAccess = $this.IsUserAdmin()
 	}
 
