@@ -17,6 +17,10 @@ class SecurityCenter: AzSKRoot
 	[string] $SQLASCTier = "";
 	[string] $AppSvcASCTier = "";
 	[string] $StorageASCTier = "";
+	[bool] $alertNotificationsstate = $false;
+	[bool] $alertNotificationsminimalSeverity = $false;
+	[bool] $notificationsByRolestate = $false;
+	[bool] $notificationsByRole = $false;
 
 	SecurityCenter([string] $subscriptionId,[bool]$registerASCProvider): 
         Base($subscriptionId)
@@ -221,14 +225,25 @@ class SecurityCenter: AzSKRoot
 				-and [Helpers]::CheckMember($response,"properties.alertNotifications.state") -and -not [string]::IsNullOrWhiteSpace($response.properties.alertNotifications.state))
 			
 			{
-				if(-not ((-not ([Helpers]::CheckMember($secContactObject,"properties.alertNotifications.state",$false)) -or ($response.properties.alertNotifications.state -eq $secContactObject.properties.alertNotifications.state))`
-					 		-and (-not ([Helpers]::CheckMember($secContactObject,"properties.alertNotifications.minimalSeverity",$false)) -or ($ControlSettings.SeverityForSecContactAlerts -contains $response.properties.alertNotifications.minimalSeverity))`
-							-and (-not ([Helpers]::CheckMember($secContactObject,"properties.notificationsByRole.roles",$false))`
-							-or  (-not @($secContactObject.properties.notificationsByRole.roles| Where-Object {$response.properties.notificationsByRole.roles -notcontains $_}| Select-Object -first 1).Count))`
-					 		-and (-not ([Helpers]::CheckMember($secContactObject,"properties.notificationsByRole.state",$false)) -or ($response.properties.notificationsByRole.state -eq $secContactObject.properties.notificationsByRole.state))))
+				#checking if alerts are configured as expected i.e. (state = ON and Severity = "Medium or Low")
+				if ([Helpers]::CheckMember($secContactObject,"properties.alertNotifications.state",$false) -and [Helpers]::CheckMember($secContactObject,"properties.alertNotifications.minimalSeverity",$false))
+				{
+					$this.alertNotificationsstate = $response.properties.alertNotifications.state -eq $secContactObject.properties.alertNotifications.state;
+					$this.alertNotificationsminimalSeverity = $ControlSettings.SeverityForSecContactAlerts -contains $response.properties.alertNotifications.minimalSeverity;
+				}
+
+				#checking if roles for notification are configured as expected i.e. (state = ON and MinimumRoles = "Owner, ServiceAdmin")
+				if ([Helpers]::CheckMember($secContactObject,"properties.notificationsByRole.state",$false) -and [Helpers]::CheckMember($secContactObject,"properties.notificationsByRole.roles",$false))
+				{
+					$this.notificationsByRolestate = $response.properties.notificationsByRole.state -eq $secContactObject.properties.notificationsByRole.state
+					$this.notificationsByRole = -not @($secContactObject.properties.notificationsByRole.roles|
+															Where-Object {$response.properties.notificationsByRole.roles -notcontains $_}| Select-Object -first 1).Count
+				}
+
+				if(-not ($this.alertNotificationsstate -and $this.alertNotificationsminimalSeverity -and $this.notificationsByRolestate -and $this.notificationsByRole))
 				{                   
 					return "SecurityContactsConfig: [One of the configuration(Email,alertNotifications,notificationsByRole) is not configured properly]"#or not configured properly
-				}				
+				}			
 			}
             else
             {
