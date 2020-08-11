@@ -551,6 +551,7 @@
   "PublicIpAddress": {
     "EnablePublicIpResource": false
    },
+  "SeverityForSecContactAlerts": ["Medium","Low"],
   "MaxResourceInventoryObjectsCount": 20000,
   "AlernateAccountRegularExpressionForOrg": "",
   "GenerateSecurityEvaluationJsonFile": false
