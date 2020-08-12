@@ -247,7 +247,7 @@ class SecurityCenter: AzSKRoot
 					{
 						$missingroles = $secContactObject.properties.notificationsByRole.roles|
 										Where-Object {$response.properties.notificationsByRole.roles -notcontains $_}
-						$messages += "Missing roles for alert notification:`n $($missingroles -Join ',')"
+						$messages += "Following roles are missing for alert notification:`n $($missingroles -Join ',')"
 					}
 				}
 
