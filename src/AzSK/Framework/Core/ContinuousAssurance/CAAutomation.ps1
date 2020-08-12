@@ -1857,7 +1857,7 @@ class CCAutomation: AzCommandBase
 				$resolvemsg = "To avoid CA disruption due to credential expiry, please run command '$($this.updateCommandName) -RenewCertificate'."
 				$failMsg = "CA Certificate is going to expire within next 7 days. Expiry date: [$($runAsCertificate.ExpiryTime.ToString("yyyy-MM-dd"))]. CA SPN: [$($ADapp.DisplayName)]"
 				$resultMsg = "$failmsg`r`n$resolveMsg"			
-				$resultStatus = "Failed"
+				$resultStatus = "Warning"
 			}
 			elseif(($runAsCertificate.ExpiryTime - $(get-date)).TotalDays -gt 0 -and ($runAsCertificate.ExpiryTime - $(get-date)).TotalDays -le 30)
 			{

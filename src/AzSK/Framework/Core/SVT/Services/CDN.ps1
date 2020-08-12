@@ -22,12 +22,30 @@ class CDN: AzSVTBase
 		}
 		else
 		{
+			# list of CDN endpoints which have only http enabled
+			$onlyHttpAllowedEndpointList =  @($cdnEndpoints | Where-Object { $_.IsHttpAllowed -eq $true -and  $_.IsHttpsAllowed -eq $false})
+			# list of CDN endpoints which have http enabled (irrespective of https)
 			$httpAllowedEndpointList =  $cdnEndpoints | Where-Object { $_.IsHttpAllowed -eq $true }
 
 			if(($httpAllowedEndpointList | Measure-Object).Count -eq 0)
 			{
 				$controlResult.AddMessage([VerificationResult]::Passed,
 										[MessageData]::new("All CDN endpoints in the CDN profile [" + $this.ResourceContext.ResourceName + "] are using HTTPS protocol only - ", ($cdnEndpoints | Select-Object -Property Name, HostName, OriginHostHeader, IsHttpAllowed, IsHttpsAllowed))); 
+			}elseif($null -ne $onlyHttpAllowedEndpointList -and ($onlyHttpAllowedEndpointList | Measure-Object).Count -gt 0){
+				# If only http protocol is enabled, Fail the control directly without checking for redirection rule
+				$httpEndpointObjList=@()
+				$httpAllowedEndpointList| Foreach-Object {
+					$httpEndpointObj = New-Object -TypeName PSObject
+					$httpEndpointObj | Add-Member -NotePropertyName HostName -NotePropertyValue $_.HostName
+					$httpEndpointObj | Add-Member -NotePropertyName IsHttpAllowed -NotePropertyValue $_.IsHttpAllowed
+					$httpEndpointObj | Add-Member -NotePropertyName IsHttpsAllowed -NotePropertyValue $_.IsHttpsAllowed
+					$httpEndpointObjList+=$httpEndpointObj
+				}
+
+				$controlResult.SetStateData("Http Enabled Endpoints", $httpEndpointObjList);
+				$controlResult.EnableFixControl = $true;
+				$controlResult.AddMessage([VerificationResult]::Failed,
+				[MessageData]::new("Only HTTP protocol is enabled for following CDN endpoints in the CDN profile [" + $this.ResourceContext.ResourceName + "]  ", ($onlyHttpAllowedEndpointList | Select-Object -Property Name, HostName, OriginHostHeader, IsHttpAllowed, IsHttpsAllowed))); 
 			}
 			else
 			{
