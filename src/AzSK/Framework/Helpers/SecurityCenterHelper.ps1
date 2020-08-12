@@ -13,6 +13,7 @@ class SecurityCenterHelper
 	static [string] $ApiVersion = "?api-version=2015-06-01-preview";
 	static [string] $ApiVersionNew = "?api-version=2017-08-01-preview";
 	static [string] $ApiVersionLatest = "?api-version=2019-09-01";
+	static [string] $NewApiVersionForSecContact = "?api-version=2020-01-01-preview";
 	static [PSObject] $Recommendations = $null;
 	
 

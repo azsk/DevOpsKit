@@ -224,9 +224,10 @@ class SVTBase: AzSKRoot
 				Reference = $this.SVTConfig.Reference;
 			};
 
-			SubscriptionContext   = $this.SubscriptionContext;
-			ResourceContext       = $this.ResourceContext;
-			PartialScanIdentifier = $this.PartialScanIdentifier
+            SubscriptionContext = $this.SubscriptionContext;
+            ResourceContext = $this.ResourceContext;
+			PartialScanIdentifier = $this.PartialScanIdentifier;
+			IsLocalComplianceStoreEnabled = $this.IsLocalComplianceStoreEnabled;
 			
 		};
 	}

@@ -44,7 +44,8 @@ class SVTCommandBase: AzCommandBase {
     hidden [SVTEventContext] CreateSVTEventContextObject() {
         return [SVTEventContext]@{
             SubscriptionContext = $this.SubscriptionContext;
-            PartialScanIdentifier = $this.PartialScanIdentifier
+            PartialScanIdentifier = $this.PartialScanIdentifier;
+            IsLocalComplianceStoreEnabled = $this.IsLocalComplianceStoreEnabled;
             };
     }
 

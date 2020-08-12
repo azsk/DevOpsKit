@@ -17,6 +17,10 @@ class SecurityCenter: AzSKRoot
 	[string] $SQLASCTier = "";
 	[string] $AppSvcASCTier = "";
 	[string] $StorageASCTier = "";
+	[bool] $alertNotificationsstate = $false;
+	[bool] $alertNotificationsminimalSeverity = $false;
+	[bool] $notificationsByRolestate = $false;
+	[bool] $notificationsByRole = $false;
 
 	SecurityCenter([string] $subscriptionId,[bool]$registerASCProvider): 
         Base($subscriptionId)
@@ -181,55 +185,80 @@ class SecurityCenter: AzSKRoot
 		if($null -ne $this.PolicyObject -and $null -ne $this.PolicyObject.securityContacts)
 		{	
 			$ResourceAppIdURI = [WebRequestHelper]::GetResourceManagerUrl()		
-			$securityContactsUri = $ResourceAppIdURI + "subscriptions/$($this.SubscriptionContext.SubscriptionId)/providers/$([SecurityCenterHelper]::ProviderNamespace)/$([SecurityCenterHelper]::SecurityContactsApi)/default1$([SecurityCenterHelper]::ApiVersionNew)";
+			$securityContactsUri = $ResourceAppIdURI + "subscriptions/$($this.SubscriptionContext.SubscriptionId)/providers/$([SecurityCenterHelper]::ProviderNamespace)/$([SecurityCenterHelper]::SecurityContactsApi)/default$([SecurityCenterHelper]::NewApiVersionForSecContact)";
 			$body = $this.PolicyObject.securityContacts | ConvertTo-Json -Depth 10
 			$body = $body.Replace("{0}",$this.SubscriptionContext.SubscriptionId).Replace("{1}",$this.ContactEmail).Replace("{2}",$this.ContactPhoneNumber) | ConvertFrom-Json;
-		  	[WebRequestHelper]::InvokeWebRequest([Microsoft.PowerShell.Commands.WebRequestMethod]::Put, $securityContactsUri, $body);
+			try
+			{
+				[WebRequestHelper]::InvokeWebRequest([Microsoft.PowerShell.Commands.WebRequestMethod]::Put, $securityContactsUri, $body);
+			}
+			catch
+			{
+				throw [System.ArgumentException] ("Error occurred while configuring security contact settings.");
+			}
 		}
 		return $messages;
 	}
 
 	[string] CheckSecurityContactSettings()
 	{
+		[string] $messages = @();
+		$ControlSettings = $this.LoadServerConfigFile("ControlSettings.json");
 		if($null -ne $this.PolicyObject -and $null -ne $this.PolicyObject.securityContacts)
 		{
 			$ResourceAppIdURI = [WebRequestHelper]::GetResourceManagerUrl()
-			$securityContactsUri = $ResourceAppIdURI + "subscriptions/$($this.SubscriptionContext.SubscriptionId)/providers/$([SecurityCenterHelper]::ProviderNamespace)/$([SecurityCenterHelper]::SecurityContactsApi)/default1$([SecurityCenterHelper]::ApiVersionNew)";
+			$securityContactsUri = $ResourceAppIdURI + "subscriptions/$($this.SubscriptionContext.SubscriptionId)/providers/$([SecurityCenterHelper]::ProviderNamespace)/$([SecurityCenterHelper]::SecurityContactsApi)/default$([SecurityCenterHelper]::NewApiVersionForSecContact)";
 			
 			try
-            {
-                $response = [WebRequestHelper]::InvokeGetWebRequest($securityContactsUri);
-            }
-            catch
-            {
+            		{
+                		$response = [WebRequestHelper]::InvokeGetWebRequest($securityContactsUri);
+            		}
+            		catch
+            		{
 				#return failure status if api throws exception.
-                return "SecurityContactsConfig: [Security contact details is either not configured or not able to fetch configuration due to access issue]"
+                		return "Security contact details is either not configured or not able to fetch configuration due to access issue."
 			}
-			$secContactObject = $this.PolicyObject.securityContacts
-			if([Helpers]::CheckMember($response,"properties.email") -and -not [string]::IsNullOrWhiteSpace($response.properties.email) `
-				-and [Helpers]::CheckMember($response,"properties.phone") -and -not [string]::IsNullOrWhiteSpace($response.properties.phone))				
+			$secContactObject = $this.PolicyObject.securityContacts #SecurityCenter Object
+			if([Helpers]::CheckMember($response,"properties.emails") -and -not [string]::IsNullOrWhiteSpace($response.properties.emails) `
+				-and [Helpers]::CheckMember($response,"properties.notificationsByRole.roles") -and -not [string]::IsNullOrWhiteSpace($response.properties.notificationsByRole.roles) `
+				-and [Helpers]::CheckMember($response,"properties.notificationsByRole.state") -and -not [string]::IsNullOrWhiteSpace($response.properties.notificationsByRole.state) `
+				-and [Helpers]::CheckMember($response,"properties.alertNotifications.minimalSeverity") -and -not [string]::IsNullOrWhiteSpace($response.properties.alertNotifications.minimalSeverity) `
+				-and [Helpers]::CheckMember($response,"properties.alertNotifications.state") -and -not [string]::IsNullOrWhiteSpace($response.properties.alertNotifications.state))
+			
 			{
-				$this.ContactEmail = $response.properties.email;
-				$this.ContactPhoneNumber = $response.properties.phone;
-				if([Helpers]::CheckMember($response, "properties.alertNotifications"))
+				#checking if alerts are configured as expected i.e. (state = ON and Severity = "Medium or Low")
+				if ([Helpers]::CheckMember($secContactObject,"properties.alertNotifications.state",$false) -and [Helpers]::CheckMember($secContactObject,"properties.alertNotifications.minimalSeverity",$false))
 				{
-					$this.AlertNotifStatus = $response.properties.alertNotifications;
+					$this.alertNotificationsstate = $response.properties.alertNotifications.state -eq $secContactObject.properties.alertNotifications.state;
+					$this.alertNotificationsminimalSeverity = $ControlSettings.SeverityForSecContactAlerts -contains $response.properties.alertNotifications.minimalSeverity;
+					if ( -not $this.alertNotificationsminimalSeverity)
+					{
+						$messages += "Notification for alerts should be enabled with " + $secContactObject.properties.alertNotifications.minimalSeverity + " severity.`n"
+					}
 				}
-				if([Helpers]::CheckMember($response, "properties.alertsToAdmins"))
+
+				#checking if roles for notification are configured as expected i.e. (state = ON and MinimumRoles = "Owner, ServiceAdmin")
+				if ([Helpers]::CheckMember($secContactObject,"properties.notificationsByRole.state",$false) -and [Helpers]::CheckMember($secContactObject,"properties.notificationsByRole.roles",$false))
 				{
-					$this.AlertAdminStatus = $response.properties.alertsToAdmins;
+					$this.notificationsByRolestate = $response.properties.notificationsByRole.state -eq $secContactObject.properties.notificationsByRole.state
+					$this.notificationsByRole = -not @($secContactObject.properties.notificationsByRole.roles|
+															Where-Object {$response.properties.notificationsByRole.roles -notcontains $_}| Select-Object -first 1).Count
+					if ( -not $this.notificationsByRole)
+					{
+						$missingroles = $secContactObject.properties.notificationsByRole.roles|
+										Where-Object {$response.properties.notificationsByRole.roles -notcontains $_}
+						$messages += "Following roles are missing for alert notification:`n $($missingroles -Join ',')"
+					}
 				}
-				if(-not ((-not ([Helpers]::CheckMember($secContactObject,"properties.email",$false)) -or ([Helpers]::CheckMember($response,"properties.email") -and -not [string]::IsNullOrWhiteSpace($response.properties.email)))`
-					 -and (-not ([Helpers]::CheckMember($secContactObject,"properties.phone",$false)) -or ([Helpers]::CheckMember($response,"properties.phone") -and -not [string]::IsNullOrWhiteSpace($response.properties.phone)))`
-					 -and (-not ([Helpers]::CheckMember($secContactObject,"properties.alertNotifications",$false)) -or ([Helpers]::CheckMember($response,"properties.alertNotifications") -and ($response.properties.alertNotifications -eq $secContactObject.properties.alertNotifications)))`
-					 -and (-not ([Helpers]::CheckMember($secContactObject,"properties.alertsToAdmins",$false)) -or ([Helpers]::CheckMember($response,"properties.alertsToAdmins") -and ($response.properties.alertsToAdmins -eq $secContactObject.properties.alertsToAdmins)))))
+
+				if(-not ($this.alertNotificationsstate -and $this.alertNotificationsminimalSeverity -and $this.notificationsByRolestate -and $this.notificationsByRole))
 				{                   
-					return "SecurityContactsConfig: [Failed. One of the configuration(Email,Phone,SendEmailAlertNotification,SendEmailAlertsToAdmin) is missing]"
-				}				
+					return $messages
+				}			
 			}
             else
             {
-                return "SecurityContactsConfig: [Not able to find either email or phone number contact details]"
+                return "One of the configurations (Email,alertNotifications,notificationsByRole) is missing."
             }
 		}
 		return $null;
