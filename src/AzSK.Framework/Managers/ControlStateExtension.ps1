@@ -571,10 +571,10 @@ class ControlStateExtension
 					
 			# Check if trim has been performed within period specified
 			$PeriodToCheckForLastTrim = [DateTime]::Now.AddDays(-$ControlSettings.AttestationTrimIntervalDays.Days)
-			$BackupFileCount = (Get-AzStorageBlob -Container $ContainerName -Context $StorageAccount.Context -Blob $this.BackupIndexerBlobPrefix | Where-Object { $_.LastModified -gt $PeriodToCheckForLastTrim} | Measure-Object).Count
-			if ($BackupFileCount -gt 0 )
+			$BackUpFiles = Get-AzStorageBlob -Container $ContainerName -Context $StorageAccount.Context -Blob $this.BackupIndexerBlobPrefix | Where-Object { $_.LastModified -gt $PeriodToCheckForLastTrim} 
+			if ($null -ne $BackupFiles)
 			{
-				$LastBackup = Get-AzStorageBlob -Container $ContainerName -Context $StorageAccount.Context -Blob $this.BackupIndexerBlobPrefix | Sort-Object -Property LastModified -Descending|Select-Object -First 1 
+				$LastBackup = $BackUpFiles | Sort-Object -Property LastModified -Descending|Select-Object -First 1 
 				if($LastBackup.LastModified -gt $PeriodToCheckForLastTrim)
 				{
 					$TrimPeriodExceeded = $false
@@ -622,21 +622,24 @@ class ControlStateExtension
 				
 				$deletedResourcesWithAttestation = @();
 				$filteredIndexerObject= @();
-				$deletedResourceCount = 0;
+				$deletedResourcesWithAttestationCount = 0;
 
-				$deletedResourcesWithAttestation = $resourcesWithAttestation| Where-Object{$AzSKScannableResourceIds -notcontains $_ -and $_ -match 'resourceGroups'} # matching with 'resourceGroups' to avoid deleting attestattion for subscription level controls
+				# matching with 'resourceGroups' to avoid deleting attestattion for subscription level controls
+				$deletedResourcesWithAttestation = @($resourcesWithAttestation| Where-Object{$AzSKScannableResourceIds -notcontains $_ -and $_ -match 'resourceGroups'}) 
 				# if any deleted resources found , having attestation for those
 				if($null -ne $deletedResourcesWithAttestation)
 				{		
-					$deletedResourceCount = $deletedResourcesWithAttestation.Count;
-					$filteredIndexerObject = $this.ControlStateIndexer  | Where-Object {$deletedResourcesWithAttestation -notcontains $_.ResourceId}
+					$deletedResourcesWithAttestationCount = $deletedResourcesWithAttestation.Count;
+
+					#filteredIndexerObject to have entries for resources that are existing in subscription and have attestation
+					$filteredIndexerObject =@($this.ControlStateIndexer  | Where-Object {$deletedResourcesWithAttestation -notcontains $_.ResourceId})
 					# Rewrite trimmed $this.ControlStateIndexer values to Resource.index.json file
 					[JsonHelper]::ConvertToJsonCustom($filteredIndexerObject) | Out-File $IndexFileLocalTempPath -Force
 					# Upload trimmed file to storage
 					[AzHelper]::UploadStorageBlobContent($IndexFileLocalTempPath, $this.IndexerBlobName , $ContainerName, $StorageAccount.Context)
 				}
 				$event = "" | Select-Object Name, Properties, Metrics
-				$properties = @{"SubscriptionId"= $this.SubscriptionContext.SubscriptionId;"UniquRunIdentifier"=$this.UniqueRunId;"NumberOfResourcesTrimmed"=$deletedResourceCount;}
+				$properties = @{"SubscriptionId"= $this.SubscriptionContext.SubscriptionId;"UniquRunIdentifier"=$this.UniqueRunId;"NumberOfResourcesTrimmed"=$deletedResourcesWithAttestationCount;}
 				$event.Name = "Trim attestation flow completed"
 				$event.Properties = $properties
 				$trimAttestationEvents.Add($event) | Out-Null

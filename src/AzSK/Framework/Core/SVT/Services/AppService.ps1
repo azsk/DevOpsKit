@@ -151,7 +151,17 @@ class AppService: AzSVTBase
 				$IsAppServiceCustomAuthAllowed = $false
 			}
 			#Checks if functions app present
-			if([Helpers]::CheckMember($this.ResourceObject, "Kind") -and ($this.ResourceObject.Kind -eq "functionapp"))
+			$isFunctionApp = $false;
+			if([Helpers]::CheckMember($this.ResourceObject, "Kind") -and [FeatureFlightingManager]::GetFeatureStatus("FunctionAppKindMatch",$($this.SubscriptionContext.SubscriptionId)) -eq $true  )
+			{
+				$isFunctionApp = $this.ResourceObject.Kind -like "*functionapp*"
+			}
+			elseif([Helpers]::CheckMember($this.ResourceObject, "Kind"))
+			{
+				$isFunctionApp = $this.ResourceObject.Kind -eq "functionapp"
+			}
+
+			if($isFunctionApp)
 			{
 				$ResourceAppIdURI = [WebRequestHelper]::GetServiceManagementUrl()
 				$accessToken = [ContextHelper]::GetAccessToken($ResourceAppIdURI)
@@ -278,19 +288,19 @@ class AppService: AzSVTBase
 						if([Helpers]::CheckMember($this.ControlSettings,"AppService.AllowedExternalRedirectURLs"))
 						{
 							$AllowedExternalRedirectURLs = $this.ControlSettings.AppService.AllowedExternalRedirectURLs
-							$IsAllowedExternalRedirectURLsConfigured = $false;
+							$IsAllowedExternalRedirectURLsConfigured = $true;
 							$ConfiguredExternalRedirectURLs = $this.AuthenticationSettings.properties.allowedExternalRedirectUrls
 				
-							ForEach($allowedurl in $AllowedExternalRedirectURLs){
-								#check if any of the configured AuthURL match Allowed ones
-								ForEach($configuredURL in $ConfiguredExternalRedirectURLs)
+							ForEach($configuredURL in $ConfiguredExternalRedirectURLs){
+								if($AllowedExternalRedirectURLs -contains $configuredURL)
 								{
-									if($allowedurl -ceq $configuredURL)
-									{
-										$IsAllowedExternalRedirectURLsConfigured= $true; 										
-									}
+									$IsAllowedExternalRedirectURLsConfigured= $true -and $IsAllowedExternalRedirectURLsConfigured; 										
 								}
-							}
+								else
+								{
+									$IsAllowedExternalRedirectURLsConfigured= $false; 
+								}
+							}							
 						}
 						#Check if any of the AllowedAuthenticationProviders is configured
 						if([Helpers]::CheckMember($this.ControlSettings,"AppService.AllowedAuthenticationProviders"))
