@@ -194,7 +194,7 @@ class SecurityCenter: AzSKRoot
 			}
 			catch
 			{
-				throw [System.ArgumentException] ("Cannot configure Security Contacts");
+				throw [System.ArgumentException] ("Error occurred while configuring security contact settings.");
 			}
 		}
 		return $messages;
@@ -202,6 +202,7 @@ class SecurityCenter: AzSKRoot
 
 	[string] CheckSecurityContactSettings()
 	{
+		[string] $messages = @();
 		$ControlSettings = $this.LoadServerConfigFile("ControlSettings.json");
 		if($null -ne $this.PolicyObject -and $null -ne $this.PolicyObject.securityContacts)
 		{
@@ -215,7 +216,7 @@ class SecurityCenter: AzSKRoot
             		catch
             		{
 				#return failure status if api throws exception.
-                		return "SecurityContactsConfig: [Security contact details is either not configured or not able to fetch configuration due to access issue]"
+                		return "Security contact details is either not configured or not able to fetch configuration due to access issue."
 			}
 			$secContactObject = $this.PolicyObject.securityContacts #SecurityCenter Object
 			if([Helpers]::CheckMember($response,"properties.emails") -and -not [string]::IsNullOrWhiteSpace($response.properties.emails) `
@@ -230,6 +231,10 @@ class SecurityCenter: AzSKRoot
 				{
 					$this.alertNotificationsstate = $response.properties.alertNotifications.state -eq $secContactObject.properties.alertNotifications.state;
 					$this.alertNotificationsminimalSeverity = $ControlSettings.SeverityForSecContactAlerts -contains $response.properties.alertNotifications.minimalSeverity;
+					if ( -not $this.alertNotificationsminimalSeverity)
+					{
+						$messages += "Notification for alerts should be enabled with " + $secContactObject.properties.alertNotifications.minimalSeverity + " severity.`n"
+					}
 				}
 
 				#checking if roles for notification are configured as expected i.e. (state = ON and MinimumRoles = "Owner, ServiceAdmin")
@@ -238,16 +243,22 @@ class SecurityCenter: AzSKRoot
 					$this.notificationsByRolestate = $response.properties.notificationsByRole.state -eq $secContactObject.properties.notificationsByRole.state
 					$this.notificationsByRole = -not @($secContactObject.properties.notificationsByRole.roles|
 															Where-Object {$response.properties.notificationsByRole.roles -notcontains $_}| Select-Object -first 1).Count
+					if ( -not $this.notificationsByRole)
+					{
+						$missingroles = $secContactObject.properties.notificationsByRole.roles|
+										Where-Object {$response.properties.notificationsByRole.roles -notcontains $_}
+						$messages += "Following roles are missing for alert notification:`n $($missingroles -Join ',')"
+					}
 				}
 
 				if(-not ($this.alertNotificationsstate -and $this.alertNotificationsminimalSeverity -and $this.notificationsByRolestate -and $this.notificationsByRole))
 				{                   
-					return "SecurityContactsConfig: [One of the configuration(Email,alertNotifications,notificationsByRole) is not configured properly]"#or not configured properly
+					return $messages
 				}			
 			}
             else
             {
-                return "SecurityContactsConfig: [One of the configurations (Email,alertNotifications,notificationsByRole) is missing]"#message
+                return "One of the configurations (Email,alertNotifications,notificationsByRole) is missing."
             }
 		}
 		return $null;
