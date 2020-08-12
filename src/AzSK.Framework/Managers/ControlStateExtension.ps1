@@ -547,7 +547,6 @@ class ControlStateExtension
 		try 
 		{
 			$TrimPeriodExceeded = $false;	
-			$IsTrimAttestationFeatureEnabled = $false;
 			$ControlSettings = [ConfigurationManager]::LoadServerConfigFile("ControlSettings.json");
 			
 			$ContainerName = [Constants]::AttestationDataContainerName;
