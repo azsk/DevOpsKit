@@ -1,4 +1,4 @@
-{
+﻿{
   "FeatureName": "CDN",
   "Reference": "aka.ms/azsktcp/cdn",
   "IsMaintenanceMode": false,
@@ -63,7 +63,7 @@
       "Automated": "Yes",
       "MethodName": "CheckCDNHttpsProtocol",
       "Rationale": "Use of HTTPS ensures server/service authentication and protects data in transit from network layer man-in-the-middle, eavesdropping, session-hijacking attacks.",
-      "Recommendation": "To enable HTTPS protocol: Go to Azure Portal --> your CDN Profile --> your CDN Endpoint --> Origin --> Select HTTPS --> Save. Else implement through PowerShell as follows: `$ce= Get-AzCdnEndpoint -EndpointName <EndpointName> -ProfileName <CDNprofile> -ResourceGroupName <RGName>; `$ce.IsHttpAllowed =`$false; `$ce.IsHttpsAllowed =`$true; Set-AzCdnEndpoint -CdnEndpoint `$ce",
+      "Recommendation": "Enable only HTTPs protocol for endpoints, to enable HTTPS protocol: Go to Azure Portal --> your CDN Profile --> your CDN Endpoint --> Origin --> Select HTTPS --> Save. Else implement through PowerShell as follows: `$ce= Get-AzCdnEndpoint -EndpointName <EndpointName> –ProfileName <CDNprofile> -ResourceGroupName <RGName>; `$ce.IsHttpAllowed =`$false; `$ce.IsHttpsAllowed =`$true; Set-AzCdnEndpoint -CdnEndpoint `$ce. Note: In the interest of user experience, enable both HTTP and HTTPS protocol along with HTTP to HTTPS redirection rule configured in rules engine for all endpoints, to enable HTTP and HTTPS protocol: Go to Azure Portal --> your CDN Profile --> your CDN Endpoint --> Origin --> Select HTTPS and HTTP --> Save. Else implement through PowerShell as follows: `$ce= Get-AzCdnEndpoint -EndpointName <EndpointName> –ProfileName <CDNprofile> -ResourceGroupName <RGName>; `$ce.IsHttpAllowed =`$true; `$ce.IsHttpsAllowed =`$true; Set-AzCdnEndpoint -CdnEndpoint `$ce and refer: https://docs.microsoft.com/en-us/azure/cdn/cdn-standard-rules-engine to configure HTTP to HTTPs redirection rule in rules engine.",
       "Tags": [
         "SDL",
         "TCP",

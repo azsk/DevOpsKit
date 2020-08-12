@@ -152,6 +152,7 @@ class SVTEventContext: AzSKRootEventArgument
 	[string] $FeatureName = ""
     [Metadata] $Metadata
 	[string] $PartialScanIdentifier;
+	[bool] $IsLocalComplianceStoreEnabled;
     [ResourceContext] $ResourceContext;
 	[ControlItem] $ControlItem;
     [ControlResult[]] $ControlResults = @();

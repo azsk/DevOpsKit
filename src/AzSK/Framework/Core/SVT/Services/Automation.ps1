@@ -117,10 +117,17 @@ class Automation: AzSVTBase
 				$this.PublishException($_);
 			}
 		}
-		if($null -ne $diaSettings -and (Get-Member -InputObject $diaSettings -Name WorkspaceId -MemberType Properties) -and $null -ne $diaSettings.WorkspaceId)
-		{
-			$controlResult.AddMessage([VerificationResult]::Passed, "Log Analytics workspace is configured with this Automation account. Log Analytics Workspace Id is given below.", $diaSettings.WorkspaceId)
-		}
+
+		$foundWS = $false
+        if($null -ne $diaSettings)
+        {
+            $diaSettings | ForEach-Object {if ( Get-Member -InputObject $_ -Name WorkSpaceId -MemberType Property) { if($_.WorkspaceId -ne $null) {$foundWS = $true}}}
+        }
+
+        if($foundWS)
+        {
+            $controlResult.AddMessage([VerificationResult]::Passed, "Log Analytics workspace is configured with this Automation account. Log Analytics Workspace Id is given below.", $diaSettings.WorkspaceId)
+        }
 		else
 		{
 			$controlResult.AddMessage([VerificationResult]::Failed, "Log Analytics workspace is not configured with this Automation account.")

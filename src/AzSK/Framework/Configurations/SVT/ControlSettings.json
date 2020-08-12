@@ -490,7 +490,12 @@
       "Low": 90
     }
   },
-
+  "AttestationTrimIntervalDays":{
+    "Days" : 30
+  },
+  "PurgeAttestationbackupAfterDays":{
+    "Days" : 90
+  },
   "SubscriptionCore": {
     "EnableV1AlertFailure": false,
     "ASCTier": ["Standard"],
@@ -551,6 +556,8 @@
   "PublicIpAddress": {
     "EnablePublicIpResource": false
    },
+  "SeverityForSecContactAlerts": ["Medium","Low"],
   "MaxResourceInventoryObjectsCount": 20000,
-  "AlernateAccountRegularExpressionForOrg": ""
+  "AlernateAccountRegularExpressionForOrg": "",
+  "GenerateSecurityEvaluationJsonFile": false
 }

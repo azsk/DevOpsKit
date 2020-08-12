@@ -1464,6 +1464,8 @@ class SubscriptionCore: AzSVTBase
 		{
 			$controlResult.AddMessage($_);
 			$controlResult.VerificationResult = [VerificationResult]::Manual
+			#Set Hasrequired access false in case of pim api failure 
+			$controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false;
 		}
 		return $controlResult;
 	}
@@ -1565,6 +1567,8 @@ class SubscriptionCore: AzSVTBase
 				{
 					$controlResult.AddMessage($_);
 					$controlResult.VerificationResult = [VerificationResult]::Manual
+					#Set Hasrequired access false in case of pim api failure
+					$controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false;
 				}
 			}
 			else{
@@ -1637,6 +1641,8 @@ class SubscriptionCore: AzSVTBase
 					if($messageSub -ne 'OK' -or $messageRG -ne 'OK' )
 					{
 						$controlResult.AddMessage("Unable to fetch PIM data, please verify manually.")
+						#Set Hasrequired access false in case of api failure while fetching PIM roles
+						$controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false;
 						$controlResult.AddMessage($message);
 						return $controlResult;
 					}
@@ -2123,12 +2129,12 @@ class SubscriptionCore: AzSVTBase
 		      {
 				 $controlResult.EnableFixControl = $true;
 			     $controlResult.SetStateData("Misconfigured Security Contact Details", $this.MisConfiguredSecurityContactDetails);
-			     $controlResult.AddMessage([VerificationResult]::Failed, [MessageData]::new("Security contacts are not configured.", $this.MisConfiguredSecurityContactDetails));
+			     $controlResult.AddMessage([VerificationResult]::Failed, [MessageData]::new("Security contacts settings are not configured correctly.", $this.MisConfiguredSecurityContactDetails));
 		      }
 			
 			else
 			{
-				$controlResult.AddMessage([VerificationResult]::Passed, [MessageData]::new("Security contacts are correctly configured."));
+				$controlResult.AddMessage([VerificationResult]::Passed, [MessageData]::new("Security contacts settings are correctly configured."));
 			}
 		}
 		return $controlResult

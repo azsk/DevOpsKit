@@ -226,9 +226,9 @@ class ServicesSecurityStatus: AzSVTCommandBase
 				if($svtObject)
 				{
 					$svtObject.RunningLatestPSModule = $this.RunningLatestPSModule;
-					$this.SetSVTBaseProperties($svtObject);
-					#Setting up svtObject property
+					#Setting up svtObject property					
 					$svtObject.IsLocalComplianceStoreEnabled = $this.IsLocalComplianceStoreEnabled
+					$this.SetSVTBaseProperties($svtObject);
 					$childResources += $svtObject.ChildSvtObjects;
 					$currentResourceResults += $svtObject.$methodNameToCall();
 					$result += $currentResourceResults;
