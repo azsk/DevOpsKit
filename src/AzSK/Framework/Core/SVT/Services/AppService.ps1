@@ -139,7 +139,7 @@ class AppService: AzSVTBase
 		else
 		{
 			$IsAllowedAuthenticationProvidersConfigured = $false;
-			$IsAllowedExternalRedirectURLsConfigured = $false;
+			$IsConfiguredExtRedirectURLsAllowed = $false;
 			$ConfiguredAuthenticationProvidersSettings = New-Object PSObject
 			$ConfiguredExternalRedirectURLs= @()
 			if([FeatureFlightingManager]::GetFeatureStatus("EnableAppServiceCustomAuth",$($this.SubscriptionContext.SubscriptionId)) -eq $true)
@@ -151,7 +151,20 @@ class AppService: AzSVTBase
 				$IsAppServiceCustomAuthAllowed = $false
 			}
 			#Checks if functions app present
-			if([Helpers]::CheckMember($this.ResourceObject, "Kind") -and ($this.ResourceObject.Kind -eq "functionapp"))
+			$isFunctionApp = $false;
+			if([Helpers]::CheckMember($this.ResourceObject, "Kind"))
+			{
+				if([FeatureFlightingManager]::GetFeatureStatus("FunctionAppKindMatch",$($this.SubscriptionContext.SubscriptionId)) -eq $true  )
+				{
+					$isFunctionApp = $this.ResourceObject.Kind -like "*functionapp*"
+				}
+				else
+				{
+					$isFunctionApp = $this.ResourceObject.Kind -eq "functionapp"
+				}
+			}
+
+			if($isFunctionApp)
 			{
 				$ResourceAppIdURI = [WebRequestHelper]::GetServiceManagementUrl()
 				$accessToken = [ContextHelper]::GetAccessToken($ResourceAppIdURI)
@@ -278,19 +291,15 @@ class AppService: AzSVTBase
 						if([Helpers]::CheckMember($this.ControlSettings,"AppService.AllowedExternalRedirectURLs"))
 						{
 							$AllowedExternalRedirectURLs = $this.ControlSettings.AppService.AllowedExternalRedirectURLs
-							$IsAllowedExternalRedirectURLsConfigured = $false;
+							$IsConfiguredExtRedirectURLsAllowed = $true;
 							$ConfiguredExternalRedirectURLs = $this.AuthenticationSettings.properties.allowedExternalRedirectUrls
-				
-							ForEach($allowedurl in $AllowedExternalRedirectURLs){
-								#check if any of the configured AuthURL match Allowed ones
-								ForEach($configuredURL in $ConfiguredExternalRedirectURLs)
-								{
-									if($allowedurl -ceq $configuredURL)
-									{
-										$IsAllowedExternalRedirectURLsConfigured= $true; 										
-									}
-								}
-							}
+							#Get External redirect URLs that are configured for app service but not allowed as per controlsettings
+							$RedirectURLsNotInAllowed= @($ConfiguredExternalRedirectURLs|Where-Object{$AllowedExternalRedirectURLs -notcontains $_})
+							
+							if($null -ne $RedirectURLsNotInAllowed -and $RedirectURLsNotInAllowed.Count -gt 0)
+							{
+								$IsConfiguredExtRedirectURLsAllowed = $false;
+							}	
 						}
 						#Check if any of the AllowedAuthenticationProviders is configured
 						if([Helpers]::CheckMember($this.ControlSettings,"AppService.AllowedAuthenticationProviders"))
@@ -307,7 +316,7 @@ class AppService: AzSVTBase
 						}			
 					}
 				
-				if($AADEnabled -or ($IsAllowedAuthenticationProvidersConfigured -or $IsAllowedExternalRedirectURLsConfigured))
+				if($AADEnabled -or ($IsAllowedAuthenticationProvidersConfigured -or $IsConfiguredExtRedirectURLsAllowed))
 				{
 					if([FeatureFlightingManager]::GetFeatureStatus("EnableAppServiceAADAuthAllowAnonymousCheck",$($this.SubscriptionContext.SubscriptionId)) -eq $true)
 					{
@@ -333,7 +342,7 @@ class AppService: AzSVTBase
 						$controlResult.AddMessage([MessageData]::new("Authentication Providers configured for " + $this.ResourceContext.ResourceName));
 						$controlResult.AddMessage([MessageData]::new($ConfiguredAuthenticationProvidersSettings));
 					}
-					if($IsAllowedExternalRedirectURLsConfigured)
+					if($IsConfiguredExtRedirectURLsAllowed)
 					{
 						$controlResult.AddMessage([MessageData]::new("External redirect URLs configured for " + $this.ResourceContext.ResourceName));
 						$controlResult.AddMessage([MessageData]::new($ConfiguredExternalRedirectURLs));

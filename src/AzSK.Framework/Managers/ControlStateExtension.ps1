@@ -14,6 +14,9 @@ class ControlStateExtension
 	hidden [int] $HasControlStateReadPermissions = -1;
 	hidden [int] $HasControlStateWritePermissions = -1;
 	hidden [string]	$IndexerBlobName ="Resource.index.json"
+	hidden [string] $BackupIndexerBlobName ;
+	hidden [string] $BackupIndexerBlobPrefix = "Resource.index.bk*"
+	hidden [string] $AttestationBackupSuccess = $false;
 
 	hidden [int] $retryCount = 3;
 	hidden [string] $UniqueRunId;
@@ -40,6 +43,7 @@ class ControlStateExtension
 		{
 			$this.UniqueRunId = $(Get-Date -format "yyyyMMdd_HHmmss");
 		}
+		$this.BackupIndexerBlobName = "Resource.index.bk." +  $this.UniqueRunId + ".json"
 		$this.GetAzSKControlStateContainer($CreateResourcesIfNotExists)
 		#Reset attestation index file and set attestation index file present flag to get fresh index file from storage
 		$this.ControlStateIndexer = $null;
@@ -528,6 +532,137 @@ class ControlStateExtension
 		}		
 	}
 
+	hidden [PSObject[]] TrimAttestationFile()
+	{	
+		$trimAttestationEvents = [System.Collections.ArrayList]::new() 
+
+		$IsTrimAttestationFeatureEnabled = [FeatureFlightingManager]::GetFeatureStatus("EnableAttestationTrim",$this.SubscriptionContext.SubscriptionId)
+		
+		# return if feature flag is off
+		##ToDo: Reversal strategy to restore backup
+		if(!$IsTrimAttestationFeatureEnabled)
+		{
+			return $trimAttestationEvents;
+		}
+		try 
+		{
+			$TrimPeriodExceeded = $false;	
+			$ControlSettings = [ConfigurationManager]::LoadServerConfigFile("ControlSettings.json");
+			
+			$ContainerName = [Constants]::AttestationDataContainerName;
+			
+			#return if you don't have the required state attestation configuration during the runtime evaluation
+			$AttestationContainer= Get-AzStorageContainer -Context $this.AzSKStorageAccount.Context -Name $ContainerName -ErrorAction SilentlyContinue
+			
+			if( $null -eq $this.AzSKResourceGroup -or $null -eq $this.AzSKStorageAccount -or $null -eq $AttestationContainer)
+			{			
+				return $trimAttestationEvents ;
+			}
+			
+			#check for write permission to create backup file and rewrite trimmed attestation json 
+			if($this.HasControlStateWritePermissions -le 0) 
+			{
+				return $trimAttestationEvents ;
+			}
+			
+			$StorageAccount = $this.AzSKStorageAccount;
+			$IndexFileLocalTempPath= Join-Path $([Constants]::AzSKAppFolderPath) "Temp" | Join-Path -ChildPath $this.UniqueRunId | Join-Path -ChildPath "ServerControlState"| Join-Path -ChildPath $this.IndexerBlobName;
+					
+			# Check if trim has been performed within period specified
+			$PeriodToCheckForLastTrim = [DateTime]::Now.AddDays(-$ControlSettings.AttestationTrimIntervalDays.Days)
+			$BackUpFiles = Get-AzStorageBlob -Container $ContainerName -Context $StorageAccount.Context -Blob $this.BackupIndexerBlobPrefix | Where-Object { $_.LastModified -gt $PeriodToCheckForLastTrim} 
+			if ($null -ne $BackupFiles)
+			{
+				$LastBackup = $BackUpFiles | Sort-Object -Property LastModified -Descending|Select-Object -First 1 
+				if($LastBackup.LastModified -gt $PeriodToCheckForLastTrim)
+				{
+					$TrimPeriodExceeded = $false
+					$event = "" | Select-Object Name, Properties, Metrics
+					$properties = @{"SubscriptionId"= $this.SubscriptionContext.SubscriptionId;"UniquRunIdentifier"=$this.UniqueRunId;"LastTrimDoneOn"=$LastBackup.LastModified;}
+					$event.Name = "Trim attestation flow aborted as period to trim has not exceeded"
+					$event.Properties = $properties
+					$trimAttestationEvents.Add($event) | Out-Null
+					return $trimAttestationEvents
+				}
+			}	
+			# Backup existing attestation json file with timestamp added
+			try
+			{
+				$backuptask = Start-AzStorageBlobCopy -SrcContainer $ContainerName -SrcBlob $this.IndexerBlobName -DestContainer $this.AzSKStorageContainer.Name -DestBlob $this.BackupIndexerBlobName -Context $StorageAccount.Context| Get-AzStorageBlobCopyState -WaitForComplete
+				if($backuptask.Status -eq "Success")
+				{
+					# Backup complete
+					$this.AttestationBackupSuccess = $true;
+				}	
+			}
+			catch{
+				$this.AttestationBackupSuccess = $false;
+				$event = "" | Select-Object Name, Properties, Metrics
+				$properties = @{"SubscriptionId"= $this.SubscriptionContext.SubscriptionId;"UniquRunIdentifier"=$this.UniqueRunId;}
+				$event.Name = "Trim attestation flow aborted as backup was not successful."
+				$event.Properties = $properties
+				$trimAttestationEvents.Add($event) | Out-Null
+				return $trimAttestationEvents
+			}		
+			
+			# Remove entries for deleted resources from Resource.index.json file
+			if($this.AttestationBackupSuccess)
+			{
+				# Fetch list of resources , avoided caching as this would be periodic trimming, not for every CA run 
+				[ResourceInventory]::FetchResources(); 
+				# Get resources list supported for scan
+				$AzSKScannableResources=[ResourceInventory]::FilteredResources;
+
+				$AzSKScannableResourceIds= $AzSKScannableResources | Select-Object -ExpandProperty ResourceId
+
+				# Fetch current attestation 
+				$ControlStateIndexerObject = $this.ComputeControlStateIndexer();
+				$resourcesWithAttestation = $this.ControlStateIndexer |Select-Object -ExpandProperty ResourceId
+				
+				$deletedResourcesWithAttestation = @();
+				$filteredIndexerObject= @();
+				$deletedResourcesWithAttestationCount = 0;
+
+				# matching with 'resourceGroups' to avoid deleting attestattion for subscription level controls
+				$deletedResourcesWithAttestation = @($resourcesWithAttestation| Where-Object{$AzSKScannableResourceIds -notcontains $_ -and $_ -match 'resourceGroups'}) 
+				# if any deleted resources found , having attestation for those
+				if($null -ne $deletedResourcesWithAttestation)
+				{		
+					$deletedResourcesWithAttestationCount = $deletedResourcesWithAttestation.Count;
+
+					#filteredIndexerObject to have entries for resources that are existing in subscription and have attestation
+					$filteredIndexerObject =@($this.ControlStateIndexer  | Where-Object {$deletedResourcesWithAttestation -notcontains $_.ResourceId})
+					# Rewrite trimmed $this.ControlStateIndexer values to Resource.index.json file
+					[JsonHelper]::ConvertToJsonCustom($filteredIndexerObject) | Out-File $IndexFileLocalTempPath -Force
+					# Upload trimmed file to storage
+					[AzHelper]::UploadStorageBlobContent($IndexFileLocalTempPath, $this.IndexerBlobName , $ContainerName, $StorageAccount.Context)
+				}
+				$event = "" | Select-Object Name, Properties, Metrics
+				$properties = @{"SubscriptionId"= $this.SubscriptionContext.SubscriptionId;"UniquRunIdentifier"=$this.UniqueRunId;"NumberOfResourcesTrimmed"=$deletedResourcesWithAttestationCount;}
+				$event.Name = "Trim attestation flow completed"
+				$event.Properties = $properties
+				$trimAttestationEvents.Add($event) | Out-Null
+
+				# Purge old backup files
+				$PurgeBackupAttestationFilesBefore = [DateTime]::Now.AddDays(-$ControlSettings.PurgeAttestationbackupAfterDays.Days);
+				$OldBackups = Get-AzStorageBlob -Container $ContainerName -Context $StorageAccount.Context -Blob "$($this.BackupIndexerBlobPrefix)" | Where-Object { $_.LastModified -lt $PurgeBackupAttestationFilesBefore} 
+				if ($null -ne $OldBackups){	
+					$OldBackups| Remove-AzStorageBlob -Force -ErrorAction SilentlyContinue
+				}
+			}
+		}
+		catch
+		{
+			$event = "" | Select-Object Name, Properties, Metrics
+			$properties = @{"SubscriptionId"= $this.SubscriptionContext.SubscriptionId;"UniquRunIdentifier"=$this.UniqueRunId;}
+			$event.Name = "Trim attestation flow aborted" + $_;
+			$event.Properties = $properties
+			$trimAttestationEvents.Add($event) | Out-Null
+			return $trimAttestationEvents
+
+		}
+		return $trimAttestationEvents
+	}
 	hidden [ControlState[]] GetPersistedControlStates([string] $controlStateBlobName)
 	{
 		$AzSKTemp = Join-Path $([Constants]::AzSKAppFolderPath) "Temp" | Join-Path -ChildPath $this.UniqueRunId | Join-Path -ChildPath "ServerControlState";

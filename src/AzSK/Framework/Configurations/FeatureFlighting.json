@@ -228,6 +228,24 @@
       "DisabledForSubs": [],
       "UnderPreview": false,
       "IsEnabled": true
+    },
+    {
+      "Name": "EnableAttestationTrim",
+      "Description": "",
+      "Sources": ["*"],
+      "EnabledForSubs": [],
+      "DisabledForSubs": [],
+      "UnderPreview": false,
+      "IsEnabled": true
+    },
+    {
+      "Name": "FunctionAppKindMatch",
+      "Description": "",
+      "Sources": ["*"],
+      "EnabledForSubs": [],
+      "DisabledForSubs": [],
+      "UnderPreview": false,
+      "IsEnabled": true
     }
   ]
 }
