@@ -152,15 +152,18 @@ class AppService: AzSVTBase
 			}
 			#Checks if functions app present
 			$isFunctionApp = $false;
-			if([Helpers]::CheckMember($this.ResourceObject, "Kind") -and [FeatureFlightingManager]::GetFeatureStatus("FunctionAppKindMatch",$($this.SubscriptionContext.SubscriptionId)) -eq $true  )
+			if([Helpers]::CheckMember($this.ResourceObject, "Kind"))
 			{
-				$isFunctionApp = $this.ResourceObject.Kind -like "*functionapp*"
+				if([FeatureFlightingManager]::GetFeatureStatus("FunctionAppKindMatch",$($this.SubscriptionContext.SubscriptionId)) -eq $true  )
+				{
+					$isFunctionApp = $this.ResourceObject.Kind -like "*functionapp*"
+				}
+				else
+				{
+					$isFunctionApp = $this.ResourceObject.Kind -eq "functionapp"
+				}
 			}
-			elseif([Helpers]::CheckMember($this.ResourceObject, "Kind"))
-			{
-				$isFunctionApp = $this.ResourceObject.Kind -eq "functionapp"
-			}
-
+			
 			if($isFunctionApp)
 			{
 				$ResourceAppIdURI = [WebRequestHelper]::GetServiceManagementUrl()
