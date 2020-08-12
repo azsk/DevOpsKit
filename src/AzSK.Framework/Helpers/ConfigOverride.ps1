@@ -116,5 +116,6 @@ class ConfigOverride
 		[ConfigurationHelper]::LocalPolicyEnabled = $false
 		[ContextHelper]::currentRMContext = $null
 		[ConfigurationHelper]::PolicyCacheContent = @()
+		[ConfigurationHelper]::ExtentionNotFoundFlagStore = @{}
 	}
 }
