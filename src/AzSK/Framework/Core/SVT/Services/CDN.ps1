@@ -32,6 +32,7 @@ class CDN: AzSVTBase
 				$controlResult.AddMessage([VerificationResult]::Passed,
 										[MessageData]::new("All CDN endpoints in the CDN profile [" + $this.ResourceContext.ResourceName + "] are using HTTPS protocol only - ", ($cdnEndpoints | Select-Object -Property Name, HostName, OriginHostHeader, IsHttpAllowed, IsHttpsAllowed))); 
 			}elseif($null -ne $onlyHttpAllowedEndpointList -and ($onlyHttpAllowedEndpointList | Measure-Object).Count -gt 0){
+				# If only http protocol is enabled, Fail the control directly without checking for redirection rule
 				$httpEndpointObjList=@()
 				$httpAllowedEndpointList| Foreach-Object {
 					$httpEndpointObj = New-Object -TypeName PSObject
