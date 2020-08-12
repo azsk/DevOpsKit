@@ -235,7 +235,7 @@ class Organization: ADOSVTBase
     {
         if([Helpers]::CheckMember($this.OrgPolicyObj,"user"))
         {
-            $userPolicyObj = $this.OrgPolicyObj.user[0]; 
+            $userPolicyObj = $this.OrgPolicyObj.user; 
             $guestAuthObj = $userPolicyObj | Where-Object {$_.Policy.Name -eq "Policy.DisallowAadGuestUserAccess"}
             if(($guestAuthObj | Measure-Object).Count -gt 0)
             {
@@ -251,12 +251,12 @@ class Organization: ADOSVTBase
             else 
             {
                 #Manual control status because external guest access notion is not applicable when AAD is not configured. Instead invite GitHub user policy is available in non-AAD backed orgs.
-                $controlResult.AddMessage([VerificationResult]::Manual, "Could not fetch external guest access policy details of the organization.");    
+                $controlResult.AddMessage([VerificationResult]::Manual, "Could not fetch external guest access policy details of the organization. This policy is available only when the organization is connected to AAD.");    
             }
         }
         else 
         {
-            $controlResult.AddMessage([VerificationResult]::Error, "Could not fetch external guest access policy details of the organization.");
+            $controlResult.AddMessage([VerificationResult]::Error, "Could not fetch user policy details of the organization.");
         }
         return $controlResult
     }
@@ -505,29 +505,32 @@ class Organization: ADOSVTBase
 
     hidden [ControlResult] CheckDisconnectedIdentities([ControlResult] $controlResult)
     {
-        $apiURL = "https://{0}.visualstudio.com/_apis/OrganizationSettings/DisconnectedUser" -f $($this.SubscriptionContext.SubscriptionName);
-        $responseObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
+        try 
+        {
+            $apiURL = "https://{0}.visualstudio.com/_apis/OrganizationSettings/DisconnectedUser" -f $($this.SubscriptionContext.SubscriptionName);
+            $responseObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
+            
+            #disabling null check to CheckMember because if there are no disconnected users - it will return null.
+            if ([Helpers]::CheckMember($responseObj[0], "users",$false)) 
+            {
+                if (($responseObj[0].users | Measure-Object).Count -gt 0 ) 
+                {
         
-        try {
-           if ([Helpers]::CheckMember($responseObj,"users")) {
-               if(($responseObj.users | Measure-Object).Count -gt 0 )  
-               {
-        
-                    $UsersNames = @();   
-                    $UsersNames += ($responseObj.users | Select-Object -Property @{Name="Name"; Expression = {$_.displayName}},@{Name="mailAddress"; Expression = {$_.preferredEmailAddress}})
-                    $controlResult.AddMessage([VerificationResult]::Failed, "Remove access from the organization for below disconnected users",$UsersNames);  
-                    $controlResult.SetStateData("Disconnected users list: ", $UsersNames);
-               }
-               else
-               {
-                   $controlResult.AddMessage([VerificationResult]::Passed, "No disconnected users found.");
-               }   
-              } 
+                    $userNames = @();   
+                    $userNames += ($responseObj[0].users | Select-Object -Property @{Name = "Name"; Expression = { $_.displayName } }, @{Name = "mailAddress"; Expression = { $_.preferredEmailAddress } })
+                    $controlResult.AddMessage([VerificationResult]::Failed, "Remove access for below disconnected users : ", $userNames);  
+                    $controlResult.SetStateData("Disconnected users list: ", $userNames);
+                }
+                else 
+                {
+                    $controlResult.AddMessage([VerificationResult]::Passed, "No disconnected users found.");
+                }   
+            } 
         }
-        catch {
-            $controlResult.AddMessage([VerificationResult]::Passed, "No disconnected users found.");
+        catch 
+        {
+            $controlResult.AddMessage([VerificationResult]::Error, "Could not fetch the list of disconnected users.");
         }
-        
        
         return $controlResult;
     }
@@ -733,10 +736,10 @@ class Organization: ADOSVTBase
             
             if($orgLevelScope -eq $true )
             {
-                $controlResult.AddMessage([VerificationResult]::Passed, "Job authorization scope is limited to current project for non-release pipeline at organization level.");
+                $controlResult.AddMessage([VerificationResult]::Passed, "Job authorization scope is limited to current project for non-release pipelines at organization level.");
             }
             else{
-                $controlResult.AddMessage([VerificationResult]::Failed, "Job authorization scope is set to project collection for non-release pipeline at organization level.");
+                $controlResult.AddMessage([VerificationResult]::Failed, "Job authorization scope is set to project collection for non-release pipelines at organization level.");
             }       
        }
        else{
@@ -745,7 +748,7 @@ class Organization: ADOSVTBase
         return $controlResult
     }
 
-    hidden [ControlResult] CheckJobScopeToADORepos([ControlResult] $controlResult)
+    hidden [ControlResult] CheckAuthZRepoScope([ControlResult] $controlResult)
     {
        if($this.PipelineSettingsObj)
        {
@@ -753,14 +756,14 @@ class Organization: ADOSVTBase
             
             if($orgLevelScope -eq $true )
             {
-                $controlResult.AddMessage([VerificationResult]::Passed, "Job authorization scope is limited to referenced Azure DevOps repositories at organization level.");
+                $controlResult.AddMessage([VerificationResult]::Passed, "Job authorization scope of pipelines is limited to explicitly referenced Azure DevOps repositories at organization level.");
             }
             else{
-                $controlResult.AddMessage([VerificationResult]::Failed, "Job authorization scope is set to referenced Azure DevOps repositories at organization level.");
+                $controlResult.AddMessage([VerificationResult]::Failed, "Job authorization scope of pipelines is set to all Azure DevOps repositories in the authorized projects at organization level.");
             }       
        }
        else{
-             $controlResult.AddMessage([VerificationResult]::Error, "Could not fetch the organization settings.");
+             $controlResult.AddMessage([VerificationResult]::Error, "Could not fetch the organization pipeline settings.");
        }       
         return $controlResult
     }
@@ -773,14 +776,16 @@ class Organization: ADOSVTBase
             
             if($orgLevelScope -eq $true )
             {
-                $controlResult.AddMessage([VerificationResult]::Passed, "Built-in task is disabled at organization level.");
+                $controlResult.AddMessage([VerificationResult]::Passed, "Built-in tasks are disabled at organization level.");
             }
-            else{
-                $controlResult.AddMessage([VerificationResult]::Failed, "Built-in task is not disabled at organization level.");
+            else
+            {
+                $controlResult.AddMessage([VerificationResult]::Failed, "Built-in tasks are not disabled at organization level.");
             }       
        }
-       else{
-             $controlResult.AddMessage([VerificationResult]::Error, "Could not fetch the organization settings.");
+       else
+       {
+             $controlResult.AddMessage([VerificationResult]::Error, "Could not fetch the organization pipeline settings.");
        }       
         return $controlResult
     }
@@ -793,45 +798,78 @@ class Organization: ADOSVTBase
             
             if($orgLevelScope -eq $true )
             {
-                $controlResult.AddMessage([VerificationResult]::Passed, "Market place task is disabled at organization level.");
+                $controlResult.AddMessage([VerificationResult]::Passed, "Market place tasks are disabled at organization level.");
             }
-            else{
-                $controlResult.AddMessage([VerificationResult]::Failed, "Market place task is not disabled at organization level.");
+            else
+            {
+                $controlResult.AddMessage([VerificationResult]::Failed, "Market place tasks are not disabled at organization level.");
             }       
        }
-       else{
-             $controlResult.AddMessage([VerificationResult]::Error, "Could not fetch the organization settings.");
+       else
+       {
+             $controlResult.AddMessage([VerificationResult]::Error, "Could not fetch the organization pipeline settings.");
        }       
         return $controlResult
     }
 
-    hidden [ControlResult] CheckPolicyAllowInviveUser([ControlResult] $controlResult)
+    hidden [ControlResult] CheckPolicyProjectTeamAdminUserInvitation([ControlResult] $controlResult)
     {
         if([Helpers]::CheckMember($this.OrgPolicyObj,"user"))
         {
             $userPolicyObj = $this.OrgPolicyObj.user
-            if(($userPolicyObj | Measure-Object).Count -gt 1)
+            $userInviteObj = $userPolicyObj | Where-Object {$_.Policy.Name -eq "Policy.AllowTeamAdminsInvitationsAccessToken"}
+            if(($userInviteObj | Measure-Object).Count -gt 0)
             {
-                $guestAuthObj = $userPolicyObj[1] | Where-Object {$_.Policy.Name -eq "Policy.AllowTeamAdminsInvitationsAccessToken"}
             
-                if($guestAuthObj.policy.effectiveValue -eq $false )
+                if($userInviteObj.policy.effectiveValue -eq $false )
                 {
-                    $controlResult.AddMessage([VerificationResult]::Passed,"Allow team and project administrators to invite new users is disabled in the organization.");
+                    $controlResult.AddMessage([VerificationResult]::Passed,"Team and project administrators are not allowed to invite new users.");
                 }
                 else 
                 {
-                    $controlResult.AddMessage([VerificationResult]::Failed, "Allow team and project administrators to invite new users is enabled in the organization.");
+                    $controlResult.AddMessage([VerificationResult]::Failed, "Team and project administrators are allowed to invite new users.");
                 }
             }
             else 
             {
-                #Manual control status because external guest access notion is not applicable when AAD is not configured. Instead invite GitHub user policy is available in non-AAD backed orgs.
-                $controlResult.AddMessage([VerificationResult]::Manual, "Could not fetch external guest access policy details of the organization.");    
+                #Manual control status because the notion of team and project admins inviting new users is not applicable when AAD is not configured.
+                $controlResult.AddMessage([VerificationResult]::Manual, "Could not fetch invite new user policy details of the organization. This policy is available only when the organization is connected to AAD.");    
             }
         }
         else 
         {
-            $controlResult.AddMessage([VerificationResult]::Error, "Could not fetch external guest access policy details of the organization.");
+            $controlResult.AddMessage([VerificationResult]::Error, "Could not fetch user policy details of the organization.");
+        }
+        return $controlResult
+    }
+
+    hidden [ControlResult] CheckRequestAccessPolicy([ControlResult] $controlResult)
+    {
+        if([Helpers]::CheckMember($this.OrgPolicyObj,"user"))
+        {
+            $userPolicyObj = $this.OrgPolicyObj.user
+            $requestAccessObj = $userPolicyObj | Where-Object {$_.Policy.Name -eq "Policy.AllowRequestAccessToken"}
+            if(($requestAccessObj | Measure-Object).Count -gt 0)
+            {
+            
+                if($requestAccessObj.policy.effectiveValue -eq $false )
+                {
+                    $controlResult.AddMessage([VerificationResult]::Passed,"Users can not request access to organization or projects within the organization.");
+                }
+                else 
+                {
+                    $controlResult.AddMessage([VerificationResult]::Failed, "Users can request access to organization or projects within the organization.");
+                }
+            }
+            else 
+            {
+                #Manual control status because the notion of request access is not applicable when AAD is not configured.
+                $controlResult.AddMessage([VerificationResult]::Manual, "Could not fetch request access policy details of the organization. This policy is available only when the organization is connected to AAD.");    
+            }
+        }
+        else 
+        {
+            $controlResult.AddMessage([VerificationResult]::Error, "Could not fetch user policy details of the organization.");
         }
         return $controlResult
     }

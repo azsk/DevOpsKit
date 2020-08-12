@@ -184,7 +184,7 @@
       "Id": "ServiceConnection210",
       "ControlSeverity": "High",
       "Automated": "Yes",
-      "MethodName": "CheckInActiveConnection",
+      "MethodName": "CheckInactiveConnection",
       "Rationale": "",
       "Recommendation": "To remove inactive service connection, follow the steps given here: 1.Navigate to the service connection settings. 2. Select a service connection. 3. Select three dots (present at right top). 4. Click on Delete.",
       "Tags": [
@@ -196,12 +196,12 @@
       "Enabled": true
     },
     {
-      "ControlID": "AzureDevOps_ServiceConnection_SI_Review_Cross_Project_Connection",
+      "ControlID": "AzureDevOps_ServiceConnection_SI_Dont_Allow_Cross_Project_Sharing",
       "Description": "Do not make service connections accessible to multiple project.",
       "Id": "ServiceConnection220",
       "ControlSeverity": "High",
       "Automated": "Yes",
-      "MethodName": "CheckCrossProjectConnection",
+      "MethodName": "CheckCrossProjectSharing",
       "Rationale": "",
       "Recommendation": "To remediate this, navigate to the service connections settings page for your project -> select your service connection from the list -> click Security -> Revoke access from the 'Project Permission'.",
       "Tags": [
@@ -214,12 +214,12 @@
       "Enabled": true
     },
     {
-      "ControlID": "AzureDevOps_ServiceConnection_SI_Review_Cross_Pipeline_Connection",
+      "ControlID": "AzureDevOps_ServiceConnection_SI_Review_Cross_Pipeline_Sharing",
       "Description": "Do not make service connections accessible to multiple pipelines.",
       "Id": "ServiceConnection230",
       "ControlSeverity": "High",
       "Automated": "Yes",
-      "MethodName": "CheckCrossPipelineConnection",
+      "MethodName": "CheckCrossPipelineSharing",
       "Rationale": "",
       "Recommendation": "To remediate this, navigate to the service connections settings page for your project -> select your service connection from the list -> click Security -> Remove access from the 'Pipeline Permission'.",
       "Tags": [

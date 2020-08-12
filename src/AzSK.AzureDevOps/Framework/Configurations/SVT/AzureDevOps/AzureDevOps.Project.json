@@ -89,7 +89,7 @@
       "Enabled": true
     },
     {
-      "ControlID": "AzureDevOps_Project_AuthZ_Limit_Job_Scope_To_Current_Project_Non_Release_Pipeline",
+      "ControlID": "AzureDevOps_Project_AuthZ_Limit_Non_Release_Scope_To_Current_Project",
       "Description": "Do not run non-release pipelines using tokens that have project collection level access.",
       "Id": "Project160",
       "ControlSeverity": "Medium",
@@ -106,12 +106,12 @@
       "Enabled": true
     },
     {
-      "ControlID": "AzureDevOps_Project_AuthZ_Limit_Job_Authorization_Scope_To_Referenced_ADO_Repos",
+      "ControlID": "AzureDevOps_Project_AuthZ_Limit_Job_Scope_To_Referenced_ADO_Repos",
       "Description": "Do not allow Pipelines access any Azure DevOps repositories.",
       "Id": "Project162",
       "ControlSeverity": "Medium",
       "Automated": "Yes",
-      "MethodName": "CheckScopeToDevOpsRepo",
+      "MethodName": "CheckAuthZRepoScope",
       "Rationale": "Pipelines can access any Azure DevOps repositories in authorized projects unless this option is enabled. With this option enabled, you can reduce the scope of access for all pipelines to only Azure DevOps repositories explicitly referenced by the pipeline.",
       "Recommendation": "Go to Project Settings --> Pipelines --> Settings --> Enable 'Limit job authorization scope to referenced Azure DevOps repositorie'.",
       "Tags": [

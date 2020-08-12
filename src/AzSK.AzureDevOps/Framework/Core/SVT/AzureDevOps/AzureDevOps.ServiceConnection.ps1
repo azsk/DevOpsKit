@@ -337,109 +337,113 @@ class ServiceConnection: ADOSVTBase
         return $controlResult;
     }
 
-    hidden [ControlResult] CheckInActiveConnection([ControlResult] $controlResult)
+    hidden [ControlResult] CheckInactiveConnection([ControlResult] $controlResult)
 	{             
-        try {
-        if($this.ServiceConnEndPointDetail -and [Helpers]::CheckMember($this.ServiceConnEndPointDetail, "serviceEndpointExecutionHistory") ) 
+        try
         {
-            #Get the last run dat of the servic econneciton
-            $svcLastRunDate = $this.ServiceConnEndPointDetail.serviceEndpointExecutionHistory[0].data.finishTime;
-            #if last run is still running then finish time would not be there, so take start time.
-            if (!$svcLastRunDate) {
-              $svcLastRunDate = $this.ServiceConnEndPointDetail.serviceEndpointExecutionHistory[0].data.startTime;
-            } 
-            #format date
-            $formatLastRunDate = ([datetime]::parseexact($svcLastRunDate.Split('T')[0], 'yyyy-MM-dd', $null))
-            
-            if ((((Get-Date) - $formatLastRunDate).Days) -gt 180)
+            if ($this.ServiceConnEndPointDetail -and [Helpers]::CheckMember($this.ServiceConnEndPointDetail, "serviceEndpointExecutionHistory") ) 
             {
-                $controlResult.AddMessage([VerificationResult]::Failed,
-                "Service connection is not in use from last 180 days. Verify the service connection and remove if no longer required.");
+                #Get the last known usage (job) timestamp of the service connection
+                $svcLastRunDate = $this.ServiceConnEndPointDetail.serviceEndpointExecutionHistory[0].data.finishTime;
+                #if this job is still running then finishTime is not available. Instead use the startTime if this job.
+                if (!$svcLastRunDate)
+                {
+                    $svcLastRunDate = $this.ServiceConnEndPointDetail.serviceEndpointExecutionHistory[0].data.startTime;
+                } 
+                #format date
+                $formatLastRunDate = ([datetime]::parseexact($svcLastRunDate.Split('T')[0], 'yyyy-MM-dd', $null))
+                
+                # $inactiveLimit denotes the upper limit on number of days of inactivity before the svc conn is deemed inactive.
+                $inactiveLimit = $this.ControlSettings.ServiceConnection.ServiceConnectionHistoryPeriodInDays
+                if ((((Get-Date) - $formatLastRunDate).Days) -gt $inactiveLimit)
+                {
+                    $controlResult.AddMessage([VerificationResult]::Failed, "Service connection has not been used in the last $inactiveLimit days.");
+                }
+                else
+                {
+                    $controlResult.AddMessage([VerificationResult]::Passed, "Service connection has been used in the last $inactiveLimit days.");
+                }  
             }
-            else {
-                $controlResult.AddMessage([VerificationResult]::Passed,"");
-            }  
+            else #service connection was created but never used
+            {    
+                $controlResult.AddMessage([VerificationResult]::Failed, "Service connection has never been used.");
+            }
         }
-        else  #service conneciton is cerated and never run
-        { 
-            $controlResult.AddMessage([VerificationResult]::Verify,"Servic econneciton never run. Verify the service connection and remove if not in use.");
-        }
-        }
-        catch {
-            $controlResult.AddMessage([VerificationResult]::Error,
-                                            "Service connection details not found. Verify service connection manually.");
+        catch
+        {
+            $controlResult.AddMessage([VerificationResult]::Error,"Could not fetch the service connection details.");
         }
         
         return $controlResult;
     }
 
-    hidden [ControlResult] CheckCrossProjectConnection([ControlResult] $controlResult)
+    hidden [ControlResult] CheckCrossProjectSharing([ControlResult] $controlResult)
 	{  
-        try {
-            if($this.ServiceConnEndPointDetail -and [Helpers]::CheckMember($this.ServiceConnEndPointDetail, "serviceEndpoint") ) 
+        if($this.ServiceConnEndPointDetail -and [Helpers]::CheckMember($this.ServiceConnEndPointDetail, "serviceEndpoint") ) 
+        {
+            #Get the project list which are accessible to the service connection. 
+            $svcProjectReferences = $this.ServiceConnEndPointDetail.serviceEndpoint.serviceEndpointProjectReferences
+            if (($svcProjectReferences | Measure-Object).Count -gt 1) 
             {
-                #Get the project list which are accessible to the service connection. 
-                $svcProjectReferences = $this.ServiceConnEndPointDetail.serviceEndpoint.serviceEndpointProjectReferences
-                if ($svcProjectReferences -and $svcProjectReferences.Count -gt 1) {
-                    $svcConnAccessProjectList = @();
-                    $svcConnAccessProjectList = ($svcProjectReferences.projectReference | Select name) 
+                $stateData = @();
+                $stateData += $svcProjectReferences | Select-Object name, projectReference
                 
-                    $controlResult.AddMessage([VerificationResult]::Failed,
-                    "Service connectin is shared with multiple projects: [$($svcConnAccessProjectList.name -join ", ")].");
-                }
-                else {
-                    $controlResult.AddMessage([VerificationResult]::Passed,
-                    "Service connectin is not shared with multiple project.");
-                }
+                $controlResult.AddMessage([VerificationResult]::Verify, "Review the list of projects that have access to the service connection : ", $stateData);
+                $controlResult.SetStateData("List of projects that have access to the service connection : ", $stateData); 
             }
-            else
+            else 
             {
-                $controlResult.AddMessage([VerificationResult]::Verify,
-                                            "Service connection details not found. Verify connection access is configured at resource group scope.");
+                $controlResult.AddMessage([VerificationResult]::Passed, "Service connection is not shared with multiple projects.");
             }
         }
-        catch {
-            $controlResult.AddMessage([VerificationResult]::Error,
-                                            "Service connection details not found. Verify service connection manually.");
+        else
+        {
+            $controlResult.AddMessage([VerificationResult]::Error, "Service connection details could not be fetched.");
         }       
         return $controlResult;
     }
 
-    hidden [ControlResult] CheckCrossPipelineConnection([ControlResult] $controlResult)
-	{  
-        try
-           {
-               #Get pipeline access on svc conn
-               $apiURL = "https://dev.azure.com/{0}/{1}/_apis/pipelines/pipelinePermissions/endpoint/{2}?api-version=5.1-preview.1" -f $($this.SubscriptionContext.SubscriptionName),$($this.ProjectId),$($this.ServiceEndpointsObj.id) ;
-               $responseObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
+    hidden [ControlResult] CheckCrossPipelineSharing([ControlResult] $controlResult) {  
+        try 
+        {
+            #Get pipeline access on svc conn
+            $apiURL = "https://dev.azure.com/{0}/{1}/_apis/pipelines/pipelinePermissions/endpoint/{2}?api-version=5.1-preview.1" -f $($this.SubscriptionContext.SubscriptionName), $($this.ProjectId), $($this.ServiceEndpointsObj.id) ;
+            $responseObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
 
-               #check if svc conn is set to "Grant access permission to all pipelines"
-               if([Helpers]::CheckMember($responseObj,"allPipelines")) 
-               {
-                    $controlResult.AddMessage([VerificationResult]::Failed,"Do not grant global security access to all pipeline.");        
-               }
-               elseif([Helpers]::CheckMember($responseObj[0],"pipelines") -and ($responseObj[0].pipelines | Measure-Object).Count -gt 1) #If multipe pipeline has access on svvc conn
-               {
-                    #get the pipelines ids in comma separated string to pass in api to get the pipeline name
-                    $pipelinesIds =  $responseObj[0].pipelines.id -join ","
-                    #api call to get the pipeline name
-                    $apiURL = "https://{0}.visualstudio.com/{1}/_apis/build/definitions?definitionIds={2}&api-version=5.0" -f $($this.SubscriptionContext.SubscriptionName),$($this.ProjectId), $pipelinesIds;
-                    $pipelineObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
+            #check if svc conn is set to "Grant access permission to all pipelines"
+            if ([Helpers]::CheckMember($responseObj[0], "allPipelines.authorized") -and $responseObj[0].allPipelines.authorized -eq $true) 
+            {
+                $controlResult.AddMessage([VerificationResult]::Failed, "Service connection is accessible to all pipelines in the project.");        
+            }
+            elseif ([Helpers]::CheckMember($responseObj[0], "pipelines") -and ($responseObj[0].pipelines | Measure-Object).Count -gt 0) #Atleast one pipeline has access to svvc conn
+            { 
+                #get the pipelines ids in comma separated string to pass in api to get the pipeline name
+                $pipelinesIds = $responseObj[0].pipelines.id -join ","
+                #api call to get the pipeline name
+                $apiURL = "https://{0}.visualstudio.com/{1}/_apis/build/definitions?definitionIds={2}&api-version=5.0" -f $($this.SubscriptionContext.SubscriptionName), $($this.ProjectId), $pipelinesIds;
+                $pipelineObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
                     
-                    $pipelines = "";
-                    if ($pipelineObj -and ($pipelineObj | Measure-Object).Count -gt 0) {
-                        $pipelines = $pipelineObj.name -join ", "
-                    }
-
-                    $controlResult.AddMessage([VerificationResult]::Verify,"Service connection is granted access to multiple pipelines:[($pipelines)]");
-               } 
-               else{
-                    $controlResult.AddMessage([VerificationResult]::Passed, "Service connection is not granted access to multiple pipeline");
-               }
-               $responseObj = $null;
-           }
-        catch {
-            $controlResult.AddMessage([VerificationResult]::Error,"Unable to fetch service connection details. Please verify from portal that you are not granting multiple pipeline access to service connections");
+                # We are fixing the control status here and the state data info will be done as shown below. This is done in case we are not able to fetch the pipeline names. Although, we have the pipeline ids as shown above.
+                $controlResult.AddMessage([VerificationResult]::Verify, "");
+                $pipelines = @();
+                    
+                if ($pipelineObj -and ($pipelineObj | Measure-Object).Count -gt 0) 
+                {
+                    $pipelines += $pipelineObj.name
+                    $controlResult.AddMessage("Review the list of pipelines that have access to the service connection : ", $pipelines);
+                    $controlResult.SetStateData("List of pipelines that have access to the service connection : ", $pipelines);   
+                }                    
+            } 
+            else 
+            {
+                $controlResult.AddMessage([VerificationResult]::Passed, "No pipeline has access to this service connection.");
+            }
+            #clearing memory space.
+            $responseObj = $null;
+        }
+        catch 
+        {
+            $controlResult.AddMessage([VerificationResult]::Error, "Could not fetch pipeline permission details for the service connection.");
         }
          
         return $controlResult;

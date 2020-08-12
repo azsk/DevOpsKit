@@ -138,12 +138,12 @@ class Project: ADOSVTBase
         }
         else
         {
-            $controlResult.AddMessage([VerificationResult]::Error, "There was an error accessing the project pipeline settings.");
+            $controlResult.AddMessage([VerificationResult]::Error, "Could not fetch project pipeline settings.");
         }       
         return $controlResult
     }
 
-    hidden [ControlResult] CheckScopeToDevOpsRepo([ControlResult] $controlResult)
+    hidden [ControlResult] CheckAuthZRepoScope([ControlResult] $controlResult)
     {
         if($this.PipelineSettingsObj)
         {
@@ -152,25 +152,25 @@ class Project: ADOSVTBase
 
             if($prjLevelScope -eq $true )
             {
-                $controlResult.AddMessage([VerificationResult]::Passed, "Job authorization scope is limited to referenced azure devops repositories.");
+                $controlResult.AddMessage([VerificationResult]::Passed, "Job authorization scope of pipelines is limited to explicitly referenced Azure DevOps repositories.");
             }
             else
             {
-                $controlResult.AddMessage([VerificationResult]::Failed, "Job authorization scope is not set to referenced azure devops repositories.");
+                $controlResult.AddMessage([VerificationResult]::Failed, "Job authorization scope of pipelines is set to all Azure DevOps repositories in the authorized projects.");
             }     
             
             if($orgLevelScope -eq $true )
             {
-                $controlResult.AddMessage("This setting is enabled (limited to azure devops repositories) at organization level.");
+                $controlResult.AddMessage("This setting is enabled (limited to explicitly referenced Azure DevOps repositories) at organization level.");
             }
             else
             {
-                $controlResult.AddMessage("This setting is disabled (set to project collection) at organization level.");
+                $controlResult.AddMessage("This setting is disabled (set to all Azure DevOps repositories in authorized projects) at organization level.");
             }     
         }
         else
         {
-            $controlResult.AddMessage([VerificationResult]::Error, "There was an error accessing the project settings.");
+            $controlResult.AddMessage([VerificationResult]::Error, "Could not fetch project pipeline settings.");
         }       
         return $controlResult
     }
