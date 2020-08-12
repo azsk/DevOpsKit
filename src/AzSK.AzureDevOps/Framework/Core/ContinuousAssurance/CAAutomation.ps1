@@ -62,7 +62,8 @@ class CAAutomation : ADOSVTCommandBase
 		$this.ScanTriggerLocalTime = $(Get-Date).AddMinutes(20)
 		$this.ControlSettings = [ConfigurationManager]::LoadServerConfigFile("ControlSettings.json");
 		$this.ImageName = $this.ControlSettings.DockerImage.ImageName
-		
+		$this.CreateLAWS = $CreateLaws
+
 		if ([string]::IsNullOrWhiteSpace($ResourceGroupName)) 
 		{
 			$this.RGName ="ADOScannerRG"
@@ -73,7 +74,7 @@ class CAAutomation : ADOSVTCommandBase
 	
 		if ([string]::IsNullOrWhiteSpace($LAWorkspaceId) -or [string]::IsNullOrWhiteSpace($LAWorkspaceKey) ) 
 		{
-			if ($CreateLaws -ne $true)
+			if ($this.CreateLaws -ne $true)
 			{
 				$this.messages = "Log Analytics Workspace details are missing. Use -CreateWorkspace switch to create a new workspace while setting up CA. Setup will continue...`r`n"
 			}
@@ -408,7 +409,7 @@ class CAAutomation : ADOSVTCommandBase
 			else 
 			{
 
-				#Validate if app settings update is required based on input paramaeters. 
+				#Step 1: Validate if app settings update is required based on input paramaeters. 
 				$this.invocationContext.BoundParameters.GetEnumerator() | foreach-object {
 					# If input param is other than below 3 then app settings update will be required
 					if($_.Key -ne "SubscriptionId" -and $_.Key -ne "ResourceGroupName" -and $_.Key -ne "PATToken")
@@ -421,25 +422,38 @@ class CAAutomation : ADOSVTCommandBase
 					}
 				}
 
+				#Step 2: Validate if RG exists.
+				if (-not [string]::IsNullOrEmpty($this.RGname))
+                {
+                     $RG = Get-AzResourceGroup -Name $this.RGname -ErrorAction SilentlyContinue
+                     if ($null -eq $RG)
+                     {
+                        $messageData += "Resource group '$($this.RGname)' not found. Please validate the resource group name." -ForegroundColor Red
+                        Write-Host $messageData.Message
+		                return $messageData
+                     }
+				}
+				
+				#Step 3: If only subid and/or RG name params are used then display below message
 				if ($updateAppSettings -eq $false -and $updatePATToken -eq $false)
 				{
-					Write-Host "Please use additonal paramaeters to perform update on LAWSId, LAWSSharedKey, OrganizationName, PATToken etc."
+					Write-Host "Please use additonal parameters to perform update on LAWSId, LAWSSharedKey, OrganizationName, PATToken, ProjectNames, ExtendedCommand"
 				}
 
+				#Step 4: Update PATToken in KV (if applicable)
 				if ($updatePATToken -eq $true)
 				{
 					#Get KeyVault resource from RG
 					$keyVaultResource = @((Get-AzResource -ResourceGroupName $this.RGname -ResourceType "Microsoft.KeyVault/vaults").Name | where {$_ -match $this.KVDefaultName})
 					if($keyVaultResource.Count -eq 0)
 					{
-						Write-Host "ADOScanner KeyVault is not available in resource group '$($this.RGname)'. Update Failed!"
+						Write-Host "ADOScanner KeyVault is not available in resource group '$($this.RGname)'. Update Failed!" -ForegroundColor Red
 					}
 					elseif ($keyVaultResource.Count -gt 1)
 					{
-						Write-Host "More than one ADOScanner KeyVault is available in resource group '$($this.RGname)'. Update Failed!"
+						Write-Host "More than one ADOScanner KeyVault is available in resource group '$($this.RGname)'. Update Failed!" -ForegroundColor Red
 					}
 					else {
-						#$Secret = ConvertTo-SecureString -String $this.PATToken -AsPlainText -Force
 						$CreatedSecret = Set-AzKeyVaultSecret -VaultName $keyVaultResource[0] -Name $this.SecretName -SecretValue $this.PATToken
 						if($null -eq $CreatedSecret) 
 						{
@@ -452,6 +466,7 @@ class CAAutomation : ADOSVTCommandBase
 					}
 				}
 
+				#Step 5: Update Function app settings (if applicable)
 				if ($updateAppSettings -eq $true)
 				{
 					#Get function app resource from RG to get existing app settings details
