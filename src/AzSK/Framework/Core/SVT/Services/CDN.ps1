@@ -31,7 +31,7 @@ class CDN: AzSVTBase
 			{
 				$controlResult.AddMessage([VerificationResult]::Passed,
 										[MessageData]::new("All CDN endpoints in the CDN profile [" + $this.ResourceContext.ResourceName + "] are using HTTPS protocol only - ", ($cdnEndpoints | Select-Object -Property Name, HostName, OriginHostHeader, IsHttpAllowed, IsHttpsAllowed))); 
-			}elseif($null -ne $onlyHttpAllowedEndpointList -and ($httpAllowedEndpointList | Measure-Object).Count -eq 0){
+			}elseif($null -ne $onlyHttpAllowedEndpointList -and ($httpAllowedEndpointList | Measure-Object).Count -gt 0){
 				$httpEndpointObjList=@()
 				$httpAllowedEndpointList| Foreach-Object {
 					$httpEndpointObj = New-Object -TypeName PSObject
