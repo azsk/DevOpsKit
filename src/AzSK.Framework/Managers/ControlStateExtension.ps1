@@ -579,7 +579,7 @@ class ControlStateExtension
 					$TrimPeriodExceeded = $false
 					$event = "" | Select-Object Name, Properties, Metrics
 					$properties = @{"SubscriptionId"= $this.SubscriptionContext.SubscriptionId;"UniquRunIdentifier"=$this.UniqueRunId;"LastTrimDoneOn"=$LastBackup.LastModified;}
-					$event.Name = "Trim attestation flow aborted as period to trim has not exceeded"
+					$event.Name = "Attestation trimming skipped(mininmum interval to trim has not exceeded)."
 					$event.Properties = $properties
 					$trimAttestationEvents.Add($event) | Out-Null
 					return $trimAttestationEvents
@@ -599,7 +599,7 @@ class ControlStateExtension
 				$this.AttestationBackupSuccess = $false;
 				$event = "" | Select-Object Name, Properties, Metrics
 				$properties = @{"SubscriptionId"= $this.SubscriptionContext.SubscriptionId;"UniquRunIdentifier"=$this.UniqueRunId;}
-				$event.Name = "Trim attestation flow aborted as backup was not successful."
+				$event.Name = "Attestation trimming aborted(backup was not successful)."
 				$event.Properties = $properties
 				$trimAttestationEvents.Add($event) | Out-Null
 				return $trimAttestationEvents
@@ -639,7 +639,7 @@ class ControlStateExtension
 				}
 				$event = "" | Select-Object Name, Properties, Metrics
 				$properties = @{"SubscriptionId"= $this.SubscriptionContext.SubscriptionId;"UniquRunIdentifier"=$this.UniqueRunId;"NumberOfResourcesTrimmed"=$deletedResourcesWithAttestationCount;}
-				$event.Name = "Trim attestation flow completed"
+				$event.Name = "Attestation trimming completed"
 				$event.Properties = $properties
 				$trimAttestationEvents.Add($event) | Out-Null
 
@@ -655,7 +655,7 @@ class ControlStateExtension
 		{
 			$event = "" | Select-Object Name, Properties, Metrics
 			$properties = @{"SubscriptionId"= $this.SubscriptionContext.SubscriptionId;"UniquRunIdentifier"=$this.UniqueRunId;}
-			$event.Name = "Trim attestation flow aborted" + $_;
+			$event.Name = "Attestation trimming aborted (" + $_ +").";
 			$event.Properties = $properties
 			$trimAttestationEvents.Add($event) | Out-Null
 			return $trimAttestationEvents
