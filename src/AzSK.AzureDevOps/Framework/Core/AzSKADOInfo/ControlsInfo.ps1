@@ -26,7 +26,6 @@ class ControlsInfo: CommandBase
 		$this.ControlSeverity = $controlSeverity;
 		$this.ControlIdContains = $controlIdContains
 
-		Write-Host -ForegroundColor Yellow 'TBD/TODO - review Tags/FilterTags params.'
 		if(-not [string]::IsNullOrEmpty($controlIdString))
         {
 			$this.ControlIds = $this.ConvertToStringArray($controlIdString);

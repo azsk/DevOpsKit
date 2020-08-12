@@ -12,17 +12,17 @@ function Get-AzSKADOInfo
 	.PARAMETER InfoType
 		InfoType for which type of information required by user.
 	.PARAMETER ResourceTypeName
-		Friendly name of resource type. e.g.: KeyVault. Run command 'Get-AzSKSupportedResourceTypes' to get the list of supported values.
+		Friendly name of resource type. e.g.: Build, Release, etc. (combo types e.g., Build_Release are not currently supported).
 	.PARAMETER DoNotOpenOutputFolder
 		Switch to specify whether to open output folder containing all security evaluation report or not.
 	.PARAMETER UseBaselineControls
 		This switch would scan only for baseline controls defined at org level
 	.PARAMETER ControlIds
-		Comma separated control ids to filter the security controls. e.g.: Azure_Subscription_AuthZ_Limit_Admin_Owner_Count, Azure_Storage_DP_Encrypt_At_Rest_Blob etc.
+		Comma-separated control ids to filter the security controls. e.g.: AzureDevOps_Release_AuthZ_Disable_Inherited_Permissions, AzureDevOps_ServiceConnection_AuthZ_Dont_Grant_All_Pipelines_Access
 	.PARAMETER ControlSeverity
-			Select one of the control severity (Critical, High, Low, Medium)
+		Select one of the control severity (Critical, High, Low, Medium)
 	.PARAMETER ControlIdContains
-			The list of control ids for which fixes should be applied.
+		The list of control ids for which fixes should be applied.
 
 	.NOTES
 	This command helps the application team to verify whether their Azure resources are compliant with the security guidance or not 
