@@ -545,10 +545,8 @@ class ControlStateExtension
 			return $trimAttestationEvents;
 		}
 		try 
-		{
-			$TrimPeriodExceeded = $false;	
-			$ControlSettings = [ConfigurationManager]::LoadServerConfigFile("ControlSettings.json");
-			
+		{	
+			$ControlSettings = [ConfigurationManager]::LoadServerConfigFile("ControlSettings.json");	
 			$ContainerName = [Constants]::AttestationDataContainerName;
 			
 			#return if you don't have the required state attestation configuration during the runtime evaluation
@@ -559,31 +557,39 @@ class ControlStateExtension
 				return $trimAttestationEvents ;
 			}
 			
+			#check for reader access at subscription level 
+			$HasReaderAccessForSub = $false;
+			$HasReaderAccessForSub = $this.CheckSubscriptionScopeReaderAccess()	
+			
 			#check for write permission to create backup file and rewrite trimmed attestation json 
-			if($this.HasControlStateWritePermissions -le 0) 
+			#check for reader access on subscription 
+			if($this.HasControlStateWritePermissions -le 0 -or !$HasReaderAccessForSub) 
 			{
 				return $trimAttestationEvents ;
-			}
+				$event = "" | Select-Object Name, Properties, Metrics
+				$properties = @{"SubscriptionId"= $this.SubscriptionContext.SubscriptionId;"UniquRunIdentifier"=$this.UniqueRunId;"HasAtetstationWritePermissions"= $this.HasControlStateWritePermissions;"HasReaderAccessForSub"=$HasReaderAccessForSub;}
+				$event.Name = "Attestation trimming aborted (insufficient permissions)."
+				$event.Properties = $properties
+				$trimAttestationEvents.Add($event) | Out-Null
+				return $trimAttestationEvents
+			}	
 			
 			$StorageAccount = $this.AzSKStorageAccount;
 			$IndexFileLocalTempPath= Join-Path $([Constants]::AzSKAppFolderPath) "Temp" | Join-Path -ChildPath $this.UniqueRunId | Join-Path -ChildPath "ServerControlState"| Join-Path -ChildPath $this.IndexerBlobName;
 					
 			# Check if trim has been performed within period specified
 			$PeriodToCheckForLastTrim = [DateTime]::Now.AddDays(-$ControlSettings.AttestationTrimIntervalDays.Days)
-			$BackUpFiles = Get-AzStorageBlob -Container $ContainerName -Context $StorageAccount.Context -Blob $this.BackupIndexerBlobPrefix | Where-Object { $_.LastModified -gt $PeriodToCheckForLastTrim} 
-			if ($null -ne $BackupFiles)
+			$BackUpFiles = Get-AzStorageBlob -Container $ContainerName -Context $StorageAccount.Context -Blob $this.BackupIndexerBlobPrefix 
+			$BackUpFilesWithinTrimInterval = $BackUpFiles | Where-Object { $_.LastModified -gt $PeriodToCheckForLastTrim} 
+			if ($null -ne $BackUpFilesWithinTrimInterval)
 			{
-				$LastBackup = $BackUpFiles | Sort-Object -Property LastModified -Descending|Select-Object -First 1 
-				if($LastBackup.LastModified -gt $PeriodToCheckForLastTrim)
-				{
-					$TrimPeriodExceeded = $false
-					$event = "" | Select-Object Name, Properties, Metrics
-					$properties = @{"SubscriptionId"= $this.SubscriptionContext.SubscriptionId;"UniquRunIdentifier"=$this.UniqueRunId;"LastTrimDoneOn"=$LastBackup.LastModified;}
-					$event.Name = "Attestation trimming skipped(mininmum interval to trim has not exceeded)."
-					$event.Properties = $properties
-					$trimAttestationEvents.Add($event) | Out-Null
-					return $trimAttestationEvents
-				}
+				$LastBackup = $BackUpFilesWithinTrimInterval | Sort-Object -Property LastModified -Descending|Select-Object -First 1 				
+				$event = "" | Select-Object Name, Properties, Metrics
+				$properties = @{"SubscriptionId"= $this.SubscriptionContext.SubscriptionId;"UniquRunIdentifier"=$this.UniqueRunId;"LastTrimDoneOn"=$LastBackup.LastModified;}
+				$event.Name = "Attestation trimming skipped (minimum interval to trim has not exceeded)."
+				$event.Properties = $properties
+				$trimAttestationEvents.Add($event) | Out-Null
+				return $trimAttestationEvents
 			}	
 			# Backup existing attestation json file with timestamp added
 			try
@@ -599,7 +605,7 @@ class ControlStateExtension
 				$this.AttestationBackupSuccess = $false;
 				$event = "" | Select-Object Name, Properties, Metrics
 				$properties = @{"SubscriptionId"= $this.SubscriptionContext.SubscriptionId;"UniquRunIdentifier"=$this.UniqueRunId;}
-				$event.Name = "Attestation trimming aborted(backup was not successful)."
+				$event.Name = "Attestation trimming aborted (backup was not successful)."
 				$event.Properties = $properties
 				$trimAttestationEvents.Add($event) | Out-Null
 				return $trimAttestationEvents
@@ -615,6 +621,7 @@ class ControlStateExtension
 
 				$AzSKScannableResourceIds= $AzSKScannableResources | Select-Object -ExpandProperty ResourceId
 
+				$resourcesWithAttestationCount = 0;
 				# Fetch current attestation 
 				$ControlStateIndexerObject = $this.ComputeControlStateIndexer();
 				$resourcesWithAttestation = $this.ControlStateIndexer |Select-Object -ExpandProperty ResourceId
@@ -622,11 +629,11 @@ class ControlStateExtension
 				$deletedResourcesWithAttestation = @();
 				$filteredIndexerObject= @();
 				$deletedResourcesWithAttestationCount = 0;
-
+				
 				# matching with 'resourceGroups' to avoid deleting attestattion for subscription level controls
 				$deletedResourcesWithAttestation = @($resourcesWithAttestation| Where-Object{$AzSKScannableResourceIds -notcontains $_ -and $_ -match 'resourceGroups'}) 
 				# if any deleted resources found , having attestation for those
-				if($null -ne $deletedResourcesWithAttestation)
+				if($deletedResourcesWithAttestation.Count -gt 0)
 				{		
 					$deletedResourcesWithAttestationCount = $deletedResourcesWithAttestation.Count;
 
@@ -636,16 +643,17 @@ class ControlStateExtension
 					[JsonHelper]::ConvertToJsonCustom($filteredIndexerObject) | Out-File $IndexFileLocalTempPath -Force
 					# Upload trimmed file to storage
 					[AzHelper]::UploadStorageBlobContent($IndexFileLocalTempPath, $this.IndexerBlobName , $ContainerName, $StorageAccount.Context)
+					$resourcesWithAttestationCount = $filteredIndexerObject.Count
 				}
 				$event = "" | Select-Object Name, Properties, Metrics
-				$properties = @{"SubscriptionId"= $this.SubscriptionContext.SubscriptionId;"UniquRunIdentifier"=$this.UniqueRunId;"NumberOfResourcesTrimmed"=$deletedResourcesWithAttestationCount;}
-				$event.Name = "Attestation trimming completed"
+				$properties = @{"SubscriptionId"= $this.SubscriptionContext.SubscriptionId;"UniquRunIdentifier"=$this.UniqueRunId;"NumberOfResourcesTrimmed"=$deletedResourcesWithAttestationCount;"NumberOfResourcesWithAttestation"=$resourcesWithAttestationCount;}
+				$event.Name = "Attestation trimming completed."
 				$event.Properties = $properties
 				$trimAttestationEvents.Add($event) | Out-Null
 
 				# Purge old backup files
 				$PurgeBackupAttestationFilesBefore = [DateTime]::Now.AddDays(-$ControlSettings.PurgeAttestationbackupAfterDays.Days);
-				$OldBackups = Get-AzStorageBlob -Container $ContainerName -Context $StorageAccount.Context -Blob "$($this.BackupIndexerBlobPrefix)" | Where-Object { $_.LastModified -lt $PurgeBackupAttestationFilesBefore} 
+				$OldBackups = $BackUpFiles| Where-Object { $_.LastModified -lt $PurgeBackupAttestationFilesBefore} 
 				if ($null -ne $OldBackups){	
 					$OldBackups| Remove-AzStorageBlob -Force -ErrorAction SilentlyContinue
 				}
@@ -821,5 +829,46 @@ class ControlStateExtension
 		{
 			return $true;
 		}
+	}
+	hidden [PSObject] GetRunAsConnection()
+	{
+		
+		$AutomationAccount=[Constants]::AutomationAccount
+		$AzSKRGName=[ConfigurationManager]::GetAzSKConfigData().AzSKRGName
+		$connectionAssetName=[Constants]::connectionAssetName
+		$connection = Get-AzAutomationConnection -AutomationAccountName  $AutomationAccount `
+			-Name  $connectionAssetName -ResourceGroupName `
+			$AzSKRGName -ErrorAction SilentlyContinue
+		if((Get-Member -InputObject $connection -Name FieldDefinitionValues -MemberType Properties) -and $connection.FieldDefinitionValues.ContainsKey("ApplicationId"))
+		{
+			 $connection = $connection|Select-Object Name,Description,ConnectionTypeName,FieldDefinitionValues
+			 return $connection
+		}
+		else
+		{
+			return $null
+		}
+	}
+	hidden [bool] CheckSubscriptionScopeReaderAccess()
+	{
+		#fetch logged in user/serviceprincipal
+		$rmContext = [ContextHelper]::GetCurrentRMContext();
+		if($rmContext.Account.Type -eq "ServicePrincipal")
+		{
+			$permissions = Get-AzRoleAssignment -serviceprincipalname $rmContext.Account.Id -Scope "/subscriptions/$($this.SubscriptionContext.SubscriptionId)" -RoleDefinitionName "Reader"
+		}
+		else
+		{
+			$permissions = Get-AzRoleAssignment -SignInName $rmContext.Account.Id -Scope "/subscriptions/$($this.SubscriptionContext.SubscriptionId)" -RoleDefinitionName "Reader"
+		}
+		if(($permissions|measure-object).count -gt 0)
+		{
+			return $true	
+		}
+		else
+		{
+			return $false
+		}
+	
 	}
 }
