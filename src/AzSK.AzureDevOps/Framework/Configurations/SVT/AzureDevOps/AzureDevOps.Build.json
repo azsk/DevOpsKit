@@ -125,6 +125,23 @@
       "Enabled": true
     },
     {
+      "ControlID": "AzureDevOps_Build_SI_Review_Settable_At_Queue_Time_URL",
+      "Description": "Pipeline variables marked settable at queue time should be carefully reviewed.",
+      "Id": "Build172",
+      "ControlSeverity": "High",
+      "Automated": "Yes",
+      "MethodName": "CheckSettableAtQueueTimeForURL",
+      "Rationale": "Pipeline variables not marked settable at queue time can only be changed by someone with elevated permissions. These variables (reasonably) used in ways that make code injection possible.",
+      "Recommendation": "To uncheck settable at queue time follow the steps given here: 1.Navigate to the build pipeline. 2. Open up the build pipeline. 3. Click on Edit 4. Select variables. 5. Uncheck settable at queue time. 6. Save the build pipeline",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Automated",
+        "SI"
+      ],
+      "Enabled": true
+    },
+    {
       "ControlID": "AzureDevOps_Build_SI_Check_External_Source_Self_Hosted_Build",
       "Description": "Building code from untrusted external sources is effectively allowing external parties to execute arbitrary code on your computer.",
       "Id": "Build180",
