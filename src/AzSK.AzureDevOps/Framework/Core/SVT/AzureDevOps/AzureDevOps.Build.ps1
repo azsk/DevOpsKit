@@ -112,12 +112,12 @@ class Build: ADOSVTBase
                 }
                 else 
                 {
-                    $controlResult.AddMessage([VerificationResult]::Passed, "Regular expressions for detecting URLs in pipeline variables are not defined in your organization.");    
+                    $controlResult.AddMessage([VerificationResult]::Manual, "Regular expressions for detecting credentials in pipeline variables are not defined in your organization.");    
                 }
             }
             else 
             {
-                $controlResult.AddMessage([VerificationResult]::Passed, "No credentials found in build definition.");
+                $controlResult.AddMessage([VerificationResult]::Passed, "No variables found in build definition.");
             }
         }
         catch {
@@ -347,7 +347,7 @@ class Build: ADOSVTBase
                 }
                 else 
                 {
-                    $controlResult.AddMessage([VerificationResult]::Passed, "Regular expressions for detecting URLs in pipeline variables are not defined in your organization.");    
+                    $controlResult.AddMessage([VerificationResult]::Manual, "Regular expressions for detecting URLs in pipeline variables are not defined in your organization.");    
                 }
             }
             else 
