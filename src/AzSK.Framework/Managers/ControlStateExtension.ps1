@@ -830,25 +830,6 @@ class ControlStateExtension
 			return $true;
 		}
 	}
-	hidden [PSObject] GetRunAsConnection()
-	{
-		
-		$AutomationAccount=[Constants]::AutomationAccount
-		$AzSKRGName=[ConfigurationManager]::GetAzSKConfigData().AzSKRGName
-		$connectionAssetName=[Constants]::connectionAssetName
-		$connection = Get-AzAutomationConnection -AutomationAccountName  $AutomationAccount `
-			-Name  $connectionAssetName -ResourceGroupName `
-			$AzSKRGName -ErrorAction SilentlyContinue
-		if((Get-Member -InputObject $connection -Name FieldDefinitionValues -MemberType Properties) -and $connection.FieldDefinitionValues.ContainsKey("ApplicationId"))
-		{
-			 $connection = $connection|Select-Object Name,Description,ConnectionTypeName,FieldDefinitionValues
-			 return $connection
-		}
-		else
-		{
-			return $null
-		}
-	}
 	hidden [bool] CheckSubscriptionScopeReaderAccess()
 	{
 		#fetch logged in user/serviceprincipal
