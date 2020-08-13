@@ -65,9 +65,11 @@ class SubscriptionSecurityStatus: AzSVTCommandBase
 					{
 						$secContacts = New-Object psobject -Property @{
 							Phone = $svtObject.SecurityCenterInstance.ContactPhoneNumber;
-							Email = $svtObject.SecurityCenterInstance.ContactEmail;
-							AlertNotifications = $svtObject.SecurityCenterInstance.AlertNotifStatus;
-							AlertsToAdmins = $svtObject.SecurityCenterInstance.AlertAdminStatus
+							Emails = $svtObject.SecurityCenterInstance.ContactEmail;
+							AlertNotificationsState = $svtObject.SecurityCenterInstance.AlertNotifStatus;
+							AlertNotificationsMinimalSeverity = $svtObject.SecurityCenterInstance.AlertNotifSev;
+							NotificationsByRoleState = $svtObject.SecurityCenterInstance.NotificationRolesStatus;
+							NotificationsByRole = $svtObject.SecurityCenterInstance.NotificationRoles;
 						}
 						[ASCTelemetryHelper]::ascData = [ASCTelemetryHelper]::new($svtObject.SubscriptionContext.SubscriptionId, $svtObject.SecurityCenterInstance.ASCTier, $svtObject.SecurityCenterInstance.AutoProvisioningSettings, $secContacts)
 						[RemoteApiHelper]::PostASCTelemetry([ASCTelemetryHelper]::ascData)

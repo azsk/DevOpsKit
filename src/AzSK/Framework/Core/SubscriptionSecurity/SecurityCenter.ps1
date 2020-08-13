@@ -10,7 +10,9 @@ class SecurityCenter: AzSKRoot
 	[string] $ContactPhoneNumber;
 	[string] $ContactEmail;
 	[string] $AlertNotifStatus;
-	[string] $AlertAdminStatus;
+	[string] $AlertNotifSev;
+	[string] $NotificationRolesStatus;
+	[string] $NotificationRoles;
 	[string] $AutoProvisioningSettings = "";
 	[string] $ASCTier = "";
 	[string] $VMASCTier = "";
@@ -226,9 +228,13 @@ class SecurityCenter: AzSKRoot
 				-and [Helpers]::CheckMember($response,"properties.alertNotifications.state") -and -not [string]::IsNullOrWhiteSpace($response.properties.alertNotifications.state))
 			
 			{
+				$this.ContactEmail = $response.properties.emails
+				$this.ContactPhoneNumber = $response.properties.phone
 				#checking if alerts are configured as expected i.e. (state = ON and Severity = "Medium or Low")
 				if ([Helpers]::CheckMember($secContactObject,"properties.alertNotifications.state",$false) -and [Helpers]::CheckMember($secContactObject,"properties.alertNotifications.minimalSeverity",$false))
 				{
+					$this.AlertNotifStatus = $response.properties.alertNotifications.state
+					$this.AlertNotifSev = $response.properties.alertNotifications.minimalSeverity
 					$this.alertNotificationsstate = $response.properties.alertNotifications.state -eq $secContactObject.properties.alertNotifications.state;
 					$this.alertNotificationsminimalSeverity = $ControlSettings.SeverityForSecContactAlerts -contains $response.properties.alertNotifications.minimalSeverity;
 					if ( -not $this.alertNotificationsminimalSeverity)
@@ -240,6 +246,8 @@ class SecurityCenter: AzSKRoot
 				#checking if roles for notification are configured as expected i.e. (state = ON and MinimumRoles = "Owner, ServiceAdmin")
 				if ([Helpers]::CheckMember($secContactObject,"properties.notificationsByRole.state",$false) -and [Helpers]::CheckMember($secContactObject,"properties.notificationsByRole.roles",$false))
 				{
+					$this.NotificationRolesStatus = $response.properties.notificationsByRole.state
+					$this.NotificationRoles = $response.properties.notificationsByRole.roles
 					$this.notificationsByRolestate = $response.properties.notificationsByRole.state -eq $secContactObject.properties.notificationsByRole.state
 					$this.notificationsByRole = -not @($secContactObject.properties.notificationsByRole.roles|
 															Where-Object {$response.properties.notificationsByRole.roles -notcontains $_}| Select-Object -first 1).Count
