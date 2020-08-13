@@ -108,7 +108,7 @@ class ServiceConnection: ADOSVTBase
             }
         }
         else {
-            $controlResult.AddMessage([VerificationResult]::Passed);
+            $controlResult.AddMessage([VerificationResult]::Passed,"");
         }
         
         return $controlResult;
