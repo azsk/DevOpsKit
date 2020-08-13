@@ -133,7 +133,7 @@ class UsageTelemetry: ListenerBase {
 				if($feature -eq 'Project'){
 					[UsageTelemetry]::PushProjectTelemetry($currentInstance, $SVTEventContexts[0])
 				}else{
-
+					#do nothing. Currently, we do not support extracting unique project info (masked) from other feature types.
 				}
 			}
 			catch
