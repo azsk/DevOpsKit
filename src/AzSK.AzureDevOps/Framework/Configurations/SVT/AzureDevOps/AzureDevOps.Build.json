@@ -108,7 +108,7 @@
       "Enabled": true
     },
     {
-      "ControlID": "AzureDevOps_Build_SI_Review_Settable_At_Queue_Time",
+      "ControlID": "AzureDevOps_Build_SI_Review_Variables_Settable_At_Queue_Time",
       "Description": "Pipeline variables marked settable at queue time should be carefully reviewed.",
       "Id": "Build170",
       "ControlSeverity": "High",
@@ -125,7 +125,7 @@
       "Enabled": true
     },
     {
-      "ControlID": "AzureDevOps_Build_SI_Review_Settable_At_Queue_Time_URL",
+      "ControlID": "AzureDevOps_Build_SI_Review_URL_Variables_Settable_At_Queue_Time",
       "Description": "Pipeline variables marked settable at queue time should be carefully reviewed.",
       "Id": "Build172",
       "ControlSeverity": "High",

@@ -175,8 +175,7 @@
     "MaxPCAMembersPermissible": 5,
     "MinPCAMembersPermissible": 2,
     "GroupsToCheckForSCAltMembers": [
-      "Project Collection Administrators",
-      "Project Collection Service Accounts"
+      "Project Collection Administrators"
     ]
   },
   "Project": {
@@ -230,6 +229,12 @@
         "^(?=.*\\d)(?=.*[a-z])(?=.*[A-Z]).{4,8}$",
         "(?=^.{6,10}$)(?=.*\\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&amp;*()_+}{&quot;:;'?/&gt;.&lt;,])(?!.*\\s).*$",
         "(?=^.{7,20}$)(?=.*\\d)(?=.*[a-zA-Z])(?!.*\\s)[0-9a-zA-Z*$-+?_&=!%{}/'.]*$"
+      ]
+    },
+    {
+      "RegexCode": "URLs",
+      "RegexList": [
+        "(www.|http:|https:)+[^\\s]+[\\w]"
       ]
     }
   ],

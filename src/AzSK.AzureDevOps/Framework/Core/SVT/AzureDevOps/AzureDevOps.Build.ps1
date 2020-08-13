@@ -79,18 +79,18 @@ class Build: ADOSVTBase
         }
         else {
           try {      
-            if([Helpers]::CheckMember($this.BuildObj,"variables")) 
+            if([Helpers]::CheckMember($this.BuildObj[0],"variables")) 
             {
                 $varList = @();
                 $noOfCredFound = 0;     
                 $patterns = $this.ControlSettings.Patterns | where {$_.RegexCode -eq "Build"} | Select-Object -Property RegexList;
     
-                Get-Member -InputObject $this.BuildObj.variables -MemberType Properties | ForEach-Object {
-                if([Helpers]::CheckMember($this.BuildObj.variables.$($_.Name),"value") -and  (-not [Helpers]::CheckMember($this.BuildObj.variables.$($_.Name),"isSecret")))
+                Get-Member -InputObject $this.BuildObj[0].variables -MemberType Properties | ForEach-Object {
+                if([Helpers]::CheckMember($this.BuildObj[0].variables.$($_.Name),"value") -and  (-not [Helpers]::CheckMember($this.BuildObj[0].variables.$($_.Name),"isSecret")))
                 {
                    $propertyName = $_.Name
                   for ($i = 0; $i -lt $patterns.RegexList.Count; $i++) {
-                    if ($this.BuildObj.variables.$($propertyName).value -match $patterns.RegexList[$i]) { 
+                    if ($this.BuildObj[0].variables.$($propertyName).value -match $patterns.RegexList[$i]) { 
                         $noOfCredFound +=1
                         $varList += "$propertyName ";   
                         break  
@@ -271,13 +271,13 @@ class Build: ADOSVTBase
 	{
       try { 
         
-        if([Helpers]::CheckMember($this.BuildObj,"variables")) 
+        if([Helpers]::CheckMember($this.BuildObj[0],"variables")) 
         {
            $setablevar =@();
            $nonsetablevar =@();
           
-           Get-Member -InputObject $this.BuildObj.variables -MemberType Properties | ForEach-Object {
-            if([Helpers]::CheckMember($this.BuildObj.variables.$($_.Name),"allowOverride") )
+           Get-Member -InputObject $this.BuildObj[0].variables -MemberType Properties | ForEach-Object {
+            if([Helpers]::CheckMember($this.BuildObj[0].variables.$($_.Name),"allowOverride") )
             {
                 $setablevar +=  $_.Name;
             }
@@ -308,36 +308,50 @@ class Build: ADOSVTBase
     {
         try 
         { 
-            if ([Helpers]::CheckMember($this.BuildObj, "variables")) 
+            if ([Helpers]::CheckMember($this.BuildObj[0], "variables")) 
             {
-                $setablevar = @();
-                Get-Member -InputObject $this.BuildObj.variables -MemberType Properties | ForEach-Object {
-                    if ([Helpers]::CheckMember($this.BuildObj.variables.$($_.Name), "allowOverride") )
-                    {
-                        $varName = $_.Name;
-                        $varValue = $this.BuildObj.variables."$varName".value;
-                        if (($varValue -match "(www.|http:|https:)+[^\s]+[\w]")) {
-                            $setablevar += @( [pscustomobject] @{ Name = $varName; Value = $varValue } )
+                $settableURLVars = @();
+                $count = 0;
+                $patterns = $this.ControlSettings.Patterns | where {$_.RegexCode -eq "URLs"} | Select-Object -Property RegexList;
+
+                if(($patterns | Measure-Object).Count -gt 0){
+                
+                    Get-Member -InputObject $this.BuildObj[0].variables -MemberType Properties | ForEach-Object {
+                        if ([Helpers]::CheckMember($this.BuildObj[0].variables.$($_.Name), "allowOverride") )
+                        {
+                            $varName = $_.Name;
+                            $varValue = $this.BuildObj[0].variables.$($varName).value;
+                            for ($i = 0; $i -lt $patterns.RegexList.Count; $i++) {
+                                if ($varValue -match $patterns.RegexList[$i]) { 
+                                    $count +=1
+                                    $settableURLVars += @( [PSCustomObject] @{ Name = $varName; Value = $varValue } )  
+                                    break  
+                                }
+                            }
                         }
+                    } 
+                    if ($count -gt 0) 
+                    {
+                        $controlResult.AddMessage([VerificationResult]::Failed, "Found variables are settable at queue time containing value as URL : ", $settableURLVars);
+                        $controlResult.SetStateData("List of variables settable at queue time containing value as URL: ", $settableURLVars);
                     }
-                } 
-                if (($setablevar | Measure-Object).Count -gt 0) 
-                {
-                    $controlResult.AddMessage([VerificationResult]::Failed, "The below variables are settable at queue time.", $setablevar);
-                    $controlResult.SetStateData("Variables settable at queue time: ", $setablevar);
+                    else {
+                        $controlResult.AddMessage([VerificationResult]::Passed, "No variables found in the build pipeline that are settable at queue time and containing value as URL.");   
+                    }
                 }
-                else {
-                    $controlResult.AddMessage([VerificationResult]::Passed, "No variables are found in the build pipeline.");   
+                else 
+                {
+                    $controlResult.AddMessage([VerificationResult]::Passed, "Regular expressions for detecting URLs in pipeline variables are not defined in your organization.");    
                 }
             }
             else 
             {
-                $controlResult.AddMessage([VerificationResult]::Passed, "No variables are found in the build pipeline.");   
+                $controlResult.AddMessage([VerificationResult]::Passed, "No variables found in the build pipeline.");   
             }
         }  
         catch 
         {
-            $controlResult.AddMessage([VerificationResult]::Manual, "Unable to fetch build pipeline variables.");   
+            $controlResult.AddMessage([VerificationResult]::Manual, "Could not fetch variables of the build pipeline.");   
         }
         return $controlResult;
     }
