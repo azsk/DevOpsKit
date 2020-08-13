@@ -46,6 +46,7 @@ class WriteDataFile: FileOutputBase
             $currentInstance = [WriteDataFile]::GetInstance();
             try 
             {
+                if (!$currentInstance.IsSecurityEvaluationJsonFileRequired()) { return; };
                 $currentInstance.WriteToJson($Event.SourceArgs);
                 $currentInstance.FilePath = "";
             }
@@ -71,5 +72,15 @@ class WriteDataFile: FileOutputBase
 				#[JsonHelper]::ConvertToPson($arguments) | Out-File $($this.FilePath.Replace(".json", ".pson"))
 			}
 		}
+    }
+
+    [bool] IsSecurityEvaluationJsonFileRequired()
+    {
+        $generateSecurityEvaluationJsonFile = $false
+        $ControlSettings = [ConfigurationManager]::LoadServerConfigFile("ControlSettings.json");
+        if([Helpers]::CheckMember($ControlSettings, "generateSecurityEvaluationJsonFile") -and $ControlSettings -eq $true){
+            $generateSecurityEvaluationJsonFile = $true
+        }
+        return $generateSecurityEvaluationJsonFile;
     }
 }

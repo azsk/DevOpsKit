@@ -222,5 +222,6 @@
     "MaxKeyWordsToQueryForBugClose": 30,
     "AutoCloseProjectBug": true,
     "AutoCloseOrgBug": true
-  }
+  },
+  "generateSecurityEvaluationJsonFile" : false
 }
