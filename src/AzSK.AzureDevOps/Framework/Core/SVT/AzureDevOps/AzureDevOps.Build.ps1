@@ -84,32 +84,39 @@ class Build: ADOSVTBase
                 $varList = @();
                 $noOfCredFound = 0;     
                 $patterns = $this.ControlSettings.Patterns | where {$_.RegexCode -eq "Build"} | Select-Object -Property RegexList;
-    
-                Get-Member -InputObject $this.BuildObj[0].variables -MemberType Properties | ForEach-Object {
-                if([Helpers]::CheckMember($this.BuildObj[0].variables.$($_.Name),"value") -and  (-not [Helpers]::CheckMember($this.BuildObj[0].variables.$($_.Name),"isSecret")))
-                {
-                   $propertyName = $_.Name
-                  for ($i = 0; $i -lt $patterns.RegexList.Count; $i++) {
-                    if ($this.BuildObj[0].variables.$($propertyName).value -match $patterns.RegexList[$i]) { 
-                        $noOfCredFound +=1
-                        $varList += "$propertyName ";   
-                        break  
+                if(($patterns | Measure-Object).Count -gt 0)
+                {                
+                    Get-Member -InputObject $this.BuildObj[0].variables -MemberType Properties | ForEach-Object {
+                    if([Helpers]::CheckMember($this.BuildObj[0].variables.$($_.Name),"value") -and  (-not [Helpers]::CheckMember($this.BuildObj[0].variables.$($_.Name),"isSecret")))
+                    {
+                       $propertyName = $_.Name
+                      for ($i = 0; $i -lt $patterns.RegexList.Count; $i++) {
+                        if ($this.BuildObj[0].variables.$($propertyName).value -match $patterns.RegexList[$i]) { 
+                            $noOfCredFound +=1
+                            $varList += "$propertyName ";   
+                            break  
+                            }
                         }
+                    } 
                     }
-                } 
+                    if($noOfCredFound -gt 0)
+                    {
+                        $varList = $varList | select -Unique
+                        $controlResult.AddMessage([VerificationResult]::Failed,
+                        "Found credentials in build definition. Variables name: $varList" );
+                    }
+                    else {
+                        $controlResult.AddMessage([VerificationResult]::Passed, "No credentials found in build definition.");
+                    }
+                    $patterns = $null;
                 }
-                if($noOfCredFound -gt 0)
+                else 
                 {
-                    $varList = $varList | select -Unique
-                    $controlResult.AddMessage([VerificationResult]::Failed,
-                    "Found credentials in build definition. Variables name: $varList" );
+                    $controlResult.AddMessage([VerificationResult]::Passed, "Regular expressions for detecting URLs in pipeline variables are not defined in your organization.");    
                 }
-                else {
-                    $controlResult.AddMessage([VerificationResult]::Passed, "No credentials found in build definition.");
-                }
-                $patterns = $null;
             }
-            else {
+            else 
+            {
                 $controlResult.AddMessage([VerificationResult]::Passed, "No credentials found in build definition.");
             }
         }
@@ -314,8 +321,7 @@ class Build: ADOSVTBase
                 $count = 0;
                 $patterns = $this.ControlSettings.Patterns | where {$_.RegexCode -eq "URLs"} | Select-Object -Property RegexList;
 
-                if(($patterns | Measure-Object).Count -gt 0){
-                
+                if(($patterns | Measure-Object).Count -gt 0){                
                     Get-Member -InputObject $this.BuildObj[0].variables -MemberType Properties | ForEach-Object {
                         if ([Helpers]::CheckMember($this.BuildObj[0].variables.$($_.Name), "allowOverride") )
                         {

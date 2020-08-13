@@ -92,30 +92,36 @@ class Release: ADOSVTBase
                     $varList = @();
                     $noOfCredFound = 0;     
                     $patterns = $this.ControlSettings.Patterns | where {$_.RegexCode -eq "Release"} | Select-Object -Property RegexList;
-                            
-                    Get-Member -InputObject $this.ReleaseObj.variables -MemberType Properties | ForEach-Object {
-                    if([Helpers]::CheckMember($this.ReleaseObj.variables.$($_.Name),"value") -and  (-not [Helpers]::CheckMember($this.ReleaseObj.variables.$($_.Name),"isSecret")))
-                    {
-                       $propertyName = $_.Name
-                      for ($i = 0; $i -lt $patterns.RegexList.Count; $i++) {
-                        if ($this.ReleaseObj.variables.$($propertyName).value -match $patterns.RegexList[$i]) { 
-                            $noOfCredFound +=1
-                            $varList += "$propertyName ";   
-                            break  
+                    if(($patterns | Measure-Object).Count -gt 0)
+                    {        
+                        Get-Member -InputObject $this.ReleaseObj.variables -MemberType Properties | ForEach-Object {
+                        if([Helpers]::CheckMember($this.ReleaseObj.variables.$($_.Name),"value") -and  (-not [Helpers]::CheckMember($this.ReleaseObj.variables.$($_.Name),"isSecret")))
+                        {
+                           $propertyName = $_.Name
+                          for ($i = 0; $i -lt $patterns.RegexList.Count; $i++) {
+                            if ($this.ReleaseObj.variables.$($propertyName).value -match $patterns.RegexList[$i]) { 
+                                $noOfCredFound +=1
+                                $varList += "$propertyName ";   
+                                break  
+                                }
                             }
+                        } 
                         }
-                    } 
+                        if($noOfCredFound -gt 0)
+                        {
+                            $varList = $varList | select -Unique
+                            $controlResult.AddMessage([VerificationResult]::Failed,
+                            "Found credentials in release definition. Variables name: $varList" );
+                        }
+                        else {
+                            $controlResult.AddMessage([VerificationResult]::Passed, "No credentials found in release definition.");
+                        }
+                        $patterns = $null;
                     }
-                    if($noOfCredFound -gt 0)
-                    {
-                        $varList = $varList | select -Unique
-                        $controlResult.AddMessage([VerificationResult]::Failed,
-                        "Found credentials in release definition. Variables name: $varList" );
-                    }
-                    else {
-                        $controlResult.AddMessage([VerificationResult]::Passed, "No credentials found in release definition.");
-                    }
-                    $patterns = $null;
+                }
+                else 
+                {
+                    $controlResult.AddMessage([VerificationResult]::Passed, "Regular expressions for detecting URLs in pipeline variables are not defined in your organization.");    
                 }
                 else {
                     $controlResult.AddMessage([VerificationResult]::Passed, "No credentials found in release definition.");

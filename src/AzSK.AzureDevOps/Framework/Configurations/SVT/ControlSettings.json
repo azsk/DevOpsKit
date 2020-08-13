@@ -164,7 +164,7 @@
   "AgentPool": {
     "AgentPoolHistoryPeriodInDays": 180
   },
-  "RegexToMatchForSCAlt": "^((?!sc-).)*$",
+  "AlernateAccountRegularExpressionForOrg": "^SC-.*@.*microsoft.com$",
   "Organization": {
     "InActiveUserActivityLogsPeriodInDays": 90,
     "TopInActiveUserCount": 500,

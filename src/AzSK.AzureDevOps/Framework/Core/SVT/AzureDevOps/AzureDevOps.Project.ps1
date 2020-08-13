@@ -336,53 +336,69 @@ class Project: ADOSVTBase
     {
         try 
         {
-            #api call to get descriptor which used to get grops members in other api call.
-            $url = 'https://dev.azure.com/{0}/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1' -f $($this.SubscriptionContext.SubscriptionName);
-            $inputbody = '{"contributionIds":["ms.vss-admin-web.org-admin-groups-data-provider"],"dataProviderContext":{"properties":{"sourcePage":{"url":"","routeId":"ms.vss-admin-web.project-admin-hub-route","routeValues":{"project":"","adminPivot":"permissions","controller":"ContributedPage","action":"Execute"}}}}}' | ConvertFrom-Json
-            $inputbody.dataProviderContext.properties.sourcePage.url = "https://dev.azure.com/$($this.SubscriptionContext.SubscriptionName)/$($this.ResourceContext.ResourceName)/_settings/permissions";
-            $inputbody.dataProviderContext.properties.sourcePage.routeValues.Project = $this.ResourceContext.ResourceName;
-
-            $response = [WebRequestHelper]::InvokePostWebRequest($url, $inputbody); 
-
             $adminGroupNames = $this.ControlSettings.Project.GroupsToCheckForSCAltMembers;
-            if ($response -and [Helpers]::CheckMember($response[0], "dataProviders") -and $response[0].dataProviders."ms.vss-admin-web.org-admin-groups-data-provider") 
+            if (($adminGroupNames | Measure-Object).Count -gt 0) 
             {
-                $adminGroups = @();    
-                $adminGroups += $response.dataProviders."ms.vss-admin-web.org-admin-groups-data-provider".identities | where { $_.displayName -in $adminGroupNames }
-                
-                if (($adminGroups | Measure-Object).Count -gt 0) {
-                    [AdministratorHelper]::AllPAMembers = @();
-                    for ($i = 0; $i -lt $adminGroups.Count; $i++) {
-                        [AdministratorHelper]::FindPAMembers($adminGroups[$i].descriptor, $this.SubscriptionContext.SubscriptionName, $this.ResourceContext.ResourceName)
-                    }
-                    $allAdminMembers = @();
-                    $allAdminMembers += [AdministratorHelper]::AllPAMembers
-                    if (($allAdminMembers | Measure-Object).Count -gt 0) {
-                        $matchToSCAlt = $this.ControlSettings.RegexToMatchForSCAlt
-                        $nonSCMembers = @();
-                        $nonSCMembers += $allAdminMembers | Where-Object { $_.mailAddress -match $matchToSCAlt }  #(sc|SC)-\w*@\w*.com|COM
-                        if (($nonSCMembers | Measure-Object).Count -gt 0) {
-                            $nonSCMembers = $nonSCMembers | Select-Object displayName, mailAddress
-                            $stateData = @();
-                            $stateData += $nonSCMembers
-                            $controlResult.AddMessage([VerificationResult]::Verify, "Review the members having admin privileges: ", $stateData); 
-                            $controlResult.SetStateData("Members having admin privileges: ", $stateData); 
+                #api call to get descriptor which used to get grops members in other api call.
+                $url = 'https://dev.azure.com/{0}/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1' -f $($this.SubscriptionContext.SubscriptionName);
+                $inputbody = '{"contributionIds":["ms.vss-admin-web.org-admin-groups-data-provider"],"dataProviderContext":{"properties":{"sourcePage":{"url":"","routeId":"ms.vss-admin-web.project-admin-hub-route","routeValues":{"project":"","adminPivot":"permissions","controller":"ContributedPage","action":"Execute"}}}}}' | ConvertFrom-Json
+                $inputbody.dataProviderContext.properties.sourcePage.url = "https://dev.azure.com/$($this.SubscriptionContext.SubscriptionName)/$($this.ResourceContext.ResourceName)/_settings/permissions";
+                $inputbody.dataProviderContext.properties.sourcePage.routeValues.Project = $this.ResourceContext.ResourceName;
+    
+                $response = [WebRequestHelper]::InvokePostWebRequest($url, $inputbody); 
+    
+                if ($response -and [Helpers]::CheckMember($response[0], "dataProviders") -and $response[0].dataProviders."ms.vss-admin-web.org-admin-groups-data-provider") 
+                {
+                    $adminGroups = @();    
+                    $adminGroups += $response.dataProviders."ms.vss-admin-web.org-admin-groups-data-provider".identities | where { $_.displayName -in $adminGroupNames }
+                    
+                    if (($adminGroups | Measure-Object).Count -gt 0) 
+                    {
+                        [AdministratorHelper]::AllPAMembers = @();
+                        for ($i = 0; $i -lt $adminGroups.Count; $i++) 
+                        {
+                            [AdministratorHelper]::FindPAMembers($adminGroups[$i].descriptor, $this.SubscriptionContext.SubscriptionName, $this.ResourceContext.ResourceName)
+                        }
+                        $allAdminMembers = @();
+                        $allAdminMembers += [AdministratorHelper]::AllPAMembers
+                        if (($allAdminMembers | Measure-Object).Count -gt 0) 
+                        {
+                            $matchToSCAlt = $this.ControlSettings.AlernateAccountRegularExpressionForOrg
+                            if (-not [string]::IsNullOrEmpty($matchToSCAlt)) 
+                            {
+                                $nonSCMembers = @();
+                                $nonSCMembers += $allAdminMembers | Where-Object { $_.mailAddress -notmatch $matchToSCAlt }  #(sc|SC)-\w*@\w*.com|COM
+                                if (($nonSCMembers | Measure-Object).Count -gt 0) {
+                                    $nonSCMembers = $nonSCMembers | Select-Object displayName, mailAddress
+                                    $stateData = @();
+                                    $stateData += $nonSCMembers
+                                    $controlResult.AddMessage([VerificationResult]::Verify, "Review the members having admin privileges: ", $stateData); 
+                                    $controlResult.SetStateData("Members having admin privileges: ", $stateData); 
+                                }
+                                else {
+                                    $controlResult.AddMessage([VerificationResult]::Passed, "Admin groups does not have any members.");
+                                }
+                            }
+                            else {
+                                $controlResult.AddMessage([VerificationResult]::Manual, "Regular expressions for detecting sc-alt account is not defined in the organization.");
+                            }
                         }
                         else {
+                            #count is 0 then there is no members added in the admin groups
                             $controlResult.AddMessage([VerificationResult]::Passed, "Admin groups does not have any members.");
                         }
                     }
                     else {
-                        #count is 0 then there is no members added in the admin groups
-                        $controlResult.AddMessage([VerificationResult]::Passed, "Admin groups does not have any members.");
+                        $controlResult.AddMessage([VerificationResult]::Error, "Could not find the list of groups in the organization.");
                     }
                 }
                 else {
                     $controlResult.AddMessage([VerificationResult]::Error, "Could not find the list of groups in the organization.");
                 }
             }
-            else {
-                $controlResult.AddMessage([VerificationResult]::Error, "Could not find the list of groups in the organization.");
+            else
+            {
+                $controlResult.AddMessage([VerificationResult]::Manual, "Administrative groups for detecting non sc-alt accounts are not defined in your organization.");    
             }
         }
         catch {
