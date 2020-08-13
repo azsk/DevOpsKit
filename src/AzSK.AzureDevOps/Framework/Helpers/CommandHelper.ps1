@@ -50,6 +50,18 @@ class CommandHelper
             Noun = "AzSKSessionState";
             ShortName = "CSS";
 			IsLatestRequired = $false;
+		},
+		[CommandDetails]@{
+            Verb = "Install";
+            Noun = "AzSKADOContinuousAssurance";
+            ShortName = "ICA";
+			IsLatestRequired = $false;
+        },
+		[CommandDetails]@{
+            Verb = "Update";
+            Noun = "AzSKADOContinuousAssurance";
+            ShortName = "UCA";
+			IsLatestRequired = $false;
         }
     );
 

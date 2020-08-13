@@ -63,6 +63,9 @@
     "ResourceTrackerValidforDays": 3,
     "StoreResourceTrackerLocally": "True"
   },
+  "DockerImage":{
+    "ImageName" : "azsktest01/adosecurityscan"
+  },
   "AllowAttestationResourceType": [
     "Organization",
     "Project",
