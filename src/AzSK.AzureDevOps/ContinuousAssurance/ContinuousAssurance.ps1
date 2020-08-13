@@ -3,7 +3,7 @@ function Install-AzSKADOContinuousAssurance
 {
 	<#
 	.SYNOPSIS
-	This command would help in setting Continuous Assurance feature of AzSK.AzureDevOps in your subscription
+	This command would help in setting up Continuous Assurance feature of AzSK.AzureDevOps in your subscription
 	.DESCRIPTION
 	This command will create a resource group (Name: ADOScannerRG) which runs security scan on organization and projects which are specified during installation.
 	Security scan results will be populated in Log Analytics workspace which is configured during installation. Also, detailed logs will be stored in storage account (Name: adoscannersayyMMddHHmmss format).  
@@ -45,25 +45,25 @@ function Install-AzSKADOContinuousAssurance
 		[Alias("loc")]
 		$Location , 
 
-		[Parameter(Mandatory = $false, ParameterSetName = "Default", HelpMessage="Resource group name where CA setup need to be done")]
+		[Parameter(Mandatory = $false, ParameterSetName = "Default", HelpMessage="Resource group name where CA setup needs to be done")]
         [string]
 		[ValidateNotNullOrEmpty()]
 		[Alias("rgn")]
 		$ResourceGroupName ,       
 
-        [Parameter(Mandatory = $false, ParameterSetName = "Default", HelpMessage="Workspace ID of Log Analytics workspace where security scan results will be populated.")]
+        [Parameter(Mandatory = $false, ParameterSetName = "Default", HelpMessage="Workspace ID of Log Analytics workspace which is used to monitor security scan results.")]
         [string]
 		[ValidateNotNullOrEmpty()]
-		[Alias("lwid","wid","OMSWorkspaceId")]
+		[Alias("lwid","wid")]
 		$LAWSId,
 
         [Parameter(Mandatory = $false, ParameterSetName = "Default", HelpMessage="Shared key of Log Analytics workspace which is used to monitor security scan results.")]
         [string]
 		[ValidateNotNullOrEmpty()]
-		[Alias("lwkey","wkey","OMSSharedKey")]
+		[Alias("lwkey","wkey")]
 		$LAWSSharedKey,
 
-		[Parameter(Mandatory = $true, ParameterSetName = "Default", HelpMessage = "Orgnanization name for which scan will be performed.")]
+		[Parameter(Mandatory = $true, ParameterSetName = "Default", HelpMessage = "Organization name for which scan will be performed.")]
 		[ValidateNotNullOrEmpty()]
 		[Alias("oz")]
 		[string]
@@ -75,18 +75,18 @@ function Install-AzSKADOContinuousAssurance
 		[System.Security.SecureString]
 		$PATToken,
 
-		[Parameter(Mandatory = $false, ParameterSetName = "Default", HelpMessage = "Project names to be scanned within the organization. If not provided then all projects will be scanned.")]
+		[Parameter(Mandatory = $false, ParameterSetName = "Default", HelpMessage = "List of projects to be scanned within the organization. If not provided, then all projects will be scanned.")]
 		[Alias("pns")]
 		[string]
 		$ProjectNames,
 		
-		[Parameter(Mandatory = $false, ParameterSetName = "Default", HelpMessage = "Use extended command to narrow down the scans.")]
+		[Parameter(Mandatory = $false, ParameterSetName = "Default", HelpMessage = "Use extended command to narrow down the target scan.")]
 		[Alias("ex")]
 		[string]
 		$ExtendedCommand,
 
 		[switch]
-		[Parameter(Mandatory = $false, HelpMessage = "Switch to create and map new log analytics workspace with CA setup.")]
+		[Parameter(Mandatory = $false, HelpMessage = "Switch to create and map new Log Analytics workspace with CA setup.")]
 		[Alias("cws")]
 		$CreateLAWorkspace,
 
@@ -130,25 +130,25 @@ function Update-AzSKADOContinuousAssurance
 	.SYNOPSIS
 	This command would help in updating user configurable properties of Continuous Assurance in your subscription
 	.DESCRIPTION
-	This command will update configurations of existing AzureDEvOps CA setup in your subscription.
+	This command will update configurations of existing AzSK.AzureDevOps CA setup in your subscription.
 	Security scan results will be populated in Log Analytics workspace which is configured during installation. Also, detailed logs will be stored in storage account (Name: adoscannersayyMMddHHmmss format).  
 	
 	.PARAMETER SubscriptionId
 		Subscription id in which CA setup is present.
 	.PARAMETER ResourceGroupName
-		Resource group name where CA setup is available. (Default : ADOSCannerRG)
+		Resource group name where CA setup is available (Default : ADOScannerRG).
 	.PARAMETER LAWSId
-		Workspace ID of Log Analytics workspace where security scan results will be sent
+		Workspace ID of Log Analytics workspace which is used to monitor security scan results.
 	.PARAMETER LAWSSharedKey
 		Shared key of Log Analytics workspace which is used to monitor security scan results.
 	.PARAMETER OrganizationName
-		Orgnanization name for which scan will be performed.
+		Organization name for which scan will be performed.
 	.PARAMETER PATToken
 		PAT token secure string for organization to be scanned.
 	.PARAMETER ProjectNames
-		Project names to be scanned within the organization. If not provided then all projects will be scanned.
+		List of projects to be scanned within the organization.
 	.PARAMETER ExtendedCommand
-		Extended command to narrow down the scans.
+		Extended command to narrow down the target scan.
 
 	#>
 	Param(
