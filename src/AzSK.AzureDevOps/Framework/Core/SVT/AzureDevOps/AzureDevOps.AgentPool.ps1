@@ -132,7 +132,7 @@ class AgentPool: ADOSVTBase
                         }
                         else 
                         {
-                            $controlResult.AddMessage([VerificationResult]::Passed,"Agent pool has been queued recently.");
+                            $controlResult.AddMessage([VerificationResult]::Passed,"Agent pool was being queued during control evaluation.");
                         }
                 }
                 else 
@@ -144,12 +144,11 @@ class AgentPool: ADOSVTBase
                         
                         if ((((Get-Date) - $agentPoolDetails.selectedAgentPool.createdOn).Days) -lt $inactiveLimit)
                         {
-                            $controlResult.AddMessage([VerificationResult]::Passed, "Agent pool created but never used.");
+                            $controlResult.AddMessage([VerificationResult]::Passed, "Agent pool was created within last $inactiveLimit days but never queued.");
                         }
                         else 
                         {
-                            $controlResult.AddMessage([VerificationResult]::Failed,
-                            "Agent pool is not in use from last $inactiveLimit days. Verify the agent pool and remove if no longer required.");
+                            $controlResult.AddMessage([VerificationResult]::Failed, "Agent pool has not been queued from last $inactiveLimit days.");
                         }
                     }
                     else 

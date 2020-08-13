@@ -365,7 +365,7 @@ class ServiceConnection: ADOSVTBase
                 }
                 else
                 {
-                    $controlResult.AddMessage([VerificationResult]::Passed, "Service connection has been used recently.");
+                    $controlResult.AddMessage([VerificationResult]::Passed, "Service connection was under use during the control scan.");
                 }
             }
             else #service connection was created but never used. (Fail for now)
