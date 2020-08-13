@@ -172,6 +172,23 @@
         "Best Practice"
       ],
       "Enabled": true
+    },
+    {
+      "ControlID": "AzureDevOps_Project_AuthZ_Use_SC_ALT_Account_For_Admin_Members",
+      "Description": "Smart Card Alt(SC-ALT) accounts must be used for privileged roles used for project admin activity.",
+      "Id": "Project200",
+      "ControlSeverity": "Medium",
+      "Automated": "Yes",
+      "MethodName": "CheckSCALTForAdminMembers",
+      "Rationale": "",
+      "Recommendation": "Go to Project settings --> General --> Permissions --> Groups --> Select the group --> Review the members of this group",
+      "Tags": [
+        "SDL",
+        "AuthZ",
+        "Automated",
+        "Best Practice"
+      ],
+      "Enabled": true
     }
   ]
 }

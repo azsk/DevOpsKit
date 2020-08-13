@@ -164,6 +164,7 @@
   "AgentPool": {
     "AgentPoolHistoryPeriodInDays": 180
   },
+  "RegexToMatchForSCAlt": "^((?!sc-).)*$",
   "Organization": {
     "InActiveUserActivityLogsPeriodInDays": 90,
     "TopInActiveUserCount": 500,
@@ -175,13 +176,15 @@
     "MinPCAMembersPermissible": 2,
     "GroupsToCheckForSCAltMembers": [
       "Project Collection Administrators",
-      "Project Collection Service Accounts",
-      "Project Administrators"
+      "Project Collection Service Accounts"
     ]
   },
   "Project": {
     "MaxPAMembersPermissible": 5,
-    "MinPAMembersPermissible": 2
+    "MinPAMembersPermissible": 2,
+    "GroupsToCheckForSCAltMembers": [
+      "Project Administrators"
+    ]
   },
   "ServiceConnection": {
     "ServiceConnectionHistoryPeriodInDays": 180,

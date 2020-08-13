@@ -125,7 +125,7 @@ class Organization: ADOSVTBase
         return $controlResult
     }
 
-    hidden [ControlResult] CheckACALTForPCSAMembers([ControlResult] $controlResult)
+    hidden [ControlResult] CheckSCALTForAdminMembers([ControlResult] $controlResult)
     {
         try
         {
@@ -135,40 +135,52 @@ class Organization: ADOSVTBase
             $body = ($body.Replace("{0}", $this.SubscriptionContext.SubscriptionName)) | ConvertFrom-Json
             $response = [WebRequestHelper]::InvokePostWebRequest($url,$body);    
             
-            
-            $accname = $this.ControlSettings.Organization.GroupsToCheckForSCAltMembers;
+            $adminGroupNames = $this.ControlSettings.Organization.GroupsToCheckForSCAltMembers;
             if ($response -and [Helpers]::CheckMember($response[0],"dataProviders") -and $response[0].dataProviders."ms.vss-admin-web.org-admin-groups-data-provider") 
             {
-                $prcollobj = $response.dataProviders."ms.vss-admin-web.org-admin-groups-data-provider".identities | where { $_.displayName -in $accname }
+                $adminGroups = @();
+                $adminGroups += $response.dataProviders."ms.vss-admin-web.org-admin-groups-data-provider".identities | where { $_.displayName -in $adminGroupNames }
                 
-                if(($prcollobj | Measure-Object).Count -gt 0)
+                if(($adminGroups | Measure-Object).Count -gt 0)
                 {
                     [AdministratorHelper]::AllPCAMembers = @();
-                    [AdministratorHelper]::FindPCAMembers($prcollobj.descriptor,$this.SubscriptionContext.SubscriptionName)
-                    $allPCSAMembers = [AdministratorHelper]::AllPCAMembers
-                    if(($allPCSAMembers | Measure-Object).Count -gt 0)
+                    for ($i = 0; $i -lt $adminGroups.Count; $i++) 
                     {
-                        $nonSCMembers = $allPCSAMembers | Where-Object { $_.mailAddress -notmatch "(sc|SC)-\w*@\w*.com|COM" }
-                        $result = ([regex]::matches($allPCSAMembers.mailAddress, "(sc|SC)-\w*@\w*.com|COM") | % {$_})
-                        $nonSCMembers = $nonSCMembers | Select-Object displayName,mailAddress,subjectKind
-                        $stateData = @();
-                        $stateData += $nonSCMembers
-                        $controlResult.AddMessage([VerificationResult]::Verify, "Review the members of the group Project Collection Service Accounts : ", $stateData); 
-                        $controlResult.SetStateData("Members of the Project Collection Service Accounts group : ", $stateData); 
+                        [AdministratorHelper]::FindPCAMembers($adminGroups[$i].descriptor, $this.SubscriptionContext.SubscriptionName)
+                    }
+                    $allAdminMembers = @();
+                    $allAdminMembers += [AdministratorHelper]::AllPCAMembers
+                    if(($allAdminMembers | Measure-Object).Count -gt 0)
+                    {
+                        $matchToSCAlt = $this.ControlSettings.RegexToMatchForSCAlt
+                        $nonSCMembers = @();
+                        $nonSCMembers += $allAdminMembers | Where-Object { $_.mailAddress -match $matchToSCAlt }  #(sc|SC)-\w*@\w*.com|COM
+                        if (($nonSCMembers | Measure-Object).Count -gt 0) 
+                        {
+                            $nonSCMembers = $nonSCMembers | Select-Object displayName,mailAddress
+                            $stateData = @();
+                            $stateData += $nonSCMembers
+                            $controlResult.AddMessage([VerificationResult]::Verify, "Review the members having admin privileges: ", $stateData); 
+                            $controlResult.SetStateData("Members having admin privileges: ", $stateData); 
+                        }
+                        else 
+                        {
+                            $controlResult.AddMessage([VerificationResult]::Passed, "Admin groups does not have any members.");
+                        }
                     }
                     else
-                    { #count is 0 then there is no member in the prj coll ser acc group
-                        $controlResult.AddMessage([VerificationResult]::Passed, "Project Collection Service Accounts group does not have any member.");
+                    { #count is 0 then there is no members added in the admin groups
+                        $controlResult.AddMessage([VerificationResult]::Passed, "Admin groups does not have any members.");
                     }
                 }
                 else
                 {
-                    $controlResult.AddMessage([VerificationResult]::Error, "Project Collection Service Accounts group could not be fetched.");
+                    $controlResult.AddMessage([VerificationResult]::Error, "Could not find the list of groups in the organization.");
                 }
             }
             else
             {
-                $controlResult.AddMessage([VerificationResult]::Error, "Project Collection Service Accounts group could not be fetched.");
+                $controlResult.AddMessage([VerificationResult]::Error, "Could not find the list of groups in the organization.");
             }
         }
         catch

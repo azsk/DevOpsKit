@@ -109,57 +109,55 @@ class AgentPool: ADOSVTBase
             
             if (([Helpers]::CheckMember($agentPool[0], "fps.dataProviders.data") ) -and ($agentPool[0].fps.dataProviders.data."ms.vss-build-web.agent-jobs-data-provider")) 
             {
+                # $inactiveLimit denotes the upper limit on number of days of inactivity before the agent pool is deemed inactive.
+                $inactiveLimit = $this.ControlSettings.AgentPool.AgentPoolHistoryPeriodInDays
                 #Filtering agent pool jobs specific to the current project.
                 $agentPoolJobs = $agentPool[0].fps.dataProviders.data."ms.vss-build-web.agent-jobs-data-provider".jobs | Where-Object {$_.scopeId -eq $projectId};
                 #If agent pool has been queued at least once
                 if (($agentPoolJobs | Measure-Object).Count -gt 0) 
                 {
                         #Get the last queue timestamp of the agent pool
-                        $agtPoolLastRunDate = $agentPoolJobs[0].finishTime;
-                        #if last queue is still running then finishTime would be null, so instead take startTime.
-                        if (!$agtPoolLastRunDate) 
+                        if ([Helpers]::CheckMember($agentPoolJobs[0], "finishTime")) 
                         {
-                        $agtPoolLastRunDate = $agentPoolJobs[0].queueTime;
-                        } 
-                        
-                        # $inactiveLimit denotes the upper limit on number of days of inactivity before the agent pool is deemed inactive.
-                        $inactiveLimit = $this.ControlSettings.AgentPool.AgentPoolHistoryPeriodInDays
-                        if ((((Get-Date) - $agtPoolLastRunDate).Days) -gt $inactiveLimit)
-                        {
-                            $controlResult.AddMessage([VerificationResult]::Failed, "Agent pool has not been queued in the last $inactiveLimit days.");
-                        }
-                        else 
-                        {
-                            $controlResult.AddMessage([VerificationResult]::Passed,"Agent pool has been queued in the last $inactiveLimit days.");
-                        }
-                }
-                else #agent pool was created but never used
-                {
-                    $controlResult.AddMessage([VerificationResult]::Failed, "Agent pool has never been queued in the current project.");
-                }
-                <#else 
-                {
-                    #[else] Agent pool is created but nenver run, check creation date greated then 180
-                        if (([Helpers]::CheckMember($agentPools, "fps.dataProviders.data") ) -and ($agentPools.fps.dataProviders.data."ms.vss-build-web.agent-pool-data-provider")) 
-                        {
-                            $agentPoolDetails = $agentPools.fps.dataProviders.data."ms.vss-build-web.agent-pool-data-provider"
+                            $agtPoolLastRunDate = $agentPoolJobs[0].finishTime;
                             
-                            if ((((Get-Date) - $agentPoolDetails.selectedAgentPool.createdOn).Days) -gt 180)
+                            if ((((Get-Date) - $agtPoolLastRunDate).Days) -gt $inactiveLimit)
                             {
-                                $controlResult.AddMessage([VerificationResult]::Failed,
-                                "Agent pool is not in use from last 180 days. Verify the agent pool and remove if no longer required.");
+                                $controlResult.AddMessage([VerificationResult]::Failed, "Agent pool has not been queued in the last $inactiveLimit days.");
                             }
                             else 
                             {
-                                $controlResult.AddMessage([VerificationResult]::Verify, "Agent pool never used. Verify the agent pool and remove if not in use.");
+                                $controlResult.AddMessage([VerificationResult]::Passed,"Agent pool has been queued in the last $inactiveLimit days.");
                             }
                         }
                         else 
                         {
-                            $controlResult.AddMessage([VerificationResult]::Error, "Agent pool details not found. Verify agent pool manually.");
-                        }                    
-                } #>
+                            $controlResult.AddMessage([VerificationResult]::Passed,"Agent pool has been queued recently.");
+                        }
                 }
+                else 
+                {
+                    #[else] Agent pool is created but nenver run, check creation date greated then 180
+                    if (([Helpers]::CheckMember($agentPool, "fps.dataProviders.data") ) -and ($agentPool.fps.dataProviders.data."ms.vss-build-web.agent-pool-data-provider")) 
+                    {
+                        $agentPoolDetails = $agentPool.fps.dataProviders.data."ms.vss-build-web.agent-pool-data-provider"
+                        
+                        if ((((Get-Date) - $agentPoolDetails.selectedAgentPool.createdOn).Days) -lt $inactiveLimit)
+                        {
+                            $controlResult.AddMessage([VerificationResult]::Passed, "Agent pool created but never used.");
+                        }
+                        else 
+                        {
+                            $controlResult.AddMessage([VerificationResult]::Failed,
+                            "Agent pool is not in use from last $inactiveLimit days. Verify the agent pool and remove if no longer required.");
+                        }
+                    }
+                    else 
+                    {
+                        $controlResult.AddMessage([VerificationResult]::Error, "Agent pool details not found. Verify agent pool manually.");
+                    }                    
+                } 
+            }
             else 
             { 
                 $controlResult.AddMessage([VerificationResult]::Error, "Could not fetch agent pool queue history.");

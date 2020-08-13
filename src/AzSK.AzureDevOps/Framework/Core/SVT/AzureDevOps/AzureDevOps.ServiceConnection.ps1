@@ -343,28 +343,32 @@ class ServiceConnection: ADOSVTBase
         {
             if ($this.ServiceConnEndPointDetail -and [Helpers]::CheckMember($this.ServiceConnEndPointDetail, "serviceEndpointExecutionHistory") ) 
             {
-                #Get the last known usage (job) timestamp of the service connection
-                $svcLastRunDate = $this.ServiceConnEndPointDetail.serviceEndpointExecutionHistory[0].data.finishTime;
-                #if this job is still running then finishTime is not available. Instead use the startTime if this job.
-                if (!$svcLastRunDate)
+                #if this job is still running then finishTime is not available. pass the control
+                if ([Helpers]::CheckMember($this.ServiceConnEndPointDetail.serviceEndpointExecutionHistory[0].data, "finishTime")) 
                 {
-                    $svcLastRunDate = $this.ServiceConnEndPointDetail.serviceEndpointExecutionHistory[0].data.startTime;
-                } 
-                #format date
-                $formatLastRunDate = ([datetime]::parseexact($svcLastRunDate.Split('T')[0], 'yyyy-MM-dd', $null))
-                
-                # $inactiveLimit denotes the upper limit on number of days of inactivity before the svc conn is deemed inactive.
-                $inactiveLimit = $this.ControlSettings.ServiceConnection.ServiceConnectionHistoryPeriodInDays
-                if ((((Get-Date) - $formatLastRunDate).Days) -gt $inactiveLimit)
-                {
-                    $controlResult.AddMessage([VerificationResult]::Failed, "Service connection has not been used in the last $inactiveLimit days.");
+                    #Get the last known usage (job) timestamp of the service connection
+                    $svcLastRunDate = $this.ServiceConnEndPointDetail.serviceEndpointExecutionHistory[0].data.finishTime;
+                    
+                    #format date
+                    $formatLastRunDate = ([datetime]::parseexact($svcLastRunDate.Split('T')[0], 'yyyy-MM-dd', $null))
+                    
+                    # $inactiveLimit denotes the upper limit on number of days of inactivity before the svc conn is deemed inactive.
+                    $inactiveLimit = $this.ControlSettings.ServiceConnection.ServiceConnectionHistoryPeriodInDays
+                    if ((((Get-Date) - $formatLastRunDate).Days) -gt $inactiveLimit)
+                    {
+                        $controlResult.AddMessage([VerificationResult]::Failed, "Service connection has not been used in the last $inactiveLimit days.");
+                    }
+                    else
+                    {
+                        $controlResult.AddMessage([VerificationResult]::Passed, "Service connection has been used in the last $inactiveLimit days.");
+                    }  
                 }
                 else
                 {
-                    $controlResult.AddMessage([VerificationResult]::Passed, "Service connection has been used in the last $inactiveLimit days.");
-                }  
+                    $controlResult.AddMessage([VerificationResult]::Passed, "Service connection has been used recently.");
+                }
             }
-            else #service connection was created but never used
+            else #service connection was created but never used. (Fail for now)
             {    
                 $controlResult.AddMessage([VerificationResult]::Failed, "Service connection has never been used.");
             }
@@ -388,7 +392,7 @@ class ServiceConnection: ADOSVTBase
                 $stateData = @();
                 $stateData += $svcProjectReferences | Select-Object name, projectReference
                 
-                $controlResult.AddMessage([VerificationResult]::Verify, "Review the list of projects that have access to the service connection : ", $stateData);
+                $controlResult.AddMessage([VerificationResult]::Failed, "Review the list of projects that have access to the service connection : ", $stateData);
                 $controlResult.SetStateData("List of projects that have access to the service connection : ", $stateData); 
             }
             else 
@@ -415,7 +419,7 @@ class ServiceConnection: ADOSVTBase
             {
                 $controlResult.AddMessage([VerificationResult]::Failed, "Service connection is accessible to all pipelines in the project.");        
             }
-            elseif ([Helpers]::CheckMember($responseObj[0], "pipelines") -and ($responseObj[0].pipelines | Measure-Object).Count -gt 0) #Atleast one pipeline has access to svvc conn
+            elseif ([Helpers]::CheckMember($responseObj[0], "pipelines") -and ($responseObj[0].pipelines | Measure-Object).Count -gt 1) #Atleast one pipeline has access to svvc conn
             { 
                 #get the pipelines ids in comma separated string to pass in api to get the pipeline name
                 $pipelinesIds = $responseObj[0].pipelines.id -join ","
@@ -436,7 +440,7 @@ class ServiceConnection: ADOSVTBase
             } 
             else 
             {
-                $controlResult.AddMessage([VerificationResult]::Passed, "No pipeline has access to this service connection.");
+                $controlResult.AddMessage([VerificationResult]::Passed, "Service connection is not shared with multiple pipelines.");
             }
             #clearing memory space.
             $responseObj = $null;

@@ -242,12 +242,12 @@
       "Enabled": true
     },
     {
-      "ControlID": "AzureDevOps_Organization_AuthZ_Use_SC_ALT_Accounts_For_PCSA_Members",
-      "Description": " Smart Card Alt(SC-ALT) accounts must be used for privileged roles used for Org activity.",
+      "ControlID": "AzureDevOps_Organization_AuthZ_Use_SC_ALT_Account_For_Admin_Members",
+      "Description": "Smart Card Alt(SC-ALT) accounts must be used for privileged roles used for Org activity.",
       "Id": "Organization242",
       "ControlSeverity": "High",
       "Automated": "Yes",
-      "MethodName": "CheckACALTForPCSAMembers",
+      "MethodName": "CheckSCALTForAdminMembers",
       "Rationale": "<TODO>",
       "Recommendation": "Refer: https://docs.microsoft.com/en-us/azure/devops/notifications/concepts-events-and-notifications?view=vsts",
       "Tags": [
