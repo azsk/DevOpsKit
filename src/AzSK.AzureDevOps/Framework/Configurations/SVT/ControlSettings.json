@@ -35,7 +35,8 @@
           "AzureDevOps_ServiceConnection_AuthZ_Dont_Grant_All_Pipelines_Access",
           "AzureDevOps_ServiceConnection_AuthZ_Dont_Allow_Global_Groups",
           "AzureDevOps_ServiceConnection_SI_Review_Inactive_Connection",
-          "AzureDevOps_ServiceConnection_SI_Dont_Allow_Cross_Project_Sharing"
+          "AzureDevOps_ServiceConnection_SI_Dont_Allow_Cross_Project_Sharing",
+          "AzureDevOps_ServiceConnection_AuthZ_Dont_Grant_Subscription_Access"
         ]
       },
       {

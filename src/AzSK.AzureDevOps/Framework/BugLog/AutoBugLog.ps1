@@ -157,7 +157,7 @@ class AutoBugLog {
             'Project' {
                 #check if user is member of PA/PCA
                 if (!$this.ControlStateExt.GetControlStatePermission($ControlResult.FeatureName, $ControlResult.ResourceContext.ResourceName)) {
-                    Write-Host "`nAuto bug logging denied due to insufficient permissions. Make sure you are a Project Administrator. " -ForegroundColor Red
+                    Write-Host "`nAuto bug logging denied due to insufficient permissions. Make sure you are a project administrator. " -ForegroundColor Red
                     return $false
                 }
             }

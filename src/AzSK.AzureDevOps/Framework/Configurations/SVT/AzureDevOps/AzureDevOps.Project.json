@@ -141,7 +141,7 @@
     },
     {
       "ControlID": "AzureDevOps_Project_AuthZ_Min_Admin_Count",
-      "Description": "There should be atleast $($this.ControlSettings.Project.MinPAMembersPermissible) Project Administrators in your project.",
+      "Description": "There should be at least $($this.ControlSettings.Project.MinPAMembersPermissible) Project Administrators in your project.",
       "Id": "Project180",
       "ControlSeverity": "Medium",
       "Automated": "Yes",

@@ -332,77 +332,109 @@ class Project: ADOSVTBase
         return $controlResult
     }
 
-    hidden [ControlResult] CheckSCALTForAdminMembers([ControlResult] $controlResult) 
+    hidden [ControlResult] CheckSCALTForAdminMembers([ControlResult] $controlResult)
     {
-        try 
+        try
         {
-            $adminGroupNames = $this.ControlSettings.Project.GroupsToCheckForSCAltMembers;
-            if (($adminGroupNames | Measure-Object).Count -gt 0) 
+            if(($null -ne $this.ControlSettings) -and [Helpers]::CheckMember($this.ControlSettings, "Project.GroupsToCheckForSCAltMembers"))
             {
-                #api call to get descriptor which used to get grops members in other api call.
-                $url = 'https://dev.azure.com/{0}/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1' -f $($this.SubscriptionContext.SubscriptionName);
-                $inputbody = '{"contributionIds":["ms.vss-admin-web.org-admin-groups-data-provider"],"dataProviderContext":{"properties":{"sourcePage":{"url":"","routeId":"ms.vss-admin-web.project-admin-hub-route","routeValues":{"project":"","adminPivot":"permissions","controller":"ContributedPage","action":"Execute"}}}}}' | ConvertFrom-Json
-                $inputbody.dataProviderContext.properties.sourcePage.url = "https://dev.azure.com/$($this.SubscriptionContext.SubscriptionName)/$($this.ResourceContext.ResourceName)/_settings/permissions";
-                $inputbody.dataProviderContext.properties.sourcePage.routeValues.Project = $this.ResourceContext.ResourceName;
-    
-                $response = [WebRequestHelper]::InvokePostWebRequest($url, $inputbody); 
-    
-                if ($response -and [Helpers]::CheckMember($response[0], "dataProviders") -and $response[0].dataProviders."ms.vss-admin-web.org-admin-groups-data-provider") 
+
+                $adminGroupNames = $this.ControlSettings.Project.GroupsToCheckForSCAltMembers;
+                if (($adminGroupNames | Measure-Object).Count -gt 0) 
                 {
-                    $adminGroups = @();    
-                    $adminGroups += $response.dataProviders."ms.vss-admin-web.org-admin-groups-data-provider".identities | where { $_.displayName -in $adminGroupNames }
+                    #api call to get descriptor for organization groups. This will be used to fetch membership of individual groups later.
+                    $url = 'https://dev.azure.com/{0}/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1' -f $($this.SubscriptionContext.SubscriptionName);
+                    $inputbody = '{"contributionIds":["ms.vss-admin-web.org-admin-groups-data-provider"],"dataProviderContext":{"properties":{"sourcePage":{"url":"","routeId":"ms.vss-admin-web.project-admin-hub-route","routeValues":{"project":"","adminPivot":"permissions","controller":"ContributedPage","action":"Execute"}}}}}' | ConvertFrom-Json
+                    $inputbody.dataProviderContext.properties.sourcePage.url = "https://dev.azure.com/$($this.SubscriptionContext.SubscriptionName)/$($this.ResourceContext.ResourceName)/_settings/permissions";
+                    $inputbody.dataProviderContext.properties.sourcePage.routeValues.Project = $this.ResourceContext.ResourceName;
+        
+                    $response = [WebRequestHelper]::InvokePostWebRequest($url, $inputbody);    
                     
-                    if (($adminGroups | Measure-Object).Count -gt 0) 
+                    if ($response -and [Helpers]::CheckMember($response[0], "dataProviders") -and $response[0].dataProviders."ms.vss-admin-web.org-admin-groups-data-provider") 
                     {
-                        [AdministratorHelper]::AllPAMembers = @();
-                        for ($i = 0; $i -lt $adminGroups.Count; $i++) 
+                        $adminGroups = @();
+                        $adminGroups += $response.dataProviders."ms.vss-admin-web.org-admin-groups-data-provider".identities | where { $_.displayName -in $adminGroupNames }
+                        
+                        if(($adminGroups | Measure-Object).Count -gt 0)
                         {
-                            [AdministratorHelper]::FindPAMembers($adminGroups[$i].descriptor, $this.SubscriptionContext.SubscriptionName, $this.ResourceContext.ResourceName)
-                        }
-                        $allAdminMembers = @();
-                        $allAdminMembers += [AdministratorHelper]::AllPAMembers
-                        if (($allAdminMembers | Measure-Object).Count -gt 0) 
-                        {
-                            $matchToSCAlt = $this.ControlSettings.AlernateAccountRegularExpressionForOrg
-                            if (-not [string]::IsNullOrEmpty($matchToSCAlt)) 
+                            #global variable to track admin members across all admin groups
+                            $allAdminMembers = @();
+                            
+                            for ($i = 0; $i -lt $adminGroups.Count; $i++) 
                             {
-                                $nonSCMembers = @();
-                                $nonSCMembers += $allAdminMembers | Where-Object { $_.mailAddress -notmatch $matchToSCAlt }  #(sc|SC)-\w*@\w*.com|COM
-                                if (($nonSCMembers | Measure-Object).Count -gt 0) {
-                                    $nonSCMembers = $nonSCMembers | Select-Object displayName, mailAddress
-                                    $stateData = @();
-                                    $stateData += $nonSCMembers
-                                    $controlResult.AddMessage([VerificationResult]::Verify, "Review the members having admin privileges: ", $stateData); 
-                                    $controlResult.SetStateData("Members having admin privileges: ", $stateData); 
-                                }
-                                else {
-                                    $controlResult.AddMessage([VerificationResult]::Passed, "Admin groups does not have any members.");
-                                }
+                                # [AdministratorHelper]::AllPAMembers is a static variable. Always needs ro be initialized. At the end of each iteration, it will be populated with members of that particular admin group.
+                                [AdministratorHelper]::AllPAMembers = @();
+                                # Helper function to fetch flattened out list of group members.
+                                [AdministratorHelper]::FindPAMembers($adminGroups[$i].descriptor,  $this.SubscriptionContext.SubscriptionName, $this.ResourceContext.ResourceName)
+                                
+                                $groupMembers = @();
+                                # Add the members of current group to this temp variable.
+                                $groupMembers += [AdministratorHelper]::AllPAMembers
+                                # Create a custom object to append members of current group with the group name. Each of these custom object is added to the global variable $allAdminMembers for further analysis of SC-Alt detection.
+                                $groupMembers | ForEach-Object {$allAdminMembers += @( [PSCustomObject] @{ name = $_.displayName; mailAddress = $_.mailAddress; groupName = $adminGroups[$i].displayName } )} 
                             }
-                            else {
-                                $controlResult.AddMessage([VerificationResult]::Manual, "Regular expressions for detecting sc-alt account is not defined in the organization.");
+                            
+                            # clearing cached value in [AdministratorHelper]::AllPAMembers as it can be used in attestation later and might have incorrect group loaded.
+                            [AdministratorHelper]::AllPAMembers = @();
+
+                            if(($allAdminMembers | Measure-Object).Count -gt 0)
+                            {
+                                if([Helpers]::CheckMember($this.ControlSettings, "AlernateAccountRegularExpressionForOrg")){
+                                    $matchToSCAlt = $this.ControlSettings.AlernateAccountRegularExpressionForOrg
+                                    #currently SC-ALT regex is a singleton expression. In case we have multiple regex - we need to make the controlsetting entry as an array and accordingly loop the regex here.
+                                    if (-not [string]::IsNullOrEmpty($matchToSCAlt)) 
+                                    {
+                                        $nonSCMembers = @();
+                                        $nonSCMembers += $allAdminMembers | Where-Object { $_.mailAddress -notmatch $matchToSCAlt }  
+                                        if (($nonSCMembers | Measure-Object).Count -gt 0) 
+                                        {
+                                            $nonSCMembers = $nonSCMembers | Select-Object name,mailAddress,groupName
+                                            $stateData = @();
+                                            $stateData += $nonSCMembers
+                                            $controlResult.AddMessage([VerificationResult]::Verify, "Review the users having admin privileges with non SC-Alt accounts : ", $stateData); 
+                                            $controlResult.SetStateData("List of users having admin privileges with non SC-Alt accounts : ", $stateData); 
+                                        }
+                                        else 
+                                        {
+                                            $controlResult.AddMessage([VerificationResult]::Passed, "No users have admin privileges with non SC-Alt accounts.");
+                                        }
+                                    }
+                                    else {
+                                        $controlResult.AddMessage([VerificationResult]::Manual, "Regular expressions for detecting SC-Alt account is not defined in the organization.");
+                                    }
+                                }
+                                else{
+                                    $controlResult.AddMessage([VerificationResult]::Error, "Regular expressions for detecting SC-Alt account is not defined in the organization. Please update your ControlSettings.json as per the latest AzSK.AzureDevOps PowerShell module.");
+                                }   
+                            }
+                            else
+                            { #count is 0 then there is no members added in the admin groups
+                                $controlResult.AddMessage([VerificationResult]::Passed, "Admin groups does not have any members.");
                             }
                         }
-                        else {
-                            #count is 0 then there is no members added in the admin groups
-                            $controlResult.AddMessage([VerificationResult]::Passed, "Admin groups does not have any members.");
+                        else
+                        {
+                            $controlResult.AddMessage([VerificationResult]::Error, "Could not find the list of administrator groups in the project.");
                         }
                     }
-                    else {
-                        $controlResult.AddMessage([VerificationResult]::Error, "Could not find the list of groups in the organization.");
+                    else
+                    {
+                        $controlResult.AddMessage([VerificationResult]::Error, "Could not find the list of groups in the project.");
                     }
                 }
-                else {
-                    $controlResult.AddMessage([VerificationResult]::Error, "Could not find the list of groups in the organization.");
+                else
+                {
+                    $controlResult.AddMessage([VerificationResult]::Manual, "List of administrator groups for detecting non SC-Alt accounts is not defined in your project.");    
                 }
             }
             else
             {
-                $controlResult.AddMessage([VerificationResult]::Manual, "Administrative groups for detecting non sc-alt accounts are not defined in your organization.");    
+                $controlResult.AddMessage([VerificationResult]::Error, "List of administrator groups for detecting non SC-Alt accounts is not defined in your project. Please update your ControlSettings.json as per the latest AzSK.AzureDevOps PowerShell module.");
             }
         }
-        catch {
-            $controlResult.AddMessage([VerificationResult]::Error, "Could not fetch the list of groups in the organization.");
+        catch
+        {
+            $controlResult.AddMessage([VerificationResult]::Error, "Could not fetch the list of groups in the project.");
         }
        
         return $controlResult

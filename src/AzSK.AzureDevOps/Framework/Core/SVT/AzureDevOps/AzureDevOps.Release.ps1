@@ -48,7 +48,7 @@ class Release: ADOSVTBase
                         $releaseDefPath = [Constants]::AzSKTempFolderPath + "\Releases\"+ $releaseDefFileName + "\";
                         if(-not (Test-Path -Path $releaseDefPath))
                         {
-                            mkdir -Path $releaseDefPath -Force | Out-Null
+                            New-Item -ItemType Directory -Path $releaseDefPath -Force | Out-Null
                         }
 
                         $this.ReleaseObj | ConvertTo-Json -Depth 5 | Out-File "$releaseDefPath\$releaseDefFileName.json"

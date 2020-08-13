@@ -515,7 +515,7 @@
     },
     {
       "ControlID": "AzureDevOps_Organization_AuthZ_Min_Admin_Count",
-      "Description": "There should be atleast $($this.ControlSettings.Organization.MinPCAMembersPermissible) Project Collection Administrators in your organization",
+      "Description": "There should be at least $($this.ControlSettings.Organization.MinPCAMembersPermissible) Project Collection Administrators in your organization",
       "Id": "Organization350",
       "ControlSeverity": "Medium",
       "Automated": "Yes",
