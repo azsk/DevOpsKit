@@ -65,7 +65,10 @@ class SubscriptionCore: AzSVTBase
 		[hashtable] $subscriptionMetada = @{}
 		$subscriptionMetada.Add("HasGraphAccess",$this.HasGraphAPIAccess);
 		$subscriptionMetada.Add("ASCSecurityContactEmailIds", $this.SecurityCenterInstance.ContactEmail);
-		$subscriptionMetada.Add("ASCSecurityContactPhoneNumber", $this.SecurityCenterInstance.ContactPhoneNumber);
+		$subscriptionMetada.Add("ASCSecurityContactNotificationSeverity", $this.SecurityCenterInstance.AlertNotifSev);
+		$subscriptionMetada.Add("ASCSecurityContactNotificationSeverityStatus", $this.SecurityCenterInstance.AlertNotifStatus);
+		$subscriptionMetada.Add("ASCSecurityContactNotificationRoles", $this.SecurityCenterInstance.NotificationRoles);
+		$subscriptionMetada.Add("ASCSecurityContactNotificationRolesStatus", $this.SecurityCenterInstance.NotificationRolesStatus);
 		$subscriptionMetada.Add("FeatureVersions", $azskRGTags);
 		$subscriptionMetada.Add("SecuritySolutions", $this.ASCSecuritySolutionDetails);
 		$this.SubscriptionContext.SubscriptionMetadata = $subscriptionMetada;
@@ -2132,7 +2135,7 @@ class SubscriptionCore: AzSVTBase
 		      {
 				 $controlResult.EnableFixControl = $true;
 			     $controlResult.SetStateData("Misconfigured Security Contact Details", $this.MisConfiguredSecurityContactDetails);
-			     $controlResult.AddMessage([VerificationResult]::Failed, [MessageData]::new("Security contacts settings are not configured correctly.", $this.MisConfiguredSecurityContactDetails));
+			     $controlResult.AddMessage([VerificationResult]::Failed, [MessageData]::new("Security contacts settings are not configured correctly.`n", $this.MisConfiguredSecurityContactDetails));
 		      }
 			
 			else

@@ -10,7 +10,9 @@ class SecurityCenter: AzSKRoot
 	[string] $ContactPhoneNumber;
 	[string] $ContactEmail;
 	[string] $AlertNotifStatus;
-	[string] $AlertAdminStatus;
+	[string] $AlertNotifSev;
+	[string] $NotificationRolesStatus;
+	[string] $NotificationRoles;
 	[string] $AutoProvisioningSettings = "";
 	[string] $ASCTier = "";
 	[string] $VMASCTier = "";
@@ -187,7 +189,8 @@ class SecurityCenter: AzSKRoot
 			$ResourceAppIdURI = [WebRequestHelper]::GetResourceManagerUrl()		
 			$securityContactsUri = $ResourceAppIdURI + "subscriptions/$($this.SubscriptionContext.SubscriptionId)/providers/$([SecurityCenterHelper]::ProviderNamespace)/$([SecurityCenterHelper]::SecurityContactsApi)/default$([SecurityCenterHelper]::NewApiVersionForSecContact)";
 			$body = $this.PolicyObject.securityContacts | ConvertTo-Json -Depth 10
-			$body = $body.Replace("{0}",$this.SubscriptionContext.SubscriptionId).Replace("{1}",$this.ContactEmail).Replace("{2}",$this.ContactPhoneNumber) | ConvertFrom-Json;
+			$email = (($this.ContactEmail.split(",")).Trim()) -join ";"
+			$body = $body.Replace("{0}",$this.SubscriptionContext.SubscriptionId).Replace("{1}",$email).Replace("{2}",$this.ContactPhoneNumber) | ConvertFrom-Json;
 			try
 			{
 				[WebRequestHelper]::InvokeWebRequest([Microsoft.PowerShell.Commands.WebRequestMethod]::Put, $securityContactsUri, $body);
@@ -226,28 +229,35 @@ class SecurityCenter: AzSKRoot
 				-and [Helpers]::CheckMember($response,"properties.alertNotifications.state") -and -not [string]::IsNullOrWhiteSpace($response.properties.alertNotifications.state))
 			
 			{
+				$this.ContactEmail = $response.properties.emails
+				if([Helpers]::CheckMember($response,"properties.phone"))
+				{
+					$this.ContactPhoneNumber = $response.properties.phone
+				}
 				#checking if alerts are configured as expected i.e. (state = ON and Severity = "Medium or Low")
 				if ([Helpers]::CheckMember($secContactObject,"properties.alertNotifications.state",$false) -and [Helpers]::CheckMember($secContactObject,"properties.alertNotifications.minimalSeverity",$false))
 				{
+					$this.AlertNotifStatus = $response.properties.alertNotifications.state
+					$this.AlertNotifSev = $response.properties.alertNotifications.minimalSeverity
 					$this.alertNotificationsstate = $response.properties.alertNotifications.state -eq $secContactObject.properties.alertNotifications.state;
 					$this.alertNotificationsminimalSeverity = $ControlSettings.SeverityForSecContactAlerts -contains $response.properties.alertNotifications.minimalSeverity;
-					if ( -not $this.alertNotificationsminimalSeverity)
+					if (-not ($this.alertNotificationsstate -and $this.alertNotificationsminimalSeverity))
 					{
-						$messages += "Notification for alerts should be enabled with " + $secContactObject.properties.alertNotifications.minimalSeverity + " severity.`n"
-					}
+						$messages += "-Alert Notifications should be configured for alerts with severity "+ $secContactObject.properties.alertNotifications.minimalSeverity + " and higher.`n"
+					} 
 				}
 
 				#checking if roles for notification are configured as expected i.e. (state = ON and MinimumRoles = "Owner, ServiceAdmin")
 				if ([Helpers]::CheckMember($secContactObject,"properties.notificationsByRole.state",$false) -and [Helpers]::CheckMember($secContactObject,"properties.notificationsByRole.roles",$false))
 				{
+					$this.NotificationRolesStatus = $response.properties.notificationsByRole.state
+					$this.NotificationRoles = $response.properties.notificationsByRole.roles
 					$this.notificationsByRolestate = $response.properties.notificationsByRole.state -eq $secContactObject.properties.notificationsByRole.state
 					$this.notificationsByRole = -not @($secContactObject.properties.notificationsByRole.roles|
 															Where-Object {$response.properties.notificationsByRole.roles -notcontains $_}| Select-Object -first 1).Count
 					if ( -not $this.notificationsByRole)
 					{
-						$missingroles = $secContactObject.properties.notificationsByRole.roles|
-										Where-Object {$response.properties.notificationsByRole.roles -notcontains $_}
-						$messages += "Following roles are missing for alert notification:`n $($missingroles -Join ',')"
+						$messages += "-Roles that should be configured to receive alert notifications: $($secContactObject.properties.notificationsByRole.roles -Join ',')"
 					}
 				}
 
