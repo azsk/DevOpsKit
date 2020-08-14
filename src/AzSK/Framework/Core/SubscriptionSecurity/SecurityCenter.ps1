@@ -281,26 +281,32 @@ class SecurityCenter: AzSKRoot
 		[hashtable] $hashvalue = @{}
 		$ResourceUrl= [WebRequestHelper]::GetResourceManagerUrl()
 		$validatedUri ="$ResourceUrl/subscriptions/$($this.SubscriptionContext.SubscriptionId)/providers/Microsoft.Security/pricings/default?api-version=2017-08-01-preview"
-		$ascTierContentDetails = [WebRequestHelper]::InvokeGetWebRequest($validatedUri)
-
- 		if([Helpers]::CheckMember($ascTierContentDetails,"properties.pricingTier"))
+        try
 		{
-			$this.ASCTier = $ascTierContentDetails.properties.pricingTier
-		}
+		    $ascTierContentDetails = [WebRequestHelper]::InvokeGetWebRequest($validatedUri)
+ 			if([Helpers]::CheckMember($ascTierContentDetails,"properties.pricingTier"))
+			{
+				$this.ASCTier = $ascTierContentDetails.properties.pricingTier
+			}
 
-		$validatedUri = "$ResourceUrl/subscriptions/$($this.SubscriptionContext.SubscriptionId)/providers/Microsoft.Security/pricings?api-version=2018-06-01"
-		$ascTierResourceWiseDetails = [WebRequestHelper]::InvokeGetWebRequest($validatedUri)
+			$validatedUri = "$ResourceUrl/subscriptions/$($this.SubscriptionContext.SubscriptionId)/providers/Microsoft.Security/pricings?api-version=2018-06-01"
+			$ascTierResourceWiseDetails = [WebRequestHelper]::InvokeGetWebRequest($validatedUri)
 
-        foreach($resourceDetails in $ascTierResourceWiseDetails)
-        {
-            if([Helpers]::CheckMember($resourceDetails,"properties.pricingTier"))
-            {
-				$resourceName = $resourceDetails.name
-				$ResourceASCTier = $resourceDetails.properties.pricingTier
-				$hashvalue.Add($resourceName,$ResourceASCTier)
-            }
+        	foreach($resourceDetails in $ascTierResourceWiseDetails)
+        	{
+            	if([Helpers]::CheckMember($resourceDetails,"properties.pricingTier"))
+            	{
+					$resourceName = $resourceDetails.name
+					$ResourceASCTier = $resourceDetails.properties.pricingTier
+					$hashvalue.Add($resourceName,$ResourceASCTier)
+            	}
             
-		}  
+			} 
+		} 
+		catch
+		{
+			#TODO: need to handle it gracefully
+		}
 		return $hashvalue
 	}
 	
