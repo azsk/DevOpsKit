@@ -1593,6 +1593,20 @@ class SubscriptionCore: AzSVTBase
 			$AltAccountRegX = [string]::Empty;
 			$messageRG = [string]::Empty;
 			$messageSub= [string]::Empty;
+
+			# Get the altenate account pattern from org policy control settings
+			if( [Helpers]::CheckMember($this.ControlSettings,"AlernateAccountRegularExpressionForOrg"))
+			{
+				$AltAccountRegX = $this.ControlSettings.AlernateAccountRegularExpressionForOrg
+			}
+			else
+			{
+				# if unable to get the altenate account pattern from policy control settings, let the control be manual 
+				$controlResult.AddMessage([VerificationResult]::Manual, "Unable to get the alternate account pattern for your org. Please verify manually.");
+				return $controlResult;
+			}
+
+			# Get PIM assignments
 			if([FeatureFlightingManager]::GetFeatureStatus("EnableResourceGroupPersistentAccessCheck",$($this.SubscriptionContext.SubscriptionId)))
 			{
 				$messageRG=$this.GetRGLevelPIMRoles();
@@ -1606,18 +1620,6 @@ class SubscriptionCore: AzSVTBase
 				$controlResult.AddMessage([VerificationResult]::Manual, "Please make sure your subscription has onboarded Privileged Identity Management (PIM).");
 				#Set Hasrequired access false in case of api failure while fetching PIM roles
 				$controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false;
-				return $controlResult;
-			}
-
-			# Get the altenate account pattern from org policy control settings
-			if( [Helpers]::CheckMember($this.ControlSettings,"AlernateAccountRegularExpressionForOrg"))
-			{
-				$AltAccountRegX = $this.ControlSettings.AlernateAccountRegularExpressionForOrg
-			}
-			else
-			{
-				# if unable to get the altenate account pattern from policy control settings, let the control be manual 
-				$controlResult.AddMessage([VerificationResult]::Manual, "Unable to get the alternate account pattern for your org. Please verify manually.");
 				return $controlResult;
 			}
 
