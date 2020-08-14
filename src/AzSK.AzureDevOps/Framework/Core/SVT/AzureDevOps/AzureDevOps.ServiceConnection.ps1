@@ -27,7 +27,7 @@ class ServiceConnection: ADOSVTBase
         if(($this.ServiceEndpointsObj | Measure-Object).Count -eq 0)
         {
             throw [SuppressedException] "Unable to find active service connection(s) under [$($this.ResourceContext.ResourceGroupName)] project."
-        }
+        }          
     }
 
     hidden [ControlResult] CheckServiceConnectionAccess([ControlResult] $controlResult)
@@ -47,10 +47,14 @@ class ServiceConnection: ADOSVTBase
                     if([Helpers]::CheckMember($serviceEndPoint, "data.scopeLevel") -and ([Helpers]::CheckMember($serviceEndPoint.data, "creationMode") -or $serviceEndPoint.data.scopeLevel -eq "AzureMLWorkspace"  -or $serviceEndPoint.authorization.scheme -eq "PublishProfile" ))
                     {
                         #If Service connection scope is subcription, creation mode is automatic and no resource group is defined then only fail the control, else pass (scop peroperty comes, only if resource is set)
-                        if($serviceEndPoint.data.scopeLevel -eq "Subscription" -and $serviceEndPoint.data.creationMode -eq "Automatic" -and !([Helpers]::CheckMember($serviceEndPoint.authorization.parameters,"scope") ) )
+                        #Fail the control if it has access to management group (last condition)
+                        if(($serviceEndPoint.data.scopeLevel -eq "Subscription" -and $serviceEndPoint.data.creationMode -eq "Automatic" -and !([Helpers]::CheckMember($serviceEndPoint.authorization.parameters,"scope") )) -or $serviceEndPoint.data.scopeLevel -eq "ManagementGroup")
                         {
-                            $controlResult.AddMessage([VerificationResult]::Failed,
-                                                    "Service connection is configured in [$($serviceEndPoint.data.subscriptionName)] at subscription scope.");
+                            $controlFailedMsg = "Service connection is configured in [$($serviceEndPoint.data.subscriptionName)] at subscription scope."
+                            if ($serviceEndPoint.data.scopeLevel -eq "ManagementGroup") {
+                                $controlFailedMsg = "Service connection is configured in [$($serviceEndPoint.data.managementGroupName)] at management group scope."
+                            }
+                            $controlResult.AddMessage([VerificationResult]::Failed, $controlFailedMsg);
                         }
                         else{
                             $message = "Service connection is configured in [$($serviceEndPoint.data.subscriptionName)] at [{0}] scope.";
@@ -316,5 +320,4 @@ class ServiceConnection: ADOSVTBase
         }
         return $controlResult;
     }
-
 }

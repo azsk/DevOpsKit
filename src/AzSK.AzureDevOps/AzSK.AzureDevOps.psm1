@@ -125,6 +125,59 @@ function Clear-AzSKSessionState {
 
 }
 
+
+function Set-AzSKPolicySettings {
+    <#
+	.SYNOPSIS
+	This command would help to set online policy store URL.
+	.DESCRIPTION
+	This command would help to set online policy store URL.
+
+	.PARAMETER AutoUpdateCommand
+			Provide org install URL
+	.PARAMETER AutoUpdate
+            Toggle the auto-update feature
+	#>
+    Param(
+        [Parameter(Mandatory = $false, HelpMessage = "Provide org install URL")]
+        [string]
+		[Alias("auc")]
+        $AutoUpdateCommand,
+
+        [Parameter(Mandatory = $false, ParameterSetName = "AutoUpdatePolicy", HelpMessage = "Toggle the auto-update feature")]
+        [ValidateSet("On", "Off", "NotSet")]
+		[Alias("au")]
+        $AutoUpdate
+    )
+    Begin {
+        [CommandHelper]::BeginCommand($PSCmdlet.MyInvocation);
+        [ListenerHelper]::RegisterListeners();
+    }
+    Process {
+        try {
+
+	    $azskSettings = [ConfigurationManager]::GetLocalAzSKSettings();
+            
+            if (-not [string]::IsNullOrWhiteSpace($AutoUpdateCommand)) {
+                $azskSettings.AutoUpdateCommand = $AutoUpdateCommand;
+            }
+            if ($AutoUpdate) {
+                $azskSettings.AutoUpdateSwitch = $AutoUpdate
+            }
+			
+            [ConfigurationManager]::UpdateAzSKSettings($azskSettings);
+            [ConfigOverride]::ClearConfigInstance();            
+            [EventBase]::PublishGenericCustomMessage("Successfully configured settings.", [MessageType]::Warning);
+        }
+        catch {
+            [EventBase]::PublishGenericException($_);
+        }
+    }
+    End {
+        [ListenerHelper]::UnregisterListeners();
+    }
+}
+
 #$FrameworkPath = $PSScriptRoot
 
 . $FrameworkPath\Helpers\AliasHelper.ps1
