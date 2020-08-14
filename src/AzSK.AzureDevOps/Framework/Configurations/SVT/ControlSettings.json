@@ -12,26 +12,31 @@
           "AzureDevOps_Organization_AuthZ_Review_Extension_Managers",
           "AzureDevOps_Organization_AuthZ_Review_Project_Collection_Service_Accounts",
           "AzureDevOps_Organization_SI_Review_Auto_Injected_Extensions",
-          "AzureDevOps_Organization_AuthZ_Limit_Job_Authorization_Scope_To_Current_Project",
+          "AzureDevOps_Organization_AuthZ_Limit_Non_Release_Scope_To_Current_Project",
+          "AzureDevOps_Organization_AuthZ_Limit_Job_Scope_To_Referenced_ADO_Repos",
           "AzureDevOps_Organization_DP_Dont_Allow_Public_Projects",
-          "AzureDevOps_Organization_AuthZ_Min_Admin_Count"
+          "AzureDevOps_Organization_AuthZ_Min_Admin_Count"          
         ]
       },
       {
         "ResourceType": "Project",
         "ControlIds": [
           "AzureDevOps_Project_AuthZ_Set_Visibility_Private_Or_Enterprise",
-          "AzureDevOps_Project_AuthZ_Limit_Job_Scope_To_Current_Project",
-          "AzureDevOps_Project_AuthZ_Min_Admin_Count"
+          "AzureDevOps_Project_AuthZ_Min_Admin_Count",
+          "AzureDevOps_Project_AuthZ_Limit_Non_Release_Scope_To_Current_Project",
+          "AzureDevOps_Project_AuthZ_Limit_Job_Scope_To_Referenced_ADO_Repos"
         ]
       },
       {
         "ResourceType": "ServiceConnection",
         "ControlIds": [
           "AzureDevOps_ServiceConnection_AuthZ_Dont_Use_Classic_Connections",
-          "AzureDevOps_ServiceConnection_AuthZ_Disable_InheritPermissions",
+          "AzureDevOps_ServiceConnection_AuthZ_Disable_Inherited_Permissions",
           "AzureDevOps_ServiceConnection_AuthZ_Dont_Grant_All_Pipelines_Access",
-          "AzureDevOps_ServiceConnection_AuthZ_Dont_Allow_Global_Groups"
+          "AzureDevOps_ServiceConnection_AuthZ_Dont_Allow_Global_Groups",
+          "AzureDevOps_ServiceConnection_SI_Review_Inactive_Connection",
+          "AzureDevOps_ServiceConnection_SI_Dont_Allow_Cross_Project_Sharing",
+          "AzureDevOps_ServiceConnection_AuthZ_Dont_Grant_Subscription_Access"
         ]
       },
       {
@@ -51,7 +56,8 @@
         "ResourceType": "AgentPool",
         "ControlIds": [
           "AzureDevOps_AgentPool_AuthZ_Disable_Inherited_Permissions",
-          "AzureDevOps_AgentPool_AuthZ_Project_Dont_Grant_All_Pipeline_Access"
+          "AzureDevOps_AgentPool_AuthZ_Project_Dont_Grant_All_Pipeline_Access",
+          "AzureDevOps_AgentPool_SI_Review_Inactive_AgentPool"
         ]
       }
     ]
@@ -159,20 +165,32 @@
       "Pre-Prod"
     ]
   },
+  "AgentPool": {
+    "AgentPoolHistoryPeriodInDays": 180
+  },
+  "AlernateAccountRegularExpressionForOrg": "^SC-.*@.*microsoft.com$",
   "Organization": {
-    "InActiveUserActivityLogsPeriodInDays": 365,
+    "InActiveUserActivityLogsPeriodInDays": 90,
+    "TopInActiveUserCount": 500,
     "WhitelistedExtensionPublishers": [
       "Microsoft",
       "Microsoft DevLabs"
     ],
     "MaxPCAMembersPermissible": 5,
-    "MinPCAMembersPermissible": 2
+    "MinPCAMembersPermissible": 2,
+    "GroupsToCheckForSCAltMembers": [
+      "Project Collection Administrators"
+    ]
   },
   "Project": {
     "MaxPAMembersPermissible": 5,
-    "MinPAMembersPermissible": 2
+    "MinPAMembersPermissible": 2,
+    "GroupsToCheckForSCAltMembers": [
+      "Project Administrators"
+    ]
   },
   "ServiceConnection": {
+    "ServiceConnectionHistoryPeriodInDays": 180,
     "WhitelistedGroupIdentities": [
       "Endpoint Administrators"
     ],
@@ -215,6 +233,12 @@
         "^(?=.*\\d)(?=.*[a-z])(?=.*[A-Z]).{4,8}$",
         "(?=^.{6,10}$)(?=.*\\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&amp;*()_+}{&quot;:;'?/&gt;.&lt;,])(?!.*\\s).*$",
         "(?=^.{7,20}$)(?=.*\\d)(?=.*[a-zA-Z])(?!.*\\s)[0-9a-zA-Z*$-+?_&=!%{}/'.]*$"
+      ]
+    },
+    {
+      "RegexCode": "URLs",
+      "RegexList": [
+        "(www.|http:|https:)+[^\\s]+[\\w]"
       ]
     }
   ],

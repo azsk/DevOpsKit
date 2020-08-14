@@ -242,6 +242,23 @@
       "Enabled": true
     },
     {
+      "ControlID": "AzureDevOps_Organization_AuthZ_Use_SC_ALT_Account_For_Admin_Members",
+      "Description": "Smart Card Alt(SC-ALT) accounts must be used for privileged roles used for Org activity.",
+      "Id": "Organization242",
+      "ControlSeverity": "High",
+      "Automated": "Yes",
+      "MethodName": "CheckSCALTForAdminMembers",
+      "Rationale": "<TODO>",
+      "Recommendation": "Refer: https://docs.microsoft.com/en-us/azure/devops/notifications/concepts-events-and-notifications?view=vsts",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Manual",
+        "AuthZ"
+      ],
+      "Enabled": true
+    },
+    {
       "ControlID": "AzureDevOps_Organization_AuthZ_Review_Project_Collection_Service_Accounts",
       "Description": "Minimize and review user/service accounts that are members of the Project Collection Service Accounts group.",
       "Id": "Organization250",
@@ -378,14 +395,99 @@
       "Enabled": true
     },
     {
-      "ControlID": "AzureDevOps_Organization_AuthZ_Limit_Job_Authorization_Scope_To_Current_Project",
-      "Description": "Do not run pipelines using tokens that have project collection level access.",
+      "ControlID": "AzureDevOps_Organization_AuthZ_Limit_Non_Release_Scope_To_Current_Project",
+      "Description": "Do not run non-release pipelines using tokens that have project collection level access.",
       "Id": "Organization330",
       "ControlSeverity": "Medium",
       "Automated": "Yes",
       "MethodName": "CheckJobAuthZScope",
       "Rationale": "If pipelines use project collection level tokens, a vulnerability in components used by one project can be leveraged by an attacker to attack all other projects. This is also in keeping with the principle of least privilege.",
-      "Recommendation": "Go to Organization Settings --> Pipelines --> Settings --> Enable 'Limit job authorization scope to current project.'.",
+      "Recommendation": "Go to Organization Settings --> Pipelines --> Settings --> Enable 'Limit job authorization scope to current project for non-release pipeline.'.",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Automated",
+        "AuthZ"
+      ],
+      "Enabled": true
+    },
+    {
+      "ControlID": "AzureDevOps_Organization_AuthZ_Limit_Job_Scope_To_Referenced_ADO_Repos",
+      "Description": "Do not allow Pipelines access to any Azure DevOps repositories.",
+      "Id": "Organization332",
+      "ControlSeverity": "Medium",
+      "Automated": "Yes",
+      "MethodName": "CheckAuthZRepoScope",
+      "Rationale": "Pipelines can access any Azure DevOps repositories in authorized projects unless this option is enabled. With this option enabled, you can reduce the scope of access for all pipelines to only Azure DevOps repositories explicitly referenced by the pipeline.",
+      "Recommendation": "Go to Organization Settings --> Settings --> Enable 'Limit job authorization scope to referenced Azure DevOps repositorie'.",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Automated",
+        "AuthZ"
+      ],
+      "Enabled": true
+    },
+    {
+      "ControlID": "AzureDevOps_Organization_SI_Disable_BuiltIn_Task",
+      "Description": "Do not keep enabled built-in task.",
+      "Id": "Organization334",
+      "ControlSeverity": "Medium",
+      "Automated": "Yes",
+      "MethodName": "CheckBuiltInTask",
+      "Rationale": "With this enabled, pipelines will not use built-in tasks.",
+      "Recommendation": "Go to Organization Settings --> Task restriction --> Settings --> On 'Disable built-in tasks' flag.",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Automated",
+        "AuthZ"
+      ],
+      "Enabled": true
+    },
+    {
+      "ControlID": "AzureDevOps_Organization_SI_Disable_Marketplace_Task",
+      "Description": "Do not keep enabled marketplace task.",
+      "Id": "Organization336",
+      "ControlSeverity": "Medium",
+      "Automated": "Yes",
+      "MethodName": "CheckMarketplaceTask",
+      "Rationale": "With this enabled, pipelines will not use tasks installed from the Marketplace.",
+      "Recommendation": "Go to Organization Settings --> Task restriction --> On 'Disable Marketplace tasks' flag.",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Automated",
+        "AuthZ"
+      ],
+      "Enabled": true
+    },
+    {
+      "ControlID": "AzureDevOps_Organization_AuthN_Dont_Allow_Project_Team_Admins_Invite_Users",
+      "Description": "Disable team and project administrators to invite new users.",
+      "Id": "Organization338",
+      "ControlSeverity": "Medium",
+      "Automated": "Yes",
+      "MethodName": "CheckPolicyProjectTeamAdminUserInvitation",
+      "Rationale": "Disabling this policy will block Team and Project Administrators from inviting new users. Project Collection Administrators (PCAs) can add new users to the organization, regardless of the policy status.",
+      "Recommendation": "Go to Organization Settings --> Policy --> User Policy --> Off 'Allow team and project administrators to invite new users.'.",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Automated",
+        "AuthZ"
+      ],
+      "Enabled": true
+    },
+    {
+      "ControlID": "AzureDevOps_Organization_AuthN_Disable_Request_Access",
+      "Description": "Stop your users from requesting access to your organization or project within your organization, by disabling the Request Access policy.",
+      "Id": "Organization339",
+      "ControlSeverity": "Medium",
+      "Automated": "Yes",
+      "MethodName": "CheckRequestAccessPolicy",
+      "Rationale": "Disabling this policy will prevent users from requesting access to your organization or project within your organization",
+      "Recommendation": "Go to Organization Settings --> Policy --> User Policy --> Off 'Request Access.'.",
       "Tags": [
         "SDL",
         "TCP",
@@ -413,7 +515,7 @@
     },
     {
       "ControlID": "AzureDevOps_Organization_AuthZ_Min_Admin_Count",
-      "Description": "There should be atleast $($this.ControlSettings.Organization.MinPCAMembersPermissible) Project Collection Administrators in your organization",
+      "Description": "There should be at least $($this.ControlSettings.Organization.MinPCAMembersPermissible) Project Collection Administrators in your organization",
       "Id": "Organization350",
       "ControlSeverity": "Medium",
       "Automated": "Yes",

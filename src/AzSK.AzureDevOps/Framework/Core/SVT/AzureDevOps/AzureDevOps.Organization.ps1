@@ -14,16 +14,24 @@ class Organization: ADOSVTBase
 
     GetOrgPolicyObject()
     {
-        $apiURL = "https://{0}.vsaex.visualstudio.com/_apis/Contribution/dataProviders/query?api-version=5.0-preview.1" -f $($this.SubscriptionContext.SubscriptionName);
-
-        $orgUrl = "https://{0}.visualstudio.com" -f $($this.SubscriptionContext.SubscriptionName);
-        $inputbody =  "{'contributionIds':['ms.vss-org-web.collection-admin-policy-data-provider'],'context':{'properties':{'sourcePage':{'url':'$orgUrl/_settings/policy','routeId':'ms.vss-admin-web.collection-admin-hub-route','routeValues':{'adminPivot':'policy','controller':'ContributedPage','action':'Execute'}}}}}" | ConvertFrom-Json
+        $uri ="https://{0}.visualstudio.com/_settings/organizationPolicy?__rt=fps&__ver=2" -f $($this.SubscriptionContext.SubscriptionName);
+        $response = [WebRequestHelper]::InvokeGetWebRequest($uri);
         
-        $responseObj = [WebRequestHelper]::InvokePostWebRequest($apiURL,$inputbody);
-      
-        if([Helpers]::CheckMember($responseObj,"data") -and $responseObj.data.'ms.vss-org-web.collection-admin-policy-data-provider')
+        if($response -and [Helpers]::CheckMember($response.fps.dataProviders,"data") -and $response.fps.dataProviders.data.'ms.vss-admin-web.organization-policies-data-provider')
         {
-            $this.OrgPolicyObj = $responseObj.data.'ms.vss-org-web.collection-admin-policy-data-provider'.policies
+            $this.OrgPolicyObj = $response.fps.dataProviders.data.'ms.vss-admin-web.organization-policies-data-provider'.policies
+        }
+        # Added above new api to get User policy settings, old api is not returning
+        if (!$this.OrgPolicyObj) {
+            $apiURL = "https://{0}.vsaex.visualstudio.com/_apis/Contribution/dataProviders/query?api-version=5.0-preview.1" -f $($this.SubscriptionContext.SubscriptionName);
+
+            $orgUrl = "https://{0}.visualstudio.com" -f $($this.SubscriptionContext.SubscriptionName);
+            $inputbody =  "{'contributionIds':['ms.vss-org-web.collection-admin-policy-data-provider'],'context':{'properties':{'sourcePage':{'url':'$orgUrl/_settings/policy','routeId':'ms.vss-admin-web.collection-admin-hub-route','routeValues':{'adminPivot':'policy','controller':'ContributedPage','action':'Execute'}}}}}" | ConvertFrom-Json
+            $responseObj = [WebRequestHelper]::InvokePostWebRequest($apiURL,$inputbody);
+            if([Helpers]::CheckMember($responseObj,"data") -and $responseObj.data.'ms.vss-org-web.collection-admin-policy-data-provider')
+            {
+                $this.OrgPolicyObj = $responseObj.data.'ms.vss-org-web.collection-admin-policy-data-provider'.policies
+            }
         }
     }
     
@@ -117,6 +125,112 @@ class Organization: ADOSVTBase
         return $controlResult
     }
 
+    hidden [ControlResult] CheckSCALTForAdminMembers([ControlResult] $controlResult)
+    {
+        try
+        {
+            if(($null -ne $this.ControlSettings) -and [Helpers]::CheckMember($this.ControlSettings, "Organization.GroupsToCheckForSCAltMembers"))
+            {
+
+                $adminGroupNames = $this.ControlSettings.Organization.GroupsToCheckForSCAltMembers;
+                if (($adminGroupNames | Measure-Object).Count -gt 0) 
+                {
+                    #api call to get descriptor for organization groups. This will be used to fetch membership of individual groups later.
+                    $url = "https://{0}.visualstudio.com/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1" -f $($this.SubscriptionContext.SubscriptionName);
+                    $body = '{"contributionIds":["ms.vss-admin-web.org-admin-groups-data-provider"],"dataProviderContext":{"properties":{"sourcePage":{"url":"https://{0}.visualstudio.com/_settings/groups","routeId":"ms.vss-admin-web.collection-admin-hub-route","routeValues":{"adminPivot":"groups","controller":"ContributedPage","action":"Execute"}}}}}' 
+                    $body = ($body.Replace("{0}", $this.SubscriptionContext.SubscriptionName)) | ConvertFrom-Json
+                    $response = [WebRequestHelper]::InvokePostWebRequest($url,$body);    
+                    
+                    if ($response -and [Helpers]::CheckMember($response[0],"dataProviders") -and $response[0].dataProviders."ms.vss-admin-web.org-admin-groups-data-provider") 
+                    {
+                        $adminGroups = @();
+                        $adminGroups += $response.dataProviders."ms.vss-admin-web.org-admin-groups-data-provider".identities | where { $_.displayName -in $adminGroupNames }
+                        
+                        if(($adminGroups | Measure-Object).Count -gt 0)
+                        {
+                            #global variable to track admin members across all admin groups
+                            $allAdminMembers = @();
+                            
+                            for ($i = 0; $i -lt $adminGroups.Count; $i++) 
+                            {
+                                # [AdministratorHelper]::AllPCAMembers is a static variable. Always needs ro be initialized. At the end of each iteration, it will be populated with members of that particular admin group.
+                                [AdministratorHelper]::AllPCAMembers = @();
+                                # Helper function to fetch flattened out list of group members.
+                                [AdministratorHelper]::FindPCAMembers($adminGroups[$i].descriptor, $this.SubscriptionContext.SubscriptionName)
+                                
+                                $groupMembers = @();
+                                # Add the members of current group to this temp variable.
+                                $groupMembers += [AdministratorHelper]::AllPCAMembers
+                                # Create a custom object to append members of current group with the group name. Each of these custom object is added to the global variable $allAdminMembers for further analysis of SC-Alt detection.
+                                $groupMembers | ForEach-Object {$allAdminMembers += @( [PSCustomObject] @{ name = $_.displayName; mailAddress = $_.mailAddress; groupName = $adminGroups[$i].displayName } )} 
+                            }
+                            
+                            # clearing cached value in [AdministratorHelper]::AllPCAMembers as it can be used in attestation later and might have incorrect group loaded.
+                            [AdministratorHelper]::AllPCAMembers = @();
+                            
+                            if(($allAdminMembers | Measure-Object).Count -gt 0)
+                            {
+                                if([Helpers]::CheckMember($this.ControlSettings, "AlernateAccountRegularExpressionForOrg")){
+                                    $matchToSCAlt = $this.ControlSettings.AlernateAccountRegularExpressionForOrg
+                                    #currently SC-ALT regex is a singleton expression. In case we have multiple regex - we need to make the controlsetting entry as an array and accordingly loop the regex here.
+                                    if (-not [string]::IsNullOrEmpty($matchToSCAlt)) 
+                                    {
+                                        $nonSCMembers = @();
+                                        $nonSCMembers += $allAdminMembers | Where-Object { $_.mailAddress -notmatch $matchToSCAlt }  
+                                        if (($nonSCMembers | Measure-Object).Count -gt 0) 
+                                        {
+                                            $nonSCMembers = $nonSCMembers | Select-Object name,mailAddress,groupName
+                                            $stateData = @();
+                                            $stateData += $nonSCMembers
+                                            $controlResult.AddMessage([VerificationResult]::Verify, "Review the users having admin privileges with non SC-Alt accounts : ", $stateData); 
+                                            $controlResult.SetStateData("List of users having admin privileges with non SC-Alt accounts : ", $stateData); 
+                                        }
+                                        else 
+                                        {
+                                            $controlResult.AddMessage([VerificationResult]::Passed, "No users have admin privileges with non SC-Alt accounts.");
+                                        }
+                                    }
+                                    else {
+                                        $controlResult.AddMessage([VerificationResult]::Manual, "Regular expressions for detecting SC-Alt account is not defined in the organization.");
+                                    }
+                                }
+                                else{
+                                    $controlResult.AddMessage([VerificationResult]::Error, "Regular expressions for detecting SC-Alt account is not defined in the organization. Please update your ControlSettings.json as per the latest AzSK.AzureDevOps PowerShell module.");
+                                }   
+                            }
+                            else
+                            { #count is 0 then there is no members added in the admin groups
+                                $controlResult.AddMessage([VerificationResult]::Passed, "Admin groups does not have any members.");
+                            }
+                        }
+                        else
+                        {
+                            $controlResult.AddMessage([VerificationResult]::Error, "Could not find the list of administrator groups in the organization.");
+                        }
+                    }
+                    else
+                    {
+                        $controlResult.AddMessage([VerificationResult]::Error, "Could not find the list of groups in the organization.");
+                    }
+                }
+                else
+                {
+                    $controlResult.AddMessage([VerificationResult]::Manual, "List of administrator groups for detecting non SC-Alt accounts is not defined in your organization.");    
+                }
+            }
+            else
+            {
+                $controlResult.AddMessage([VerificationResult]::Error, "List of administrator groups for detecting non SC-Alt accounts is not defined in your organization. Please update your ControlSettings.json as per the latest AzSK.AzureDevOps PowerShell module.");
+            }
+        }
+        catch
+        {
+            $controlResult.AddMessage([VerificationResult]::Error, "Could not fetch the list of groups in the organization.");
+        }
+       
+        return $controlResult
+    }
+
     hidden [ControlResult] CheckAADConfiguration([ControlResult] $controlResult)
     {
         try 
@@ -173,7 +287,7 @@ class Organization: ADOSVTBase
     {
         if([Helpers]::CheckMember($this.OrgPolicyObj,"user"))
         {
-            $userPolicyObj = $this.OrgPolicyObj.user[0]; 
+            $userPolicyObj = $this.OrgPolicyObj.user; 
             $guestAuthObj = $userPolicyObj | Where-Object {$_.Policy.Name -eq "Policy.DisallowAadGuestUserAccess"}
             if(($guestAuthObj | Measure-Object).Count -gt 0)
             {
@@ -189,12 +303,12 @@ class Organization: ADOSVTBase
             else 
             {
                 #Manual control status because external guest access notion is not applicable when AAD is not configured. Instead invite GitHub user policy is available in non-AAD backed orgs.
-                $controlResult.AddMessage([VerificationResult]::Manual, "Could not fetch external guest access policy details of the organization.");    
+                $controlResult.AddMessage([VerificationResult]::Manual, "Could not fetch external guest access policy details of the organization. This policy is available only when the organization is connected to AAD.");    
             }
         }
         else 
         {
-            $controlResult.AddMessage([VerificationResult]::Error, "Could not fetch external guest access policy details of the organization.");
+            $controlResult.AddMessage([VerificationResult]::Error, "Could not fetch user policy details of the organization.");
         }
         return $controlResult
     }
@@ -398,7 +512,8 @@ class Organization: ADOSVTBase
     hidden [ControlResult] CheckInActiveUsers([ControlResult] $controlResult)
     {
 
-        $apiURL = "https://{0}.vsaex.visualstudio.com/_apis/UserEntitlements?top=50&filter=&sortOption=lastAccessDate+ascending" -f $($this.SubscriptionContext.SubscriptionName);
+        $topInActiveUsers = $this.ControlSettings.Organization.TopInActiveUserCount 
+        $apiURL = "https://{0}.vsaex.visualstudio.com/_apis/UserEntitlements?top={1}&filter=&sortOption=lastAccessDate+ascending" -f $($this.SubscriptionContext.SubscriptionName), $topInActiveUsers;
         $responseObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
 
         if($responseObj.Count -gt 0)
@@ -412,14 +527,19 @@ class Organization: ADOSVTBase
             }
             if(($inactiveUsers | Measure-Object).Count -gt 0)
             {
-                if($inactiveUsers.Count -gt 50)
+                if($inactiveUsers.Count -gt $topInActiveUsers)
                 {
-                    $controlResult.AddMessage("Displaying top 50 inactive users")
+                    $controlResult.AddMessage("Displaying top $($topInActiveUsers) inactive users")
                 }
-                $inactiveUsersNames = ($inactiveUsers | Select-Object -Property @{Name="Name"; Expression = {$_.User.displayName}},@{Name="mailAddress"; Expression = {$_.User.mailAddress}})
+                #inactive user with days from how many days user is inactive, if user account created and was never active, in this case lastaccessdate is default 01-01-0001
+                $inactiveUsersWithDays = ($inactiveUsers | Select-Object -Property @{Name="Name"; Expression = {$_.User.displayName}},@{Name="mailAddress"; Expression = {$_.User.mailAddress}},@{Name="InactiveFromDays"; Expression = { if (((Get-Date) -[datetime]::Parse($_.lastAccessedDate)).Days -gt 10000){return "User was never active"} else {return ((Get-Date) -[datetime]::Parse($_.lastAccessedDate)).Days} }})
+            
+                #set data for attestation
+                $inactiveUsers = ($inactiveUsers | Select-Object -Property @{Name="Name"; Expression = {$_.User.displayName}},@{Name="mailAddress"; Expression = {$_.User.mailAddress}})
+                
                 $controlResult.AddMessage([VerificationResult]::Failed,
-                                        "Review inactive users present in the organization",$inactiveUsersNames);
-                $controlResult.SetStateData("Inactive users list: ", $inactiveUsersNames);
+                                        "Review inactive users present in the organization",$inactiveUsersWithDays);
+                $controlResult.SetStateData("Inactive users list: ", $inactiveUsers);
             }
             else {
                 $controlResult.AddMessage([VerificationResult]::Passed,
@@ -437,29 +557,32 @@ class Organization: ADOSVTBase
 
     hidden [ControlResult] CheckDisconnectedIdentities([ControlResult] $controlResult)
     {
-        $apiURL = "https://{0}.visualstudio.com/_apis/OrganizationSettings/DisconnectedUser" -f $($this.SubscriptionContext.SubscriptionName);
-        $responseObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
+        try 
+        {
+            $apiURL = "https://{0}.visualstudio.com/_apis/OrganizationSettings/DisconnectedUser" -f $($this.SubscriptionContext.SubscriptionName);
+            $responseObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
+            
+            #disabling null check to CheckMember because if there are no disconnected users - it will return null.
+            if ([Helpers]::CheckMember($responseObj[0], "users",$false)) 
+            {
+                if (($responseObj[0].users | Measure-Object).Count -gt 0 ) 
+                {
         
-        try {
-           if ([Helpers]::CheckMember($responseObj,"users")) {
-               if(($responseObj.users | Measure-Object).Count -gt 0 )  
-               {
-        
-                    $UsersNames = @();   
-                    $UsersNames += ($responseObj.users | Select-Object -Property @{Name="Name"; Expression = {$_.displayName}},@{Name="mailAddress"; Expression = {$_.preferredEmailAddress}})
-                    $controlResult.AddMessage([VerificationResult]::Failed, "Remove access from the organization for below disconnected users",$UsersNames);  
-                    $controlResult.SetStateData("Disconnected users list: ", $UsersNames);
-               }
-               else
-               {
-                   $controlResult.AddMessage([VerificationResult]::Passed, "No disconnected users found.");
-               }   
-              } 
+                    $userNames = @();   
+                    $userNames += ($responseObj[0].users | Select-Object -Property @{Name = "Name"; Expression = { $_.displayName } }, @{Name = "mailAddress"; Expression = { $_.preferredEmailAddress } })
+                    $controlResult.AddMessage([VerificationResult]::Failed, "Remove access for below disconnected users : ", $userNames);  
+                    $controlResult.SetStateData("Disconnected users list: ", $userNames);
+                }
+                else 
+                {
+                    $controlResult.AddMessage([VerificationResult]::Passed, "No disconnected users found.");
+                }   
+            } 
         }
-        catch {
-            $controlResult.AddMessage([VerificationResult]::Passed, "No disconnected users found.");
+        catch 
+        {
+            $controlResult.AddMessage([VerificationResult]::Error, "Could not fetch the list of disconnected users.");
         }
-        
        
         return $controlResult;
     }
@@ -665,15 +788,141 @@ class Organization: ADOSVTBase
             
             if($orgLevelScope -eq $true )
             {
-                $controlResult.AddMessage([VerificationResult]::Passed, "Job authorization scope is limited to current project at organization level.");
+                $controlResult.AddMessage([VerificationResult]::Passed, "Job authorization scope is limited to current project for non-release pipelines at organization level.");
             }
             else{
-                $controlResult.AddMessage([VerificationResult]::Failed, "Job authorization scope is set to project collection at organization level.");
+                $controlResult.AddMessage([VerificationResult]::Failed, "Job authorization scope is set to project collection for non-release pipelines at organization level.");
             }       
        }
        else{
              $controlResult.AddMessage([VerificationResult]::Error, "Could not fetch the organization pipeline settings.");
        }       
+        return $controlResult
+    }
+
+    hidden [ControlResult] CheckAuthZRepoScope([ControlResult] $controlResult)
+    {
+       if($this.PipelineSettingsObj)
+       {
+            $orgLevelScope = $this.PipelineSettingsObj.enforceReferencedRepoScopedToken
+            
+            if($orgLevelScope -eq $true )
+            {
+                $controlResult.AddMessage([VerificationResult]::Passed, "Job authorization scope of pipelines is limited to explicitly referenced Azure DevOps repositories at organization level.");
+            }
+            else{
+                $controlResult.AddMessage([VerificationResult]::Failed, "Job authorization scope of pipelines is set to all Azure DevOps repositories in the authorized projects at organization level.");
+            }       
+       }
+       else{
+             $controlResult.AddMessage([VerificationResult]::Error, "Could not fetch the organization pipeline settings.");
+       }       
+        return $controlResult
+    }
+
+    hidden [ControlResult] CheckBuiltInTask([ControlResult] $controlResult)
+    {
+       if($this.PipelineSettingsObj)
+       {
+            $orgLevelScope = $this.PipelineSettingsObj.disableInBoxTasksVar
+            
+            if($orgLevelScope -eq $true )
+            {
+                $controlResult.AddMessage([VerificationResult]::Passed, "Built-in tasks are disabled at organization level.");
+            }
+            else
+            {
+                $controlResult.AddMessage([VerificationResult]::Failed, "Built-in tasks are not disabled at organization level.");
+            }       
+       }
+       else
+       {
+             $controlResult.AddMessage([VerificationResult]::Error, "Could not fetch the organization pipeline settings.");
+       }       
+        return $controlResult
+    }
+
+    hidden [ControlResult] CheckMarketplaceTask([ControlResult] $controlResult)
+    {
+       if($this.PipelineSettingsObj)
+       {
+            $orgLevelScope = $this.PipelineSettingsObj.disableMarketplaceTasksVar
+            
+            if($orgLevelScope -eq $true )
+            {
+                $controlResult.AddMessage([VerificationResult]::Passed, "Market place tasks are disabled at organization level.");
+            }
+            else
+            {
+                $controlResult.AddMessage([VerificationResult]::Failed, "Market place tasks are not disabled at organization level.");
+            }       
+       }
+       else
+       {
+             $controlResult.AddMessage([VerificationResult]::Error, "Could not fetch the organization pipeline settings.");
+       }       
+        return $controlResult
+    }
+
+    hidden [ControlResult] CheckPolicyProjectTeamAdminUserInvitation([ControlResult] $controlResult)
+    {
+        if([Helpers]::CheckMember($this.OrgPolicyObj,"user"))
+        {
+            $userPolicyObj = $this.OrgPolicyObj.user
+            $userInviteObj = $userPolicyObj | Where-Object {$_.Policy.Name -eq "Policy.AllowTeamAdminsInvitationsAccessToken"}
+            if(($userInviteObj | Measure-Object).Count -gt 0)
+            {
+            
+                if($userInviteObj.policy.effectiveValue -eq $false )
+                {
+                    $controlResult.AddMessage([VerificationResult]::Passed,"Team and project administrators are not allowed to invite new users.");
+                }
+                else 
+                {
+                    $controlResult.AddMessage([VerificationResult]::Failed, "Team and project administrators are allowed to invite new users.");
+                }
+            }
+            else 
+            {
+                #Manual control status because the notion of team and project admins inviting new users is not applicable when AAD is not configured.
+                $controlResult.AddMessage([VerificationResult]::Manual, "Could not fetch invite new user policy details of the organization. This policy is available only when the organization is connected to AAD.");    
+            }
+        }
+        else 
+        {
+            $controlResult.AddMessage([VerificationResult]::Error, "Could not fetch user policy details of the organization.");
+        }
+        return $controlResult
+    }
+
+    hidden [ControlResult] CheckRequestAccessPolicy([ControlResult] $controlResult)
+    {
+        if([Helpers]::CheckMember($this.OrgPolicyObj,"user"))
+        {
+            $userPolicyObj = $this.OrgPolicyObj.user
+            $requestAccessObj = $userPolicyObj | Where-Object {$_.Policy.Name -eq "Policy.AllowRequestAccessToken"}
+            if(($requestAccessObj | Measure-Object).Count -gt 0)
+            {
+            
+                if($requestAccessObj.policy.effectiveValue -eq $false )
+                {
+                    $controlResult.AddMessage([VerificationResult]::Passed,"Users can not request access to organization or projects within the organization.");
+                }
+                else 
+                {
+                    $controlResult.AddMessage([VerificationResult]::Failed, "Users can request access to organization or projects within the organization.");
+                }
+            }
+            else 
+            {
+                #Manual control status because the notion of request access is not applicable when AAD is not configured.
+                $controlResult.AddMessage([VerificationResult]::Manual, "Could not fetch request access policy details of the organization. This policy is available only when the organization is connected to AAD.");    
+            }
+        }
+        else 
+        {
+            $controlResult.AddMessage([VerificationResult]::Error, "Could not fetch user policy details of the organization.");
+        }
         return $controlResult
     }
     

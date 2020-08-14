@@ -89,14 +89,31 @@
       "Enabled": true
     },
     {
-      "ControlID": "AzureDevOps_Project_AuthZ_Limit_Job_Scope_To_Current_Project",
-      "Description": "Do not run pipelines using tokens that have project collection level access.",
+      "ControlID": "AzureDevOps_Project_AuthZ_Limit_Non_Release_Scope_To_Current_Project",
+      "Description": "Do not run non-release pipelines using tokens that have project collection level access.",
       "Id": "Project160",
       "ControlSeverity": "Medium",
       "Automated": "Yes",
       "MethodName": "CheckJobAuthZScope",
       "Rationale": "If pipelines use project collection level tokens, a vulnerability in components used by one project can be leveraged by an attacker to attack all other projects. This is also in keeping with the principle of least privilege.",
-      "Recommendation": "Go to Project Settings --> Pipelines --> Settings --> Enable 'Limit job authorization scope to current project.'.",
+      "Recommendation": "Go to Project Settings --> Pipelines --> Settings --> Enable 'Limit job authorization scope to current project for non-release pipelines.'.",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Automated",
+        "AuthZ"
+      ],
+      "Enabled": true
+    },
+    {
+      "ControlID": "AzureDevOps_Project_AuthZ_Limit_Job_Scope_To_Referenced_ADO_Repos",
+      "Description": "Do not allow Pipelines access any Azure DevOps repositories.",
+      "Id": "Project162",
+      "ControlSeverity": "Medium",
+      "Automated": "Yes",
+      "MethodName": "CheckAuthZRepoScope",
+      "Rationale": "Pipelines can access any Azure DevOps repositories in authorized projects unless this option is enabled. With this option enabled, you can reduce the scope of access for all pipelines to only Azure DevOps repositories explicitly referenced by the pipeline.",
+      "Recommendation": "Go to Project Settings --> Pipelines --> Settings --> Enable 'Limit job authorization scope to referenced Azure DevOps repositorie'.",
       "Tags": [
         "SDL",
         "TCP",
@@ -124,7 +141,7 @@
     },
     {
       "ControlID": "AzureDevOps_Project_AuthZ_Min_Admin_Count",
-      "Description": "There should be atleast $($this.ControlSettings.Project.MinPAMembersPermissible) Project Administrators in your project.",
+      "Description": "There should be at least $($this.ControlSettings.Project.MinPAMembersPermissible) Project Administrators in your project.",
       "Id": "Project180",
       "ControlSeverity": "Medium",
       "Automated": "Yes",
@@ -148,6 +165,23 @@
       "MethodName": "CheckMaxPACount",
       "Rationale": "Each additional person in the administrator role increases the attack surface for the entire project. The number of members in these roles should be kept to as low as possible.",
       "Recommendation": "Go to Project settings --> General --> Permissions --> Groups --> Select the group : Project Administrators --> Review the members of this group",
+      "Tags": [
+        "SDL",
+        "AuthZ",
+        "Automated",
+        "Best Practice"
+      ],
+      "Enabled": true
+    },
+    {
+      "ControlID": "AzureDevOps_Project_AuthZ_Use_SC_ALT_Account_For_Admin_Members",
+      "Description": "Smart Card Alt(SC-ALT) accounts must be used for privileged roles used for project admin activity.",
+      "Id": "Project200",
+      "ControlSeverity": "Medium",
+      "Automated": "Yes",
+      "MethodName": "CheckSCALTForAdminMembers",
+      "Rationale": "",
+      "Recommendation": "Go to Project settings --> General --> Permissions --> Groups --> Select the group --> Review the members of this group",
       "Tags": [
         "SDL",
         "AuthZ",

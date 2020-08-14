@@ -244,6 +244,7 @@ class Constants
 	
 	# LogAnalytics view file name
 	static [string] $LogAnalyticsGenericView = "AZSK.AM.LogAnalytics.GenericView.V6.lawsview"
+	static [string] $LogAnalyticsGenericViewWorkbook = "ADOScannerLAWorkbook.json"
 	# Constants for in cluster CA scanning
 	static [string] $DatabricksScanJobConfigurationUrl = "https://azsdkossep.azureedge.net/incluster_configuration/DatabricksConfiguration.json"
 	static [string] $DatabricksCANotebookUrl = "https://azsdkossep.azureedge.net/incluster_configuration/AzSK_DB.ipynb"
