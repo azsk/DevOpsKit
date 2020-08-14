@@ -156,3 +156,9 @@ enum RemoveConfiguredCASetting
 	AltLAWSSettings
 	WebhookSettings
 }
+
+enum DashboardType
+{
+	View
+	Workbook
+}
