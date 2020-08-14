@@ -620,13 +620,11 @@ class ControlStateExtension
 				# Get resources list supported for scan
 				$AzSKScannableResources=[ResourceInventory]::FilteredResources;
 
-				$AzSKScannableResourceIds= $AzSKScannableResources | Select-Object -ExpandProperty ResourceId
-
-				$resourcesWithAttestationCount = 0;
+				$AzSKScannableResourceIds= $AzSKScannableResources | Select-Object -ExpandProperty ResourceId				
 				# Fetch current attestation 
 				$ControlStateIndexerObject = $this.ComputeControlStateIndexer();
-				$resourcesWithAttestation = $this.ControlStateIndexer |Select-Object -ExpandProperty ResourceId
-				
+				$resourcesWithAttestation = @($this.ControlStateIndexer |Select-Object -ExpandProperty ResourceId)
+				$resourcesWithAttestationCount = $resourcesWithAttestation.Count
 				$deletedResourcesWithAttestation = @();
 				$filteredIndexerObject= @();
 				$deletedResourcesWithAttestationCount = 0;
@@ -644,7 +642,6 @@ class ControlStateExtension
 					[JsonHelper]::ConvertToJsonCustom($filteredIndexerObject) | Out-File $IndexFileLocalTempPath -Force
 					# Upload trimmed file to storage
 					[AzHelper]::UploadStorageBlobContent($IndexFileLocalTempPath, $this.IndexerBlobName , $ContainerName, $StorageAccount.Context)
-					$resourcesWithAttestationCount = $filteredIndexerObject.Count
 				}
 				$trimAttestationEvent = "" | Select-Object Name, Properties, Metrics
 				$properties = @{"SubscriptionId"= $this.SubscriptionContext.SubscriptionId;"UniquRunIdentifier"=$this.UniqueRunId;"NumberOfResourcesTrimmed"=$deletedResourcesWithAttestationCount;"NumberOfResourcesWithAttestation"=$resourcesWithAttestationCount;}
