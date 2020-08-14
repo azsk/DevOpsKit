@@ -567,7 +567,7 @@ class ControlStateExtension
 				$trimAttestationEvent = "" | Select-Object Name, Properties, Metrics
 				$reason = "Insufficient permissions"
 				$properties = @{"SubscriptionId"= $this.SubscriptionContext.SubscriptionId;"UniquRunIdentifier"=$this.UniqueRunId;"HasAtetstationWritePermissions"= $this.HasControlStateWritePermissions;"HasReaderAccessForSub"=$HasReaderAccessForSub;"Reason"= $reason}
-				$trimAttestationEvent.Name = "Attestation trimming aborted."
+				$trimAttestationEvent.Name = "Attestation trimming aborted"
 				$trimAttestationEvent.Properties = $properties
 				$trimAttestationEvents.Add($trimAttestationevent) | Out-Null
 				return $trimAttestationEvents
@@ -586,7 +586,7 @@ class ControlStateExtension
 				$trimAttestationEvent = "" | Select-Object Name, Properties, Metrics
 				$reason = "Minimum interval to trim has not exceeded"
 				$properties = @{"SubscriptionId"= $this.SubscriptionContext.SubscriptionId;"UniquRunIdentifier"=$this.UniqueRunId;"LastTrimDoneOn"=$LastBackup.LastModified;"Reason"= $reason}
-				$trimAttestationEvent.Name = "Attestation trimming skipped."
+				$trimAttestationEvent.Name = "Attestation trimming skipped"
 				$trimAttestationEvent.Properties = $properties
 				$trimAttestationEvents.Add($trimAttestationEvent) | Out-Null
 				return $trimAttestationEvents
@@ -606,7 +606,7 @@ class ControlStateExtension
 				$trimAttestationEvent = "" | Select-Object Name, Properties, Metrics
 				$reason ="Backup was not successful"
 				$properties = @{"SubscriptionId"= $this.SubscriptionContext.SubscriptionId;"UniquRunIdentifier"=$this.UniqueRunId;"Reason"=$reason}
-				$trimAttestationEvent.Name = "Attestation trimming aborted."
+				$trimAttestationEvent.Name = "Attestation trimming aborted"
 				$trimAttestationEvent.Properties = $properties
 				$trimAttestationEvents.Add($trimAttestationEvent) | Out-Null
 				return $trimAttestationEvents
@@ -648,7 +648,7 @@ class ControlStateExtension
 				}
 				$trimAttestationEvent = "" | Select-Object Name, Properties, Metrics
 				$properties = @{"SubscriptionId"= $this.SubscriptionContext.SubscriptionId;"UniquRunIdentifier"=$this.UniqueRunId;"NumberOfResourcesTrimmed"=$deletedResourcesWithAttestationCount;"NumberOfResourcesWithAttestation"=$resourcesWithAttestationCount;}
-				$trimAttestationEvent.Name = "Attestation trimming completed."
+				$trimAttestationEvent.Name = "Attestation trimming completed"
 				$trimAttestationEvent.Properties = $properties
 				$trimAttestationEvents.Add($trimAttestationEvent) | Out-Null
 
@@ -664,7 +664,7 @@ class ControlStateExtension
 		{
 			$trimAttestationEvent = "" | Select-Object Name, Properties, Metrics
 			$properties = @{"SubscriptionId"= $this.SubscriptionContext.SubscriptionId;"UniquRunIdentifier"=$this.UniqueRunId;}
-			$trimAttestationEvent.Name = "Attestation trimming aborted (" + $_ +").";
+			$trimAttestationEvent.Name = "Attestation trimming aborted (" + $_ +")";
 			$trimAttestationEvent.Properties = $properties
 			$trimAttestationEvents.Add($trimAttestationEvent) | Out-Null
 			return $trimAttestationEvents
