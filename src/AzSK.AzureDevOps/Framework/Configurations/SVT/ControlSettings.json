@@ -250,5 +250,5 @@
     "AutoCloseProjectBug": true,
     "AutoCloseOrgBug": true
   },
-  "generateSecurityEvaluationJsonFile" : false
+  "GenerateSecurityEvaluationJsonFile" : false
 }
