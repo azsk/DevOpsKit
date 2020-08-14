@@ -689,12 +689,12 @@ class UsageTelemetry: ListenerBase {
             $event = [Microsoft.ApplicationInsights.DataContracts.EventTelemetry]::new()
             $event.Name = $Name
             $Properties.Keys | ForEach-Object {
-				if(-not $event.Properties.ContainsKey($_)){
+				if(-not $event.Properties.ContainsKey($_) -and (-not [String]::IsNullOrWhiteSpace($Properties[$_]))){
 					$event.Properties[$_] = $Properties[$_].ToString();
 				}
             }
             $Metrics.Keys | ForEach-Object {
-				if(-not $event.Properties.ContainsKey($_)){
+				if(-not $event.Properties.ContainsKey($_) -and (-not [String]::IsNullOrWhiteSpace($Metrics[$_]))){
 					$event.Metrics[$_] = $Metrics[$_].ToString();
 				}
 			}
