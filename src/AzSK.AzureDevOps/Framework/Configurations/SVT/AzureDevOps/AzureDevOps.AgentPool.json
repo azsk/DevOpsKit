@@ -74,7 +74,7 @@
       "Enabled": true
     },
     {
-      "ControlID": "AzureDevOps_AgentPool_AuthZ_Org_Auto_Provisioning",
+      "ControlID": "AzureDevOps_AgentPool_AuthZ_Dont_Enable_Auto_Provisioning",
       "Description": "Do not enable Auto-provisioning for agent pools",
       "Id": "AgentPool150",
       "ControlSeverity": "High",

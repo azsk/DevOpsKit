@@ -57,6 +57,7 @@
         "ControlIds": [
           "AzureDevOps_AgentPool_AuthZ_Disable_Inherited_Permissions",
           "AzureDevOps_AgentPool_AuthZ_Project_Dont_Grant_All_Pipeline_Access",
+          "AzureDevOps_AgentPool_AuthZ_Dont_Enable_Auto_Provisioning",
           "AzureDevOps_AgentPool_SI_Review_Inactive_AgentPool"
         ]
       }

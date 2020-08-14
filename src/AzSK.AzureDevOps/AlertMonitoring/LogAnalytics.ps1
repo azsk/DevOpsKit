@@ -196,10 +196,10 @@ function Install-AzSKMonitoringSolution
 		[Parameter(Mandatory = $false, HelpMessage = "Switch to specify whether to open output folder.")]
 		$DoNotOpenOutputFolder,
 
-		[switch]
-		[Alias("wb")]
-		[Parameter(Mandatory = $False, HelpMessage="Provide this switch to create workbook based security dashboard.") ]
-		$DeployWorkbook
+		[ValidateSet("View", "Workbook")] 
+        [Parameter(Mandatory = $false, HelpMessage="Provide the type of dashboard to be created in Log Analytics.")]
+		[Alias("dt")]
+		$DashboardType = [DashboardType]::View
 		
     )
 	Begin
@@ -211,6 +211,10 @@ function Install-AzSKMonitoringSolution
 	{
 		try
 		{
+			$DeployWorkbook = $false
+			if($DashboardType -eq [DashboardType]::Workbook){
+				$DeployWorkbook = $true
+			}
 			$monitoringInstance = [LogAnalyticsMonitoring]::new($LAWSSubscriptionId, $LAWSResourceGroup, $LAWSId, $PSCmdlet.MyInvocation, $ViewName, $DeployWorkbook);
 		}
 		catch
