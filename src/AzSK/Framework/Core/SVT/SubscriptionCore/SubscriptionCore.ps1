@@ -1627,9 +1627,10 @@ class SubscriptionCore: AzSVTBase
 					$nonAltPIMAccounts = $AssignmentsForCriticalRoles | Where-Object{$_.ObjectType -eq 'User' -and $_.PrincipalName -notmatch $AltAccountRegX}
 					if(($nonAltPIMAccounts | Measure-Object).Count -gt 0)
 					{
-						$nonAltPIMAccountsWithRoles = $AssignmentsForCriticalRoles | Where-Object{$_.DisplayName -in $nonAltPIMAccounts.DisplayName}
+						$nonAltPIMAccountsWithRoles = $AssignmentsForCriticalRoles | Where-Object{$_.DisplayName -in $nonAltPIMAccounts.DisplayName} | Select-Object -Property "PrincipalName", "RoleDefinitionName","Scope","ObjectType" 
 						$controlResult.AddMessage([VerificationResult]::Failed, "Non alternate accounts are assigned critical roles")
-						$controlResult.AddMessage($($nonAltPIMAccountsWithRoles | Select-Object -Property "PrincipalName", "RoleDefinitionName","Scope","ObjectType" ))
+						$controlResult.AddMessage($($nonAltPIMAccountsWithRoles))
+						$controlResult.SetStateData("Non alternate accounts are assigned critical roles:", @($nonAltPIMAccountsWithRoles));
 					}
 					else
 					{
