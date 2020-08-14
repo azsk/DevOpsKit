@@ -1249,6 +1249,10 @@ class SubscriptionCore: AzSVTBase
 				$controlResult.AddMessage([VerificationResult]::Failed, [MessageData]::new("Expected pricing tier is not configured for ASC.", $MisconfiguredASCTier));
 			}
 		}
+		else 
+		{
+			$controlResult.AddMessage([VerificationResult]::Verify, "Not able to validate ASC pricing tier. Please verify if Microsoft.Security provider is registered." )
+		}
 		return $controlResult
 	}
 
