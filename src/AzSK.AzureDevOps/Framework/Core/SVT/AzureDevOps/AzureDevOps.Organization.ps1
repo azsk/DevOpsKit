@@ -535,13 +535,13 @@ class Organization: ADOSVTBase
                     $controlResult.AddMessage("Displaying top $($topInActiveUsers) inactive users")
                 }
                 #inactive user with days from how many days user is inactive, if user account created and was never active, in this case lastaccessdate is default 01-01-0001
-                $inactiveUsersWithDays = ($inactiveUsers | Select-Object -Property @{Name="Name"; Expression = {$_.User.displayName}},@{Name="mailAddress"; Expression = {$_.User.mailAddress}},@{Name="InactiveFromDays"; Expression = { if (((Get-Date) -[datetime]::Parse($_.lastAccessedDate)).Days -gt 10000){return "User was never active"} else {return ((Get-Date) -[datetime]::Parse($_.lastAccessedDate)).Days} }})
+                $inactiveUsersWithDays = ($inactiveUsers | Select-Object -Property @{Name="Name"; Expression = {$_.User.displayName}},@{Name="mailAddress"; Expression = {$_.User.mailAddress}},@{Name="InactiveFromDays"; Expression = { if (((Get-Date) -[datetime]::Parse($_.lastAccessedDate)).Days -gt 10000){return "User was never active."} else {return ((Get-Date) -[datetime]::Parse($_.lastAccessedDate)).Days} }})
             
                 #set data for attestation
                 $inactiveUsers = ($inactiveUsers | Select-Object -Property @{Name="Name"; Expression = {$_.User.displayName}},@{Name="mailAddress"; Expression = {$_.User.mailAddress}})
                 
                 $controlResult.AddMessage([VerificationResult]::Failed,
-                                        "Review inactive users present in the organization",$inactiveUsersWithDays);
+                                        "Review users present in the organization who are inactive from last $($this.ControlSettings.Organization.InActiveUserActivityLogsPeriodInDays) days : ",$inactiveUsersWithDays);
                 $controlResult.SetStateData("Inactive users list: ", $inactiveUsers);
             }
             else {

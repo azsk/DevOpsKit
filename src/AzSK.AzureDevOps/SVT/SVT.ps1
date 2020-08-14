@@ -32,6 +32,7 @@ function Get-AzSKAzureDevOpsSecurityStatus
 	#>
 
 	[OutputType([String])]
+	[Alias("Get-AzSKADOSecurityStatus")]
 	Param
 	(
 
