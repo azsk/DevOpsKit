@@ -25,10 +25,10 @@ function Get-AzSKADOInfo
 		The list of control ids for which fixes should be applied.
 
 	.NOTES
-	This command helps the application team to verify whether their Azure resources are compliant with the security guidance or not 
+	This command helps the application team to verify whether their ADO resources are compliant with the security guidance or not 
 
 	.LINK
-	https://aka.ms/azskossdocs 
+	https://aka.ms/ADOScanner 
 
 	#>
 	Param(
