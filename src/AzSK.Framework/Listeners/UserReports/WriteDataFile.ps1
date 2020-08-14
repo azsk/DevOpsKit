@@ -78,7 +78,7 @@ class WriteDataFile: FileOutputBase
     {
         $generateSecurityEvaluationJsonFile = $false
         $ControlSettings = [ConfigurationManager]::LoadServerConfigFile("ControlSettings.json");
-        if([Helpers]::CheckMember($ControlSettings, "generateSecurityEvaluationJsonFile") -and $ControlSettings -eq $true){
+        if([Helpers]::CheckMember($ControlSettings, "generateSecurityEvaluationJsonFile") -and $ControlSettings.generateSecurityEvaluationJsonFile -eq $true){
             $generateSecurityEvaluationJsonFile = $true
         }
         return $generateSecurityEvaluationJsonFile;
