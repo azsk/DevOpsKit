@@ -624,7 +624,7 @@ class ControlStateExtension
 				# Fetch current attestation 
 				$ControlStateIndexerObject = $this.ComputeControlStateIndexer();
 				$resourcesWithAttestation = @($this.ControlStateIndexer |Select-Object -ExpandProperty ResourceId)
-				$resourcesWithAttestationCount = $resourcesWithAttestation | Measure-Object
+				$resourcesWithAttestationCount = ($resourcesWithAttestation | Measure-Object).Count
 				$deletedResourcesWithAttestation = @();
 				$filteredIndexerObject= @();
 				$deletedResourcesWithAttestationCount = 0;
