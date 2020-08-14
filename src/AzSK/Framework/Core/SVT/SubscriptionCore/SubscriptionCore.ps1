@@ -2132,7 +2132,7 @@ class SubscriptionCore: AzSVTBase
 		      {
 				 $controlResult.EnableFixControl = $true;
 			     $controlResult.SetStateData("Misconfigured Security Contact Details", $this.MisConfiguredSecurityContactDetails);
-			     $controlResult.AddMessage([VerificationResult]::Failed, [MessageData]::new("Security contacts settings are not configured correctly.", $this.MisConfiguredSecurityContactDetails));
+			     $controlResult.AddMessage([VerificationResult]::Failed, [MessageData]::new("Security contacts settings are not configured correctly.`n", $this.MisConfiguredSecurityContactDetails));
 		      }
 			
 			else
