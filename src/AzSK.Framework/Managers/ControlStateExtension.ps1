@@ -558,19 +558,18 @@ class ControlStateExtension
 			}
 			
 			#check for reader access at subscription level 
-			$HasReaderAccessForSub = $false;
 			$HasReaderAccessForSub = $this.CheckSubscriptionScopeReaderAccess()	
 			
 			#check for write permission to create backup file and rewrite trimmed attestation json 
 			#check for reader access on subscription 
-			if($this.HasControlStateWritePermissions -le 0 -or !$HasReaderAccessForSub) 
+			if($this.HasControlStateWritePermissions -le 0 -or -not $HasReaderAccessForSub) 
 			{
-				return $trimAttestationEvents ;
-				$event = "" | Select-Object Name, Properties, Metrics
-				$properties = @{"SubscriptionId"= $this.SubscriptionContext.SubscriptionId;"UniquRunIdentifier"=$this.UniqueRunId;"HasAtetstationWritePermissions"= $this.HasControlStateWritePermissions;"HasReaderAccessForSub"=$HasReaderAccessForSub;}
-				$event.Name = "Attestation trimming aborted (insufficient permissions)."
-				$event.Properties = $properties
-				$trimAttestationEvents.Add($event) | Out-Null
+				$trimAttestationEvent = "" | Select-Object Name, Properties, Metrics
+				$reason = "Insufficient permissions"
+				$properties = @{"SubscriptionId"= $this.SubscriptionContext.SubscriptionId;"UniquRunIdentifier"=$this.UniqueRunId;"HasAtetstationWritePermissions"= $this.HasControlStateWritePermissions;"HasReaderAccessForSub"=$HasReaderAccessForSub;"Reason"= $reason}
+				$trimAttestationEvent.Name = "Attestation trimming aborted."
+				$trimAttestationEvent.Properties = $properties
+				$trimAttestationEvents.Add($trimAttestationevent) | Out-Null
 				return $trimAttestationEvents
 			}	
 			
@@ -584,11 +583,12 @@ class ControlStateExtension
 			if ($null -ne $BackUpFilesWithinTrimInterval)
 			{
 				$LastBackup = $BackUpFilesWithinTrimInterval | Sort-Object -Property LastModified -Descending|Select-Object -First 1 				
-				$event = "" | Select-Object Name, Properties, Metrics
-				$properties = @{"SubscriptionId"= $this.SubscriptionContext.SubscriptionId;"UniquRunIdentifier"=$this.UniqueRunId;"LastTrimDoneOn"=$LastBackup.LastModified;}
-				$event.Name = "Attestation trimming skipped (minimum interval to trim has not exceeded)."
-				$event.Properties = $properties
-				$trimAttestationEvents.Add($event) | Out-Null
+				$trimAttestationEvent = "" | Select-Object Name, Properties, Metrics
+				$reason = "Minimum interval to trim has not exceeded"
+				$properties = @{"SubscriptionId"= $this.SubscriptionContext.SubscriptionId;"UniquRunIdentifier"=$this.UniqueRunId;"LastTrimDoneOn"=$LastBackup.LastModified;"Reason"= $reason}
+				$trimAttestationEvent.Name = "Attestation trimming skipped."
+				$trimAttestationEvent.Properties = $properties
+				$trimAttestationEvents.Add($trimAttestationEvent) | Out-Null
 				return $trimAttestationEvents
 			}	
 			# Backup existing attestation json file with timestamp added
@@ -603,11 +603,12 @@ class ControlStateExtension
 			}
 			catch{
 				$this.AttestationBackupSuccess = $false;
-				$event = "" | Select-Object Name, Properties, Metrics
-				$properties = @{"SubscriptionId"= $this.SubscriptionContext.SubscriptionId;"UniquRunIdentifier"=$this.UniqueRunId;}
-				$event.Name = "Attestation trimming aborted (backup was not successful)."
-				$event.Properties = $properties
-				$trimAttestationEvents.Add($event) | Out-Null
+				$trimAttestationEvent = "" | Select-Object Name, Properties, Metrics
+				$reason ="Backup was not successful"
+				$properties = @{"SubscriptionId"= $this.SubscriptionContext.SubscriptionId;"UniquRunIdentifier"=$this.UniqueRunId;"Reason"=$reason}
+				$trimAttestationEvent.Name = "Attestation trimming aborted."
+				$trimAttestationEvent.Properties = $properties
+				$trimAttestationEvents.Add($trimAttestationEvent) | Out-Null
 				return $trimAttestationEvents
 			}		
 			
@@ -645,11 +646,11 @@ class ControlStateExtension
 					[AzHelper]::UploadStorageBlobContent($IndexFileLocalTempPath, $this.IndexerBlobName , $ContainerName, $StorageAccount.Context)
 					$resourcesWithAttestationCount = $filteredIndexerObject.Count
 				}
-				$event = "" | Select-Object Name, Properties, Metrics
+				$trimAttestationEvent = "" | Select-Object Name, Properties, Metrics
 				$properties = @{"SubscriptionId"= $this.SubscriptionContext.SubscriptionId;"UniquRunIdentifier"=$this.UniqueRunId;"NumberOfResourcesTrimmed"=$deletedResourcesWithAttestationCount;"NumberOfResourcesWithAttestation"=$resourcesWithAttestationCount;}
-				$event.Name = "Attestation trimming completed."
-				$event.Properties = $properties
-				$trimAttestationEvents.Add($event) | Out-Null
+				$trimAttestationEvent.Name = "Attestation trimming completed."
+				$trimAttestationEvent.Properties = $properties
+				$trimAttestationEvents.Add($trimAttestationEvent) | Out-Null
 
 				# Purge old backup files
 				$PurgeBackupAttestationFilesBefore = [DateTime]::Now.AddDays(-$ControlSettings.PurgeAttestationbackupAfterDays.Days);
@@ -661,11 +662,11 @@ class ControlStateExtension
 		}
 		catch
 		{
-			$event = "" | Select-Object Name, Properties, Metrics
+			$trimAttestationEvent = "" | Select-Object Name, Properties, Metrics
 			$properties = @{"SubscriptionId"= $this.SubscriptionContext.SubscriptionId;"UniquRunIdentifier"=$this.UniqueRunId;}
-			$event.Name = "Attestation trimming aborted (" + $_ +").";
-			$event.Properties = $properties
-			$trimAttestationEvents.Add($event) | Out-Null
+			$trimAttestationEvent.Name = "Attestation trimming aborted (" + $_ +").";
+			$trimAttestationEvent.Properties = $properties
+			$trimAttestationEvents.Add($trimAttestationEvent) | Out-Null
 			return $trimAttestationEvents
 
 		}
