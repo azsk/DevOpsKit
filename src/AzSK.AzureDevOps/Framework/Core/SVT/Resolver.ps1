@@ -6,4 +6,8 @@ Class Resolver : AzSKRoot {
     {
         
     }
+    Resolver([string] $subscriptionId,  [System.Security.SecureString] $PATToken):Base($subscriptionId, $PATToken)
+    {
+        
+    }
 }

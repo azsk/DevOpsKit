@@ -2,7 +2,9 @@
 
 . $PSScriptRoot\Framework\Framework.ps1
 
-@("$PSScriptRoot\SVT", "$PSScriptRoot\AlertMonitoring") |
+
+#These are the topmost folder PS1 files that load 
+@("$PSScriptRoot\SVT", "$PSScriptRoot\AlertMonitoring", "$PSScriptRoot\ContinuousAssurance","$PSScriptRoot\AzSKADOInfo") |
     ForEach-Object {
     (Get-ChildItem -Path $_ -Recurse -File -Include "*.ps1") |
         ForEach-Object {
@@ -123,6 +125,59 @@ function Clear-AzSKSessionState {
     [ConfigOverride]::ClearConfigInstance()
     Write-Host "Session state cleared." -ForegroundColor Yellow
 
+}
+
+
+function Set-AzSKPolicySettings {
+    <#
+	.SYNOPSIS
+	This command would help to set online policy store URL.
+	.DESCRIPTION
+	This command would help to set online policy store URL.
+
+	.PARAMETER AutoUpdateCommand
+			Provide org install URL
+	.PARAMETER AutoUpdate
+            Toggle the auto-update feature
+	#>
+    Param(
+        [Parameter(Mandatory = $false, HelpMessage = "Provide org install URL")]
+        [string]
+		[Alias("auc")]
+        $AutoUpdateCommand,
+
+        [Parameter(Mandatory = $false, ParameterSetName = "AutoUpdatePolicy", HelpMessage = "Toggle the auto-update feature")]
+        [ValidateSet("On", "Off", "NotSet")]
+		[Alias("au")]
+        $AutoUpdate
+    )
+    Begin {
+        [CommandHelper]::BeginCommand($PSCmdlet.MyInvocation);
+        [ListenerHelper]::RegisterListeners();
+    }
+    Process {
+        try {
+
+	    $azskSettings = [ConfigurationManager]::GetLocalAzSKSettings();
+            
+            if (-not [string]::IsNullOrWhiteSpace($AutoUpdateCommand)) {
+                $azskSettings.AutoUpdateCommand = $AutoUpdateCommand;
+            }
+            if ($AutoUpdate) {
+                $azskSettings.AutoUpdateSwitch = $AutoUpdate
+            }
+			
+            [ConfigurationManager]::UpdateAzSKSettings($azskSettings);
+            [ConfigOverride]::ClearConfigInstance();            
+            [EventBase]::PublishGenericCustomMessage("Successfully configured settings.", [MessageType]::Warning);
+        }
+        catch {
+            [EventBase]::PublishGenericException($_);
+        }
+    }
+    End {
+        [ListenerHelper]::UnregisterListeners();
+    }
 }
 
 #$FrameworkPath = $PSScriptRoot

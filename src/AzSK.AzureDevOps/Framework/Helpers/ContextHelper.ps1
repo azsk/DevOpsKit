@@ -32,14 +32,20 @@ class ContextHelper {
             $azSKUI = $null;
             if ( !$authNRefresh -and ($azSKUI = Get-Variable 'AzSKADOLoginUI' -Scope Global -ErrorAction 'Ignore')) {
                 if ($azSKUI.Value -eq 1) {
-                    $result = $ctx.AcquireToken($azureDevOpsResourceId, $clientId, [Uri]::new($replyUri),[PromptBehavior]::Always);
+                    $PromptBehavior = [Microsoft.IdentityModel.Clients.ActiveDirectory.PromptBehavior]::Always 
+                    $PlatformParameters = New-Object Microsoft.IdentityModel.Clients.ActiveDirectory.PlatformParameters -ArgumentList $PromptBehavior 
+                    $result = $ctx.AcquireTokenAsync($azureDevOpsResourceId, $clientId, [Uri]::new($replyUri),$PlatformParameters).Result;
                 }
                 else {
-                    $result = $ctx.AcquireToken($azureDevOpsResourceId, $clientId, [Uri]::new($replyUri),[PromptBehavior]::Auto);
+                    $PromptBehavior = [Microsoft.IdentityModel.Clients.ActiveDirectory.PromptBehavior]::Auto 
+                    $PlatformParameters = New-Object Microsoft.IdentityModel.Clients.ActiveDirectory.PlatformParameters -ArgumentList $PromptBehavior 
+                    $result = $ctx.AcquireTokenAsync($azureDevOpsResourceId, $clientId, [Uri]::new($replyUri),$PlatformParameters).Result;
                 }
             }
             else {
-                $result = $ctx.AcquireToken($azureDevOpsResourceId, $clientId, [Uri]::new($replyUri),[PromptBehavior]::Auto);
+                $PromptBehavior = [Microsoft.IdentityModel.Clients.ActiveDirectory.PromptBehavior]::Auto 
+                $PlatformParameters = New-Object Microsoft.IdentityModel.Clients.ActiveDirectory.PlatformParameters -ArgumentList $PromptBehavior 
+                $result = $ctx.AcquireTokenAsync($azureDevOpsResourceId, $clientId, [Uri]::new($replyUri),$PlatformParameters).Result;
             }
 
             [ContextHelper]::ConvertToContextObject($result)
@@ -147,8 +153,7 @@ class ContextHelper {
         $contextObj = [Context]::new()
         $contextObj.Account.Id = [string]::Empty
         $contextObj.Tenant.Id =  [string]::Empty
-        $BSTR = [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($patToken)
-        $contextObj.AccessToken = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto($BSTR)
+        $contextObj.AccessToken = [System.Net.NetworkCredential]::new("", $patToken).Password
         
         # Here subscription basically means ADO organization (due to framework).
         # We do not get ADO organization Id as part of current context. Hence appending org name to both Id and Name param.

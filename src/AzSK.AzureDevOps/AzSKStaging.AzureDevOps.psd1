@@ -48,10 +48,18 @@
     ProcessorArchitecture  = 'None'
 
     # Modules that must be imported into the global environment prior to importing this module
-    RequiredModules        = @()
+    RequiredModules        = @(
+        @{ModuleName = 'Az.Accounts'; RequiredVersion = '1.8.0'}
+		@{ModuleName = 'Az.Storage'; RequiredVersion = '2.0.0'}
+		@{ModuleName = 'Az.Functions'; RequiredVersion = '1.0.0'}
+		@{ModuleName = 'Az.KeyVault'; RequiredVersion = '2.0.0'}
+        @{ModuleName = 'Az.OperationalInsights'; RequiredVersion = '2.0.0'}
+		@{ModuleName = 'Az.Resources'; RequiredVersion = '2.0.1'}
+        @{ModuleName = 'Az.Websites'; RequiredVersion = '1.9.0'}	
+    )
 
     # Assemblies that must be loaded prior to importing this module
-    RequiredAssemblies = @('.\Lib\Newtonsoft.Json.dll','.\Lib\Microsoft.ApplicationInsights.dll','.\Lib\Microsoft.IdentityModel.Clients.ActiveDirectory.dll')
+    RequiredAssemblies = @('.\Lib\Newtonsoft.Json.dll','.\Lib\Microsoft.ApplicationInsights.dll')
 
     # Script files (.ps1) that are run in the caller's environment prior to importing this module.
     ScriptsToProcess       = @()
@@ -68,16 +76,20 @@
     # Functions to export from this module
     FunctionsToExport      = @(
         'Get-AzSKAzureDevOpsSecurityStatus',
-        'Get-AzSKAzureDevOpsOrgSecurityStatus',
-        'Get-AzSKAzureDevOpsProjectSecurityStatus',
-        'Get-AzSKAzureDevOpsBuildSecurityStatus',
-        'Get-AzSKAzureDevOpsReleaseSecurityStatus',
+        'Get-AzSKADOInfo',
+        #'Get-AzSKAzureDevOpsOrgSecurityStatus',
+        #'Get-AzSKAzureDevOpsProjectSecurityStatus',
+        #'Get-AzSKAzureDevOpsBuildSecurityStatus',
+        #'Get-AzSKAzureDevOpsReleaseSecurityStatus',
         'Set-AzSKOMSSettings',
         'Set-AzSKMonitoringSettings',
         'Clear-AzSKSessionState',
         'Set-AzSKAzureDevOpsPolicySettings',
         'Set-AzSKPrivacyNoticeResponse',
-        'Install-AzSKMonitoringSolution'
+        'Install-AzSKMonitoringSolution',
+        'Set-AzSKPolicySettings',
+        'Install-AzSKADOContinuousAssurance',
+        'Update-AzSKADOContinuousAssurance'
     )
 
     # Cmdlets to export from this module

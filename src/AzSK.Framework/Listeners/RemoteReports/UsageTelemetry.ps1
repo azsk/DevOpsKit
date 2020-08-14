@@ -32,6 +32,95 @@ class UsageTelemetry: ListenerBase {
             }
         });
 
+
+		$this.RegisterEvent([AzSKRootEvent]::CommandStarted, {
+			if(-not [UsageTelemetry]::IsAnonymousTelemetryActive()) { return; }
+            $currentInstance = [UsageTelemetry]::GetInstance();
+			try
+			{
+				$Properties = @{ "Command" = $currentInstance.invocationContext.MyCommand.Name }
+				[UsageTelemetry]::SetCommandInvocationProperties($currentInstance,$Properties);
+				$commandStartedEvents = [System.Collections.ArrayList]::new()
+				$telemetryEvent = "" | Select-Object Name, Properties, Metrics
+				$telemetryEvent.Name = "Command Started"
+				$telemetryEvent.Properties = $Properties
+				$telemetryEvent = [UsageTelemetry]::SetCommonProperties($telemetryEvent,$currentInstance);
+				$commandStartedEvents.Add($telemetryEvent) 
+				[AIOrgTelemetryHelper]::PublishEvent($commandStartedEvents,"Usage")
+				#Not using the below helper functions because it is currently unable to gracefully handle properties with null value.
+				#[UsageTelemetry]::TrackCommandUsageEvent($currentInstance, "Command Started", $Properties, @{});
+			}
+			catch{
+				#No need to break execution, If any occurs while sending anonymous telemetry
+			}
+        });
+
+		$this.RegisterEvent([SVTEvent]::CommandStarted, {
+			if(-not [UsageTelemetry]::IsAnonymousTelemetryActive()) { return; }
+            $currentInstance = [UsageTelemetry]::GetInstance();
+			try
+			{
+				$Properties = @{ "Command" = $currentInstance.invocationContext.MyCommand.Name }
+				[UsageTelemetry]::SetCommandInvocationProperties($currentInstance,$Properties);
+				$commandStartedEvents = [System.Collections.ArrayList]::new()
+				$telemetryEvent = "" | Select-Object Name, Properties, Metrics
+				$telemetryEvent.Name = "Command Started"
+				$telemetryEvent.Properties = $Properties
+				$telemetryEvent = [UsageTelemetry]::SetCommonProperties($telemetryEvent,$currentInstance);
+				$commandStartedEvents.Add($telemetryEvent) 
+				[AIOrgTelemetryHelper]::PublishEvent($commandStartedEvents,"Usage")
+				#Not using the below helper functions because it is currently unable to gracefully handle properties with null value.
+				#[UsageTelemetry]::TrackCommandUsageEvent($currentInstance, "Command Started", $Properties, @{});
+			}
+			catch{
+				#No need to break execution, If any occurs while sending anonymous telemetry
+			}
+        });
+
+		$this.RegisterEvent([AzSKRootEvent]::CommandCompleted, {
+			if(-not [UsageTelemetry]::IsAnonymousTelemetryActive()) { return; }
+            $currentInstance = [UsageTelemetry]::GetInstance();
+			try
+			{
+				$Properties = @{ "Command" = $currentInstance.invocationContext.MyCommand.Name }
+				[UsageTelemetry]::SetCommandInvocationProperties($currentInstance,$Properties);
+				$commandCompletedEvents = [System.Collections.ArrayList]::new()
+				$telemetryEvent = "" | Select-Object Name, Properties, Metrics
+				$telemetryEvent.Name = "Command Completed"
+				$telemetryEvent.Properties = $Properties
+				$telemetryEvent = [UsageTelemetry]::SetCommonProperties($telemetryEvent,$currentInstance);
+				$commandCompletedEvents.Add($telemetryEvent) 
+				[AIOrgTelemetryHelper]::PublishEvent($commandCompletedEvents,"Usage")
+				#Not using the below helper functions because it is currently unable to gracefully handle properties with null value.
+				#[UsageTelemetry]::TrackCommandUsageEvent($currentInstance, "Command Completed", $Properties, @{});
+			}
+			catch{
+				#No need to break execution, If any occurs while sending anonymous telemetry
+			}
+        });
+
+		$this.RegisterEvent([SVTEvent]::CommandCompleted, {
+			if(-not [UsageTelemetry]::IsAnonymousTelemetryActive()) { return; }
+            $currentInstance = [UsageTelemetry]::GetInstance();
+			try
+			{
+				$Properties = @{ "Command" = $currentInstance.invocationContext.MyCommand.Name }
+				[UsageTelemetry]::SetCommandInvocationProperties($currentInstance,$Properties);
+				$commandCompletedEvents = [System.Collections.ArrayList]::new()
+				$telemetryEvent = "" | Select-Object Name, Properties, Metrics
+				$telemetryEvent.Name = "Command Completed"
+				$telemetryEvent.Properties = $Properties
+				$telemetryEvent = [UsageTelemetry]::SetCommonProperties($telemetryEvent,$currentInstance);
+				$commandCompletedEvents.Add($telemetryEvent) 
+				[AIOrgTelemetryHelper]::PublishEvent($commandCompletedEvents,"Usage")
+				#Not using the below helper functions because it is currently unable to gracefully handle properties with null value.
+				#[UsageTelemetry]::TrackCommandUsageEvent($currentInstance, "Command Completed", $Properties, @{});
+			}
+			catch{
+				#No need to break execution, If any occurs while sending anonymous telemetry
+			}
+		});	 
+		
 		$this.RegisterEvent([SVTEvent]::EvaluationCompleted, {
 			if(-not [UsageTelemetry]::IsAnonymousTelemetryActive()) { return; }
 			$currentInstance = [UsageTelemetry]::GetInstance();
@@ -39,13 +128,12 @@ class UsageTelemetry: ListenerBase {
 			{
 				$invocationContext = [System.Management.Automation.InvocationInfo] $currentInstance.InvocationContext
 				$SVTEventContexts = [SVTEventContext[]] $Event.SourceArgs
-				$featureGroup = [RemoteReportHelper]::GetFeatureGroup($SVTEventContexts)
-				if($featureGroup -eq [FeatureGroup]::Subscription){
-					[UsageTelemetry]::PushSubscriptionScanResults($currentInstance, $SVTEventContexts)
-				}elseif($featureGroup -eq [FeatureGroup]::Service){
-					[UsageTelemetry]::PushServiceScanResults($currentInstance, $SVTEventContexts)
+				$feature = $SVTEventContexts[0].FeatureName
+				#Adding project info telemetry for scanned controls.
+				if($feature -eq 'Project'){
+					[UsageTelemetry]::PushProjectTelemetry($currentInstance, $SVTEventContexts[0])
 				}else{
-
+					#do nothing. Currently, we do not support extracting unique project info (masked) from other feature types.
 				}
 			}
 			catch
@@ -54,6 +142,7 @@ class UsageTelemetry: ListenerBase {
 			}
 			$currentInstance.TelemetryClient.Flush()
 		});
+
 
 		$this.RegisterEvent([AzSKGenericEvent]::Exception, {
 			if(-not [UsageTelemetry]::IsAnonymousTelemetryActive()) { return; }
@@ -137,7 +226,7 @@ class UsageTelemetry: ListenerBase {
            	try{
 			$Properties = @{			
 			"OrgName" = [RemoteReportHelper]::Mask($Event.SourceArgs[0]);			
-		}
+			}
 			[UsageTelemetry]::SetCommonProperties($currentInstance, $Properties);
 			$event = [Microsoft.ApplicationInsights.DataContracts.EventTelemetry]::new()
 			$event.Name = "Policy Migration Started"
@@ -320,6 +409,27 @@ class UsageTelemetry: ListenerBase {
         [AIOrgTelemetryHelper]::PublishEvent($servicescantelemetryEvents,"Usage")
 	}
 
+	static [void] PushProjectTelemetry(
+		[UsageTelemetry] $Publisher, `
+		[SVTEventContext] $SVTEventContexts)
+	{
+		$NA = "NA"
+		#Note we are pushing only one event for each unique project resource scanned. We are not duplicatig efforts by sending project info for each project control scanned.
+		$eventData = @{
+			"Feature" = $SVTEventContexts.FeatureName;
+			"ResourceGroup" = [RemoteReportHelper]::Mask($SVTEventContexts.ResourceContext.ResourceGroupName);
+			"ResourceName" = [RemoteReportHelper]::Mask($SVTEventContexts.ResourceContext.ResourceName);
+			"ResourceId" = [RemoteReportHelper]::Mask($SVTEventContexts.ResourceContext.ResourceId);
+		}
+		$projectTelemetryEvents = [System.Collections.ArrayList]::new()
+        $telemetryEvent = "" | Select-Object Name, Properties, Metrics
+		$telemetryEvent.Name = "Project Info"
+		$telemetryEvent.Properties = $eventData
+		$telemetryEvent = [UsageTelemetry]::SetCommonProperties($telemetryEvent,$Publisher);
+		$projectTelemetryEvents.Add($telemetryEvent) 
+        [AIOrgTelemetryHelper]::PublishEvent($projectTelemetryEvents,"Usage")
+	}
+
 	static [void] PushEvent([UsageTelemetry] $Publisher, `
 							[hashtable] $Properties, [hashtable] $Metrics)
 	{
@@ -498,6 +608,22 @@ class UsageTelemetry: ListenerBase {
 		}
 	}
 
+	hidden static [void] SetCommandInvocationProperties([UsageTelemetry] $CurrentInstance, [hashtable] $Properties)
+	{
+		try{
+			$params = @{}
+			$CurrentInstance.invocationContext.BoundParameters.Keys | ForEach-Object {
+				$value = "MASKED"
+				$params.Add($_, $value)
+			}
+			$Properties.Add("Params", [JsonHelper]::ConvertToJsonCustomCompressed($params))
+		}
+		catch{
+			# Eat the current exception which typically happens when the property already exist in the object and try to add the same property again
+			# No need to break execution
+		}
+	}
+
 	hidden static [string] AnonScriptStackTrace([string] $ScriptStackTrace)
 	{
 		try{
@@ -633,6 +759,27 @@ class UsageTelemetry: ListenerBase {
 
 		return $eventObj;
 	}
+	hidden static [void] TrackCommandUsageEvent([UsageTelemetry] $currentInstance, [string] $Name, [hashtable] $Properties, [hashtable] $Metrics) {
+        [UsageTelemetry]::SetCommonProperties($currentInstance, $Properties);
+        try {
+            $event = [Microsoft.ApplicationInsights.DataContracts.EventTelemetry]::new()
+            $event.Name = $Name
+            $Properties.Keys | ForEach-Object {
+				if(-not $event.Properties.ContainsKey($_)){
+					$event.Properties[$_] = $Properties[$_].ToString();
+				}
+            }
+            $Metrics.Keys | ForEach-Object {
+				if(-not $event.Properties.ContainsKey($_)){
+					$event.Metrics[$_] = $Metrics[$_].ToString();
+				}
+			}
 
+            $currentInstance.TelemetryClient.TrackEvent($event);
+        }
+        catch{ 
+				# No need to break execution, if any occurs while sending telemetry
+		}
+    }
 }
 

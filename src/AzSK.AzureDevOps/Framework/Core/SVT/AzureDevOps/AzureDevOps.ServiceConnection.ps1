@@ -43,10 +43,10 @@ class ServiceConnection: ADOSVTBase
         }
         catch {
             
-        }            
+        }
     }
 
-    hidden [ControlResult] CheckServiceConnectionAccess([ControlResult] $controlResult)
+        hidden [ControlResult] CheckServiceConnectionAccess([ControlResult] $controlResult)
 	{
         if ($this.ServiceEndpointsObj.type -eq "azurerm") 
         {
@@ -452,5 +452,4 @@ class ServiceConnection: ADOSVTBase
          
         return $controlResult;
     }
-
 }
