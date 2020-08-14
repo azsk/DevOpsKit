@@ -89,6 +89,9 @@ class CommandBase: AzSKRoot {
     # Dummy function declaration to define the function signature
     [void] PostCommandCompletedAction([SVTEventContext[]] $arguments)
 	{ }
+
+	[void] PostCommandCompletedAction([MessageData[]] $messages)
+	{ }
 	#EndRegion
 
 	#Region: Helper function to invoke function based on method name. 
@@ -306,7 +309,7 @@ class CommandBase: AzSKRoot {
 		$userChoice = ""
 		if(($PSProcesses | Measure-Object).Count -ge 1)
 		{			
-			Write-Host "A new version of AzSK is available. Starting the auto-update workflow...`nTo prepare for auto-update, please:`n`t a) Save your work from all active PS sessions including the current one and`n`t b) Close all PS sessions other than the current one. " -ForegroundColor Cyan
+			Write-Host([Constants]::ModuleAutoUpdateAvailableMsg) -ForegroundColor Cyan;
 		}
 
 		#User choice that captures the decision to close the active PS Sessions
