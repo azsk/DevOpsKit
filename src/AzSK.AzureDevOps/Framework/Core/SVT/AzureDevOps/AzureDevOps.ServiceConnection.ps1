@@ -154,28 +154,6 @@ class ServiceConnection: ADOSVTBase
         return $controlResult;
     }
 
-
-    hidden [ControlResult] CheckInactiveEndpoints([ControlResult] $controlResult)
-	{
-        $apiURL = "https://dev.azure.com/organization/project/_apis/serviceendpoint/$($this.ServiceEndpointsObj.Id)/executionhistory?api-version=4.1-preview.1"
-        $serverFileContent = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
-
-        if($serverFileContent.Count -gt 0)
-        {
-            if([DateTime]$serverFileContent[0].value[0].data.startTime -gt (Get-Date).AddDays(-180))
-            {
-                $controlResult.AddMessage([VerificationResult]::Failed,
-                                    "Service endpoint is authenticated using secret.");
-            }
-            else {
-                $controlResult.AddMessage([VerificationResult]::Passed,
-                "Service endpoint is authenticated using certificate.");
-            }
-        }
-        $serverFileContent = $null;
-        return $controlResult;
-    }
-
     hidden [ControlResult] CheckRBACInheritPermissions ([ControlResult] $controlResult)
 	{
         $failMsg = $null

@@ -14,15 +14,18 @@ class Organization: ADOSVTBase
 
     GetOrgPolicyObject()
     {
-        $uri ="https://{0}.visualstudio.com/_settings/organizationPolicy?__rt=fps&__ver=2" -f $($this.SubscriptionContext.SubscriptionName);
-        $response = [WebRequestHelper]::InvokeGetWebRequest($uri);
-        
-        if($response -and [Helpers]::CheckMember($response.fps.dataProviders,"data") -and $response.fps.dataProviders.data.'ms.vss-admin-web.organization-policies-data-provider')
-        {
-            $this.OrgPolicyObj = $response.fps.dataProviders.data.'ms.vss-admin-web.organization-policies-data-provider'.policies
+        try
+        {   
+            $uri ="https://{0}.visualstudio.com/_settings/organizationPolicy?__rt=fps&__ver=2" -f $($this.SubscriptionContext.SubscriptionName);
+            $response = [WebRequestHelper]::InvokeGetWebRequest($uri);
+            
+            if($response -and [Helpers]::CheckMember($response.fps.dataProviders,"data") -and $response.fps.dataProviders.data.'ms.vss-admin-web.organization-policies-data-provider')
+            {
+                $this.OrgPolicyObj = $response.fps.dataProviders.data.'ms.vss-admin-web.organization-policies-data-provider'.policies
+            }
         }
-        # Added above new api to get User policy settings, old api is not returning
-        if (!$this.OrgPolicyObj) {
+        catch # Added above new api to get User policy settings, old api is not returning. Fallback to old API in catch
+        {
             $apiURL = "https://{0}.vsaex.visualstudio.com/_apis/Contribution/dataProviders/query?api-version=5.0-preview.1" -f $($this.SubscriptionContext.SubscriptionName);
 
             $orgUrl = "https://{0}.visualstudio.com" -f $($this.SubscriptionContext.SubscriptionName);
