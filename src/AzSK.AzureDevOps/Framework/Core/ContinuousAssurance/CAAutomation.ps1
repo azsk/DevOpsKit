@@ -139,7 +139,7 @@ class CAAutomation : ADOSVTCommandBase
 			#Step 1: Get context. Connect to account if required
 			$Context = @(Get-AzContext -ErrorAction SilentlyContinue )
 			if ($Context.count -eq 0)  {
-				Write-Host	"No active Azure login session found. Initiating login flow..."
+				$this.PublishCustomMessage("No active Azure login session found. Initiating login flow...", [MessageType]::Info);
 				Connect-AzAccount -ErrorAction Stop
 				$Context = @(Get-AzContext -ErrorAction SilentlyContinue)
 			}
@@ -158,7 +158,7 @@ class CAAutomation : ADOSVTCommandBase
 				$RoleAssignment = @((Get-AzRoleAssignment -Scope $Scope -SignInName $Context.Account.Id -IncludeClassicAdministrators ).RoleDefinitionName | where {$_ -eq "Owner" -or $_ -eq "CoAdministrator" -or $_ -match "ServiceAdministrator"} )
 				if ($RoleAssignment.Count -eq 0)
 				{
-					Write-Host "Please make sure you have Owner role on target subscription. If your permissions were elevated recently, please run the 'Disconnect-AzAccount' command to clear the Azure cache and try again."
+					$this.PublishCustomMessage("Please make sure you have Owner role on target subscription. If your permissions were elevated recently, please run the 'Disconnect-AzAccount' command to clear the Azure cache and try again.", [MessageType]::Info);
 				}
 				$output = 'OK'
 			}
@@ -174,21 +174,21 @@ class CAAutomation : ADOSVTCommandBase
     {
 		[MessageData[]] $messageData = @();
 		$this.messages += ([Constants]::DoubleDashLine + "`r`nStarted setting up Continuous Assurance (CA)`r`n"+[Constants]::DoubleDashLine);
-		Write-Host $this.messages
+		$this.PublishCustomMessage($this.messages, [MessageType]::Info);
 		try
 		{
 			$output = $this.ValidateUserPermissions();
 			if($output -ne 'OK') # if there is some while validating permissions output will contain exception
 			{
-				Write-Host "Error validating permissions on the subscription" -ForegroundColor Red
-						$messageData += [MessageData]::new($output)
+				$this.PublishCustomMessage("Error validating permissions on the subscription", [MessageType]::Error);
+				$messageData += [MessageData]::new($output)
 			}
 			else 
 			{
 				if([string]::IsNullOrWhiteSpace($this.ImageName))
 				{
 					$messageData += [MessageData]::new("If you are using customized org policy, please ensure DockerImageName is defined in your ControlSettings.json")
-					Write-Host $messageData.Message  -ForegroundColor Red
+					$this.PublishCustomMessage($messageData.Message, [MessageType]::Error);
 					return $messageData
 				}
 				#Step 1: If RG does not exist then create new
@@ -197,30 +197,29 @@ class CAAutomation : ADOSVTCommandBase
 					$RG = @(New-AzResourceGroup -Name $this.RGname -Location $this.Location)
 					if($RG.Count -eq 0) 
 					{
-						Write-Host "New resource group '$($this.RGname)' creation failed" -ForegroundColor Red
+						$this.PublishCustomMessage("New resource group '$($this.RGname)' creation failed", [MessageType]::Error);
 					}
 					else
 					{
-						Write-Host "New resource group '$($this.RGname)' created" -ForegroundColor Green
+						$this.PublishCustomMessage("New resource group '$($this.RGname)' created", [MessageType]::Update);
 					}
 				}
 				else
 				{
-					Write-Host "$($this.RGname)' resource group already exists. Skipping RG creation" -ForegroundColor Green
+					$this.PublishCustomMessage("$($this.RGname)' resource group already exists. Skipping RG creation", [MessageType]::Update);
 				}
 		
-				Write-Host "Creating required resources in resource group '$($this.RGname)'..." -ForegroundColor Cyan
-		
+				$this.PublishCustomMessage("Creating required resources in resource group '$($this.RGname)'....", [MessageType]::Info);
 		
 				#Step 2: Create app service plan "Elastic Premium"
 				$AppServPlan = New-AzResource -ResourceName $this.AppServicePlanName -ResourceGroupName $this.RGname -ResourceType Microsoft.web/serverfarms -ApiVersion "2018-02-01" -Location $this.Location -Kind Elastic -Properties @{"reserved"=$true;} -Sku @{name= "EP1";tier = "ElasticPremium";size= "EP1";family="EP";capacity= 1} -Force
 				if($null -eq $AppServPlan) 
 				{
-					Write-Host "AppService plan '$($this.AppServicePlanName)' creation failed" -ForegroundColor Red
+					$this.PublishCustomMessage("AppService plan '$($this.AppServicePlanName)' creation failed", [MessageType]::Error);
 				}
 				else
 				{
-					Write-Host "AppService plan '$($this.AppServicePlanName)' created" -ForegroundColor Green
+					$this.PublishCustomMessage("AppService plan '$($this.AppServicePlanName)' created", [MessageType]::Update);
 					$this.CreatedResources += $AppServPlan.ResourceId
 				}
 		
@@ -229,11 +228,11 @@ class CAAutomation : ADOSVTCommandBase
 				$StorageAcc = New-AzStorageAccount -ResourceGroupName $this.RGname -Name $this.StorageName -Type $this.StorageType -Location $this.Location -Kind $this.StorageKind -EnableHttpsTrafficOnly $true -ErrorAction Stop
 				if($null -eq $StorageAcc) 
 				{
-					Write-Host "Storage account '$($this.StorageName)' creation failed" -ForegroundColor Red
+					$this.PublishCustomMessage("Storage account '$($this.StorageName)' creation failed", [MessageType]::Error);
 				}
 				else
 				{
-					Write-Host "Storage '$($this.StorageName)' created" -ForegroundColor Green
+					$this.PublishCustomMessage("Storage '$($this.StorageName)' created", [MessageType]::Update);
 					$this.CreatedResources += $StorageAcc.Id
 		
 				}
@@ -242,11 +241,11 @@ class CAAutomation : ADOSVTCommandBase
 				$FuncApp = New-AzFunctionApp -DockerImageName $this.ImageName -SubscriptionId $this.SubscriptionId -Name $this.FuncAppName -ResourceGroupName $this.RGname -StorageAccountName $this.StorageName -IdentityType SystemAssigned -PlanName $this.AppServicePlanName
 				if($null -eq $FuncApp) 
 				{
-					Write-Host "Function app '$($this.FuncAppName)' creation failed" -ForegroundColor Red
+					$this.PublishCustomMessage("Function app '$($this.FuncAppName)' creation failed", [MessageType]::Error);
 				}
 				else
 				{
-					Write-Host "Function app '$($this.FuncAppName)' created" -ForegroundColor Green
+					$this.PublishCustomMessage("Function app '$($this.FuncAppName)' created", [MessageType]::Update);
 					$this.CreatedResources += $FuncApp.Id
 				}
 				
@@ -254,11 +253,11 @@ class CAAutomation : ADOSVTCommandBase
 				$AppInsight = Get-AzResource -Name $this.AppInsightsName -ResourceType Microsoft.Insights/components
 				if($null -eq $AppInsight) 
 				{
-					Write-Host "Application Insights '$($this.AppInsightsName)' creation failed" -ForegroundColor Red
+					$this.PublishCustomMessage("Application Insights '$($this.AppInsightsName)' creation failed", [MessageType]::Error);
 				}
 				else
 				{
-					Write-Host "Application Insights '$($this.AppInsightsName)' created" -ForegroundColor Green
+					$this.PublishCustomMessage("Application Insights '$($this.AppInsightsName)' created", [MessageType]::Update);
 					$this.CreatedResources += $AppInsight.ResourceId
 				}
 		
@@ -268,14 +267,14 @@ class CAAutomation : ADOSVTCommandBase
 					$LAWorkspace = @(New-AzOperationalInsightsWorkspace -Location $this.Location -Name $this.LAWSName -Sku $this.LAWSsku -ResourceGroupName $this.RGname)
 					if($LAWorkspace -eq 0) 
 					{
-						Write-Host "Log Analytics Workspace '$($this.LAWSName)' creation failed" -ForegroundColor Red
+						$this.PublishCustomMessage("Log Analytics Workspace '$($this.LAWSName)' creation failed", [MessageType]::Error);
 					}
 					else
 					{
 						$this.LAWSId = $LAWorkspace.CustomerId.Guid.ToString()
 						$SharedKeys = Get-AzOperationalInsightsWorkspaceSharedKey -Name $this.LAWSName -ResourceGroupName $this.RGname -WarningAction silentlycontinue
 						$this.LAWSSHaredKey = $SharedKeys.PrimarySharedKey
-						Write-Host "Log Analytics Workspace '$($this.LAWSName)' created" -ForegroundColor Green
+						$this.PublishCustomMessage("Log Analytics Workspace '$($this.LAWSName)' created", [MessageType]::Update);
 						$this.CreatedResources += $LAWorkspace.ResourceId
 					}
 				}
@@ -284,11 +283,11 @@ class CAAutomation : ADOSVTCommandBase
 				$KeyVault = New-AzKeyVault -Name $this.KeyVaultName -ResourceGroupName $this.RGname -Location $this.Location
 				if($null -eq $KeyVault) 
 				{
-					Write-Host "KeyVault '$($this.KeyVaultName)' creation failed" -ForegroundColor Red
+					$this.PublishCustomMessage("KeyVault '$($this.KeyVaultName)' creation failed", [MessageType]::Error);
 				}
 				else
 				{
-					Write-Host "KeyVault '$($this.KeyVaultName)' created" -ForegroundColor Green
+					$this.PublishCustomMessage("KeyVault '$($this.KeyVaultName)' created", [MessageType]::Update);
 					$this.CreatedResources += $KeyVault.resourceid
 				}
 		
@@ -298,11 +297,11 @@ class CAAutomation : ADOSVTCommandBase
 				$CreatedSecret = Set-AzKeyVaultSecret -VaultName $this.KeyVaultName -Name $this.SecretName -SecretValue $this.PATToken
 				if($null -eq $CreatedSecret) 
 				{
-					Write-Host "PAT Secret creation in KeyVault failed" -ForegroundColor Red
+					$this.PublishCustomMessage("PAT Secret creation in KeyVault failed", [MessageType]::Error);
 				}
 				else
 				{
-					Write-Host "PAT Secret created in KeyVault" -ForegroundColor Green
+					$this.PublishCustomMessage("PAT Secret created in KeyVault", [MessageType]::Update);
 				}
 		
 		
@@ -313,21 +312,21 @@ class CAAutomation : ADOSVTCommandBase
 				$IsMSIAccess = $MSIAccessToKV.AccessPolicies | ForEach-Object { if ($_.ObjectId -match $FuncAppIdentity ) {return $true }}
 				if($IsMSIAccess -eq $true) 
 				{
-					Write-Host "MSI access to KeyVault provided" -ForegroundColor Green
+					$this.PublishCustomMessage("MSI access to KeyVault provided", [MessageType]::Update);
 				}
 				else
 				{
-					Write-Host "MSI access to KeyVault failed" -ForegroundColor Red
+					$this.PublishCustomMessage("MSI access to KeyVault failed", [MessageType]::Error);
 				}
 		
 				$MSIAccessToSA = New-AzRoleAssignment -ObjectId $FuncAppIdentity  -RoleDefinitionName "Contributor" -ResourceName $this.StorageName -ResourceGroupName $this.RGname -ResourceType Microsoft.Storage/storageAccounts
 				if($null -eq $MSIAccessToSA) 
 				{
-					Write-Host "MSI access to storage failed" -ForegroundColor Red
+					$this.PublishCustomMessage("MSI access to storage failed", [MessageType]::Error);
 				}
 				else
 				{
-					Write-Host "MSI access to storage provided" -ForegroundColor Green
+					$this.PublishCustomMessage("MSI access to storage provided", [MessageType]::Update);
 				}
 		
 		
@@ -363,33 +362,32 @@ class CAAutomation : ADOSVTCommandBase
 				$updatedWebApp = Update-AzFunctionAppSetting -Name $this.FuncAppName -ResourceGroupName $this.RGname -AppSetting $AppSettings -Force
 				if($updatedWebApp.Count -ne $AppSettings.Count) 
 				{
-					Write-Host "App settings update failed" -ForegroundColor Red
+					$this.PublishCustomMessage("App settings update failed", [MessageType]::Error);
 				}
 				else
 				{
-					Write-Host "App settings updated" -ForegroundColor Green
+					$this.PublishCustomMessage("App settings updated", [MessageType]::Update);
 				}
 		
-		
-				Write-Host "`r`nSetup Complete!" -ForegroundColor Green
+				$this.PublishCustomMessage("`r`nSetup Complete!", [MessageType]::Update);
 				Restart-AzFunctionApp -name $this.FuncAppName -ResourceGroupName $this.RGname -SubscriptionId $this.SubscriptionId -Force
 		
-				Write-Host "Scan will begin at $($this.ScanTriggerLocalTime)" -ForegroundColor Green
+				$this.PublishCustomMessage("Scan will begin at $($this.ScanTriggerLocalTime)", [MessageType]::Update);
 				$this.SetupComplete = $true
 				$messageData += [MessageData]::new("The following resources were created in resource group $($this.RGName) as part of AzSK.AzureDevOps Continuous Assurance", ($this.CreatedResources| Out-String))
 			}
 		}
 		catch
 		{
-			Write-Host "ADO Scanner CA setup failed!" -ForegroundColor Red
-			Write-Host $_
+			$this.PublishCustomMessage("ADO Scanner CA setup failed!", [MessageType]::Error);
+			$this.PublishCustomMessage($_, [MessageType]::Error);
 			$messageData += [MessageData]::new($Error)
 		}
 		finally
 		{
 			if ($this.SetupComplete -eq $false)
 			{
-				Write-Host "CA Setup could not be completed. Deleting created resources..." -ForegroundColor Yellow
+				$this.PublishCustomMessage("CA Setup could not be completed. Deleting created resources...", [MessageType]::Warning);
 				if ($this.CreatedResources.Count -ne 0)
 				{
 					Foreach ($resourceId in $this.CreatedResources)
@@ -398,11 +396,11 @@ class CAAutomation : ADOSVTCommandBase
 						$Index = $resourceId.LastIndexOf('/') + 1 ;
 						$ResourceName = $resourceId.Substring($Index)
 
-						Write-Host "Deleted resource: $($ResourceName)" -ForegroundColor Cyan
+						$this.PublishCustomMessage("Deleted resource: $($ResourceName)", [MessageType]::Info);
 					}
 				}
 				else{
-					Write-Host "No resource was created." -ForegroundColor Cyan
+					$this.PublishCustomMessage("No resource was created.", [MessageType]::Info);
 				}
 			}
 		}
@@ -417,13 +415,13 @@ class CAAutomation : ADOSVTCommandBase
 		$updatePATToken = $false
 
 		$this.messages += ([Constants]::DoubleDashLine + "`r`nStarted updating Continuous Assurance (CA)`r`n"+[Constants]::DoubleDashLine);
-		Write-Host $this.messages
+		$this.PublishCustomMessage($this.messages, [MessageType]::Info);
 		try
 		{
 			$output = $this.ValidateUserPermissions();
 			if($output -ne 'OK') # if there is some while validating permissions output will contain exception
 			{
-				Write-Host "Error validating permissions on the subscription" -ForegroundColor Red
+				$this.PublishCustomMessage("Error validating permissions on the subscription", [MessageType]::Error);
 				$messageData += [MessageData]::new($output)
 			}
 			else 
@@ -448,8 +446,8 @@ class CAAutomation : ADOSVTCommandBase
                      $RG = Get-AzResourceGroup -Name $this.RGname -ErrorAction SilentlyContinue
                      if ($null -eq $RG)
                      {
-                        $messageData += [MessageData]::new("Resource group '$($this.RGname)' not found. Please validate the resource group name." )
-                        Write-Host $messageData.Message -ForegroundColor Red
+						$messageData += [MessageData]::new("Resource group '$($this.RGname)' not found. Please validate the resource group name." )
+						$this.PublishCustomMessage($messageData.Message, [MessageType]::Error);
 		                return $messageData
                      }
 				}
@@ -457,7 +455,7 @@ class CAAutomation : ADOSVTCommandBase
 				#Step 3: If only subid and/or RG name params are used then display below message
 				if ($updateAppSettings -eq $false -and $updatePATToken -eq $false)
 				{
-					Write-Host "Please use additonal parameters to perform update on LAWSId, LAWSSharedKey, OrganizationName, PATToken, ProjectNames, ExtendedCommand"
+					$this.PublishCustomMessage("Please use additonal parameters to perform update on LAWSId, LAWSSharedKey, OrganizationName, PATToken, ProjectNames, ExtendedCommand", [MessageType]::Info);
 				}
 
 				#Step 4: Update PATToken in KV (if applicable)
@@ -467,21 +465,21 @@ class CAAutomation : ADOSVTCommandBase
 					$keyVaultResource = @((Get-AzResource -ResourceGroupName $this.RGname -ResourceType "Microsoft.KeyVault/vaults").Name | where {$_ -match $this.KVDefaultName})
 					if($keyVaultResource.Count -eq 0)
 					{
-						Write-Host "ADOScanner KeyVault is not available in resource group '$($this.RGname)'. Update Failed!" -ForegroundColor Red
+						$this.PublishCustomMessage("ADOScanner KeyVault is not available in resource group '$($this.RGname)'. Update Failed!", [MessageType]::Error);
 					}
 					elseif ($keyVaultResource.Count -gt 1)
 					{
-						Write-Host "More than one ADOScanner KeyVault is available in resource group '$($this.RGname)'. Update Failed!" -ForegroundColor Red
+						$this.PublishCustomMessage("More than one ADOScanner KeyVault is available in resource group '$($this.RGname)'. Update Failed!", [MessageType]::Error);
 					}
 					else {
 						$CreatedSecret = Set-AzKeyVaultSecret -VaultName $keyVaultResource[0] -Name $this.SecretName -SecretValue $this.PATToken
 						if($null -eq $CreatedSecret) 
 						{
-							Write-Host "Unable to update PATToken. Please validate your permissions in access policy of the KeyVault '$($keyVaultResource[0])'" -ForegroundColor Red
+							$this.PublishCustomMessage("Unable to update PATToken. Please validate your permissions in access policy of the KeyVault '$($keyVaultResource[0])'", [MessageType]::Error);
 						}
 						else
 						{
-							Write-Host "Secret updated in '$($keyVaultResource[0])' KeyVault" -ForegroundColor Green
+							$this.PublishCustomMessage("Secret updated in '$($keyVaultResource[0])' KeyVault", [MessageType]::Update);
 						}
 					}
 				}
@@ -493,11 +491,11 @@ class CAAutomation : ADOSVTCommandBase
 					$appServResource = @((Get-AzResource -ResourceGroupName $this.RGname -ResourceType "Microsoft.Web/Sites").Name | where {$_ -match $this.FuncAppDefaultName})
 					if($appServResource.Count -eq 0)
 					{
-						Write-Host "ADOScanner FunctionApp is not available in resource group '$($this.RGname)'. Update Failed!" -ForegroundColor Red
+						$this.PublishCustomMessage("ADOScanner FunctionApp is not available in resource group '$($this.RGname)'. Update Failed!", [MessageType]::Error);
 					}
 					elseif ($appServResource.Count -gt 1)
 					{
-						Write-Host "More than one ADOScanner app service is available in resource group '$($this.RGname)'. Update Failed!" -ForegroundColor Red
+						$this.PublishCustomMessage("More than one ADOScanner app service is available in resource group '$($this.RGname)'. Update Failed!", [MessageType]::Error);
 					}
 					else {
 						$WebApp = Get-AzWebApp -Name $appServResource[0] -ResourceGroupName $this.RGname
@@ -570,11 +568,11 @@ class CAAutomation : ADOSVTCommandBase
 						$updatedWebApp = Update-AzFunctionAppSetting -Name $appServResource[0] -ResourceGroupName $this.RGname -AppSetting $AppSettingsHT -Force
 						if($null -eq $updatedWebApp) 
 						{
-							Write-Host "App settings update failed in '$($appServResource[0])'" -ForegroundColor Red
+							$this.PublishCustomMessage("App settings update failed in '$($appServResource[0])'", [MessageType]::Error);
 						}
 						else
 						{
-							Write-Host "App settings updated in '$($appServResource[0])'" -ForegroundColor Green
+							$this.PublishCustomMessage("App settings updated in '$($appServResource[0])'", [MessageType]::Update);
 						}
 					}
 				}
@@ -582,8 +580,8 @@ class CAAutomation : ADOSVTCommandBase
 		}
 		catch
 		{
-			Write-Host "ADO Scanner CA update failed!" -ForegroundColor Red
-			Write-Host $_
+			$this.PublishCustomMessage("ADO Scanner CA update failed!", [MessageType]::Error);
+			$this.PublishCustomMessage($_, [MessageType]::Error);
 			$messageData += [MessageData]::new($Error)
 		}
 		return $messageData
