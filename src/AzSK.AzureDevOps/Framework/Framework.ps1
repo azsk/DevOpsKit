@@ -126,6 +126,9 @@ $FrameworkPath =  ((Get-Item $PSScriptRoot).Parent.Parent).FullName +"\AzSK.Fram
     . $_.FullName
 }
 
+. $PSScriptRoot\Core\AzSKADOInfo\HostInfo.ps1
+. $PSScriptRoot\Core\AzSKADOInfo\ControlsInfo.ps1
+
 . $PSScriptRoot\Core\SVT\SVTResourceResolver.ps1
 . $PSScriptRoot\Abstracts\ServicesSecurityStatus.ps1
 . $PSScriptRoot\Core\SVT\Resolver.ps1

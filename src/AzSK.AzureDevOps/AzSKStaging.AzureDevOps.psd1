@@ -76,6 +76,7 @@
     # Functions to export from this module
     FunctionsToExport      = @(
         'Get-AzSKAzureDevOpsSecurityStatus',
+        'Get-AzSKADOInfo',
         #'Get-AzSKAzureDevOpsOrgSecurityStatus',
         #'Get-AzSKAzureDevOpsProjectSecurityStatus',
         #'Get-AzSKAzureDevOpsBuildSecurityStatus',
