@@ -194,7 +194,13 @@ function Install-AzSKMonitoringSolution
 		[switch]
 		[Alias("dnof")]
 		[Parameter(Mandatory = $false, HelpMessage = "Switch to specify whether to open output folder.")]
-		$DoNotOpenOutputFolder
+		$DoNotOpenOutputFolder,
+
+		[switch]
+		[Alias("wb")]
+		[Parameter(Mandatory = $False, HelpMessage="Provide this switch to create workbook based security dashboard.") ]
+		$DeployWorkbook
+		
     )
 	Begin
 	{
@@ -205,7 +211,7 @@ function Install-AzSKMonitoringSolution
 	{
 		try
 		{
-			$monitoringInstance = [LogAnalyticsMonitoring]::new($LAWSSubscriptionId, $LAWSResourceGroup, $LAWSId, $PSCmdlet.MyInvocation, $ViewName);
+			$monitoringInstance = [LogAnalyticsMonitoring]::new($LAWSSubscriptionId, $LAWSResourceGroup, $LAWSId, $PSCmdlet.MyInvocation, $ViewName, $DeployWorkbook);
 		}
 		catch
 		{

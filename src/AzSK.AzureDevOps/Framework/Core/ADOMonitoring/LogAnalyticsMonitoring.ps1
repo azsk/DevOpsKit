@@ -13,7 +13,7 @@ class LogAnalyticsMonitoring #: CommandBase
 	[string] $LAWSId;
 	[string] $ApplicationSubscriptionName
 
-	LogAnalyticsMonitoring([string] $_laWSSubscriptionId,[string] $_laWSResourceGroup,[string] $_laWSId, [InvocationInfo] $invocationContext, [string] $viewName) #: Base([string] $_laWSSubscriptionId, $invocationContext) 
+	LogAnalyticsMonitoring([string] $_laWSSubscriptionId,[string] $_laWSResourceGroup,[string] $_laWSId, [InvocationInfo] $invocationContext, [string] $viewName, [bool] $isWorkbook = $false) #: Base([string] $_laWSSubscriptionId, $invocationContext) 
     { 	
 		$this.SetAzContext($_laWSSubscriptionId);
 
@@ -28,11 +28,11 @@ class LogAnalyticsMonitoring #: CommandBase
 		$locationInstance = Get-AzLocation | Where-Object { $_.DisplayName -eq $laWSInstance.Location -or  $_.Location -eq $laWSInstance.Location } 
 		$this.LAWSLocation = $locationInstance.Location
 	
-		$this.ConfigureLAWS($viewName, $false, $_laWSSubscriptionId);
+		$this.ConfigureLAWS($viewName, $false, $_laWSSubscriptionId, $isWorkbook);
 		
 	}
 
-	[void] ConfigureLAWS([string] $_viewName, [bool] $_validateOnly, [string] $_laWSSubscriptionId)	
+	[void] ConfigureLAWS([string] $_viewName, [bool] $_validateOnly, [string] $_laWSSubscriptionId, [bool] $isWorkbook)	
     {		
 	   Write-Host "WARNING: This command will overwrite the existing AzSK.AzureDevOps Security View that you may have installed using previous versions of AzSK.AzureDevOps if you are using the same view name as the one used earlier. In that case we recommend taking a backup using 'Edit -> Export' option available in the Log Analytics workspace.`n" -ForegroundColor Yellow
 	   $userInput = Read-Host "Enter 'Y' to continue and 'N' to skip installation (Y/N)"
@@ -56,8 +56,16 @@ class LogAnalyticsMonitoring #: CommandBase
 			{
 				New-Item -Path $LAWSLogPath -ItemType Directory -Force | Out-Null
 			}
-			$genericViewTemplateFilepath = [ConfigurationHelper]::LoadOfflineConfigFile([Constants]::LogAnalyticsGenericView); 				
-			$this.LAWSGenericTemplateFilepath = Join-Path $LAWSLogPath ([Constants]::LogAnalyticsGenericView)
+			$genericViewTemplateFilepath = "";
+			if ($isWorkbook) {
+				$genericViewTemplateFilepath = [ConfigurationHelper]::LoadOfflineConfigFile([Constants]::LogAnalyticsGenericViewWorkbook); 				
+				$this.LAWSGenericTemplateFilepath = Join-Path $LAWSLogPath ([Constants]::LogAnalyticsGenericViewWorkbook); 				
+			}
+			else {
+				$genericViewTemplateFilepath = [ConfigurationHelper]::LoadOfflineConfigFile([Constants]::LogAnalyticsGenericView);
+				$this.LAWSGenericTemplateFilepath = Join-Path $LAWSLogPath ([Constants]::LogAnalyticsGenericView)
+			}
+			
 			$genericViewTemplateFilepath | ConvertTo-Json -Depth 100 | Out-File $this.LAWSGenericTemplateFilepath
 			Write-Host "`r`nSetting up AzSK.AzureDevOps Log Analytics generic view.`r" -ForegroundColor Cyan
 			$this.ConfigureGenericView($_viewName, $_validateOnly, $_laWSSubscriptionId);	

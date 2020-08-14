@@ -197,16 +197,17 @@ class WriteSummaryFile: FileOutputBase
 
 		#$anyFixableControls = $null -ne ($arguments | Where-Object { $_.ControlItem.FixControl } | Select-Object -First 1);
 		#Validate if preview baseline control flag is passed to mark csv
-		$UsePreviewBaselineControls = $false
-		if($this.InvocationContext.BoundParameters['UsePreviewBaselineControls'] -eq $True)
-		{
-			[PartialScanManager] $partialScanMngr = [PartialScanManager]::GetInstance();
-			$previewBaselineControlsDetails = $partialScanMngr.GetPreviewBaselineControlDetails()
-			if($previewBaselineControlsDetails)
-			{
-				$UsePreviewBaselineControls =$True
-			}
-		}
+		#Commented below code as don't have any preview naseline controls
+		#$UsePreviewBaselineControls = $false
+		#if($this.InvocationContext.BoundParameters['UsePreviewBaselineControls'] -eq $True)
+		#{
+		#	[PartialScanManager] $partialScanMngr = [PartialScanManager]::GetInstance();
+		#	$previewBaselineControlsDetails = $partialScanMngr.GetPreviewBaselineControlDetails()
+		#	if($previewBaselineControlsDetails)
+		#	{
+		#		$UsePreviewBaselineControls =$True
+		#	}
+		#}
         $arguments | ForEach-Object {
             $item = $_
             if ($item -and $item.ControlResults) {
@@ -220,7 +221,7 @@ class WriteSummaryFile: FileOutputBase
                         FeatureName = $item.FeatureName;
                         ChildResourceName = $_.ChildResourceName;
 						Recommendation = $item.ControlItem.Recommendation;	
-				
+				        Rationale = $item.ControlItem.Rationale
                     };
 					if($_.VerificationResult -ne [VerificationResult]::NotScanned)
 					{
@@ -250,14 +251,15 @@ class WriteSummaryFile: FileOutputBase
 					{
 						$csvItem.IsBaselineControl = "No";
 					}
-					if($item.ControlItem.IsPreviewBaselineControl)
-					{
-						$csvItem.IsPreviewBaselineControl = "Yes";
-					}
-					else
-					{
-						$csvItem.IsPreviewBaselineControl = "No";
-					}
+					#Commented below code as don't have any preview baseline controls
+					#if($item.ControlItem.IsPreviewBaselineControl)
+					#{
+					#	$csvItem.IsPreviewBaselineControl = "Yes";
+					#}
+					#else
+					#{
+					#	$csvItem.IsPreviewBaselineControl = "No";
+					#}
 
 					if($anyAttestedControls)
 					{
