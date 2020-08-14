@@ -243,7 +243,7 @@ class SecurityCenter: AzSKRoot
 					$this.alertNotificationsminimalSeverity = $ControlSettings.SeverityForSecContactAlerts -contains $response.properties.alertNotifications.minimalSeverity;
 					if (-not ($this.alertNotificationsstate -and $this.alertNotificationsminimalSeverity))
 					{
-						$messages += "-Alert Notifications should be configured for alerts with severity"+ $secContactObject.properties.alertNotifications.minimalSeverity + "and higher.`n"
+						$messages += "-Alert Notifications should be configured for alerts with severity "+ $secContactObject.properties.alertNotifications.minimalSeverity + " and higher.`n"
 					} 
 				}
 
@@ -257,7 +257,7 @@ class SecurityCenter: AzSKRoot
 															Where-Object {$response.properties.notificationsByRole.roles -notcontains $_}| Select-Object -first 1).Count
 					if ( -not $this.notificationsByRole)
 					{
-						$messages += "-Roles that should be configured to receive alert notifications: `n$($secContactObject.properties.notificationsByRole.roles -Join ',')"
+						$messages += "-Roles that should be configured to receive alert notifications: $($secContactObject.properties.notificationsByRole.roles -Join ',')"
 					}
 				}
 
