@@ -2,7 +2,7 @@
 
 . $PSScriptRoot\Framework\Framework.ps1
 
-@("$PSScriptRoot\SVT", "$PSScriptRoot\AlertMonitoring") |
+@("$PSScriptRoot\SVT", "$PSScriptRoot\AlertMonitoring", "$PSScriptRoot\ContinuousAssurance") |
     ForEach-Object {
     (Get-ChildItem -Path $_ -Recurse -File -Include "*.ps1") |
         ForEach-Object {

@@ -78,7 +78,7 @@ class User: ADOSVTBase {
                 $AccessPATList = $responseObj | Where-Object { $_.validto -gt $(Get-Date -Format "yyyy-MM-dd") }
            
                 if (($AccessPATList | Measure-Object).Count -gt 0) {
-                    $res = $AccessPATList | Where-Object { (([datetime]::parseexact($_.validto.Split('T')[0], 'yyyy-MM-dd', $null) - [datetime]::parseexact($_.validfrom.Split('T')[0], 'yyyy-MM-dd', $null)).Days) -gt 180 }
+                    $res = $AccessPATList | Where-Object {(New-Timespan -Start $_.ValidFrom -End $_.ValidTo).Days -gt 180 }
                 
                     if (($res | Measure-Object).Count -gt 0) {
                         $PATList = ($res | Select-Object -Property @{Name = "Name"; Expression = { $_.displayName } }, @{Name = "ValidFrom"; Expression = { $_.validfrom } }, @{Name = "ValidTo"; Expression = { $_.validto } }, @{Name = "ValidationPeriod"; Expression = { ([datetime]::parseexact($_.validto.Split('T')[0], 'yyyy-MM-dd', $null) - [datetime]::parseexact($_.validfrom.Split('T')[0], 'yyyy-MM-dd', $null)).Days } });    
@@ -118,11 +118,10 @@ class User: ADOSVTBase {
                 $AccessPATList = $responseObj | Where-Object { $_.validto -gt $(Get-Date -Format "yyyy-MM-dd") }
            
                 if (($AccessPATList | Measure-Object).Count -gt 0) {
-                    $PATExpri7Days = $AccessPATList | Where-Object { (([datetime]::parseexact($_.validto.Split('T')[0], 'yyyy-MM-dd', $null) - $date).Days) -lt 8 };
-                    $PATExpri30Days = $AccessPATList | Where-Object { ((([datetime]::parseexact($_.validto.Split('T')[0], 'yyyy-MM-dd', $null) - $date).Days) -gt 7) -and ((([datetime]::parseexact($_.validto.Split('T')[0], 'yyyy-MM-dd', $null) - $date).Days) -lt 31) };
-                    $PATOther = $AccessPATList | Where-Object { ((([datetime]::parseexact($_.validto.Split('T')[0], 'yyyy-MM-dd', $null) - $date).Days) -gt 30) };
+                    $PATExpri7Days = $AccessPATList | Where-Object { (New-Timespan -Start $date -End $_.validto ).Days  -lt 8 };
+                    $PATExpri30Days = $AccessPATList | Where-Object { ((New-Timespan -Start $date -End $_.validto).Days -gt 7) -and ((New-Timespan -Start $date -End $_.validto).Days -lt 31) };
+                    $PATOther = $AccessPATList | Where-Object { ((New-Timespan -Start $date -End $_.validto).Days -gt 30) };
 
-                 
                     if (($PATExpri7Days | Measure-Object).Count -gt 0) {
                         $PAT7List = ($PATExpri7Days | Select-Object -Property @{Name = "Name"; Expression = { $_.displayName } }, @{Name = "ValidFrom"; Expression = { $_.validfrom } }, @{Name = "ValidTo"; Expression = { $_.validto } }, @{Name = "Remaining"; Expression = { ([datetime]::parseexact($_.validto.Split('T')[0], 'yyyy-MM-dd', $null) - $date).Days } });    
                         $controlResult.AddMessage("The following PATs expire within 7 days : ", $PAT7List )

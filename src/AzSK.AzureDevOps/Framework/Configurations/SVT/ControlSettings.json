@@ -63,6 +63,9 @@
     "ResourceTrackerValidforDays": 3,
     "StoreResourceTrackerLocally": "True"
   },
+  "DockerImage":{
+    "ImageName" : "azsktest01/adosecurityscan"
+  },
   "AllowAttestationResourceType": [
     "Organization",
     "Project",
@@ -222,5 +225,6 @@
     "MaxKeyWordsToQueryForBugClose": 30,
     "AutoCloseProjectBug": true,
     "AutoCloseOrgBug": true
-  }
+  },
+  "generateSecurityEvaluationJsonFile" : false
 }
