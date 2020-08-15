@@ -123,11 +123,31 @@ class LogAnalyticsMonitoring #: CommandBase
 		return $laWSParams;
 	}
 
+		
 	[void] SetAzContext([string] $_laWSSubscriptionId)
 	{
-		Disconnect-AzAccount
-		Connect-AzAccount 
-		Set-AzContext -SubscriptionId $_laWSSubscriptionId
+		$subId = $_laWSSubscriptionId
+
+		$Context = @(Get-AzContext -ErrorAction SilentlyContinue )
+		if ($Context.count -eq 0)  
+		{
+			Write-Host "No active Azure login session found. Initiating login flow..." -ForegroundColor Cyan
+			Connect-AzAccount -ErrorAction Stop
+			$Context = @(Get-AzContext -ErrorAction SilentlyContinue)
+		}
+
+		if ($null -eq $Context)  
+		{
+			Write-Host "No Azure login found. Azure login context is required to setup monitoring solution." -ForegroundColor Red
+			throw [SuppressedException] "Unable to sign-in to Azure."
+		}
+		else
+		{
+			if($Context.Subscription.SubscriptionId -ne $subId)
+			{
+				set-azcontext -Subscription $subId -Force | out-null
+			}
+		}
 	}
 
 	[Hashtable] GetLAWSBaseParameters([string] $_laWSSubscriptionId)

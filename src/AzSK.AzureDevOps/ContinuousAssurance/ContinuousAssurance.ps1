@@ -109,11 +109,11 @@ function Install-AzSKADOContinuousAssurance
                 $PATToken = Read-Host "Provide PAT for [$OrganizationName] org:" -AsSecureString
             }
 
-			$resolver = [Resolver]::new($SubscriptionId,$PATToken)
+			$resolver = [Resolver]::new($OrganizationName)
 
 			$caAccount = [CAAutomation]::new($SubscriptionId, $Location,`
-				$OrganizationName, $PATToken, $ResourceGroupName, $LAWSId,`
-				$LAWSSharedKey, $ProjectNames, $ExtendedCommand, $PSCmdlet.MyInvocation, $CreateLAWorkspace);
+											$OrganizationName, $PATToken, $ResourceGroupName, $LAWSId,`
+											$LAWSSharedKey, $ProjectNames, $ExtendedCommand, $PSCmdlet.MyInvocation, $CreateLAWorkspace);
             
 			return $caAccount.InvokeFunction($caAccount.InstallAzSKADOContinuousAssurance);
 		}
@@ -161,6 +161,21 @@ function Update-AzSKADOContinuousAssurance
 		[Alias("sid")]
 		$SubscriptionId ,
 
+		[Parameter(Mandatory = $true, ParameterSetName = "Default", HelpMessage = "Orgnanization name for which scan will be performed.")]
+		[Alias("oz")]
+		[string]
+		$OrganizationName,
+
+		[Parameter(Mandatory = $false, ParameterSetName = "Default", HelpMessage = "Project names to be scanned within the organization. If not provided then all projects will be scanned.")]
+		[Alias("pns", "ProjectName", "pn")]
+		[string]
+		$ProjectNames,
+		
+		[Parameter(Mandatory = $false, ParameterSetName = "Default", HelpMessage = "PAT token secure string for organization to be scanned.")]
+		[Alias("pat")]
+		[System.Security.SecureString]
+		$PATToken,
+
 		[Parameter(Mandatory = $false, ParameterSetName = "Default", HelpMessage="Resource group name where CA setup is available. (Default : ADOSCannerRG)")]
         [string]
 		[Alias("rgn")]
@@ -175,27 +190,11 @@ function Update-AzSKADOContinuousAssurance
         [string]
 		[Alias("lwkey","wkey","SharedKey")]
 		$LAWSSharedKey,
-
-		[Parameter(Mandatory = $false, ParameterSetName = "Default", HelpMessage = "Orgnanization name for which scan will be performed.")]
-		[Alias("oz")]
-		[string]
-		$OrganizationName,
-
-		[Parameter(Mandatory = $false, ParameterSetName = "Default", HelpMessage = "PAT token secure string for organization to be scanned.")]
-		[Alias("pat")]
-		[System.Security.SecureString]
-		$PATToken,
-
-		[Parameter(Mandatory = $false, ParameterSetName = "Default", HelpMessage = "Project names to be scanned within the organization. If not provided then all projects will be scanned.")]
-		[Alias("pns")]
-		[string]
-		$ProjectNames,
 		
 		[Parameter(Mandatory = $false, ParameterSetName = "Default", HelpMessage = "Use extended command to narrow down the scans.")]
 		[Alias("ex")]
 		[string]
 		$ExtendedCommand
-
     )
 	Begin
 	{
@@ -206,16 +205,10 @@ function Update-AzSKADOContinuousAssurance
 	{
 		try 
 		{
-			if ([string]::IsNullOrEmpty($PATToken))
-			{
-				$resolver = [Resolver]::new($SubscriptionId)
-				$caAccount = [CAAutomation]::new($SubscriptionId,$OrganizationName, $null, $ResourceGroupName, $LAWSId,	$LAWSSharedKey, $ProjectNames, $ExtendedCommand, $PSCmdlet.MyInvocation);
-			}
-			else
-			{
-				$resolver = [Resolver]::new($SubscriptionId,$PATToken)
-				$caAccount = [CAAutomation]::new($SubscriptionId,$OrganizationName, $PATToken, $ResourceGroupName, $LAWSId,	$LAWSSharedKey, $ProjectNames, $ExtendedCommand, $PSCmdlet.MyInvocation);
-			}
+			$resolver = [Resolver]::new($OrganizationName)
+			$caAccount = [CAAutomation]::new($SubscriptionId, $OrganizationName, $PATToken, `
+											$ResourceGroupName, $LAWSId, $LAWSSharedKey, `
+											$ProjectNames, $ExtendedCommand, $PSCmdlet.MyInvocation);
             
 			return $caAccount.InvokeFunction($caAccount.UpdateAzSKADOContinuousAssurance);
 		}
