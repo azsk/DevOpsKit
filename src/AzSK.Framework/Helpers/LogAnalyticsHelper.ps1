@@ -39,8 +39,8 @@ Class LogAnalyticsHelper{
 			{
 				switch([LogAnalyticsHelper]::$("is"+$laType+"SettingValid"))
 				{
-					0 { $warningMsg += "The Log Analytics workspace ID or key is invalid in the local settings file. Use Set-AzSKMonitoringSettings to update either/both with corrected values.";}
-					1 { $warningMsg += "The Log Analytics workspace ID or key is invalid in the ContinuousAssurance configuration. Use Update-AzSKContinuousAssurance to update either/both with corrected values."; }
+					0 { $warningMsg += "The Log Analytics workspace ID or key is invalid in the local settings file. Use Set-AzSKADOMonitoringSettings to update either/both with corrected values.";}
+					1 { $warningMsg += "The Log Analytics workspace ID or key is invalid in the ContinuousAssurance configuration. Use Update-AzSKADOContinuousAssurance to update either/both with corrected values."; }
 				}
 				
 				[EventBase]::PublishGenericCustomMessage(" `r`nWARNING: $($warningMsg)", [MessageType]::Warning);
@@ -52,8 +52,8 @@ Class LogAnalyticsHelper{
 			{
 				switch([LogAnalyticsHelper]::$("is"+$laType+"SettingValid"))
 				{
-					0 { $warningMsg += "The alternate Log Analytics workspace ID or key is invalid in the local settings file. Use Set-AzSKMonitoringSettings to update either/both with corrected values.";}
-					1 { $warningMsg += "The alternate Log Analytics workspace ID or key is invalid in the ContinuousAssurance configuration. Use Update-AzSKContinuousAssurance to update either/both with corrected values."; }
+					0 { $warningMsg += "The alternate Log Analytics workspace ID or key is invalid in the local settings file. Use Set-AzSKADOMonitoringSettings to update either/both with corrected values.";}
+					1 { $warningMsg += "The alternate Log Analytics workspace ID or key is invalid in the ContinuousAssurance configuration. Use Update-AzSKADOContinuousAssurance to update either/both with corrected values."; }
 				}
 				
 				[EventBase]::PublishGenericCustomMessage(" `r`nWARNING: $($warningMsg)", [MessageType]::Warning);
@@ -340,8 +340,7 @@ Class LogAnalyticsHelper{
 
 	static PostResourceInventory([AzSKContextDetails] $AzSKContext)
 	{
-		if($AzSKContext.Source.Equals("CC", [System.StringComparison]::OrdinalIgnoreCase) -or
-		$AzSKContext.Source.Equals("CA", [System.StringComparison]::OrdinalIgnoreCase)){
+		if($AzSKContext.Source.Equals("CA", [System.StringComparison]::OrdinalIgnoreCase)){
 			$resourceSet = [System.Collections.ArrayList]::new()
 			[ResourceInventory]::FetchResources();
 			foreach($resource in [ResourceInventory]::FilteredResources){

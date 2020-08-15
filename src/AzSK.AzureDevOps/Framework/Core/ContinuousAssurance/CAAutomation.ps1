@@ -47,7 +47,6 @@ class CAAutomation : ADOSVTCommandBase
 	[bool] $CreateLaws) : Base($subscriptionId, $invocationContext)
     {
 		$this.SubscriptionId = $SubId
-		$this.Location = $Loc
 		$this.OrganizationToScan = $OrgName
 		$this.PATToken = $PATToken
 		$this.ProjectNames = $Proj
@@ -70,10 +69,19 @@ class CAAutomation : ADOSVTCommandBase
 
 		if ([string]::IsNullOrWhiteSpace($ResourceGroupName)) 
 		{
-			$this.RGName ="ADOScannerRG"
+			$this.RGName = [Constants]::AzSKADORGName
 		}
 		else{
 			$this.RGName = $ResourceGroupName
+		}
+		
+		if ([string]::IsNullOrWhiteSpace($Loc)) 
+		{
+			$this.Location =[Constants]::AzSKADORGLocation
+		}
+		else
+		{
+			$this.Location = $Loc
 		}
 	
 		if ([string]::IsNullOrWhiteSpace($LAWorkspaceId) -or [string]::IsNullOrWhiteSpace($LAWorkspaceKey) ) 
@@ -124,7 +132,7 @@ class CAAutomation : ADOSVTCommandBase
 
 			if ([string]::IsNullOrWhiteSpace($ResourceGroupName)) 
 			{
-				$this.RGName ="ADOScannerRG"
+				$this.RGName = [Constants]::AzSKADORGName
 			}
 			else{
 				$this.RGName = $ResourceGroupName
@@ -170,7 +178,7 @@ class CAAutomation : ADOSVTCommandBase
 		return $output
 	}
 
-	[MessageData[]] InstallAzSKContinuousAssurance()
+	[MessageData[]] InstallAzSKADOContinuousAssurance()
     {
 		[MessageData[]] $messageData = @();
 		$this.messages += ([Constants]::DoubleDashLine + "`r`nStarted setting up Continuous Assurance (CA)`r`n"+[Constants]::DoubleDashLine);
@@ -206,7 +214,7 @@ class CAAutomation : ADOSVTCommandBase
 				}
 				else
 				{
-					$this.PublishCustomMessage("$($this.RGname)' resource group already exists. Skipping RG creation", [MessageType]::Update);
+					$this.PublishCustomMessage("Resource group: [$($this.RGname)] already exists. Skipping RG creation", [MessageType]::Update);
 				}
 		
 				$this.PublishCustomMessage("Creating required resources in resource group '$($this.RGname)'....", [MessageType]::Info);
@@ -408,7 +416,7 @@ class CAAutomation : ADOSVTCommandBase
 	}
 	
 	
-	[MessageData[]] UpdateAzSKContinuousAssurance()
+	[MessageData[]] UpdateAzSKADOContinuousAssurance()
     {
 		[MessageData[]] $messageData = @();
 		$updateAppSettings = $false
@@ -508,10 +516,10 @@ class CAAutomation : ADOSVTCommandBase
 							$AppSettingsHT["$($Setting.Name)"] = "$($Setting.value)"
 						}
 
-						if($null -ne $this.OrganizationToScan )
+						if(-not [string]::IsNullOrEmpty($this.OrganizationToScan))
 						{
 							#If property already exists then update it else add new property
-							if($null -ne $AppSettingsHT["OrgName"])
+							if(-not [string]::IsNullOrEmpty( $AppSettingsHT["OrgName"]))
 							{
 								$AppSettingsHT["OrgName"] = $this.OrganizationToScan
 							}
@@ -520,10 +528,10 @@ class CAAutomation : ADOSVTCommandBase
 								$AppSettingsHT += @{"OrgName" = $this.OrganizationToScan}
 							}
 						}
-						if($null -ne $this.LAWSId -and $null -ne $this.LAWSSharedKey )
+						if(-not [string]::IsNullOrEmpty($this.LAWSId) -and -not [string]::IsNullOrEmpty($this.LAWSSharedKey))
 						{
 							#If property already exists then update it else add new property
-							if($null -ne $AppSettingsHT["LAWSId"])
+							if(-not [string]::IsNullOrEmpty( $AppSettingsHT["LAWSId"]))
 							{
 								$AppSettingsHT["LAWSId"] = $this.LAWSId
 							}
@@ -531,7 +539,7 @@ class CAAutomation : ADOSVTCommandBase
 							{
 								$AppSettingsHT += @{"LAWSId" = $this.LAWSId}
 							}
-							if($null -ne $AppSettingsHT["LAWSSharedKey"])
+							if(-not [string]::IsNullOrEmpty( $AppSettingsHT["LAWSSharedKey"]))
 							{
 								$AppSettingsHT["LAWSSharedKey"] = $this.LAWSSharedKey
 							}
@@ -540,10 +548,10 @@ class CAAutomation : ADOSVTCommandBase
 								$AppSettingsHT += @{"LAWSSharedKey" = $this.LAWSSharedKey}
 							}
 						}
-						if($null -ne $this.ExtendedCommand )
+						if(-not [string]::IsNullOrEmpty( $this.ExtendedCommand ))
 						{
 							#If property already exists then update it else add new property
-							if($null -ne $AppSettingsHT["ExtendedCommand"])
+							if(-not [string]::IsNullOrEmpty($AppSettingsHT["ExtendedCommand"]))
 							{
 								$AppSettingsHT["ExtendedCommand"] = $this.ExtendedCommand
 							}
@@ -552,10 +560,10 @@ class CAAutomation : ADOSVTCommandBase
 								$AppSettingsHT += @{"ExtendedCommand" = $this.ExtendedCommand}
 							}
 						}
-						if($null -ne $this.ProjectNames )
+						if(-not [string]::IsNullOrEmpty( $this.ProjectNames ))
 						{
 							#If property already exists then update it else add new property
-							if($null -ne $AppSettingsHT["ProjectNames"])
+							if(-not [string]::IsNullOrEmpty($AppSettingsHT["ProjectNames"]))
 							{
 								$AppSettingsHT["ProjectNames"] = $this.ProjectNames
 							}

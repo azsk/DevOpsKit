@@ -1,4 +1,4 @@
-﻿Set-StrictMode -Version Latest
+Set-StrictMode -Version Latest
 
 . $PSScriptRoot\Framework\Framework.ps1
 
@@ -12,62 +12,8 @@
     }
 }
 
-function Set-AzSKAzureDevOpsPolicySettings {
-    <#
-	.SYNOPSIS
-	This command would help to set online policy store URL.
-	.DESCRIPTION
-	This command would help to set online policy store URL.
 
-	.PARAMETER ScannerToolPath
-		Provide the credential scanner tool path
-	.PARAMETER ScannerToolName
-		Provide the credential scanner tool name.
-	
-	.LINK
-	https://aka.ms/azskossdocs
-
-	#>
-    Param(
-        [Parameter(Mandatory = $false, HelpMessage = "Provide scanner tool path")]
-        [string]
-		[Alias("stp")]
-        $ScannerToolPath,
-
-        [Parameter(Mandatory = $false, HelpMessage = "Provide scanner tool name")]
-        [string]
-		[Alias("stn")]
-        $ScannerToolName
-
-    )
-    Begin {
-        [CommandHelper]::BeginCommand($PSCmdlet.MyInvocation);
-        [ListenerHelper]::RegisterListeners();
-    }
-    Process {
-        try {
-
-			$azskSettings = [ConfigurationManager]::GetLocalAzSKSettings();
-            if($ScannerToolPath -and $ScannerToolName)
-            {
-                $azskSettings.ScanToolPath = $ScannerToolPath
-                $azskSettings.ScanToolName = $ScannerToolName
-            }
-            
-            [ConfigurationManager]::UpdateAzSKSettings($azskSettings);            
-            [EventBase]::PublishGenericCustomMessage("Successfully configured policy settings. `nStart a fresh PS console/session to ensure any policy updates are (re-)loaded.", [MessageType]::Warning);
-        }
-        catch {
-            [EventBase]::PublishGenericException($_);
-        }
-    }
-    End {
-        [ListenerHelper]::UnregisterListeners();
-    }
-}
-
-
-function Set-AzSKPrivacyNoticeResponse {
+function Set-AzSKADOPrivacyNoticeResponse {
     <#
 	.SYNOPSIS
 	This command would help to set user preferences for EULA and Privacy.
@@ -80,7 +26,8 @@ function Set-AzSKPrivacyNoticeResponse {
 	.LINK
 	https://aka.ms/azskossdocs
 
-	#>
+    #>
+    [Alias("Set-AzSKPrivacyNoticeResponse")]
     Param
     (
         [Parameter(Mandatory = $true, HelpMessage = "Provide the flag to suppress the Privacy notice prompt and submit the acceptance. (Yes/No)")]
@@ -119,7 +66,7 @@ function Set-AzSKPrivacyNoticeResponse {
     }
 }
 
-function Clear-AzSKSessionState {
+function Clear-AzSKADOSessionState {
 
     Write-Host "Clearing AzSK.AzureDevOps session state..." -ForegroundColor Yellow
     [ConfigOverride]::ClearConfigInstance()
@@ -128,7 +75,7 @@ function Clear-AzSKSessionState {
 }
 
 
-function Set-AzSKPolicySettings {
+function Set-AzSKADOPolicySettings {
     <#
 	.SYNOPSIS
 	This command would help to set online policy store URL.
@@ -139,7 +86,8 @@ function Set-AzSKPolicySettings {
 			Provide org install URL
 	.PARAMETER AutoUpdate
             Toggle the auto-update feature
-	#>
+    #>
+    [Alias("Set-AzSKPolicySettings")]
     Param(
         [Parameter(Mandatory = $false, HelpMessage = "Provide org install URL")]
         [string]
@@ -149,7 +97,17 @@ function Set-AzSKPolicySettings {
         [Parameter(Mandatory = $false, ParameterSetName = "AutoUpdatePolicy", HelpMessage = "Toggle the auto-update feature")]
         [ValidateSet("On", "Off", "NotSet")]
 		[Alias("au")]
-        $AutoUpdate
+        $AutoUpdate,
+
+        [Parameter(Mandatory = $false, HelpMessage = "Provide scanner tool path")]
+        [string]
+		[Alias("stp")]
+        $ScannerToolPath,
+
+        [Parameter(Mandatory = $false, HelpMessage = "Provide scanner tool name")]
+        [string]
+		[Alias("stn")]
+        $ScannerToolName
     )
     Begin {
         [CommandHelper]::BeginCommand($PSCmdlet.MyInvocation);
@@ -158,15 +116,23 @@ function Set-AzSKPolicySettings {
     Process {
         try {
 
-	    $azskSettings = [ConfigurationManager]::GetLocalAzSKSettings();
+            $azskSettings = [ConfigurationManager]::GetLocalAzSKSettings();
             
-            if (-not [string]::IsNullOrWhiteSpace($AutoUpdateCommand)) {
+            if (-not [string]::IsNullOrWhiteSpace($AutoUpdateCommand)) 
+            {
                 $azskSettings.AutoUpdateCommand = $AutoUpdateCommand;
             }
-            if ($AutoUpdate) {
+            if ($AutoUpdate) 
+            {
                 $azskSettings.AutoUpdateSwitch = $AutoUpdate
             }
-			
+
+            if($ScannerToolPath -and $ScannerToolName)
+            {
+                $azskSettings.ScanToolPath = $ScannerToolPath
+                $azskSettings.ScanToolName = $ScannerToolName
+            }
+            
             [ConfigurationManager]::UpdateAzSKSettings($azskSettings);
             [ConfigOverride]::ClearConfigInstance();            
             [EventBase]::PublishGenericCustomMessage("Successfully configured settings.", [MessageType]::Warning);

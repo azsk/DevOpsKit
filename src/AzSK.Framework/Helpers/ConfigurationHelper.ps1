@@ -1,4 +1,4 @@
-﻿Set-StrictMode -Version Latest
+Set-StrictMode -Version Latest
 #
 # ConfigurationHelper.ps1
 #
@@ -81,11 +81,15 @@ class ConfigurationHelper {
 			if (-not [ConfigurationHelper]::OfflineMode -and [ConfigurationHelper]::IsPolicyPresentOnServer($policyFileName, $useOnlinePolicyStore, $onlineStoreUri, $enableAADAuthForOnlinePolicyStore)) {
 				#Check if online policy is present in configuration cache and fetch same
 				$cachedPolicyContent = [ConfigurationHelper]::PolicyCacheContent | Where-Object { $_.Name -eq $policyFileName }
+				#Write-Host -ForegroundColor Yellow "Trying cache for $policyFileName"
 				if ($cachedPolicyContent) {
 					$fileContent = $cachedPolicyContent.Content
+					#Write-Host -ForegroundColor Green "**FOUND** $policyFileName"
 				}
+
 				#If policy file content is not present in cache then load it from server
 				else {
+					#Write-Host -ForegroundColor Yellow "**NOT FOUND** $policyFileName"
 					try {
 						if ([String]::IsNullOrWhiteSpace([ConfigurationHelper]::ConfigVersion) -and -not [ConfigurationHelper]::LocalPolicyEnabled) {
 							try {
@@ -133,7 +137,7 @@ class ConfigurationHelper {
 							Content = $fileContent
 						}
 						[ConfigurationHelper]::PolicyCacheContent += $policy
-						
+						#Write-Host -ForegroundColor Green "**ADDING TO CACHE** $policyFileName"
 					}
 					catch {
 						[ConfigurationHelper]::OfflineMode = $true;
@@ -160,6 +164,7 @@ class ConfigurationHelper {
 
 			if (-not $fileContent) {
 				#Fire special event to notify user about switching to offline policy  
+				[EventBase]::PublishGenericCustomMessage(([Constants]::OfflineModeWarning + " Policy: $policyFileName"), [MessageType]::Warning);
 				$fileContent = [ConfigurationHelper]::LoadOfflineConfigFile($policyFileName)
 			}
 			# return $updateResult	
@@ -168,7 +173,6 @@ class ConfigurationHelper {
 			[EventBase]::PublishGenericCustomMessage(([Constants]::OfflineModeWarning + " Policy: $policyFileName"), [MessageType]::Warning);
 			$fileContent = [ConfigurationHelper]::LoadOfflineConfigFile($policyFileName)
 		}        
-
 		if (-not $fileContent) {
 			throw "The specified file '$policyFileName' is empty"                                  
 		}

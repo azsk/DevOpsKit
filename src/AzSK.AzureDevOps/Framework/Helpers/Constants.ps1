@@ -52,13 +52,13 @@ class Constants
 
     static [string] $OfflineModeWarning = "Running in offline policy mode. Commands will run against local JSON files!"
 	#Constants for AzSKConfig
-	   static [string] $AutomationAccount = "AzSKContinuousAssurance"
-       static [string] $RunbookName = "Continuous_Assurance_Runbook"
-	   static [string] $ScheduleName = "CA_Scan_Schedule"
-	   static [string] $connectionAssetName = "AzureRunAsConnection"
-	   #static [string] $AzSKRGName = "AzSKRG"
-	   static [string] $SupportDL = "azsksupext@microsoft.com"
-	   static [string] $CICDShortLink = "https://aka.ms/devopskit/cicd"
+	static [string] $RunbookName = "Continuous_Assurance_Runbook"
+	static [string] $ScheduleName = "CA_Scan_Schedule"
+	static [string] $connectionAssetName = "AzureRunAsConnection"
+	static [string] $AzSKADORGName = "ADOScannerRG"
+	static [string] $AzSKADORGLocation = "eastus2"
+	static [string] $SupportDL = "azsksupext@microsoft.com"
+	static [string] $CICDShortLink = "https://aka.ms/devopskit/cicd"
 
 	#Constants for SVTs
 	static [string] $ParentFolder = "Org_"
@@ -98,6 +98,7 @@ class Constants
 
 	#Ext Storage
 	static [string] $StorageUri = "https://extmgmt.dev.azure.com/{0}/_apis/extensionmanagement/installedextensions/azsdktm/ADOSecurityScanner/Data/Scopes/Default/Current/Collections/{1}/Documents/{2}?api-version=5.1-preview.1" 
+
 	static [string] $AttRepoStorageUri = "https://dev.azure.com/{0}/{1}/_apis/git/repositories/{2}/pushes?api-version=5.0" 
 	static [string] $GetAttRepoStorageUri = "https://{0}.visualstudio.com/{1}/_apis/git/repositories/{2}/Items?path=%2F{3}&recursionLevel=0&includeContentMetadata=true&versionDescriptor.version={4}&versionDescriptor.versionOptions=0&versionDescriptor.versionType=0&includeContent=true&resolveLfs=true?api-version=4.1-preview.1" 
 	static [string] $AutoUpdateMessage = "Auto-update for AzSK.AzureDevOps is currently not enabled for your machine."
@@ -119,7 +120,7 @@ class Constants
 	static [string] $VersionCheckMessage = "A newer version of AzSK.AzureDevOps is available: Version {0} `r`nTo update, run the command below in a fresh PS window:`r`n" ;
 	static [string] $VersionWarningMessage = ("Using the latest version ensures that AzSK.AzureDevOps security commands you run use the latest, most up-to-date controls. `r`nResults from the current version should not be considered towards compliance requirements.`r`n" + [Constants]::DoubleDashLine);
 	static [string] $UsageTelemetryKey = "59545085-0620-4106-a7bb-13ee2f5eb7a0";
-	static [string] $AzSKRGLocation = "eastus2";
+
 	static [string] $LAWSRequestURI = "https://management.azure.com/{0}?api-version=2015-03-20";
 	static [string] $NewStorageSku = "Standard_LRS";
 	static [string] $NewStorageKind = "BlobStorage";
@@ -150,7 +151,6 @@ class Constants
 	static [string] $AlertRunbookName= "Alert_Runbook"
 	static [string] $Alert_ResourceCreation_Runbook= "Continuous_Assurance_ScanOnTrigger_Runbook"
 	static [string] $AutomationWebhookName="WebhookForAlertRunbook"
-	static [string] $AutomationAccountName="AzSKContinuousAssurance"
 	static [int] $AlertWebhookUriExpiryInDays = 60	
 
 	static [int] $DefaultControlExpiryInDays = 90

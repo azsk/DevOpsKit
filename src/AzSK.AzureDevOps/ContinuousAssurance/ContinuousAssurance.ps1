@@ -39,17 +39,34 @@ function Install-AzSKADOContinuousAssurance
 		[Alias("sid")]
 		$SubscriptionId ,
 
-		[Parameter(Mandatory = $true, ParameterSetName = "Default", HelpMessage="Location in which all resources need to be setup.")]
-        [string]
+		[Parameter(Mandatory = $true, ParameterSetName = "Default", HelpMessage = "Organization name for which scan will be performed.")]
 		[ValidateNotNullOrEmpty()]
-		[Alias("loc")]
-		$Location , 
+		[Alias("oz")]
+		[string]
+		$OrganizationName,
+
+		[Parameter(Mandatory = $false, ParameterSetName = "Default", HelpMessage = "List of projects to be scanned within the organization. If not provided, then all projects will be scanned.")]
+		[Alias("pns", "ProjectName","pn")]
+		[string]
+		$ProjectNames,
+
+		[Parameter(Mandatory = $false, ParameterSetName = "Default", HelpMessage = "PAT token secure string for organization to be scanned.")]
+		[ValidateNotNullOrEmpty()]
+		[Alias("pat")]
+		[System.Security.SecureString]
+		$PATToken,
 
 		[Parameter(Mandatory = $false, ParameterSetName = "Default", HelpMessage="Resource group name where CA setup needs to be done")]
         [string]
 		[ValidateNotNullOrEmpty()]
 		[Alias("rgn")]
-		$ResourceGroupName ,       
+		$ResourceGroupName,       
+
+		[Parameter(Mandatory = $false, ParameterSetName = "Default", HelpMessage="Location in which all resources need to be setup.")]
+		[string]
+		[ValidateNotNullOrEmpty()]
+		[Alias("loc")]
+		$Location, 
 
         [Parameter(Mandatory = $false, ParameterSetName = "Default", HelpMessage="Workspace ID of Log Analytics workspace which is used to monitor security scan results.")]
         [string]
@@ -62,40 +79,21 @@ function Install-AzSKADOContinuousAssurance
 		[ValidateNotNullOrEmpty()]
 		[Alias("lwkey","wkey")]
 		$LAWSSharedKey,
-
-		[Parameter(Mandatory = $true, ParameterSetName = "Default", HelpMessage = "Organization name for which scan will be performed.")]
-		[ValidateNotNullOrEmpty()]
-		[Alias("oz")]
-		[string]
-		$OrganizationName,
-
-		[Parameter(Mandatory = $true, ParameterSetName = "Default", HelpMessage = "PAT token secure string for organization to be scanned.")]
-		[ValidateNotNullOrEmpty()]
-		[Alias("pat")]
-		[System.Security.SecureString]
-		$PATToken,
-
-		[Parameter(Mandatory = $false, ParameterSetName = "Default", HelpMessage = "List of projects to be scanned within the organization. If not provided, then all projects will be scanned.")]
-		[Alias("pns")]
-		[string]
-		$ProjectNames,
 		
+		[switch]
+		[Parameter(Mandatory = $false, HelpMessage = "Switch to create and map new Log Analytics workspace with CA setup.")]
+		[Alias("cws")]
+		$CreateLAWorkspace,
+
 		[Parameter(Mandatory = $false, ParameterSetName = "Default", HelpMessage = "Use extended command to narrow down the target scan.")]
 		[Alias("ex")]
 		[string]
 		$ExtendedCommand,
 
 		[switch]
-		[Parameter(Mandatory = $false, HelpMessage = "Switch to create and map new Log Analytics workspace with CA setup.")]
-		[Alias("cws")]
-		$CreateLAWorkspace,
-
-		[switch]
 		[Parameter(Mandatory = $false, HelpMessage = "Switch to specify whether to open output folder or not.")]
 		[Alias("dnof")]
 		$DoNotOpenOutputFolder
-
-
     )
 	Begin
 	{
@@ -106,12 +104,18 @@ function Install-AzSKADOContinuousAssurance
 	{
 		try 
 		{
+            if ($PATToken -eq $null)
+            {
+                $PATToken = Read-Host "Provide PAT for [$OrganizationName] org:" -AsSecureString
+            }
+
 			$resolver = [Resolver]::new($SubscriptionId,$PATToken)
+
 			$caAccount = [CAAutomation]::new($SubscriptionId, $Location,`
 				$OrganizationName, $PATToken, $ResourceGroupName, $LAWSId,`
 				$LAWSSharedKey, $ProjectNames, $ExtendedCommand, $PSCmdlet.MyInvocation, $CreateLAWorkspace);
             
-			return $caAccount.InvokeFunction($caAccount.InstallAzSKContinuousAssurance);
+			return $caAccount.InvokeFunction($caAccount.InstallAzSKADOContinuousAssurance);
 		}
 		catch 
 		{
@@ -160,16 +164,16 @@ function Update-AzSKADOContinuousAssurance
 		[Parameter(Mandatory = $false, ParameterSetName = "Default", HelpMessage="Resource group name where CA setup is available. (Default : ADOSCannerRG)")]
         [string]
 		[Alias("rgn")]
-		$ResourceGroupName ,       
+		$ResourceGroupName,       
 
         [Parameter(Mandatory = $false, ParameterSetName = "Default", HelpMessage="Workspace ID of Log Analytics workspace where security scan results will be populated.")]
         [string]
-		[Alias("lwid","wid","OMSWorkspaceId")]
+		[Alias("lwid","wid","WorkspaceId")]
 		$LAWSId,
 
         [Parameter(Mandatory = $false, ParameterSetName = "Default", HelpMessage="Shared key of Log Analytics workspace which is used to monitor security scan results.")]
         [string]
-		[Alias("lwkey","wkey","OMSSharedKey")]
+		[Alias("lwkey","wkey","SharedKey")]
 		$LAWSSharedKey,
 
 		[Parameter(Mandatory = $false, ParameterSetName = "Default", HelpMessage = "Orgnanization name for which scan will be performed.")]
@@ -213,7 +217,7 @@ function Update-AzSKADOContinuousAssurance
 				$caAccount = [CAAutomation]::new($SubscriptionId,$OrganizationName, $PATToken, $ResourceGroupName, $LAWSId,	$LAWSSharedKey, $ProjectNames, $ExtendedCommand, $PSCmdlet.MyInvocation);
 			}
             
-			return $caAccount.InvokeFunction($caAccount.UpdateAzSKContinuousAssurance);
+			return $caAccount.InvokeFunction($caAccount.UpdateAzSKADOContinuousAssurance);
 		}
 		catch 
 		{

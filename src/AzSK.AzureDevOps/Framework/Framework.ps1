@@ -38,10 +38,12 @@ $FrameworkPath =  ((Get-Item $PSScriptRoot).Parent.Parent).FullName +"\AzSK.Fram
 . $FrameworkPath\Models\SVT\PartialScanResourceMap.ps1
 . $FrameworkPath\Models\RemoteReports\LSRScanResultModel.ps1
 . $FrameworkPath\Models\RemoteReports\ComplianceStateModel.ps1
+<#
 . $FrameworkPath\Models\SubscriptionCore\AzureSecurityCenter.ps1
 . $FrameworkPath\Models\SubscriptionCore\ManagementCertificate.ps1
 . $FrameworkPath\Models\SubscriptionSecurity\SubscriptionRBAC.ps1
 . $FrameworkPath\Models\ContinuousAssurance\AutomationAccount.ps1
+#>
 . $FrameworkPath\Models\ControlState.ps1
 . $FrameworkPath\Models\FixControl\FixControlModel.ps1
 . $FrameworkPath\Models\RemoteReports\RecommendationReportModel.ps1

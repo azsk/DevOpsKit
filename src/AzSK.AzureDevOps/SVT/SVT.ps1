@@ -1,6 +1,6 @@
 ﻿Set-StrictMode -Version Latest
 
-function Get-AzSKAzureDevOpsSecurityStatus
+function Get-AzSKADOSecurityStatus
 {
 	<#
 	.SYNOPSIS
@@ -32,7 +32,7 @@ function Get-AzSKAzureDevOpsSecurityStatus
 	#>
 
 	[OutputType([String])]
-	[Alias("Get-AzSKADOSecurityStatus")]
+	[Alias("Get-AzSKAzureDevOpsSecurityStatus")]
 	Param
 	(
 
@@ -198,21 +198,21 @@ function Get-AzSKAzureDevOpsSecurityStatus
 			    {	
 					if ($null -ne $secStatus.Resolver.SVTResources) {
 							
-					$secStatus.ControlIdString = $ControlIds;
-					$secStatus.Severity = $Severity;
-					$secStatus.UseBaselineControls = $UseBaselineControls;
-					$secStatus.UsePreviewBaselineControls = $UsePreviewBaselineControls;
+						$secStatus.ControlIdString = $ControlIds;
+						$secStatus.Severity = $Severity;
+						$secStatus.UseBaselineControls = $UseBaselineControls;
+						$secStatus.UsePreviewBaselineControls = $UsePreviewBaselineControls;
 
-					#build the attestation options object
-				    [AttestationOptions] $attestationOptions = [AttestationOptions]::new();
-				    $attestationOptions.AttestControls = $ControlsToAttest				
-				    $attestationOptions.JustificationText = $JustificationText
-				    $attestationOptions.AttestationStatus = $AttestationStatus
-				    $attestationOptions.IsBulkClearModeOn = $BulkClear
-				    $attestationOptions.IsExemptModeOn = $AddException
-				    $secStatus.AttestationOptions = $attestationOptions;	
+						#build the attestation options object
+						[AttestationOptions] $attestationOptions = [AttestationOptions]::new();
+						$attestationOptions.AttestControls = $ControlsToAttest				
+						$attestationOptions.JustificationText = $JustificationText
+						$attestationOptions.AttestationStatus = $AttestationStatus
+						$attestationOptions.IsBulkClearModeOn = $BulkClear
+						$attestationOptions.IsExemptModeOn = $AddException
+						$secStatus.AttestationOptions = $attestationOptions;	
 
-					return $secStatus.EvaluateControlStatus();
+						return $secStatus.EvaluateControlStatus();
 					}
 			    }    
 		}
