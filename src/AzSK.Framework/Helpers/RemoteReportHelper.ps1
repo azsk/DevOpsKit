@@ -181,8 +181,7 @@ class RemoteReportHelper
 		if($laSource.Equals("CICD", [System.StringComparison]::OrdinalIgnoreCase)){
 			return [ScanSource]::VSO
 		}
-		if($laSource.Equals("CC", [System.StringComparison]::OrdinalIgnoreCase) -or
-			$laSource.Equals("CA", [System.StringComparison]::OrdinalIgnoreCase)){
+		if($laSource.Equals("CA", [System.StringComparison]::OrdinalIgnoreCase)){
 			return [ScanSource]::Runbook
 		}
 		return [ScanSource]::SpotCheck

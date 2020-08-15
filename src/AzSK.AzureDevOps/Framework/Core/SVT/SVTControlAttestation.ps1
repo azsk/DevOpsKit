@@ -420,7 +420,7 @@ class SVTControlAttestation
 					if($resourceValue[0].FeatureName -eq "Organization" -and !$this.controlStateExtension.GetProject())
 				    { 
 						Write-Host "`nNo project defined to store attestation details for organization-specific controls." -ForegroundColor Red
-						Write-Host "Use the '-AttestationHostProjectName' parameter with this command to configure the project that will host attestation details for organization level controls.`nRun 'Get-Help -Name Get-AzSKAzureDevOpsSecurityStatus -Full' for more info." -ForegroundColor Yellow
+						Write-Host "Use the '-AttestationHostProjectName' parameter with this command to configure the project that will host attestation details for organization level controls.`nRun 'Get-Help -Name Get-AzSKADOSecurityStatus -Full' for more info." -ForegroundColor Yellow
 						continue
 					}
 					[ControlState[]] $resourceControlStates = @()

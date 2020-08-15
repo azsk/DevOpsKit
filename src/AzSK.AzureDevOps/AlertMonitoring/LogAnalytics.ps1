@@ -1,5 +1,5 @@
 Set-StrictMode -Version Latest
-function Set-AzSKMonitoringSettings
+function Set-AzSKADOMonitoringSettings
 {
 	<#
 	.SYNOPSIS
@@ -24,34 +24,34 @@ function Set-AzSKMonitoringSettings
 	https://aka.ms/azskossdocs 
 
 	#>
-	[Alias("Set-AzSKOMSSettings")]
+	[Alias("Set-AzSKMonitoringSettings")]
 	param(
         
 		[Parameter(Mandatory = $false, HelpMessage="Workspace ID of your Log Analytics instance. Control scan results get pushed to this instance.", ParameterSetName = "Setup")]
         [AllowEmptyString()]
         [string]
-		[Alias("wid","OMSWorkspaceID","WorkspaceId")]
+		[Alias("wid","WorkspaceId")]
         $LAWSId,
 
         [Parameter(Mandatory = $false, HelpMessage="Shared key of your Log Analytics instance.", ParameterSetName = "Setup")]
         [AllowEmptyString()]
         [string]
-		[Alias("wkey","OMSSharedKey","SharedKey")]
+		[Alias("wkey","SharedKey")]
         $LAWSSharedKey,
 
 		[Parameter(Mandatory = $false, HelpMessage="Workspace ID of your alternate Log Analytics instance. Control scan results get pushed to this instance.", ParameterSetName = "Setup")]
         [AllowEmptyString()]
         [string]
-		[Alias("awid","AltOMSWorkspaceID","AltWorkspaceId")]
+		[Alias("awid","AltWorkspaceId")]
         $AltLAWSId,
 
         [Parameter(Mandatory = $false, HelpMessage="Shared key of your alternate Log Analytics instance.", ParameterSetName = "Setup")]
         [AllowEmptyString()]
         [string]
-		[Alias("awkey","AltOMSSharedKey","AltSharedKey")]
+		[Alias("awkey", "AltSharedKey")]
         $AltLAWSSharedKey,
 
-		[Parameter(Mandatory = $false, HelpMessage="Provide the source of Log Analytics Events.(e.g. CC,CICD,SDL)", ParameterSetName = "Setup")]
+		[Parameter(Mandatory = $false, HelpMessage="Provide the source of Log Analytics Events.(e.g. CA,CICD,SDL)", ParameterSetName = "Setup")]
         [AllowEmptyString()]
         [string]
 		[Alias("so")]
@@ -130,7 +130,7 @@ function Set-AzSKMonitoringSettings
 	}
 }
 
-function Install-AzSKMonitoringSolution
+function Install-AzSKADOMonitoringSolution
 {
 	<#
 
@@ -161,7 +161,7 @@ function Install-AzSKMonitoringSolution
 	https://aka.ms/azskossdocs
 
 	#>
-	[Alias("Install-AzSKOMSSolution")]
+	[Alias("Install-AzSKMonitoringSolution")]
     param(
         [Parameter(ParameterSetName="NewModel", HelpMessage="Id of subscription hosting Log Analytics workspace", Mandatory = $true)]
         [string]

@@ -6,61 +6,43 @@ class CommandHelper
 		# Services Security Status
 		[CommandDetails]@{
             Verb = "Get";
-            Noun = "AzSKAzureDevOpsSecurityStatus";
+            Noun = "AzSKADOSecurityStatus";
             ShortName = "gads";
 			IsLatestRequired = $false;
-        },
-		#[CommandDetails]@{
-        #    Verb = "Get";
-        #    Noun = "AzSKAzureDevOpsOrgSecurityStatus";
-        #    ShortName = "gadso";
-		#	IsLatestRequired = $false;
-        #},
-		#[CommandDetails]@{
-        #    Verb = "Get";
-        #    Noun = "AzSKAzureDevOpsProjectSecurityStatus";
-        #    ShortName = "gadsp";
-		#	IsLatestRequired = $false;
-        #},
-		#[CommandDetails]@{
-        #    Verb = "Get";
-        #    Noun = "AzSKAzureDevOpsBuildSecurityStatus";
-        #    ShortName = "gadsb";
-		#	IsLatestRequired = $false;
-        #},
-		#[CommandDetails]@{
-        #    Verb = "Get";
-        #    Noun = "AzSKAzureDevOpsReleaseSecurityStatus";
-        #    ShortName = "gadsr";
-		#	IsLatestRequired = $false;
-		#},
+		},
 		[CommandDetails]@{
             Verb = "Set";
-            Noun = "AzSKMonitoringSettings";
-            ShortName = "SMS";
+            Noun = "AzSKADOMonitoringSettings";
+            ShortName = "sms";
+		},
+		[CommandDetails]@{
+            Verb = "Get";
+            Noun = "AzSKADOInfo";
+            ShortName = "gadi";
+			IsLatestRequired = $false;
         },
 		[CommandDetails]@{
             Verb = "Install";
-            Noun = "Install-AzSKMonitoringSolution";
-            ShortName = "IMS";
+            Noun = "AzSKADOMonitoringSolution";
+            ShortName = "iadm";
 			IsLatestRequired = $false;
 		},
 		[CommandDetails]@{
             Verb = "Clear";
-            Noun = "AzSKSessionState";
-            ShortName = "CSS";
+            Noun = "AzSKADOSessionState";
+            ShortName = "css";
 			IsLatestRequired = $false;
 		},
 		[CommandDetails]@{
             Verb = "Install";
             Noun = "AzSKADOContinuousAssurance";
-            ShortName = "ICA";
+            ShortName = "ica";
 			IsLatestRequired = $false;
         },
 		[CommandDetails]@{
             Verb = "Update";
             Noun = "AzSKADOContinuousAssurance";
-            ShortName = "UCA";
+            ShortName = "uca";
 			IsLatestRequired = $false;
         }
     );

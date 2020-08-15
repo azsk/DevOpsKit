@@ -4,7 +4,7 @@ class WebhookOutput: ListenerBase
 {		
 	hidden static [WebhookOutput] $Instance = $null;  
 	#Default source is kept as SDL / PowerShell. 
-	#This value must be set in respective environment i.e. CICD,CC   
+	#This value must be set in respective environment i.e. CICD,CA   
 	[string] $WebhookSource;
 
 	WebhookOutput()

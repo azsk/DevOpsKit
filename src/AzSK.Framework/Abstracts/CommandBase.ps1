@@ -298,7 +298,6 @@ class CommandBase: AzSKRoot {
 			{
 				$AutoUpdateMsg = [Constants]::AutoUpdateMessage 
 				Write-Host $AutoUpdateMsg -ForegroundColor Yellow
-				#Write-Host "Set-AzSKPolicySettings -AutoUpdate On`n" -ForegroundColor Green
 			}
 			return;
 		}
@@ -358,7 +357,7 @@ class CommandBase: AzSKRoot {
 		if($userChoice.Trim() -eq "n" -or $secondUserChoice.Trim() -eq 'n')
 		{			
 			Write-Host "Exiting auto-update workflow. To disable auto-update permanently, run the command below:" -ForegroundColor Yellow
-			Write-Host "Set-AzSKPolicySettings -AutoUpdate Off`n" -ForegroundColor Green
+			Write-Host "Set-AzSKADOPolicySettings -AutoUpdate Off`n" -ForegroundColor Green
 			return
 		}
 		$AzSKTemp = Join-Path $([Constants]::AzSKAppFolderPath) "Temp";

@@ -23,6 +23,10 @@ class ADOSVTCommandBase: SVTCommandBase {
 
          #Initiate Compliance State
          $this.InitializeControlState();
+
+        #Force load of AzSK.json
+        $cfg = [ConfigurationManager]::GetAzSKConfigData();
+        
          #Create necessary resources to save compliance data in user's subscription
          #<TODO Perf Issue - ComplianceReportHelper fetch RG/Storage. Then creates RG/Storage/table if not exists. Check permissions for write etc>
         # if($this.IsLocalComplianceStoreEnabled)

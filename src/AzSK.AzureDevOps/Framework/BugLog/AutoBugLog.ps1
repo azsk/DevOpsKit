@@ -107,18 +107,18 @@ class AutoBugLog {
     hidden [string] GetControlReproStep([SVTEventContext []] $ControlResult){
         $StepsForRepro=""
         if ($ControlResult.FeatureName -eq "Organization") {
-            $StepsForRepro="Get-AzSKAzureDevOpsSecurityStatus -OrganizationName '{0}' -ControlIds '{1}'"
+            $StepsForRepro="Get-AzSKADOSecurityStatus -OrganizationName '{0}' -ControlIds '{1}'"
             $StepsForRepro=$StepsForRepro.Replace("{0}",$ControlResult.ResourceContext.ResourceName)
             $StepsForRepro=$StepsForRepro.Replace("{1}",$ControlResult.ControlItem.ControlID)
         }
         elseif ($ControlResult.ResourceContext.ResourceTypeName -eq "Project") {
-            $StepsForRepro="Get-AzSKAzureDevOpsSecurityStatus -OrganizationName '{0}' -ProjectNames '{1}' -ControlIds '{2}'"
+            $StepsForRepro="Get-AzSKADOSecurityStatus -OrganizationName '{0}' -ProjectNames '{1}' -ControlIds '{2}'"
             $StepsForRepro=$StepsForRepro.Replace("{0}",$ControlResult.ResourceContext.ResourceGroupName)
             $StepsForRepro=$StepsForRepro.Replace("{1}",$ControlResult.ResourceContext.ResourceName)
             $StepsForRepro=$StepsForRepro.Replace("{2}",$ControlResult.ControlItem.ControlID)
         }
         else {
-            $StepsForRepro="Get-AzSKAzureDevOpsSecurityStatus -OrganizationName '{0}' -ProjectNames '{1}' -{2}Names '{3}' -ControlIds '{4}'"
+            $StepsForRepro="Get-AzSKADOSecurityStatus -OrganizationName '{0}' -ProjectNames '{1}' -{2}Names '{3}' -ControlIds '{4}'"
             $StepsForRepro=$StepsForRepro.Replace("{0}",$this.SubscriptionContext.SubscriptionName)
             $StepsForRepro=$StepsForRepro.Replace("{1}",$ControlResult.ResourceContext.ResourceGroupName)
             $StepsForRepro=$StepsForRepro.Replace("{2}",$ControlResult.FeatureName)
@@ -202,7 +202,7 @@ class AutoBugLog {
                 #user is a PCA member but the project has not been set for org control failures
                 if (!$Project) { 
                     Write-Host "`nNo project defined to log bugs for organization-specific controls." -ForegroundColor Red
-                    Write-Host "Use the '-AttestationHostProjectName' parameter with this command to configure the project that will host bug logging details for organization level controls.`nRun 'Get-Help -Name Get-AzSKAzureDevOpsSecurityStatus -Full' for more info." -ForegroundColor Yellow
+                    Write-Host "Use the '-AttestationHostProjectName' parameter with this command to configure the project that will host bug logging details for organization level controls.`nRun 'Get-Help -Name Get-AzSKADOSecurityStatus -Full' for more info." -ForegroundColor Yellow
                     return $null
                 }
             }

@@ -189,3 +189,20 @@ class SVTEventContext: AzSKRootEventArgument
 		return $uniqueId;
 	}
 }
+
+#Keeping here temporarily (Aug2020) to remove dependency of AzSK (Azure) PS1 files (e.g., SubscriptionCore)
+#Get rid/move to another place if still needed.
+class TelemetryRBAC
+{
+	[string] $SubscriptionId="";
+	[string] $Scope="";
+	[string] $DisplayName="";
+	[string] $MemberType="";
+	[string] $ObjectId="";
+	[string] $ObjectType="";
+	[string] $RoleAssignmentId="";
+	[string] $RoleDefinitionId="";
+	[string] $RoleDefinitionName="";
+	[bool] $IsPIMEnabled;
+	
+}
