@@ -74,7 +74,7 @@
     },
     {
       "ControlID": "AzureDevOps_ServiceConnection_AuthZ_Dont_Use_Classic_Connections",
-      "Description": "Do not use any classic resources on a subscription",
+      "Description": "Do not use Azure classic service connections to grant access on a subscription.",
       "Id": "ServiceConnection150",
       "ControlSeverity": "High",
       "Automated": "Yes",
@@ -150,7 +150,7 @@
       "ControlSeverity": "High",
       "Automated": "Yes",
       "MethodName": "CheckServiceConnectionBuildAccess",
-      "Rationale": "To support security of the pipeline operations, Connections must not be granted to access for all pipeline",
+      "Rationale": "To support security of the pipeline operations, connections must not be granted access to all pipelines. This is in keeping with the principle of least privilege because a vulnerability in components used by one pipeline can be leveraged by an attacker to attack other pipelines having access to critical resources.",
       "Recommendation": "To remediate this, navigate to the service connections settings page for your project -> select your service connection from the list -> click Edit -> uncheck 'Grant access permission to all pipelines'.",
       "Tags": [
         "SDL",
@@ -185,8 +185,8 @@
       "ControlSeverity": "High",
       "Automated": "Yes",
       "MethodName": "CheckInactiveConnection",
-      "Rationale": "",
-      "Recommendation": "To remove inactive service connection, follow the steps given here: 1.Navigate to the service connection settings. 2. Select a service connection. 3. Select three dots (present at right top). 4. Click on Delete.",
+      "Rationale": "Each additional service connection being used by pipelines to access repositories increases the attack surface. To minimize this risk ensure that only active and legitimate service connections are present in organization.",
+      "Recommendation": "To remove inactive service connection, follow the steps given here: 1.Navigate to the service connection settings. 2. Select service connection. 3. Select three dots (present at right top). 4. Click on Delete.",
       "Tags": [
         "SDL",
         "Best Practice",
@@ -196,14 +196,14 @@
       "Enabled": true
     },
     {
-      "ControlID": "AzureDevOps_ServiceConnection_SI_Dont_Allow_Cross_Project_Sharing",
-      "Description": "Do not make service connections accessible to multiple project.",
+      "ControlID": "AzureDevOps_ServiceConnection_SI_Dont_Allow_Project_Sharing",
+      "Description": "Service connections should not be shared across multiple projects.",
       "Id": "ServiceConnection220",
       "ControlSeverity": "High",
       "Automated": "Yes",
       "MethodName": "CheckCrossProjectSharing",
-      "Rationale": "",
-      "Recommendation": "To remediate this, navigate to the service connections settings page for your project -> select your service connection from the list -> click Security -> Revoke access from the 'Project Permission'.",
+      "Rationale": "If a service connection is shared across multiple multiple projects, then a vulnerability in components used by one project can be leveraged by an attacker to attack other projects. This is also in keeping with the principle of least privilege.",
+      "Recommendation": "To remediate this, navigate to the service connections settings page for your project -> select your service connection from the list -> click Security -> Under 'Project Permissions', remove projects that service connection no more requires access to.",
       "Tags": [
         "SDL",
         "TCP",
@@ -214,14 +214,14 @@
       "Enabled": true
     },
     {
-      "ControlID": "AzureDevOps_ServiceConnection_SI_Review_Cross_Pipeline_Sharing",
-      "Description": "Do not make service connections accessible to multiple pipelines.",
+      "ControlID": "AzureDevOps_ServiceConnection_SI_Review_Pipeline_Sharing",
+      "Description": "Service connections should not be shared across multiple pieplines.",
       "Id": "ServiceConnection230",
       "ControlSeverity": "High",
       "Automated": "Yes",
       "MethodName": "CheckCrossPipelineSharing",
-      "Rationale": "",
-      "Recommendation": "To remediate this, navigate to the service connections settings page for your project -> select your service connection from the list -> click Security -> Remove access from the 'Pipeline Permission'.",
+      "Rationale": "If a service connection is shared across multiple multiple pipelines, then a vulnerability in components used by one pipeline can be leveraged by an attacker to attack other pipelines having access to critical resources. This is also in keeping with the principle of least privilege.",
+      "Recommendation": "To remediate this, navigate to the service connections settings page for your project -> select your service connection from the list -> click Security -> Under 'Pipeline Permissions', remove pipelines that service connection no more requires access to.",
       "Tags": [
         "SDL",
         "TCP",

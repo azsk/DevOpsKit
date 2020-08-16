@@ -96,7 +96,7 @@
       "ControlSeverity": "High",
       "Automated": "Yes",
       "MethodName": "CheckInheritPermissions",
-      "Rationale": "Disabling inherit permissions lets you finely control access to various operations at the build level for different stakeholders. This ensures that you follow the principle of least privilege and provide access only to the persons that require it.",
+      "Rationale": "Disabling inherited permissions lets you finely control access to various operations at the build level for different stakeholders. This ensures that you follow the principle of least privilege and provide access only to the persons that require it.",
       "Recommendation": "To disable inheritance follow the steps given here: 1.Navigate to the build pipeline. 2. Select three dots (present at right top). 3. Click Manage Security 4. Add the service lead & service owner as Users with Allow permissions for each permission line item. 5. Disable Inheritance. 6. Add users/groups to your build definition and provide only required access. As best practice, All teams/groups must be granted minimum required permissions on build definition.",
       "Tags": [
         "SDL",
@@ -114,8 +114,8 @@
       "ControlSeverity": "High",
       "Automated": "Yes",
       "MethodName": "CheckSettableAtQueueTime",
-      "Rationale": "Pipeline variables not marked settable at queue time can only be changed by someone with elevated permissions. These variables (reasonably) used in ways that make code injection possible.",
-      "Recommendation": "To uncheck settable at queue time follow the steps given here: 1.Navigate to the build pipeline. 2. Open up the build pipeline. 3. Click on Edit 4. Select variables. 5. Uncheck settable at queue time. 6. Save the build pipeline",
+      "Rationale": "Pipeline variables not marked settable at queue time can only be changed by someone with elevated permissions. These variables (reasonably) cab be used in ways that make code injection possible.",
+      "Recommendation": "1. Navigate to the build pipeline. 2. Click on Edit. 3. Select variables. 4. Uncheck 'settable at queue time' for such variables. 5. Save the build pipeline.",
       "Tags": [
         "SDL",
         "TCP",
@@ -126,13 +126,13 @@
     },
     {
       "ControlID": "AzureDevOps_Build_SI_Review_URL_Variables_Settable_At_Queue_Time",
-      "Description": "Pipeline variables marked settable at queue time should be carefully reviewed.",
+      "Description": "Pipeline variables marked settable at queue time and containing URLs should be carefully reviewed.",
       "Id": "Build172",
       "ControlSeverity": "High",
       "Automated": "Yes",
       "MethodName": "CheckSettableAtQueueTimeForURL",
-      "Rationale": "Pipeline variables not marked settable at queue time can only be changed by someone with elevated permissions. These variables (reasonably) used in ways that make code injection possible.",
-      "Recommendation": "To uncheck settable at queue time follow the steps given here: 1.Navigate to the build pipeline. 2. Open up the build pipeline. 3. Click on Edit 4. Select variables. 5. Uncheck settable at queue time. 6. Save the build pipeline",
+      "Rationale": "Pipeline variables not marked settable at queue time can only be changed by someone with elevated permissions. If these variables contain a URL then someone can change the URL to a server that they control and can intercept any secret used to interact with the intended server by queueing the build..",
+      "Recommendation": "1. Navigate to the build pipeline. 2. Click on Edit. 3. Select variables. 4. Uncheck 'settable at queue time' for such variables. 5. Save the build pipeline.",
       "Tags": [
         "SDL",
         "TCP",
