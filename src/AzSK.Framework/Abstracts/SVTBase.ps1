@@ -106,6 +106,17 @@ class SVTBase: AzSKRoot
         $this.ControlSettings = $this.LoadServerConfigFile("ControlSettings.json");
 
         if (-not $this.SVTConfig) {
+
+			#Check if SVTConfig is present in cache. If so, use that.
+			$cachedPolicyContent = [ConfigurationHelper]::PolicyCacheContent | Where-Object { $_.Name -eq $controlsJsonFileName }
+			if ($cachedPolicyContent)
+			{
+				$this.SVTConfig = $cachedPolicyContent.Content
+				if ($this.SVTConfig)
+				{
+					return
+				}
+			}
             $this.SVTConfig =  [ConfigurationManager]::GetSVTConfig($controlsJsonFileName);
 			
             $this.SVTConfig.Controls | Foreach-Object {
@@ -115,13 +126,13 @@ class SVTBase: AzSKRoot
                 $_.Recommendation = $global:ExecutionContext.InvokeCommand.ExpandString($_.Recommendation)
 				
 				$ControlSeverity = $_.ControlSeverity
+				
 				#Check if ControlSeverity is customized/overridden using controlsettings configurations
                 if([Helpers]::CheckMember($this.ControlSettings,"ControlSeverity.$ControlSeverity"))
                 {
                     $_.ControlSeverity = $this.ControlSettings.ControlSeverity.$ControlSeverity
                 }
 
-				#<TODO Framework: Do we really need to trim method name as it is defined by developer>
 				if(-not [string]::IsNullOrEmpty($_.MethodName))
 				{
 					$_.MethodName = $_.MethodName.Trim();
@@ -137,7 +148,26 @@ class SVTBase: AzSKRoot
 				{
 					$_.IsPreviewBaselineControl = $true
 				}
-            }
+			}
+			#Save the final, fully resolved SVTConfig JSON in cache
+			#Because we may have the network/local-module content already in cached from a call to [ConfigurationHelper]::LoadServerConfigFile, we need to check first.
+			#If there is an entry, we just overwrite the Content portion. If there is on entry, we create a new one.
+			[bool] $ConfigFoundInCache = $false
+			[ConfigurationHelper]::PolicyCacheContent | Foreach-Object {
+				if ($_.Name -eq $controlsJsonFileName)
+				{
+					$_.Content = $this.SVTConfig   #Overwrite the cached entry.
+					$ConfigFoundInCache = $true
+				} 
+			}
+			if (-not $ConfigFoundInCache)
+			{
+				$policy = [Policy]@{
+					Name    = $controlsJsonFileName
+					Content = $this.SVTConfig
+				}
+				[ConfigurationHelper]::PolicyCacheContent += $policy #Create a new entry.
+			}
         }
     }
 	#stub to be used when Baseline configuration exists 

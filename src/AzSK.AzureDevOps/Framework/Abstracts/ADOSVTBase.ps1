@@ -29,25 +29,11 @@ class ADOSVTBase: SVTBase {
 				return $true
 			}
 		}
-
-		if (($null -ne $this.ControlSettings) -and [Helpers]::CheckMember($this.ControlSettings, "BaselineControls.SubscriptionControlIdList")) {
-			$baselineControl = $this.ControlSettings.BaselineControls.SubscriptionControlIdList | Where-Object { $_ -eq $controlId }
-			if (($baselineControl | Measure-Object).Count -gt 0 ) {
-				return $true
-			}
-		}
 		return $false
 	}
 	hidden [bool] CheckPreviewBaselineControl($controlId) {
 		if (($null -ne $this.ControlSettings) -and [Helpers]::CheckMember($this.ControlSettings, "PreviewBaselineControls.ResourceTypeControlIdMappingList")) {
 			$PreviewBaselineControls = $this.ControlSettings.PreviewBaselineControls.ResourceTypeControlIdMappingList | Where-Object { $_.ControlIds -contains $controlId }
-			if (($PreviewBaselineControls | Measure-Object).Count -gt 0 ) {
-				return $true
-			}
-		}
-
-		if (($null -ne $this.ControlSettings) -and [Helpers]::CheckMember($this.ControlSettings, "PreviewBaselineControls.SubscriptionControlIdList")) {
-			$PreviewBaselineControls = $this.ControlSettings.PreviewBaselineControls.SubscriptionControlIdList | Where-Object { $_ -eq $controlId }
 			if (($PreviewBaselineControls | Measure-Object).Count -gt 0 ) {
 				return $true
 			}

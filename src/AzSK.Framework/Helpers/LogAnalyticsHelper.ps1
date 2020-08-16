@@ -84,27 +84,7 @@ Class LogAnalyticsHelper{
 	static [PSObject[]] GetLAWSBodyObjects([SVTEventContext] $eventContext,[AzSKContextDetails] $AzSKContext)
 	{
 		[PSObject[]] $output = @();
-
-		# Here we are utilizing the RG tag mapping that is done while sending the ResourceInventory telemetry event.
-		# Hence, this works only when scan source is 'CA'
-		if (([FeatureFlightingManager]::GetFeatureStatus("EnableResourceGroupTagTelemetry", "*") -eq $true) `
-				-and (([ResourceInventory]::ResourcesWithTagMapping | Measure-Object).Count -gt 0) `
-				-and ($eventContext.IsResource()))
-		{
-			try
-			{
-				$resourceTag = [ResourceInventory]::ResourcesWithTagMapping | Where-Object { $_.ResourceId -eq $($eventContext.ResourceContext.ResourceId) }
-				if (($resourceTag | Measure-Object).Count -eq 1)
-				{
-					$eventContext.ResourceContext.ResourceGroupTags = @{ "Env" = $($resourceTag.RGEnv) ; "ComponentID" = $($resourceTag.RGComponentID) };
-				}
-			}
-			catch
-			{
-				# Exception occurred during setting tag. This is kept blank intentionaly to avoid flow break
-			}
-		}
-				
+	
 		[array] $eventContext.ControlResults | ForEach-Object{
 			Set-Variable -Name ControlResult -Value $_ -Scope Local
 			$out = [LAWSModel]::new() 
@@ -116,31 +96,6 @@ Class LogAnalyticsHelper{
 				$out.ResourceId = $eventContext.ResourceContext.ResourceId
 				$out.ChildResourceName=$ControlResult.ChildResourceName
 				$out.PartialScanIdentifier=$eventContext.PartialScanIdentifier
-
-				#Send Log Analytics workspace telmetry for RG tags if feature is enabled and resource group tags are available
-				try{
-					if ([FeatureFlightingManager]::GetFeatureStatus("EnableResourceGroupTagTelemetry","*") -eq $true -and  $eventContext.ResourceContext.ResourceGroupTags.Count -gt 0) {
-						# Try catch block for Env and ComponentId tags if tags throws exceptions in case of null objects
-						try
-						{
-							$out.Env = $eventContext.ResourceContext.ResourceGroupTags[$eventContext.ResourceContext.ResourceGroupTags.Keys -match "\benv\b"]
-						}
-						catch
-						{
-							$out.Env = [string]::Empty;	
-						}
-						try
-						{
-							$out.ComponentId = $eventContext.ResourceContext.ResourceGroupTags[$eventContext.ResourceContext.ResourceGroupTags.Keys -match "\bcomponentid\b"]
-						}
-						catch{
-							$out.ComponentId = [string]::Empty
-						}
-					}
-				}
-				catch{
-					#Execution should not break if any excepiton in case of tag telemetry logging. <TODO: Add exception telemetry>
-				}
 			}
 
 			$out.Env = [AzSKSettings]::GetInstance().GetScanSource();
