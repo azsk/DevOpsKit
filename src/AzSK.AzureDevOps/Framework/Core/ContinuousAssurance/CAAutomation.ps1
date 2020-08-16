@@ -20,7 +20,7 @@ class CAAutomation : ADOSVTCommandBase
     hidden [string] $StorageKind = "StorageV2"
     hidden [string] $StorageType = "Standard_LRS"
     hidden [string] $LAWSName = "ADOScannerLAWS"
-    hidden [bool] $CreateLaws 
+    hidden [bool] $CreateLAWS 
     hidden [string] $ProjectNames 
     hidden [string] $ExtendedCommand 
     hidden [string] $LAWSsku = "Standard"
@@ -44,7 +44,7 @@ class CAAutomation : ADOSVTCommandBase
 	[string] $Proj, `
 	[string] $ExtCmd, `
     [InvocationInfo] $invocationContext, `
-	[bool] $CreateLaws) : Base($subscriptionId, $invocationContext)
+	[bool] $CreateLAWS) : Base($OrgName, $invocationContext)
     {
 		$this.SubscriptionId = $SubId
 		$this.OrganizationToScan = $OrgName
@@ -60,7 +60,7 @@ class CAAutomation : ADOSVTCommandBase
         $this.ScanTriggerTimeUTC = [System.DateTime]::UtcNow.AddMinutes(20)
 		$this.ScanTriggerLocalTime = $(Get-Date).AddMinutes(20)
 		$this.ControlSettings = [ConfigurationManager]::LoadServerConfigFile("ControlSettings.json");
-		$this.CreateLAWS = $CreateLaws
+		$this.CreateLAWS = $CreateLAWS
 
 		if (($null -ne $this.ControlSettings) -and [Helpers]::CheckMember($this.ControlSettings, "DockerImage.ImageName")) 
 		{
@@ -86,7 +86,7 @@ class CAAutomation : ADOSVTCommandBase
 	
 		if ([string]::IsNullOrWhiteSpace($LAWorkspaceId) -or [string]::IsNullOrWhiteSpace($LAWorkspaceKey) ) 
 		{
-			if ($this.CreateLaws -ne $true)
+			if ($this.CreateLAWS -ne $true)
 			{
 				$this.messages = "Log Analytics Workspace details are missing. Use -CreateWorkspace switch to create a new workspace while setting up CA. Setup will continue...`r`n"
 			}
@@ -110,7 +110,7 @@ class CAAutomation : ADOSVTCommandBase
 		[string] $LAWorkspaceKey, `
 		[string] $Proj, `
 		[string] $ExtCmd, `
-		[InvocationInfo] $invocationContext) : Base($subscriptionId, $invocationContext)
+		[InvocationInfo] $invocationContext) : Base($OrgName, $invocationContext)
 		{
 			$this.SubscriptionId = $SubId
 			$this.OrganizationToScan = $OrgName
@@ -160,7 +160,7 @@ class CAAutomation : ADOSVTCommandBase
 			{
 				if($Context.Subscription.SubscriptionId -ne $this.SubscriptionId)
 				{
-					$Context = set-azcontext -Subscription $this.SubscriptionId -Force | out-null
+					$Context = set-azcontext -Subscription $this.SubscriptionId -Force  
 				}
 				$Scope = "/subscriptions/"+$this.SubscriptionId
 				$RoleAssignment = @((Get-AzRoleAssignment -Scope $Scope -SignInName $Context.Account.Id -IncludeClassicAdministrators ).RoleDefinitionName | where {$_ -eq "Owner" -or $_ -eq "CoAdministrator" -or $_ -match "ServiceAdministrator"} )
@@ -214,23 +214,29 @@ class CAAutomation : ADOSVTCommandBase
 				}
 				else
 				{
-					$this.PublishCustomMessage("Resource group: [$($this.RGname)] already exists. Skipping RG creation", [MessageType]::Update);
+					$this.PublishCustomMessage("Resource group: [$($this.RGname)] already exists. Skipping RG creation.", [MessageType]::Update);
 				}
 		
 				$this.PublishCustomMessage("Creating required resources in resource group '$($this.RGname)'....", [MessageType]::Info);
 		
 				#Step 2: Create app service plan "Elastic Premium"
-				$AppServPlan = New-AzResource -ResourceName $this.AppServicePlanName -ResourceGroupName $this.RGname -ResourceType Microsoft.web/serverfarms -ApiVersion "2018-02-01" -Location $this.Location -Kind Elastic -Properties @{"reserved"=$true;} -Sku @{name= "EP1";tier = "ElasticPremium";size= "EP1";family="EP";capacity= 1} -Force
-				if($null -eq $AppServPlan) 
+				if ((($AppServPlan =Get-AzResource -ResourceGroupName $this.RGName -ResourceType 'Microsoft.web/serverfarms' -Name $this.AppServicePlanName) | Measure-Object).Count -eq 0)
 				{
-					$this.PublishCustomMessage("AppService plan '$($this.AppServicePlanName)' creation failed", [MessageType]::Error);
+					$AppServPlan = New-AzResource -ResourceName $this.AppServicePlanName -ResourceGroupName $this.RGname -ResourceType Microsoft.web/serverfarms -ApiVersion "2018-02-01" -Location $this.Location -Kind Elastic -Properties @{"reserved"=$true;} -Sku @{name= "EP1";tier = "ElasticPremium";size= "EP1";family="EP";capacity= 1} -Force
+					if($null -eq $AppServPlan) 
+					{
+						$this.PublishCustomMessage("AppService plan '$($this.AppServicePlanName)' creation failed", [MessageType]::Error);
+					}
+					else
+					{
+						$this.PublishCustomMessage("AppService plan '$($this.AppServicePlanName)' created", [MessageType]::Update);
+						$this.CreatedResources += $AppServPlan.ResourceId
+					}
 				}
-				else
+				else 
 				{
-					$this.PublishCustomMessage("AppService plan '$($this.AppServicePlanName)' created", [MessageType]::Update);
-					$this.CreatedResources += $AppServPlan.ResourceId
+					$this.PublishCustomMessage("AppService Plan: [$($this.AppServicePlanName)] already exists. Skipping creation.", [MessageType]::Update);
 				}
-		
 		
 				#Step 3: Create storage account
 				$StorageAcc = New-AzStorageAccount -ResourceGroupName $this.RGname -Name $this.StorageName -Type $this.StorageType -Location $this.Location -Kind $this.StorageKind -EnableHttpsTrafficOnly $true -ErrorAction Stop
@@ -270,7 +276,7 @@ class CAAutomation : ADOSVTCommandBase
 				}
 		
 				#Step 6: Create LAW if applicable
-				if ($this.CreateLaws -eq $true)
+				if ($this.CreateLAWS -eq $true)
 				{
 					$LAWorkspace = @(New-AzOperationalInsightsWorkspace -Location $this.Location -Name $this.LAWSName -Sku $this.LAWSsku -ResourceGroupName $this.RGname)
 					if($LAWorkspace -eq 0) 
@@ -518,59 +524,20 @@ class CAAutomation : ADOSVTCommandBase
 
 						if(-not [string]::IsNullOrEmpty($this.OrganizationToScan))
 						{
-							#If property already exists then update it else add new property
-							if(-not [string]::IsNullOrEmpty( $AppSettingsHT["OrgName"]))
-							{
-								$AppSettingsHT["OrgName"] = $this.OrganizationToScan
-							}
-							else
-							{
-								$AppSettingsHT += @{"OrgName" = $this.OrganizationToScan}
-							}
+							$AppSettingsHT["OrgName"] = $this.OrganizationToScan
 						}
 						if(-not [string]::IsNullOrEmpty($this.LAWSId) -and -not [string]::IsNullOrEmpty($this.LAWSSharedKey))
 						{
-							#If property already exists then update it else add new property
-							if(-not [string]::IsNullOrEmpty( $AppSettingsHT["LAWSId"]))
-							{
-								$AppSettingsHT["LAWSId"] = $this.LAWSId
-							}
-							else
-							{
-								$AppSettingsHT += @{"LAWSId" = $this.LAWSId}
-							}
-							if(-not [string]::IsNullOrEmpty( $AppSettingsHT["LAWSSharedKey"]))
-							{
-								$AppSettingsHT["LAWSSharedKey"] = $this.LAWSSharedKey
-							}
-							else
-							{
-								$AppSettingsHT += @{"LAWSSharedKey" = $this.LAWSSharedKey}
-							}
+							$AppSettingsHT["LAWSId"] = $this.LAWSId
+							$AppSettingsHT["LAWSSharedKey"] = $this.LAWSSharedKey
 						}
 						if(-not [string]::IsNullOrEmpty( $this.ExtendedCommand ))
 						{
-							#If property already exists then update it else add new property
-							if(-not [string]::IsNullOrEmpty($AppSettingsHT["ExtendedCommand"]))
-							{
-								$AppSettingsHT["ExtendedCommand"] = $this.ExtendedCommand
-							}
-							else
-							{
-								$AppSettingsHT += @{"ExtendedCommand" = $this.ExtendedCommand}
-							}
+							$AppSettingsHT["ExtendedCommand"] = $this.ExtendedCommand
 						}
 						if(-not [string]::IsNullOrEmpty( $this.ProjectNames ))
 						{
-							#If property already exists then update it else add new property
-							if(-not [string]::IsNullOrEmpty($AppSettingsHT["ProjectNames"]))
-							{
-								$AppSettingsHT["ProjectNames"] = $this.ProjectNames
-							}
-							else
-							{
-								$AppSettingsHT += @{"ProjectNames" = $this.ProjectNames}
-							}
+							$AppSettingsHT["ProjectNames"] = $this.ProjectNames
 						}
 
 						$updatedWebApp = Update-AzFunctionAppSetting -Name $appServResource[0] -ResourceGroupName $this.RGname -AppSetting $AppSettingsHT -Force
