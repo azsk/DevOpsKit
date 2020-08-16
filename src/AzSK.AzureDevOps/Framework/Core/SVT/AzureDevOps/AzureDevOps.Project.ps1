@@ -143,6 +143,38 @@ class Project: ADOSVTBase
         return $controlResult
     }
 
+    hidden [ControlResult] CheckJobAuthZReleaseScope([ControlResult] $controlResult)
+    {
+        if($this.PipelineSettingsObj)
+        {
+            $orgLevelScope = $this.PipelineSettingsObj.enforceJobAuthScopeForReleases.orgEnabled;
+            $prjLevelScope = $this.PipelineSettingsObj.enforceJobAuthScopeForReleases.enabled;
+
+            if($prjLevelScope -eq $true )
+            {
+                $controlResult.AddMessage([VerificationResult]::Passed, "Job authorization scope is limited to current project for release pipelines.");
+            }
+            else
+            {
+                $controlResult.AddMessage([VerificationResult]::Failed, "Job authorization scope is set to project collection for release pipelines.");
+            }     
+            
+            if($orgLevelScope -eq $true )
+            {
+                $controlResult.AddMessage("This setting is enabled (limited to current project) at organization level.");
+            }
+            else
+            {
+                $controlResult.AddMessage("This setting is disabled (set to project collection) at organization level.");
+            }     
+        }
+        else
+        {
+            $controlResult.AddMessage([VerificationResult]::Error, "Could not fetch project pipeline settings.");
+        }       
+        return $controlResult
+    }
+
     hidden [ControlResult] CheckAuthZRepoScope([ControlResult] $controlResult)
     {
         if($this.PipelineSettingsObj)

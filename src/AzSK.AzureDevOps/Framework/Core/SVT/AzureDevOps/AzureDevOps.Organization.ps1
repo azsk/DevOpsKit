@@ -803,6 +803,26 @@ class Organization: ADOSVTBase
         return $controlResult
     }
 
+    hidden [ControlResult] CheckJobAuthZReleaseScope([ControlResult] $controlResult)
+    {
+       if($this.PipelineSettingsObj)
+       {
+            $orgLevelScope = $this.PipelineSettingsObj.enforceJobAuthScopeForReleases
+            
+            if($orgLevelScope -eq $true )
+            {
+                $controlResult.AddMessage([VerificationResult]::Passed, "Job authorization scope is limited to current project for release pipelines at organization level.");
+            }
+            else{
+                $controlResult.AddMessage([VerificationResult]::Failed, "Job authorization scope is set to project collection for release pipelines at organization level.");
+            }       
+       }
+       else{
+             $controlResult.AddMessage([VerificationResult]::Error, "Could not fetch the organization pipeline settings.");
+       }       
+        return $controlResult
+    }
+
     hidden [ControlResult] CheckAuthZRepoScope([ControlResult] $controlResult)
     {
        if($this.PipelineSettingsObj)

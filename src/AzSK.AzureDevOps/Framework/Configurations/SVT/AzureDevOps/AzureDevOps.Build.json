@@ -114,7 +114,7 @@
       "ControlSeverity": "High",
       "Automated": "Yes",
       "MethodName": "CheckSettableAtQueueTime",
-      "Rationale": "Pipeline variables not marked settable at queue time can only be changed by someone with elevated permissions. These variables (reasonably) cab be used in ways that make code injection possible.",
+      "Rationale": "Pipeline variables not marked settable at queue time can only be changed by someone with elevated permissions. These variables (reasonably) can be used in ways that make code injection possible.",
       "Recommendation": "1. Navigate to the build pipeline. 2. Click on Edit. 3. Select variables. 4. Uncheck 'settable at queue time' for such variables. 5. Save the build pipeline.",
       "Tags": [
         "SDL",

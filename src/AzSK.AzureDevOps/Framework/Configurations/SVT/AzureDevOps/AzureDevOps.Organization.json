@@ -412,6 +412,23 @@
       "Enabled": true
     },
     {
+      "ControlID": "AzureDevOps_Organization_AuthZ_Limit_Release_Scope_To_Project",
+      "Description": "Do not run release pipelines using tokens that have project collection level access.",
+      "Id": "Organization331",
+      "ControlSeverity": "Medium",
+      "Automated": "Yes",
+      "MethodName": "CheckJobAuthZReleaseScope",
+      "Rationale": "If pipelines use project collection level tokens, a vulnerability in components used by one project can be leveraged by an attacker to attack all other projects. This is also in keeping with the principle of least privilege.",
+      "Recommendation": "Go to Organization Settings --> Pipelines --> Settings --> Enable 'Limit job authorization scope to current project for release pipelines'.",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Automated",
+        "AuthZ"
+      ],
+      "Enabled": true
+    },
+    {
       "ControlID": "AzureDevOps_Organization_AuthZ_Limit_Pipeline_Scope_To_Referenced_Repos",
       "Description": "Do not run pipelines using tokens that have access to all Azure DevOps repositories in authorized projects.",
       "Id": "Organization332",

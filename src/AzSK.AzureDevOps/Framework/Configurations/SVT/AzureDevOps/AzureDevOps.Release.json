@@ -142,6 +142,40 @@
         "SI"
       ],
       "Enabled": true
+    },
+    {
+      "ControlID": "AzureDevOps_Release_SI_Review_Variables_Settable_At_Release_Time",
+      "Description": "Pipeline variables marked settable at release time should be carefully reviewed.",
+      "Id": "Release190",
+      "ControlSeverity": "High",
+      "Automated": "Yes",
+      "MethodName": "CheckSettableAtReleaseTime",
+      "Rationale": "Pipeline variables not marked settable at release time can only be changed by someone with elevated permissions. These variables (reasonably) can be used in ways that make code injection possible.",
+      "Recommendation": "1. Navigate to the release pipeline. 2. Click on Edit. 3. Select variables. 4. Uncheck 'settable at release time' for such variables. 5. Save the release pipeline.",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Automated",
+        "SI"
+      ],
+      "Enabled": true
+    },
+    {
+      "ControlID": "AzureDevOps_Release_SI_Review_URL_Variables_Settable_At_Release_Time",
+      "Description": "Pipeline variables marked settable at release time and containing URLs should be carefully reviewed.",
+      "Id": "Release192",
+      "ControlSeverity": "High",
+      "Automated": "Yes",
+      "MethodName": "CheckSettableAtReleaseTimeForURL",
+      "Rationale": "Pipeline variables not marked settable at release time can only be changed by someone with elevated permissions. If these variables contain a URL then someone can change the URL to a server that they control and can intercept any secret used to interact with the intended server by creating a release.",
+      "Recommendation": "1. Navigate to the release pipeline. 2. Click on Edit. 3. Select variables. 4. Uncheck 'settable at release time' for such variables. 5. Save the release pipeline.",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Automated",
+        "SI"
+      ],
+      "Enabled": true
     }
   ]
 }
