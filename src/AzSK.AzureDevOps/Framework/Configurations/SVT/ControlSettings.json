@@ -13,6 +13,7 @@
           "AzureDevOps_Organization_AuthZ_Review_Project_Collection_Service_Accounts",
           "AzureDevOps_Organization_SI_Review_Auto_Injected_Extensions",
           "AzureDevOps_Organization_AuthZ_Limit_Non_Release_Scope_To_Project",
+          "AzureDevOps_Organization_AuthZ_Limit_Release_Scope_To_Project",
           "AzureDevOps_Organization_AuthZ_Limit_Pipeline_Scope_To_Referenced_Repos",
           "AzureDevOps_Organization_DP_Dont_Allow_Public_Projects",
           "AzureDevOps_Organization_AuthZ_Min_Admin_Count"          
@@ -24,6 +25,7 @@
           "AzureDevOps_Project_AuthZ_Set_Visibility_Private_Or_Enterprise",
           "AzureDevOps_Project_AuthZ_Min_Admin_Count",
           "AzureDevOps_Project_AuthZ_Limit_Non_Release_Scope_To_Project",
+          "AzureDevOps_Project_AuthZ_Limit_Release_Scope_To_Project",
           "AzureDevOps_Project_AuthZ_Limit_Pipeline_Scope_To_Referenced_Repos"
         ]
       },
