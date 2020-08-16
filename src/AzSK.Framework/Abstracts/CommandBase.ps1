@@ -118,9 +118,9 @@ class CommandBase: AzSKRoot {
 		}
         else {
 
-		# Reset cached context <TODO Framework: Fix Dependancy on RM module>
-		[ContextHelper]::ResetCurrentContext()
 
+
+			
 		# Publish runidentifier(YYYYMMDD_HHMMSS) used by all listener as identifier for scan,creating log folder 
 		$this.PublishRunIdentifier($this.InvocationContext);
 		

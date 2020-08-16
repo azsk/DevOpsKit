@@ -117,14 +117,16 @@ class SVTResourceResolver: AzSKRoot {
 
         if ($this.ProjectNames -eq "*" -or $this.BuildNames -eq "*" -or $this.ReleaseNames -eq "*" -or $this.ServiceConnections -eq "*" -or $this.AgentPools -eq "*") {            
             $this.PublishCustomMessage("Using '*' can take a long time for the scan to complete in larger projects. `nYou may want to provide a comma-separated list of projects, builds, releases, service connections and agent pools. `n ", [MessageType]::Warning);
-            
+            <# BUGBUG: [Aug-2020] Removing this until we can determine the right approach to init org-policy-url for ADO.
             if (!$this.ControlSettings) {
                 $this.ControlSettings = [ConfigurationManager]::LoadServerConfigFile("ControlSettings.json");
             }
             #fetch control settings to check whether large scans are allowed in the org
             $this.isAllowLongRunningScanInPolicy = $this.ControlSettings.IsAllowLongRunningScan; 
-            $this.longRunningScanCheckPoint = $this.ControlSettings.LongRunningScanCheckPoint;       
-            }
+            $this.longRunningScanCheckPoint = $this.ControlSettings.LongRunningScanCheckPoint;     
+            #>
+  
+        }
     }
 
     [void] LoadResourcesForScan() {

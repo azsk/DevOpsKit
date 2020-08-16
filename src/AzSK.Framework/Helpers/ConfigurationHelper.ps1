@@ -10,6 +10,7 @@ class ConfigurationHelper {
 	hidden static [bool] $LocalPolicyEnabled = $false
 	hidden static [string] $ConfigPath = [string]::Empty
 	hidden static [Policy[]] $PolicyCacheContent = @()
+	hidden static $NotExtendedTypes = @{} #Used to remember Types we have checked already as to whether they are extended (e.g., Build.ext.ps1) or not.
 	hidden static [PSObject] LoadOfflineConfigFile([string] $fileName) {
 		return [ConfigurationHelper]::LoadOfflineConfigFile($fileName, $true);
 	}
@@ -65,6 +66,23 @@ class ConfigurationHelper {
 			throw [System.ArgumentException] ("The argument 'policyFileName' is null");
 		} 
 
+		if ($onlineStoreUri -match "\{0\}.*\{1\}" -and $useOnlinePolicyStore -eq $true)
+		{
+			[EventBase]::PublishGenericCustomMessage(" Org Policy URL not set yet: $onlineStoreUri", [MessageType]::Warning);
+		}
+
+		#Check if policy is present in cache and fetch the same if present
+		$cachedPolicyContent = [ConfigurationHelper]::PolicyCacheContent | Where-Object { $_.Name -eq $policyFileName }
+		if ($cachedPolicyContent)
+		{
+			$fileContent = $cachedPolicyContent.Content
+			if ($fileContent)
+			{
+				return $fileContent                                  
+			}
+		}
+		
+
 		if ($useOnlinePolicyStore) {
 			
 			if ([string]::IsNullOrWhiteSpace($onlineStoreUri)) {
@@ -77,89 +95,70 @@ class ConfigurationHelper {
 			#First load offline OSS Content
 			$fileContent = [ConfigurationHelper]::LoadOfflineConfigFile($policyFileName)
 
-			#Check if policy present in server using metadata file
+			#Check if policy is listed as present in server config metadata file
 			if (-not [ConfigurationHelper]::OfflineMode -and [ConfigurationHelper]::IsPolicyPresentOnServer($policyFileName, $useOnlinePolicyStore, $onlineStoreUri, $enableAADAuthForOnlinePolicyStore)) {
-				#Check if online policy is present in configuration cache and fetch same
-				$cachedPolicyContent = [ConfigurationHelper]::PolicyCacheContent | Where-Object { $_.Name -eq $policyFileName }
-				#Write-Host -ForegroundColor Yellow "Trying cache for $policyFileName"
-				if ($cachedPolicyContent) {
-					$fileContent = $cachedPolicyContent.Content
-					#Write-Host -ForegroundColor Green "**FOUND** $policyFileName"
-				}
-
-				#If policy file content is not present in cache then load it from server
-				else {
-					#Write-Host -ForegroundColor Yellow "**NOT FOUND** $policyFileName"
-					try {
-						if ([String]::IsNullOrWhiteSpace([ConfigurationHelper]::ConfigVersion) -and -not [ConfigurationHelper]::LocalPolicyEnabled) {
+				#Write-Host -ForegroundColor Yellow "**NOT FOUND** $policyFileName"
+				try {
+					if ([String]::IsNullOrWhiteSpace([ConfigurationHelper]::ConfigVersion) -and -not [ConfigurationHelper]::LocalPolicyEnabled) {
+						try {
+							$Version = [System.Version] ($global:ExecutionContext.SessionState.Module.Version);
+							$serverFileContent = [ConfigurationHelper]::InvokeControlsAPI($onlineStoreUri, $Version, $policyFileName, $enableAADAuthForOnlinePolicyStore);
+							[ConfigurationHelper]::ConfigVersion = $Version;
+						}
+						catch {
 							try {
-								$Version = [System.Version] ($global:ExecutionContext.SessionState.Module.Version);
+								$Version = ([ConfigurationHelper]::LoadOfflineConfigFile("AzSK.json")).ConfigSchemaBaseVersion;
 								$serverFileContent = [ConfigurationHelper]::InvokeControlsAPI($onlineStoreUri, $Version, $policyFileName, $enableAADAuthForOnlinePolicyStore);
 								[ConfigurationHelper]::ConfigVersion = $Version;
 							}
 							catch {
-								try {
-									$Version = ([ConfigurationHelper]::LoadOfflineConfigFile("AzSK.json")).ConfigSchemaBaseVersion;
-									$serverFileContent = [ConfigurationHelper]::InvokeControlsAPI($onlineStoreUri, $Version, $policyFileName, $enableAADAuthForOnlinePolicyStore);
-									[ConfigurationHelper]::ConfigVersion = $Version;
+								if (Test-Path $onlineStoreUri) {	
+									[EventBase]::PublishGenericCustomMessage("Running Org-Policy from local policy store location: [$onlineStoreUri]", [MessageType]::Warning);
+									$serverFileContent = [ConfigurationHelper]::LoadOfflineConfigFile($policyFileName, $true, $onlineStoreUri)
+									[ConfigurationHelper]::LocalPolicyEnabled = $true
 								}
-								catch {
-									if (Test-Path $onlineStoreUri) {	
-										[EventBase]::PublishGenericCustomMessage("Running Org-Policy from local policy store location: [$onlineStoreUri]", [MessageType]::Warning);
-										$serverFileContent = [ConfigurationHelper]::LoadOfflineConfigFile($policyFileName, $true, $onlineStoreUri)
-										[ConfigurationHelper]::LocalPolicyEnabled = $true
-									}
-									else {
-										throw $_
-									}
+								else {
+									throw $_
 								}
 							}
 						}
-						elseif ([ConfigurationHelper]::LocalPolicyEnabled) {
-							$serverFileContent = [ConfigurationHelper]::LoadOfflineConfigFile($policyFileName, $true, $onlineStoreUri)
-						}
-						else {
-							$Version = [ConfigurationHelper]::ConfigVersion ;
-							$serverFileContent = [ConfigurationHelper]::InvokeControlsAPI($onlineStoreUri, $Version, $policyFileName, $enableAADAuthForOnlinePolicyStore);
-						}
-	
-						#Completely override offline config if Server Override flag is enabled
-						if ([ConfigurationHelper]::IsOverrideOfflineEnabled($policyFileName)) {
-							$fileContent = $serverFileContent
-						}
-						else {
-							$fileContent = [Helpers]::MergeObjects($fileContent, $serverFileContent)	
-						}
-
-						#Store policy file content into cache	
-						$policy = [Policy]@{
-							Name    = $policyFileName
-							Content = $fileContent
-						}
-						[ConfigurationHelper]::PolicyCacheContent += $policy
-						#Write-Host -ForegroundColor Green "**ADDING TO CACHE** $policyFileName"
 					}
-					catch {
-						[ConfigurationHelper]::OfflineMode = $true;
-	
-						if (-not [ConfigurationHelper]::IsIssueLogged) {
-							if ([Helpers]::CheckMember($_, "Exception.Response.StatusCode") -and $_.Exception.Response.StatusCode.ToString().ToLower() -eq "unauthorized") {
-								[EventBase]::PublishGenericCustomMessage(("Not able to fetch org-specific policy. The current Azure subscription is not linked to your org tenant."), [MessageType]::Warning);
-								[ConfigurationHelper]::IsIssueLogged = $true
-							}
-							elseif ($policyFileName -eq [Constants]::ServerConfigMetadataFileName) {
-								[EventBase]::PublishGenericCustomMessage(("Not able to fetch org-specific policy. Validate if org policy URL is correct."), [MessageType]::Warning);
-								[ConfigurationHelper]::IsIssueLogged = $true
-							}
-							else {
-								[EventBase]::PublishGenericCustomMessage(("Error while fetching the policy [$policyFileName] from online store. " + [Constants]::OfflineModeWarning), [MessageType]::Warning);
-								[EventBase]::PublishGenericException($_);
-								[ConfigurationHelper]::IsIssueLogged = $true
-							}
-						}            
-					}					
-				}
+					elseif ([ConfigurationHelper]::LocalPolicyEnabled) {
+						$serverFileContent = [ConfigurationHelper]::LoadOfflineConfigFile($policyFileName, $true, $onlineStoreUri)
+					}
+					else {
+						$Version = [ConfigurationHelper]::ConfigVersion ;
+						$serverFileContent = [ConfigurationHelper]::InvokeControlsAPI($onlineStoreUri, $Version, $policyFileName, $enableAADAuthForOnlinePolicyStore);
+					}
 
+					#Completely override offline config if Server Override flag is enabled
+					if ([ConfigurationHelper]::IsOverrideOfflineEnabled($policyFileName)) {
+						$fileContent = $serverFileContent
+					}
+					else {
+						$fileContent = [Helpers]::MergeObjects($fileContent, $serverFileContent)	
+					}
+					#Write-Host -ForegroundColor Green "**ADDING TO CACHE** $policyFileName"
+				}
+				catch {
+					[ConfigurationHelper]::OfflineMode = $true;
+
+					if (-not [ConfigurationHelper]::IsIssueLogged) {
+						if ([Helpers]::CheckMember($_, "Exception.Response.StatusCode") -and $_.Exception.Response.StatusCode.ToString().ToLower() -eq "unauthorized") {
+							[EventBase]::PublishGenericCustomMessage(("Not able to fetch org-specific policy. The current Azure subscription is not linked to your org tenant."), [MessageType]::Warning);
+							[ConfigurationHelper]::IsIssueLogged = $true
+						}
+						elseif ($policyFileName -eq [Constants]::ServerConfigMetadataFileName) {
+							[EventBase]::PublishGenericCustomMessage(("Not able to fetch org-specific policy. Validate if org policy URL is correct."), [MessageType]::Warning);
+							[ConfigurationHelper]::IsIssueLogged = $true
+						}
+						else {
+							[EventBase]::PublishGenericCustomMessage(("Error while fetching the policy [$policyFileName] from online store. " + [Constants]::OfflineModeWarning), [MessageType]::Warning);
+							[EventBase]::PublishGenericException($_);
+							[ConfigurationHelper]::IsIssueLogged = $true
+						}
+					}            
+				}					
 			}
 
 			if (-not $fileContent) {
@@ -176,6 +175,15 @@ class ConfigurationHelper {
 		if (-not $fileContent) {
 			throw "The specified file '$policyFileName' is empty"                                  
 		}
+
+		#Store policy file content into cache. 
+		#Note: This will happen only once per file (whether found on server or not). 
+		#In case of SVT config JSONs, we will overwrite this (only once) right after resolving baselines/dynamic parameters in control recos, etc. (in LoadSVTConfig)
+		$policy = [Policy]@{
+			Name    = $policyFileName
+			Content = $fileContent
+		}
+		[ConfigurationHelper]::PolicyCacheContent += $policy
 
 		return $fileContent;
 	}

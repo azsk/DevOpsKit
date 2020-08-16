@@ -160,7 +160,6 @@ class ServicesSecurityStatus: ADOSVTCommandBase
 		#Filter automated resources based on control ids 
         $automatedResources = $this.MapControlsToResourceTypes($automatedResources)
 		#End-perf-optimize
-
 					
 		$this.PublishCustomMessage("`nNumber of resources for which security controls will be evaluated: $($automatedResources.Count)",[MessageType]::Info);
 		
@@ -190,19 +189,44 @@ class ServicesSecurityStatus: ADOSVTCommandBase
 				try
 				{
 					$extensionSVTClassName = $svtClassName + "Ext";
+					$extensionSVTClassFilePath = $null
+
+					#Check if the extended class of this type is already loaded?
 					if(-not ($extensionSVTClassName -as [type]))
 					{
-						$extensionSVTClassFilePath = [ConfigurationManager]::LoadExtensionFile($svtClassName); 
-					}	
-					if([string]::IsNullOrWhiteSpace($extensionSVTClassFilePath))
+						#Check if we know from a previous attempt that this 'type' has not been extended.
+						if ([ConfigurationHelper]::NotExtendedTypes.containsKey($svtClassName))
+						{
+							$extensionSVTClassFilePath = $null
+						}
+						else 
+						{
+							$extensionSVTClassFilePath = [ConfigurationManager]::LoadExtensionFile($svtClassName); 
+							if ([string]::IsNullOrEmpty($extensionSVTClassFilePath))
+							{
+								[ConfigurationHelper]::NotExtendedTypes["$svtClassName"] = $true
+							}
+						}
+
+						#If $extensionSVTClassFilePath is null => use the built-in type from our module.
+						if([string]::IsNullOrWhiteSpace($extensionSVTClassFilePath))
+						{
+							$svtObject = New-Object -TypeName $svtClassName -ArgumentList $this.SubscriptionContext.SubscriptionId, $_
+						}
+						else #Use extended type.
+						{
+							# file has to be loaded here due to scope contraint
+							Write-Warning "########## Loading extended type [$extensionSVTClassName] into memory ##########"
+							. $extensionSVTClassFilePath
+							$svtObject = New-Object -TypeName $extensionSVTClassName -ArgumentList $this.SubscriptionContext.SubscriptionId, $_
+						}
+					}
+					else 
 					{
-						$svtObject = New-Object -TypeName $svtClassName -ArgumentList $this.SubscriptionContext.SubscriptionId, $_
+                       # Extended type is already loaded. Create an instance of that type.
+					   $svtObject = New-Object -TypeName $extensionSVTClassName -ArgumentList $this.SubscriptionContext.SubscriptionId, $_						
 					}
-					else {
-						# file has to be loaded here due to scope contraint
-						. $extensionSVTClassFilePath
-						$svtObject = New-Object -TypeName $extensionSVTClassName -ArgumentList $this.SubscriptionContext.SubscriptionId, $_
-					}
+
 				}
 				catch
 				{

@@ -4,15 +4,18 @@ class Build: ADOSVTBase
 
     hidden [PSObject] $BuildObj;
     hidden [string] $SecurityNamespaceId;
+    hidden static [PSObject] $SecurityNamespacesObj = $null;
     
     Build([string] $subscriptionId, [SVTResource] $svtResource): Base($subscriptionId,$svtResource) 
     {
         # Get security namespace identifier of current build.
         $apiURL = "https://dev.azure.com/{0}/_apis/securitynamespaces?api-version=5.0" -f $($this.SubscriptionContext.SubscriptionName)
-        $securityNamespacesObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
-        $this.SecurityNamespaceId = ($securityNamespacesObj | Where-Object { ($_.Name -eq "Build") -and ($_.actions.name -contains "ViewBuilds")}).namespaceId
+        if ([Build]::SecurityNamespacesObj -eq $null)
+        {
+            [Build]::SecurityNamespacesObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
+        }
+        $this.SecurityNamespaceId = ([Build]::SecurityNamespacesObj | Where-Object { ($_.Name -eq "Build") -and ($_.actions.name -contains "ViewBuilds")}).namespaceId
 
-        $securityNamespacesObj = $null;
         # Get build object
         $apiURL = $this.ResourceContext.ResourceId
         $this.BuildObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
