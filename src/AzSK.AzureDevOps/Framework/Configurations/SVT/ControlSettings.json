@@ -75,7 +75,7 @@
     "StoreResourceTrackerLocally": "True"
   },
   "DockerImage":{
-    "ImageName" : "azsktest01/adosecurityscan"
+    "ImageName" : "azskado/adosecurityscan"
   },
   "AllowAttestationResourceType": [
     "Organization",
