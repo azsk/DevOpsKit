@@ -62,7 +62,7 @@
       "ControlSeverity": "High",
       "Automated": "Yes",
       "MethodName": "CheckInheritPermissions",
-      "Rationale": "Disabling inherit permissions lets you finely control access to various operations at the release level for different stakeholders. This ensures that you follow the principle of least privilege and provide access only to the persons that require it.",
+      "Rationale": "Disabling inherited permissions lets you finely control access to various operations at the release level for different stakeholders. This ensures that you follow the principle of least privilege and provide access only to the persons that require it.",
       "Recommendation": "To disable permission inheritance within a release pipeline follow these steps: 1.Navigate to the release pipeline. 2. Open up the Security dialog for the release. 3. Add the service lead & service owner as Users with Allow permissions for each permission line item. 4. Select Off under Inheritance. 5. Add users/groups to your release definition and provide only required access. As best practice, All teams/groups must be granted minimum required permissions on release definition.",
       "Tags": [
         "SDL",
@@ -135,6 +135,40 @@
       "MethodName": "CheckMixingGitHubAndADOSources",
       "Rationale": "Pipelines build code from untrusted external sources (e.g. GitHub) via Continuous Integration or Scheduled Builds, giving the public internet access to a Project/Project Collection Build Service token.",
       "Recommendation": "Validate all the source repos in the release definition.",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Automated",
+        "SI"
+      ],
+      "Enabled": true
+    },
+    {
+      "ControlID": "AzureDevOps_Release_SI_Review_Variables_Settable_At_Release_Time",
+      "Description": "Pipeline variables marked settable at release time should be carefully reviewed.",
+      "Id": "Release190",
+      "ControlSeverity": "High",
+      "Automated": "Yes",
+      "MethodName": "CheckSettableAtReleaseTime",
+      "Rationale": "Pipeline variables not marked settable at release time can only be changed by someone with elevated permissions. These variables (reasonably) can be used in ways that make code injection possible.",
+      "Recommendation": "1. Navigate to the release pipeline. 2. Click on Edit. 3. Select variables. 4. Uncheck 'settable at release time' for such variables. 5. Save the release pipeline.",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Automated",
+        "SI"
+      ],
+      "Enabled": true
+    },
+    {
+      "ControlID": "AzureDevOps_Release_SI_Review_URL_Variables_Settable_At_Release_Time",
+      "Description": "Pipeline variables marked settable at release time and containing URLs should be carefully reviewed.",
+      "Id": "Release192",
+      "ControlSeverity": "High",
+      "Automated": "Yes",
+      "MethodName": "CheckSettableAtReleaseTimeForURL",
+      "Rationale": "Pipeline variables not marked settable at release time can only be changed by someone with elevated permissions. If these variables contain a URL then someone can change the URL to a server that they control and can intercept any secret used to interact with the intended server by creating a release.",
+      "Recommendation": "1. Navigate to the release pipeline. 2. Click on Edit. 3. Select variables. 4. Uncheck 'settable at release time' for such variables. 5. Save the release pipeline.",
       "Tags": [
         "SDL",
         "TCP",

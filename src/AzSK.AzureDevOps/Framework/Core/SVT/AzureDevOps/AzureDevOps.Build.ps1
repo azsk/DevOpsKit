@@ -296,20 +296,20 @@ class Build: ADOSVTBase
             }
            } 
            if(($setablevar | Measure-Object).Count -gt 0){
-                $controlResult.AddMessage([VerificationResult]::Verify,"The below variables are settable at queue time",$setablevar);
-                $controlResult.SetStateData("Variables settable at queue time: ", $setablevar);
+                $controlResult.AddMessage([VerificationResult]::Verify,"The below variables are settable at queue time : ",$setablevar);
+                $controlResult.SetStateData("Variables settable at queue time : ", $setablevar);
                 if ($nonsetablevar) {
-                    $controlResult.AddMessage("The below variables are not settable at queue time",$nonsetablevar);      
+                    $controlResult.AddMessage("The below variables are not settable at queue time : ",$nonsetablevar);      
                 } 
            }
                  
         }
         else {
-            $controlResult.AddMessage([VerificationResult]::Passed,"No variables are found in the build pipeline");   
+            $controlResult.AddMessage([VerificationResult]::Passed,"No variables were found in the build pipeline");   
         }
        }  
        catch {
-           $controlResult.AddMessage([VerificationResult]::Manual,"Unable to fetch build pipeline variables.");   
+           $controlResult.AddMessage([VerificationResult]::Manual,"Could not fetch build pipeline variables.");   
        }
      return $controlResult;
     }
@@ -341,11 +341,11 @@ class Build: ADOSVTBase
                     } 
                     if ($count -gt 0) 
                     {
-                        $controlResult.AddMessage([VerificationResult]::Failed, "Found variables are settable at queue time containing value as URL : ", $settableURLVars);
-                        $controlResult.SetStateData("List of variables settable at queue time containing value as URL: ", $settableURLVars);
+                        $controlResult.AddMessage([VerificationResult]::Failed, "Found variables that are settable at queue time and contain URL value : ", $settableURLVars);
+                        $controlResult.SetStateData("List of variables settable at queue time and containing URL value : ", $settableURLVars);
                     }
                     else {
-                        $controlResult.AddMessage([VerificationResult]::Passed, "No variables found in the build pipeline that are settable at queue time and containing value as URL.");   
+                        $controlResult.AddMessage([VerificationResult]::Passed, "No variables were found in the build pipeline that are settable at queue time and contain URL value.");   
                     }
                 }
                 else 
@@ -355,7 +355,7 @@ class Build: ADOSVTBase
             }
             else 
             {
-                $controlResult.AddMessage([VerificationResult]::Passed, "No variables found in the build pipeline.");   
+                $controlResult.AddMessage([VerificationResult]::Passed, "No variables were found in the build pipeline.");   
             }
         }  
         catch 

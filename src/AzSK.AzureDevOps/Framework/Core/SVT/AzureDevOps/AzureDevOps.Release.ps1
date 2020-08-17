@@ -414,4 +414,92 @@ class Release: ADOSVTBase
 
         return $controlResult;
     }
+
+    hidden [ControlResult] CheckSettableAtReleaseTime([ControlResult] $controlResult)
+	{
+      try { 
+        
+        if([Helpers]::CheckMember($this.ReleaseObj[0],"variables")) 
+        {
+           $setablevar =@();
+           $nonsetablevar =@();
+          
+           Get-Member -InputObject $this.ReleaseObj[0].variables -MemberType Properties | ForEach-Object {
+            if([Helpers]::CheckMember($this.ReleaseObj[0].variables.$($_.Name),"allowOverride") )
+            {
+                $setablevar +=  $_.Name;
+            }
+            else {
+                $nonsetablevar +=$_.Name;  
+            }
+           } 
+           if(($setablevar | Measure-Object).Count -gt 0){
+                $controlResult.AddMessage([VerificationResult]::Verify,"The below variables are settable at release time : ",$setablevar);
+                $controlResult.SetStateData("Variables settable at release time : ", $setablevar);
+                if ($nonsetablevar) {
+                    $controlResult.AddMessage("The below variables are not settable at release time : ",$nonsetablevar);      
+                } 
+           }
+                 
+        }
+        else {
+            $controlResult.AddMessage([VerificationResult]::Passed,"No variables were found in the release pipeline");   
+        }
+       }  
+       catch {
+           $controlResult.AddMessage([VerificationResult]::Manual,"Could not fetch release pipeline variables.");   
+       }
+     return $controlResult;
+    }
+
+    hidden [ControlResult] CheckSettableAtReleaseTimeForURL([ControlResult] $controlResult) 
+    {
+        try 
+        { 
+            if ([Helpers]::CheckMember($this.ReleaseObj[0], "variables")) 
+            {
+                $settableURLVars = @();
+                $count = 0;
+                $patterns = $this.ControlSettings.Patterns | where {$_.RegexCode -eq "URLs"} | Select-Object -Property RegexList;
+
+                if(($patterns | Measure-Object).Count -gt 0){                
+                    Get-Member -InputObject $this.ReleaseObj[0].variables -MemberType Properties | ForEach-Object {
+                        if ([Helpers]::CheckMember($this.ReleaseObj[0].variables.$($_.Name), "allowOverride") )
+                        {
+                            $varName = $_.Name;
+                            $varValue = $this.ReleaseObj[0].variables.$($varName).value;
+                            for ($i = 0; $i -lt $patterns.RegexList.Count; $i++) {
+                                if ($varValue -match $patterns.RegexList[$i]) { 
+                                    $count +=1
+                                    $settableURLVars += @( [PSCustomObject] @{ Name = $varName; Value = $varValue } )  
+                                    break  
+                                }
+                            }
+                        }
+                    } 
+                    if ($count -gt 0) 
+                    {
+                        $controlResult.AddMessage([VerificationResult]::Failed, "Found variables that are settable at release time and contain URL value : ", $settableURLVars);
+                        $controlResult.SetStateData("List of variables settable at release time and containing URL value : ", $settableURLVars);
+                    }
+                    else {
+                        $controlResult.AddMessage([VerificationResult]::Passed, "No variables were found in the release pipeline that are settable at release time and contain URL value.");   
+                    }
+                }
+                else 
+                {
+                    $controlResult.AddMessage([VerificationResult]::Manual, "Regular expressions for detecting URLs in pipeline variables are not defined in your organization.");    
+                }
+            }
+            else 
+            {
+                $controlResult.AddMessage([VerificationResult]::Passed, "No variables were found in the release pipeline.");   
+            }
+        }  
+        catch 
+        {
+            $controlResult.AddMessage([VerificationResult]::Manual, "Could not fetch variables of the release pipeline.");   
+        }
+        return $controlResult;
+    }
 }

@@ -75,12 +75,12 @@
     },
     {
       "ControlID": "AzureDevOps_AgentPool_AuthZ_Dont_Enable_Auto_Provisioning",
-      "Description": "Do not enable Auto-provisioning for agent pools",
+      "Description": "Do not enable auto-provisioning for agent pools.",
       "Id": "AgentPool150",
       "ControlSeverity": "High",
       "Automated": "Yes",
       "MethodName": "CheckOrgAgtAutoProvisioning",
-      "Rationale": "By enabling the 'Auto-provision' The organization agent pool is imported in all your new team projects and is accessible there immediately.",
+      "Rationale": "By enabling auto-provisioning the organization agent pool is imported in all your new team projects and is accessible there immediately. Therefore, a vulnerability in components used by one project can be leveraged by an attacker to attack other projects.",
       "Recommendation": "To change auto-provision settings: 1.Navigate to the Organization settings. 2. Open Agent pools. 3. Select Settings. 4. Change the settings for 'Auto-provisioning' this agent pools in new projects'",
       "Tags": [
         "SDL",
@@ -98,7 +98,7 @@
       "ControlSeverity": "High",
       "Automated": "Yes",
       "MethodName": "CheckPrjAllPipelineAccess",
-      "Rationale": "By enabling the 'Grant access permission to all pipelines' the agent pool is imported in all your pipelines in the current project and is accessible there immediately.",
+      "Rationale": "To support security of the pipeline operations, agaent pools must not be granted access to all pipelines. This is in keeping with the principle of least privilege because a vulnerability in components used by one pipeline can be leveraged by an attacker to attack other pipelines having access to critical resources.",
       "Recommendation": "Go to 'Project settings' --> 'Agent pools' --> Select the agent pool --> Security --> Disable 'Grant access permission to all pipeline'.",
       "Tags": [
         "SDL",
@@ -110,13 +110,13 @@
       "Enabled": true
     },
     {
-      "ControlID": "AzureDevOps_AgentPool_SI_Review_Inactive_AgentPool",
+      "ControlID": "AzureDevOps_AgentPool_SI_Review_Inactive_Pool",
       "Description": "Inactive agent pool must be removed if no more required.",
       "Id": "AgentPool170",
       "ControlSeverity": "Medium",
       "Automated": "Yes",
       "MethodName": "CheckInActiveAgentPool",
-      "Rationale": "",
+      "Rationale": "Each additional agent pool being used by pipelines to access repositories increases the attack surface. To minimize this risk ensure that only active and legitimate agent pools are present in organization.",
       "Recommendation": "To remove inactive agent pool, follow the steps given here: 1.Navigate to the agent pool settings. 3. Click on Delete.",
       "Tags": [
         "SDL",
