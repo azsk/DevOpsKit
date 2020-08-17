@@ -19,7 +19,7 @@ function Install-AzSKADOContinuousAssurance
 	.PARAMETER LAWSSharedKey
 		Shared key of Log Analytics workspace which is used to monitor security scan results.
 	.PARAMETER OrganizationName
-		Orgnanization name for which scan will be performed.
+		Organization name for which scan will be performed.
 	.PARAMETER PATToken
 		PAT token secure string for organization to be scanned.
 	.PARAMETER ProjectNames

@@ -219,15 +219,15 @@ class Build: ADOSVTBase
             $apiURL = "https://{0}.visualstudio.com/{1}/_api/_security/ReadExplicitIdentitiesJson?__v=5&permissionSetId={2}&permissionSetToken={3}%2F{4}%2F{5}" -f $($this.SubscriptionContext.SubscriptionName), $($this.BuildObj.project.id), $($this.SecurityNamespaceId), $($this.BuildObj.project.id), $($buildDefinitionPath), $($this.BuildObj.id);
             $responseObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
             $accessList = @()
-            $whitelistedUserIdentities = @()
+            $exemptedUserIdentities = @()
             # release owner
-            $whitelistedUserIdentities += $this.BuildObj.authoredBy.id
+            $exemptedUserIdentities += $this.BuildObj.authoredBy.id
             if(($responseObj.identities|Measure-Object).Count -gt 0)
             {
-                $whitelistedUserIdentities += $responseObj.identities | Where-Object { $_.IdentityType -eq "user" }| ForEach-Object {
+                $exemptedUserIdentities += $responseObj.identities | Where-Object { $_.IdentityType -eq "user" }| ForEach-Object {
                     $identity = $_
-                    $whitelistedIdentity = $this.ControlSettings.Build.WhitelistedUserIdentities | Where-Object { $_.Domain -eq $identity.Domain -and $_.DisplayName -eq $identity.DisplayName }
-                    if(($whitelistedIdentity | Measure-Object).Count -gt 0)
+                    $exemptedIdentity = $this.ControlSettings.Build.ExemptedUserIdentities | Where-Object { $_.Domain -eq $identity.Domain -and $_.DisplayName -eq $identity.DisplayName }
+                    if(($exemptedIdentity | Measure-Object).Count -gt 0)
                     {
                         return $identity.TeamFoundationId
                     }
@@ -235,7 +235,7 @@ class Build: ADOSVTBase
 
                 $accessList += $responseObj.identities | Where-Object { $_.IdentityType -eq "user" } | ForEach-Object {
                     $identity = $_ 
-                    if($whitelistedUserIdentities -notcontains $identity.TeamFoundationId)
+                    if($exemptedUserIdentities -notcontains $identity.TeamFoundationId)
                     {
                         $apiURL = $apiURL = "https://{0}.visualstudio.com/{1}/_api/_security/DisplayPermissions?__v=5&tfid={2}&permissionSetId={3}&permissionSetToken={4}%2F{5}%2F{6}" -f $($this.SubscriptionContext.SubscriptionName), $($this.BuildObj.project.id), $($identity.TeamFoundationId) ,$($this.SecurityNamespaceId),$($this.BuildObj.project.id), $($buildDefinitionPath), $($this.BuildObj.id);
                         $identityPermissions = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
@@ -259,7 +259,7 @@ class Build: ADOSVTBase
             else
             {
                 $controlResult.AddMessage([VerificationResult]::Passed,"No identities have been explicitly provided with RBAC access to [$($this.ResourceContext.ResourceName)] other than build pipeline owner and default groups");
-                $controlResult.AddMessage("List of whitelisted user identities:",$whitelistedUserIdentities)
+                $controlResult.AddMessage("List of exempted user identities:",$exemptedUserIdentities)
             } 
            # $accessList = $null;
             $responseObj = $null;

@@ -363,25 +363,25 @@ class Organization: ADOSVTBase
                 {               
                     $controlResult.AddMessage("No. of extensions installed : " + $extCount);
 
-                    $whitelistedExtPublishers = $this.ControlSettings.Organization.WhitelistedExtensionPublishers;
+                    $trustedExtPublishers = $this.ControlSettings.Organization.TrustedExtensionPublishers;
 
-                    $whiteListedExtensions = @(); #Publishers trusted by Microsoft
-                    $whiteListedExtensions += $extensionList | Where-Object {$_.publisherName -in $whitelistedExtPublishers}
+                    $trustedExtensions = @(); #Publishers trusted by Microsoft
+                    $trustedExtensions += $extensionList | Where-Object {$_.publisherName -in $trustedExtPublishers}
                     
-                    $NonwhiteListedExtensions = @(); #Publishers not trusted by Microsoft
-                    $NonwhiteListedExtensions += $extensionList | Where-Object {$_.publisherName -notin $whitelistedExtPublishers}
+                    $unTrustedExtensions = @(); #Publishers not trusted by Microsoft
+                    $unTrustedExtensions += $extensionList | Where-Object {$_.publisherName -notin $trustedExtPublishers}
                         
                     $controlResult.AddMessage([VerificationResult]::Verify, "Review the below list of installed extensions : ");  
-                    $controlResult.AddMessage("Whitelisted extensions (from trusted publisher) : ", $whiteListedExtensions);
-                    $controlResult.AddMessage("Non-Whitelisted extensions : ", $NonwhiteListedExtensions);
+                    $controlResult.AddMessage("Extensions (from trusted publisher) : ", $trustedExtensions);
+                    $controlResult.AddMessage("Extensions (from untrusted publisher) : ", $unTrustedExtensions);
 
                     $stateData = @{
-                        Whitelisted_Extensions = @();
-                        NonWhitelisted_Extensions = @();
+                        Trusted_Extensions = @();
+                        Untrusted_Extensions = @();
                     };
 
-                    $stateData.Whitelisted_Extensions += $whiteListedExtensions
-                    $stateData.NonWhitelisted_Extensions += $NonwhiteListedExtensions
+                    $stateData.Trusted_Extensions += $trustedExtensions
+                    $stateData.Untrusted_Extensions += $unTrustedExtensions
 
                     $controlResult.SetStateData("List of installed extensions : ", $stateData);
                 }

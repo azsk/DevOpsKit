@@ -75,7 +75,7 @@
     "StoreResourceTrackerLocally": "True"
   },
   "DockerImage":{
-    "ImageName" : "azsktest01/adosecurityscan"
+    "ImageName" : "azskado/adosecurityscan"
   },
   "AllowAttestationResourceType": [
     "Organization",
@@ -142,7 +142,7 @@
   },
   "Build": {
     "BuildHistoryPeriodInDays": 180,
-    "WhitelistedUserIdentities": [
+    "ExemptedUserIdentities": [
       {
         "Domain": "Build",
         "DisplayName": [
@@ -154,7 +154,7 @@
   },
   "Release": {
     "ReleaseHistoryPeriodInDays": 180,
-    "WhitelistedUserIdentities": [
+    "ExemptedUserIdentities": [
       {
         "Domain": "Build",
         "DisplayName": [
@@ -177,7 +177,7 @@
   "Organization": {
     "InActiveUserActivityLogsPeriodInDays": 90,
     "TopInActiveUserCount": 500,
-    "WhitelistedExtensionPublishers": [
+    "TrustedExtensionPublishers": [
       "Microsoft",
       "Microsoft DevLabs"
     ],
@@ -196,7 +196,7 @@
   },
   "ServiceConnection": {
     "ServiceConnectionHistoryPeriodInDays": 180,
-    "WhitelistedGroupIdentities": [
+    "ExemptedGroupIdentities": [
       "Endpoint Administrators"
     ],
     "RestrictedGlobalGroupsForSerConn": [
