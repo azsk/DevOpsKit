@@ -504,7 +504,7 @@
       "ControlSeverity": "Medium",
       "Automated": "Yes",
       "MethodName": "CheckNonAlternateAccountsinPIMAccess",
-      "Recommendation": "Go to Azure portal -> Priviledged Identity Management -> Azure Resources -> Select the scope -> Members-> Eligible roles and verify the non alernate accounts. Ensure that only alternate accounts are used as members of critical roles in the subscription. Do not use day to day user accounts.",
+      "Recommendation": "Go to Azure portal -> Privileged Identity Management -> Use resource filter to select respective scope (subscription/resource group) as flagged in the control scan detailed log file -> select 'Assignments' in the left pane -> Under 'Eligible assignments' tab, remove the non-alternate accounts present with critical role such as - a. Subscription level: Owner/Contributor/User Access Admin b. Resource Group level: Owner/User Access Admin. Ensure that only alternate accounts are used as members of critical roles in the subscription. Do not use day to day user accounts. Note: This control only checks 'User' accounts. Any Group assignment having critical roles must be reviewed manually for non-alternate accounts.",
       "Tags": [
         "SDL",
         "TCP",
