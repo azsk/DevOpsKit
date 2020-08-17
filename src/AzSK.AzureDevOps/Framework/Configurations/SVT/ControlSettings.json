@@ -48,8 +48,7 @@
         "ControlIds": [
           "AzureDevOps_Build_AuthZ_Disable_Inherited_Permissions",
           "AzureDevOps_Build_DP_No_PlainText_Secrets_In_Definition",
-          "AzureDevOps_Build_SI_Review_URL_Variables_Settable_At_Queue_Time",
-          "AzureDevOps_Release_SI_Review_URL_Variables_Settable_At_Release_Time"
+          "AzureDevOps_Build_SI_Review_URL_Variables_Settable_At_Queue_Time"
         ]
       },
       {
@@ -57,7 +56,8 @@
         "ControlIds": [
           "AzureDevOps_Release_AuthZ_Disable_Inherited_Permissions",
           "AzureDevOps_Release_SI_Review_External_Sources",
-          "AzureDevOps_Release_DP_No_PlainText_Secrets_In_Definition"
+          "AzureDevOps_Release_DP_No_PlainText_Secrets_In_Definition",
+          "AzureDevOps_Release_SI_Review_URL_Variables_Settable_At_Release_Time"
         ]
       },
       {
