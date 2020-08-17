@@ -302,6 +302,10 @@ class Build: ADOSVTBase
                     $controlResult.AddMessage("The below variables are not settable at queue time : ",$nonsetablevar);      
                 } 
            }
+           else
+           {
+                $controlResult.AddMessage([VerificationResult]::Passed, "No variables were found in the build pipeline that are settable at queue time.");   
+           }
                  
         }
         else {
