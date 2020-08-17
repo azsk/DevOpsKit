@@ -66,10 +66,6 @@ class ConfigurationHelper {
 			throw [System.ArgumentException] ("The argument 'policyFileName' is null");
 		} 
 
-		if ($onlineStoreUri -match "\{0\}.*\{1\}" -and $useOnlinePolicyStore -eq $true)
-		{
-			#[EventBase]::PublishGenericCustomMessage(" Org Policy URL not set yet: $onlineStoreUri", [MessageType]::Warning);
-		}
 
 		#Check if policy is present in cache and fetch the same if present
 		$cachedPolicyContent = [ConfigurationHelper]::PolicyCacheContent | Where-Object { $_.Name -eq $policyFileName }
@@ -81,7 +77,13 @@ class ConfigurationHelper {
 				return $fileContent                                  
 			}
 		}
-		
+
+		<#
+		if ($onlineStoreUri -match "\{0\}.*\{1\}" -and $useOnlinePolicyStore -eq $true)
+		{
+			#[EventBase]::PublishGenericCustomMessage(" Org Policy URL not set yet: $onlineStoreUri", [MessageType]::Warning);
+		}
+		#>
 
 		if ($useOnlinePolicyStore) {
 			
