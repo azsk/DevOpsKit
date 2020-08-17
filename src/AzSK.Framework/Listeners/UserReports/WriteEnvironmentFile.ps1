@@ -95,8 +95,12 @@ class WriteEnvironmentFile: FileOutputBase
 
 		$rmContext = [ContextHelper]::GetCurrentRMContext()
 
-		$this.AddOutputLog("Logged-in user context");
-		$this.AddOutputLog([Helpers]::ConvertObjectToString(($rmContext.Account | Select-Object -Property Id, Type, ExtendedProperties), $false));
+        $this.AddOutputLog("Logged-in user context");
+        $loggedInUserContext = ($rmContext.Account | Select-Object -Property Id, Type, ExtendedProperties)
+        if([Helpers]::CheckMember($loggedInUserContext, "ExtendedProperties") -and $loggedInUserContext.ExtendedProperties.ContainsKey("ServicePrincipalSecret")){
+            $loggedInUserContext.ExtendedProperties["ServicePrincipalSecret"] = "MASKED"
+        }
+		$this.AddOutputLog([Helpers]::ConvertObjectToString($loggedInUserContext, $false));
 		$this.AddOutputLog([Constants]::DoubleDashLine);
 
 		$this.AddOutputLog("Az context");
