@@ -3,14 +3,13 @@ Set-StrictMode -Version Latest
 
 class HostInfo: CommandBase
 {    
-
 	HostInfo([string] $subscriptionId, [InvocationInfo] $invocationContext): 
         Base($subscriptionId, $invocationContext) 
     { 
 		$this.DoNotOpenOutputFolder = $true;
 	}
 	
-	GetHostInfo()
+	[MessageData[]] GetHostInfo()
 	{
 		$this.PublishCustomMessage([Constants]::DoubleDashLine + "`r`nFetching configuration details from the host machine...`r`n" + [Constants]::DoubleDashLine);
 
@@ -41,6 +40,10 @@ class HostInfo: CommandBase
 		$this.PublishCustomMessage("`n`n"); 
 		$this.PublishCustomMessage("`r`nAz context`r`n" + [Constants]::SingleDashLine, [MessageType]::Default);
 		$this.PublishCustomMessage([Helpers]::ConvertObjectToString(($rmContext | Select-Object -Property Subscription, Tenant), $false), [MessageType]::Default);
+	
+		[MessageData[]] $returnMsgs = @();
+		$returnMsgs += [MessageData]::new("Returning ADO Host Info.");
+		return $returnMsgs
 	}
 
 	GetAzSKVersion()
