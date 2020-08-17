@@ -36,8 +36,9 @@ class ControlsInfo: CommandBase
 		}
 	}
 	
-	GetControlDetails() 
+	[MessageData[]] GetControlDetails() 
 	{
+		[MessageData[]] $returnMsgs = @();
 		$resourcetypes = @() 
 		$SVTConfig = @{} 
 		$allControls = @()
@@ -49,7 +50,7 @@ class ControlsInfo: CommandBase
 			$this.PublishCustomMessage([Constants]::DoubleDashLine, [MessageType]::Default);
 			$this.PublishCustomMessage([Constants]::DefaultControlInfoCmdMsg, [MessageType]::Default);
 			$this.DoNotOpenOutputFolder = $true;
-			return;
+			return $returnMsgs;
 		}
 
 		#throw if user has set params for ResourceTypeName and ResourceType
@@ -266,7 +267,9 @@ class ControlsInfo: CommandBase
 
 			$this.PublishCustomMessage(($controlSummary | Format-Table | Out-String), [MessageType]::Default)
 		}
-        
+
+		$returnMsgs += [MessageData]::new("Returning ADO Control Info.");
+		return $returnMsgs
 	}
 	
 	[string] GetControlSeverity($ControlSeverityFromServer)
