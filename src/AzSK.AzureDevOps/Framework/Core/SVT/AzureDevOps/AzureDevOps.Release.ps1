@@ -440,6 +440,10 @@ class Release: ADOSVTBase
                     $controlResult.AddMessage("The below variables are not settable at release time : ",$nonsetablevar);      
                 } 
            }
+           else 
+           {
+                $controlResult.AddMessage([VerificationResult]::Passed, "No variables were found in the release pipeline that are settable at release time.");   
+           }
                  
         }
         else {

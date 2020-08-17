@@ -116,7 +116,7 @@
       "ControlSeverity": "Medium",
       "Automated": "No",
       "MethodName": "",
-      "Rationale": "You should ensure that production releases are always done from one and only one (main) branch. The main branch should have the tightest access controls and approval standards.`n Any changes in the source code should be tested first on a development branch before merging in the main branch. The source code in the main branch should correspond to production bits at all times. This helps in maintaining stable source code and helps prevent deployment of breaking changes (and potential security bugs) into the production environment.",
+      "Rationale": "You should ensure that production releases are always done from one and only one (main) branch. The main branch should have the tightest access controls and approval standards. Any changes in the source code should be tested first on a development branch before merging in the main branch. The source code in the main branch should correspond to production bits at all times. This helps in maintaining stable source code and helps prevent deployment of breaking changes (and potential security bugs) into the production environment.",
       "Recommendation": "You can choose a specific branch as the main branch for production releases (most teams use 'master'). When adding the source/artifact for a release configuration for a production release (as in steps at https://docs.microsoft.com/en-us/azure/devops/pipelines/release/artifacts?view=azure-devops#sources, make sure you use the designated branch as the source.",
       "Tags": [
         "SDL",
