@@ -95,8 +95,8 @@ class WriteEnvironmentFile: FileOutputBase
 
 		$rmContext = [ContextHelper]::GetCurrentRMContext()
 
-		$this.AddOutputLog("Logged-in user context");
-		$this.AddOutputLog([Helpers]::ConvertObjectToString(($rmContext.Account | Select-Object -Property Id, Type, ExtendedProperties), $false));
+        $this.AddOutputLog("Logged-in user context");
+		$this.AddOutputLog([Helpers]::ConvertObjectToString(($rmContext.Account | Select-Object -Property Id, Type), $false));
 		$this.AddOutputLog([Constants]::DoubleDashLine);
 
 		$this.AddOutputLog("Az context");
