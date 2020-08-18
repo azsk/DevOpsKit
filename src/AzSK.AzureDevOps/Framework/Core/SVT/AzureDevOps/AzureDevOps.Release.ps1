@@ -118,10 +118,10 @@ class Release: ADOSVTBase
                         }
                         $patterns = $null;
                     }
-                }
-                else 
-                {
-                    $controlResult.AddMessage([VerificationResult]::Manual, "Regular expressions for detecting credentials in pipeline variables are not defined in your organization.");    
+                    else 
+                    {
+                        $controlResult.AddMessage([VerificationResult]::Manual, "Regular expressions for detecting credentials in pipeline variables are not defined in your organization.");    
+                    }
                 }
                 else {
                     $controlResult.AddMessage([VerificationResult]::Passed, "No variables found in release definition.");
