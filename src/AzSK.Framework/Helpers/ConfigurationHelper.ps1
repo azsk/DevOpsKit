@@ -10,7 +10,7 @@ class ConfigurationHelper
 	hidden static [string] $ConfigVersion = ""
 	hidden static [bool] $LocalPolicyEnabled = $false
 	hidden static [string] $ConfigPath = [string]::Empty
-	hidden static [Policy[]] $PolicyCacheContent = @()
+	hidden static $PolicyCacheContent = @{} 
 	hidden static $NotExtendedTypes = @{}   #Flag Store to avoid check for same extention file if not found once
 	hidden static [PSObject] LoadOfflineConfigFile([string] $fileName)
  {
@@ -79,14 +79,9 @@ class ConfigurationHelper
 			throw [System.ArgumentException] ("The argument 'policyFileName' is null");
 		} 
 		#Check if policy is present in cache and fetch the same if present
-		$cachedPolicyContent = [ConfigurationHelper]::PolicyCacheContent | Where-Object { $_.Name -eq $policyFileName }
-		if ($cachedPolicyContent)
+		if ([ConfigurationHelper]::PolicyCacheContent.ContainsKey($policyFileName))
 		{
-			$fileContent = $cachedPolicyContent.Content
-			if ($fileContent)
-			{
-				return $fileContent                                  
-			}
+			return [ConfigurationHelper]::PolicyCacheContent[$policyFileName].Content                          
 		}
 
 		if ($useOnlinePolicyStore)
@@ -107,14 +102,7 @@ class ConfigurationHelper
 			#Check if policy present in server using metadata file
 			if (-not [ConfigurationHelper]::OfflineMode -and [ConfigurationHelper]::IsPolicyPresentOnServer($policyFileName, $useOnlinePolicyStore, $onlineStoreUri, $enableAADAuthForOnlinePolicyStore))
 			{
-				#Check if online policy is present in configuration cache and fetch same
-				#Moved below commented code at the start of the method to avoid unnecessary code execution
-				<#$cachedPolicyContent = [ConfigurationHelper]::PolicyCacheContent | Where-Object { $_.Name -eq $policyFileName }
-				if ($cachedPolicyContent) {
-					$fileContent = $cachedPolicyContent.Content
-				}
-				#If policy file content is not present in cache then load it from server
-				else {#>
+			
 				try
 				{
 					if ([String]::IsNullOrWhiteSpace([ConfigurationHelper]::ConfigVersion) -and -not [ConfigurationHelper]::LocalPolicyEnabled)
@@ -168,14 +156,6 @@ class ConfigurationHelper
 						$fileContent = [Helpers]::MergeObjects($fileContent, $serverFileContent)	
 					}
 
-					#Store policy file content into cache
-					#Moved below commented code just before return to cache in all cases	
-					<#$policy = [Policy]@{
-							Name = $policyFileName
-							Content = $fileContent
-						}
-						[ConfigurationHelper]::PolicyCacheContent += $policy
-						#>
 				}
 				catch
 				{
@@ -201,7 +181,6 @@ class ConfigurationHelper
 						}
 					}            
 				}					
-				<#}#>
 
 			}
 
@@ -223,12 +202,12 @@ class ConfigurationHelper
 			throw "The specified file '$policyFileName' is empty"                                  
 		}
 		
-		#Store policy file content into cache in all cases i.e local file, server overwritten file or Merged File
+		#Store policy file content into cache with state as Raw.Here Raw as State specifies that policy attributes have not been updated.
 		$policy = [Policy]@{
-			Name    = $policyFileName
+			State    = [PolicyStatus]::Raw
 			Content = $fileContent
 		}
-		[ConfigurationHelper]::PolicyCacheContent += $policy
+		[ConfigurationHelper]::PolicyCacheContent[$policyFileName] = $policy
 
 		return $fileContent;
 	}
@@ -453,11 +432,11 @@ class ConfigurationHelper
 	
 }
 
-#Model to store online policy file content with name. 
+#Model to store online policy file content with state. 
 #Used in ConfigurationHelper to cache online policy files
 class Policy
 {
-	[string] $Name
+	[PolicyStatus] $State
 	[PSObject] $Content
 }
 

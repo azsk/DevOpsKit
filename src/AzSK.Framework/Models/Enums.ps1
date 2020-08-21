@@ -176,3 +176,9 @@ enum AssignmentType
 	Eligible
 	Active
 }
+
+enum PolicyStatus 
+{
+	Raw
+	Final
+}
