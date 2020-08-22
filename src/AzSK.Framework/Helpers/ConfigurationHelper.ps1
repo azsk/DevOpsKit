@@ -185,6 +185,7 @@ class ConfigurationHelper {
 		#ADOTODO: by Sep2020. Do any controlSettings processing here. Revisit after Asim's policy cache changes are integrated.
 		if ($policyFileName -match "ControlSettings.json")
 		{	
+			#Compile regex-s once upon load. The Env setting is just to compare perf during dev-test.
 			if ((@($fileContent.Patterns)).Count -gt 0 -and -not $env:AzSKNoCompileRegex)
 			{
 				$iPat = 0
