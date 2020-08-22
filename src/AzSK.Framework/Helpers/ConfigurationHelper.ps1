@@ -181,6 +181,28 @@ class ConfigurationHelper {
 		#Store policy file content into cache. 
 		#Note: This will happen only once per file (whether found on server or not). 
 		#In case of SVT config JSONs, we will overwrite this (only once) right after resolving baselines/dynamic parameters in control recos, etc. (in LoadSVTConfig)
+
+		#ADOTODO: by Sep2020. Do any controlSettings processing here. Revisit after Asim's policy cache changes are integrated.
+		if ($policyFileName -match "ControlSettings.json")
+		{	
+			if ((@($fileContent.Patterns)).Count -gt 0 -and -not $env:AzSKNoCompileRegex)
+			{
+				$iPat = 0
+				$rgxOpt = [Text.RegularExpressions.RegexOptions]::Compiled;
+				$fileContent.Patterns | % {
+					$regExList = @($_.RegexList)
+					$iReg=0
+					$regExList | % {
+						$txtRegex = $_
+						$compiledRegex = [Text.RegularExpressions.Regex]::new($txtRegex, $rgxOpt)
+						$fileContent.Patterns[$iPat].RegexList[$iReg] = $compiledRegex
+						$iReg++
+					}
+					$iPat++
+				}
+			}
+		}
+
 		$policy = [Policy]@{
 			Name    = $policyFileName
 			Content = $fileContent

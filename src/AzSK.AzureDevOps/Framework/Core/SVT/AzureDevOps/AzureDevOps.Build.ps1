@@ -86,7 +86,7 @@ class Build: ADOSVTBase
             {
                 $varList = @();
                 $noOfCredFound = 0;     
-                $patterns = $this.ControlSettings.Patterns | where {$_.RegexCode -eq "Build"} | Select-Object -Property RegexList;
+                $patterns = $this.ControlSettings.Patterns | where {$_.RegexCode -eq "SecretsInBuild"} | Select-Object -Property RegexList;
                 if(($patterns | Measure-Object).Count -gt 0)
                 {                
                     Get-Member -InputObject $this.BuildObj[0].variables -MemberType Properties | ForEach-Object {

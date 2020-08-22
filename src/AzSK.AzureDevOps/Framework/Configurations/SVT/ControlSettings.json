@@ -223,31 +223,27 @@
   },
   "Patterns": [
     {
-      "RegexCode": "Build",
+      "RegexCode": "SecretsInBuild",
       "RegexList": [
-        "(?=^.{6,12}$)((?=.*\\d)(?=.*[A-Z])(?=.*[a-z])|(?=.*\\d)(?=.*[^A-Za-z0-9])(?=.*[a-z])&(?=.*[^A-Za-z0-9])(?=.*[A-Z])(?=.*[a-z])&(?=.*\\d)(?=.*[A-Z])(?=.*[^A-Za-z0-9]))^.*",
-        "(pwd|password)\\s*=\\s*(?<pwd>('(([^'])|(''))+'|[^';]+))",
-        "^(?=.*\\d)(?=.*[a-z])(?=.*[A-Z])(?!.*\\s).{6,18}$",
-        "^(?=.*\\d)(?=.*[a-z])(?=.*[A-Z]).{4,8}$",
-        "(?=^.{6,10}$)(?=.*\\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&amp;*()_+}{&quot;:;'?/&gt;.&lt;,])(?!.*\\s).*$",
-        "(?=^.{7,20}$)(?=.*\\d)(?=.*[a-zA-Z])(?!.*\\s)[0-9a-zA-Z*$-+?_&=!%{}/'.]*$"
+        "(?# To match general passwords.)^(?=\\D*\\d)(?=[^a-z]*[a-z])(?=[^A-Z]*[A-Z])(?=(\\w*\\W|\\w*))[0-9\\Wa-zA-Z]{7,20}$",
+        "(?# To match SQL/MySQL conn strings.)((P|p)assword|pwd)\\s*=\\s*\\w+;?",
+        "(?# To match Azure storage keys.)^[A-Za-z0-9/+]{86}==$",
+        "(?# To match storage SAS.)([^?]*\\?sv=)[^&]+(&s[a-z]=[^&]+){4}"
       ]
     },
     {
-      "RegexCode": "Release",
+      "RegexCode": "SecretsInRelease",
       "RegexList": [
-        "(?=^.{6,12}$)((?=.*\\d)(?=.*[A-Z])(?=.*[a-z])|(?=.*\\d)(?=.*[^A-Za-z0-9])(?=.*[a-z])&(?=.*[^A-Za-z0-9])(?=.*[A-Z])(?=.*[a-z])&(?=.*\\d)(?=.*[A-Z])(?=.*[^A-Za-z0-9]))^.*",
-        "(pwd|password)\\s*=\\s*(?<pwd>('(([^'])|(''))+'|[^';]+))",
-        "^(?=.*\\d)(?=.*[a-z])(?=.*[A-Z])(?!.*\\s).{6,18}$",
-        "^(?=.*\\d)(?=.*[a-z])(?=.*[A-Z]).{4,8}$",
-        "(?=^.{6,10}$)(?=.*\\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&amp;*()_+}{&quot;:;'?/&gt;.&lt;,])(?!.*\\s).*$",
-        "(?=^.{7,20}$)(?=.*\\d)(?=.*[a-zA-Z])(?!.*\\s)[0-9a-zA-Z*$-+?_&=!%{}/'.]*$"
+        "(?# To match general passwords.)^(?=\\D*\\d)(?=[^a-z]*[a-z])(?=[^A-Z]*[A-Z])(?=(\\w*\\W|\\w*))[0-9\\Wa-zA-Z]{7,20}$",
+        "(?# To match SQL/MySQL conn strings.)((P|p)assword|pwd)\\s*=\\s*\\w+;?",
+        "(?# To match Azure storage keys.)^[A-Za-z0-9/+]{86}==$",
+        "(?# To match storage SAS.)([^?]*\\?sv=)[^&]+(&s[a-z]=[^&]+){4}"
       ]
     },
     {
       "RegexCode": "URLs",
       "RegexList": [
-        "(www.|http:|https:)+[^\\s]+[\\w]"
+        "(?# To match any URL.)(www.|http:|https:)+[^\\s]+[\\w]"
       ]
     }
   ],

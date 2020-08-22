@@ -91,7 +91,7 @@ class Release: ADOSVTBase
                 {
                     $varList = @();
                     $noOfCredFound = 0;     
-                    $patterns = $this.ControlSettings.Patterns | where {$_.RegexCode -eq "Release"} | Select-Object -Property RegexList;
+                    $patterns = $this.ControlSettings.Patterns | where {$_.RegexCode -eq "SecretsInRelease"} | Select-Object -Property RegexList;
                     if(($patterns | Measure-Object).Count -gt 0)
                     {        
                         Get-Member -InputObject $this.ReleaseObj.variables -MemberType Properties | ForEach-Object {
