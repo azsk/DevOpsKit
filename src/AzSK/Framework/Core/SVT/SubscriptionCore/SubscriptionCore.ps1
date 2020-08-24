@@ -29,6 +29,8 @@ class SubscriptionCore: AzSVTBase
 	hidden [System.Collections.Generic.List[TelemetryRBACExtended]] $PIMRGLevelAssignmentswithPName = @();
 	hidden [CustomData] $CustomObject;
 	hidden $SubscriptionExtId;
+	hidden [boolean] $IsSubAssignmentFetched = $false;
+	hidden [boolean] $IsRGAssignmentFetched = $false;
 
 	SubscriptionCore([string] $subscriptionId):
         Base($subscriptionId)
@@ -959,16 +961,15 @@ class SubscriptionCore: AzSVTBase
 		$message = '';
 		$whitelistedPermanentRoles = $null
 
-		if($null -eq $this.PIMAssignments -and $null -eq $this.permanentAssignments)
+		if(-not $this.IsSubAssignmentFetched)
 		{
-			$message=$this.GetPIMRoles();
+			$this.GetPIMRoles();
 		}
-		if($message -ne 'OK') # if there is some while making request message will contain exception
+		if(-not $this.IsSubAssignmentFetched)
 		{
 
-				$controlResult.AddMessage("Unable to fetch PIM data.")
-				$controlResult.AddMessage($message);
-				$controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false;
+			$controlResult.AddMessage("Unable to fetch PIM data.")
+			$controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false;
 		}
 		else 
 		{
@@ -1019,12 +1020,13 @@ class SubscriptionCore: AzSVTBase
 		if(-not([string]::IsNullOrEmpty($this.InvocationContext.BoundParameters['ControlIds'])) -or  -not( [string]::IsNullOrEmpty($this.InvocationContext.BoundParameters['ControlsToAttest'])) -or [AzSKSettings]::GetInstance().GetScanSource() -eq 'CA')
 		{
 			$whitelistedPermanentRoles = $null
-			$message=$this.GetRGLevelPIMRoles();
-			if($message -ne 'OK') # if there is some while making request message will contain exception
+			if (-not $this.IsRGAssignmentFetched)
 			{
-
+				$this.GetRGLevelPIMRoles();
+			}
+			if (-not $this.IsRGAssignmentFetched) # if false then exception occured in GetRGLevelPIMRoles 
+			{
 				$controlResult.AddMessage("Unable to fetch PIM data.")
-				$controlResult.AddMessage($message);
 				$controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false;
 				return $controlResult;
 			}
@@ -1616,12 +1618,18 @@ class SubscriptionCore: AzSVTBase
 			# Get PIM assignments
 			if([FeatureFlightingManager]::GetFeatureStatus("EnableResourceGroupPersistentAccessCheck",$($this.SubscriptionContext.SubscriptionId)))
 			{
-				$messageRG=$this.GetRGLevelPIMRoles();
+				if(-not $this.IsRGAssignmentFetched)
+				{
+					$this.GetRGLevelPIMRoles();
+				}
 			}
-			$messageSub=$this.GetPIMRoles();
+			if(-not $this.IsSubAssignmentFetched)
+			{
+				$this.GetPIMRoles();
+			}
 
 			# Return if error occured while fetching PIM RBAC list
-			if($messageSub -ne 'OK' -or $messageRG -ne 'OK' )
+			if(-not $this.IsRGAssignmentFetched -or -not $this.IsSubAssignmentFetched )
 			{
 				$controlResult.AddMessage("Unable to fetch PIM data, please verify manually.")
 				$controlResult.AddMessage([VerificationResult]::Manual, "Please make sure your subscription has onboarded Privileged Identity Management (PIM).");
@@ -1834,9 +1842,8 @@ class SubscriptionCore: AzSVTBase
 		}
 	}	
 
-	hidden [string] GetPIMRoles()
+	hidden GetPIMRoles()
 	{
-		$message='';
 		if($null -eq $this.PIMAssignments)
 		{
 			$ResourceAppIdURI = [WebRequestHelper]::GetServiceManagementUrl()
@@ -1893,27 +1900,32 @@ class SubscriptionCore: AzSVTBase
 											$tempRBExtendObject = [TelemetryRBACExtended]::new($item, $roleAssignment.subject.principalName)
 											$this.PIMAssignmentswithPName.Add($tempRBExtendObject);
 										}
+										#For active PIM assignments
+										elseif (-not [string]::IsNullOrEmpty($roleAssignment.linkedEligibleRoleAssignmentId) -and $roleAssignment.assignmentState -eq "Active" )
+										{
+											$item.IsPIMEnabled=$true;
+											$this.PIMAssignments.Add($item);
+											$tempRBExtendObject = [TelemetryRBACExtended]::new($item, $roleAssignment.subject.principalName)
+											$this.PIMAssignmentswithPName.Add($tempRBExtendObject);
+										}
 
 									}
 								}
 						}
 						
 					}
-					$message='OK';
+					$this.IsSubAssignmentFetched = $true
 				}
 				catch
 				{
-					$message="Please make sure your subscription has onboarded Privileged Identity Management (PIM).";
+					#eat exception
 				}
 			}
 		}
-
-		return($message);
 	}
 
-	hidden [string] GetRGLevelPIMRoles()
+	hidden GetRGLevelPIMRoles()
 	{
-		$message='';
 		if($null -eq $this.RGLevelPIMAssignments -and $null -eq $this.RGLevelPermanentAssignments)
 		{
 			$ResourceAppIdURI = [WebRequestHelper]::GetServiceManagementUrl()
@@ -1982,23 +1994,27 @@ class SubscriptionCore: AzSVTBase
 											$tempRBExtendObject = [TelemetryRBACExtended]::new($item, $roleAssignment.subject.principalName)
 											$this.PIMRGLevelAssignmentswithPName.Add($tempRBExtendObject);
 										}
-										
-										
+										#For active PIM assignments
+										elseif (-not [string]::IsNullOrEmpty($roleAssignment.linkedEligibleRoleAssignmentId) -and $roleAssignment.assignmentState -eq "Active" )
+										{
+											$item.IsPIMEnabled=$true;
+											$this.RGLevelPIMAssignments.Add($item);
+											$tempRBExtendObject = [TelemetryRBACExtended]::new($item, $roleAssignment.subject.principalName)
+											$this.PIMRGLevelAssignmentswithPName.Add($tempRBExtendObject);
+										}
 									}
 								}
 							}
 						}
 					}
-					$message='OK';
+					$this.IsRGAssignmentFetched = $true
 				}
 				catch
 				{
-					$message="Please make sure your subscription has onboarded Privileged Identity Management (PIM).";
+					#eat exception
 				}
 			}
 		}
-
-		return($message);
 	}
 
 	hidden [void] PublishRBACTelemetryData()
