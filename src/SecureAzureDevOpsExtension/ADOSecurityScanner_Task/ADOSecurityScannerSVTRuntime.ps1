@@ -126,8 +126,8 @@ Invoke-Expression "Import-Module $ModuleName"
 
 try {
 
-	Set-AzSKPrivacyNoticeResponse -AcceptPrivacyNotice "yes"
-	Set-AzSKMonitoringSettings -Source "CICD"
+	Set-AzSKADOPrivacyNoticeResponse -AcceptPrivacyNotice "yes"
+	Set-AzSKADOMonitoringSettings -Source "CICD"
 
 	# Fetch Organization name if default system variable is used. (scan will be performed for this organisation)
 	If ($OrgName -match "https://")
@@ -169,20 +169,20 @@ try {
 			Write-Host "Setting up Log Analytics workspace configuration..." -ForegroundColor Yellow
 			if(-not [string]::IsNullOrWhiteSpace($AltLAWSId) -and -not [string]::IsNullOrWhiteSpace($AltLAWSSharedKey))
             {
-				Set-AzSKOMSSettings -OMSSharedKey $LAWSSharedKeyVal -OMSWorkspaceID $LAWSIdVal -AltLAWSSharedKey $AltLAWSSharedKey -AltLAWSId $AltLAWSId -Source "CICD"
+				Set-AzSKADOMonitoringSettings -LAWSSharedKey $LAWSSharedKeyVal -LAWSId $LAWSIdVal -AltLAWSSharedKey $AltLAWSSharedKey -AltLAWSId $AltLAWSId -Source "CICD"
 			}
 			else {
-				Set-AzSKOMSSettings -OMSSharedKey $LAWSSharedKeyVal -OMSWorkspaceID $LAWSIdVal -Source "CICD"
+				Set-AzSKADOMonitoringSettings -LAWSSharedKey $LAWSSharedKeyVal -LAWSId $LAWSIdVal -Source "CICD"
 			}
 			
 			#clear session state
-	        Clear-AzSKSessionState
+	        Clear-AzSKADOSessionState
 		}
 		elseif (-not [string]::IsNullOrWhiteSpace($AltLAWSId) -and -not [string]::IsNullOrWhiteSpace($AltLAWSSharedKey)) {
 			Write-Host "Setting up Log Analytics workspace configuration..." -ForegroundColor Yellow
-			Set-AzSKOMSSettings -AltLAWSSharedKey $AltLAWSSharedKey -AltLAWSId $AltLAWSId -Source "CICD"
+			Set-AzSKADOMonitoringSettings -AltLAWSSharedKey $AltLAWSSharedKey -AltLAWSId $AltLAWSId -Source "CICD"
 			#clear session state
-			Clear-AzSKSessionState
+			Clear-AzSKADOSessionState
 		}
         else {
             Write-Host "Log Analytics workspace configuration is missing. Check variables..." -ForegroundColor Yellow
@@ -198,42 +198,42 @@ try {
 		if($BuildNames)
 		{
 		    if ($BuildNames -and $ReleaseNames -and $ServiceConnectionNames -and $AgentPoolNames) {
-		    	$scanCommand = "Get-AzSKAzureDevOpsSecurityStatus -OrganizationName $OrgName -DoNotOpenOutputFolder -PATToken `$token -ProjectNames $ProjectNames -BuildNames $BuildNames -ReleaseNames $ReleaseNames -ServiceConnectionNames $ServiceConnectionNames -AgentPoolNames $AgentPoolNames -ubc -ResourceTypeName $ResourceTypeName"	
+		    	$scanCommand = "Get-AzSKADOSecurityStatus -OrganizationName $OrgName -DoNotOpenOutputFolder -PATToken `$token -ProjectNames $ProjectNames -BuildNames $BuildNames -ReleaseNames $ReleaseNames -ServiceConnectionNames $ServiceConnectionNames -AgentPoolNames $AgentPoolNames -ubc -ResourceTypeName $ResourceTypeName"	
 		    }
 		    elseif ($BuildNames -and $ReleaseNames -and $ServiceConnectionNames) {
-		    	$scanCommand = "Get-AzSKAzureDevOpsSecurityStatus -OrganizationName $OrgName -DoNotOpenOutputFolder -PATToken `$token -ProjectNames $ProjectNames -BuildNames $BuildNames -ReleaseNames $ReleaseNames -ServiceConnectionNames $ServiceConnectionNames -ubc -ResourceTypeName $ResourceTypeName"	
+		    	$scanCommand = "Get-AzSKADOSecurityStatus -OrganizationName $OrgName -DoNotOpenOutputFolder -PATToken `$token -ProjectNames $ProjectNames -BuildNames $BuildNames -ReleaseNames $ReleaseNames -ServiceConnectionNames $ServiceConnectionNames -ubc -ResourceTypeName $ResourceTypeName"	
 		    }
 		    elseif ($BuildNames -and $ReleaseNames) {
-		    	$scanCommand = "Get-AzSKAzureDevOpsSecurityStatus -OrganizationName $OrgName -DoNotOpenOutputFolder -PATToken `$token -ProjectNames $ProjectNames -BuildNames $BuildNames -ReleaseNames $ReleaseNames -ubc -ResourceTypeName $ResourceTypeName"	
+		    	$scanCommand = "Get-AzSKADOSecurityStatus -OrganizationName $OrgName -DoNotOpenOutputFolder -PATToken `$token -ProjectNames $ProjectNames -BuildNames $BuildNames -ReleaseNames $ReleaseNames -ubc -ResourceTypeName $ResourceTypeName"	
 		    }
 		    else{
-		    	$scanCommand = "Get-AzSKAzureDevOpsSecurityStatus -OrganizationName $OrgName -DoNotOpenOutputFolder -PATToken `$token -ProjectNames $ProjectNames -BuildNames $BuildNames -ubc -ResourceTypeName $ResourceTypeName"
+		    	$scanCommand = "Get-AzSKADOSecurityStatus -OrganizationName $OrgName -DoNotOpenOutputFolder -PATToken `$token -ProjectNames $ProjectNames -BuildNames $BuildNames -ubc -ResourceTypeName $ResourceTypeName"
 		    }
 	    }
 	    elseif($ReleaseNames)
 	  	{
 	  	    if ($ReleaseNames -and $ServiceConnectionNames -and $AgentPoolNames) {
-	  	    	$scanCommand = "Get-AzSKAzureDevOpsSecurityStatus -OrganizationName $OrgName -DoNotOpenOutputFolder -PATToken `$token -ProjectNames $ProjectNames -ReleaseNames $ReleaseNames -ServiceConnectionNames $ServiceConnectionNames -AgentPoolNames $AgentPoolNames -ubc -ResourceTypeName $ResourceTypeName"
+	  	    	$scanCommand = "Get-AzSKADOSecurityStatus -OrganizationName $OrgName -DoNotOpenOutputFolder -PATToken `$token -ProjectNames $ProjectNames -ReleaseNames $ReleaseNames -ServiceConnectionNames $ServiceConnectionNames -AgentPoolNames $AgentPoolNames -ubc -ResourceTypeName $ResourceTypeName"
 	  	    }
 	  	    elseif ($ReleaseNames -and $ServiceConnectionNames) {
-	  	    	$scanCommand = "Get-AzSKAzureDevOpsSecurityStatus -OrganizationName $OrgName -DoNotOpenOutputFolder -PATToken `$token -ProjectNames $ProjectNames -ReleaseNames $ReleaseNames -ServiceConnectionNames $ServiceConnectionNames -ubc -ResourceTypeName $ResourceTypeName"
+	  	    	$scanCommand = "Get-AzSKADOSecurityStatus -OrganizationName $OrgName -DoNotOpenOutputFolder -PATToken `$token -ProjectNames $ProjectNames -ReleaseNames $ReleaseNames -ServiceConnectionNames $ServiceConnectionNames -ubc -ResourceTypeName $ResourceTypeName"
 	  	    }
 	  	    else{
-	  	    	$scanCommand = "Get-AzSKAzureDevOpsSecurityStatus -OrganizationName $OrgName -DoNotOpenOutputFolder -PATToken `$token -ProjectNames $ProjectNames -ReleaseNames $ReleaseNames -ubc -ResourceTypeName $ResourceTypeName"
+	  	    	$scanCommand = "Get-AzSKADOSecurityStatus -OrganizationName $OrgName -DoNotOpenOutputFolder -PATToken `$token -ProjectNames $ProjectNames -ReleaseNames $ReleaseNames -ubc -ResourceTypeName $ResourceTypeName"
 	  	    }
 	    }
 	    elseif($ServiceConnectionNames)
 	  	{
 	  	    if ($ServiceConnectionNames -and $AgentPoolNames) {
-	  	    	$scanCommand = "Get-AzSKAzureDevOpsSecurityStatus -OrganizationName $OrgName -DoNotOpenOutputFolder -PATToken `$token -ProjectNames $ProjectNames -ServiceConnectionNames $ServiceConnectionNames -AgentPoolNames $AgentPoolNames -ubc -ResourceTypeName $ResourceTypeName"
+	  	    	$scanCommand = "Get-AzSKADOSecurityStatus -OrganizationName $OrgName -DoNotOpenOutputFolder -PATToken `$token -ProjectNames $ProjectNames -ServiceConnectionNames $ServiceConnectionNames -AgentPoolNames $AgentPoolNames -ubc -ResourceTypeName $ResourceTypeName"
 	  	    }
 	  	    else{
-	  	        $scanCommand = "Get-AzSKAzureDevOpsSecurityStatus -OrganizationName $OrgName -DoNotOpenOutputFolder -PATToken `$token -ProjectNames $ProjectNames -ServiceConnectionNames $ServiceConnectionNames -ubc -ResourceTypeName $ResourceTypeName"
+	  	        $scanCommand = "Get-AzSKADOSecurityStatus -OrganizationName $OrgName -DoNotOpenOutputFolder -PATToken `$token -ProjectNames $ProjectNames -ServiceConnectionNames $ServiceConnectionNames -ubc -ResourceTypeName $ResourceTypeName"
 	  	    }
 	    }
 	    else
 	    {
-	  	    $scanCommand = "Get-AzSKAzureDevOpsSecurityStatus -OrganizationName $OrgName -DoNotOpenOutputFolder -PATToken `$token -ProjectNames $ProjectNames -ubc -ResourceTypeName $ResourceTypeName"
+	  	    $scanCommand = "Get-AzSKADOSecurityStatus -OrganizationName $OrgName -DoNotOpenOutputFolder -PATToken `$token -ProjectNames $ProjectNames -ubc -ResourceTypeName $ResourceTypeName"
 	    }
 	}
 	else
@@ -241,52 +241,57 @@ try {
 		if($BuildNames)
 		{
 		    if ($BuildNames -and $ReleaseNames -and $ServiceConnectionNames -and $AgentPoolNames) {
-		    	$scanCommand = "Get-AzSKAzureDevOpsSecurityStatus -OrganizationName $OrgName -DoNotOpenOutputFolder -PATToken `$token -ProjectNames $ProjectNames -BuildNames $BuildNames -ReleaseNames $ReleaseNames -ServiceConnectionNames $ServiceConnectionNames -AgentPoolNames $AgentPoolNames -ResourceTypeName $ResourceTypeName"
+		    	$scanCommand = "Get-AzSKADOSecurityStatus -OrganizationName $OrgName -DoNotOpenOutputFolder -PATToken `$token -ProjectNames $ProjectNames -BuildNames $BuildNames -ReleaseNames $ReleaseNames -ServiceConnectionNames $ServiceConnectionNames -AgentPoolNames $AgentPoolNames -ResourceTypeName $ResourceTypeName"
 		    }
 		    elseif ($BuildNames -and $ReleaseNames -and $ServiceConnectionNames) {
-		    	$scanCommand = "Get-AzSKAzureDevOpsSecurityStatus -OrganizationName $OrgName -DoNotOpenOutputFolder -PATToken `$token -ProjectNames $ProjectNames -BuildNames $BuildNames -ReleaseNames $ReleaseNames -ServiceConnectionNames $ServiceConnectionNames -ResourceTypeName $ResourceTypeName"
+		    	$scanCommand = "Get-AzSKADOSecurityStatus -OrganizationName $OrgName -DoNotOpenOutputFolder -PATToken `$token -ProjectNames $ProjectNames -BuildNames $BuildNames -ReleaseNames $ReleaseNames -ServiceConnectionNames $ServiceConnectionNames -ResourceTypeName $ResourceTypeName"
 		    }
 		    elseif ($BuildNames -and $ReleaseNames) {
-		    	$scanCommand = "Get-AzSKAzureDevOpsSecurityStatus -OrganizationName $OrgName -DoNotOpenOutputFolder -PATToken `$token -ProjectNames $ProjectNames -BuildNames $BuildNames -ReleaseNames $ReleaseNames -ResourceTypeName $ResourceTypeName"
+		    	$scanCommand = "Get-AzSKADOSecurityStatus -OrganizationName $OrgName -DoNotOpenOutputFolder -PATToken `$token -ProjectNames $ProjectNames -BuildNames $BuildNames -ReleaseNames $ReleaseNames -ResourceTypeName $ResourceTypeName"
 		    }
 		    else{
-		    	$scanCommand = "Get-AzSKAzureDevOpsSecurityStatus -OrganizationName $OrgName -DoNotOpenOutputFolder -PATToken `$token -ProjectNames $ProjectNames -BuildNames $BuildNames -ResourceTypeName $ResourceTypeName"
+		    	$scanCommand = "Get-AzSKADOSecurityStatus -OrganizationName $OrgName -DoNotOpenOutputFolder -PATToken `$token -ProjectNames $ProjectNames -BuildNames $BuildNames -ResourceTypeName $ResourceTypeName"
 		    }
 	    }
 	    elseif($ReleaseNames)
 	  	{
 	  	    if ($ReleaseNames -and $ServiceConnectionNames -and $AgentPoolNames) {
-	  	    	$scanCommand = "Get-AzSKAzureDevOpsSecurityStatus -OrganizationName $OrgName -DoNotOpenOutputFolder -PATToken `$token -ProjectNames $ProjectNames -ReleaseNames $ReleaseNames -ServiceConnectionNames $ServiceConnectionNames -AgentPoolNames $AgentPoolNames -ResourceTypeName $ResourceTypeName"
+	  	    	$scanCommand = "Get-AzSKADOSecurityStatus -OrganizationName $OrgName -DoNotOpenOutputFolder -PATToken `$token -ProjectNames $ProjectNames -ReleaseNames $ReleaseNames -ServiceConnectionNames $ServiceConnectionNames -AgentPoolNames $AgentPoolNames -ResourceTypeName $ResourceTypeName"
 	  	    }
 	  	    elseif ($ReleaseNames -and $ServiceConnectionNames) {
-	  	    	$scanCommand = "Get-AzSKAzureDevOpsSecurityStatus -OrganizationName $OrgName -DoNotOpenOutputFolder -PATToken `$token -ProjectNames $ProjectNames -ReleaseNames $ReleaseNames -ServiceConnectionNames $ServiceConnectionNames -ResourceTypeName $ResourceTypeName"
+	  	    	$scanCommand = "Get-AzSKADOSecurityStatus -OrganizationName $OrgName -DoNotOpenOutputFolder -PATToken `$token -ProjectNames $ProjectNames -ReleaseNames $ReleaseNames -ServiceConnectionNames $ServiceConnectionNames -ResourceTypeName $ResourceTypeName"
 	  	    }
 	  	    else{
-	  	    	$scanCommand = "Get-AzSKAzureDevOpsSecurityStatus -OrganizationName $OrgName -DoNotOpenOutputFolder -PATToken `$token -ProjectNames $ProjectNames -ReleaseNames $ReleaseNames -ResourceTypeName $ResourceTypeName"
+	  	    	$scanCommand = "Get-AzSKADOSecurityStatus -OrganizationName $OrgName -DoNotOpenOutputFolder -PATToken `$token -ProjectNames $ProjectNames -ReleaseNames $ReleaseNames -ResourceTypeName $ResourceTypeName"
 	  	    }
 	    }
 	    elseif($ServiceConnectionNames)
 	  	{
 	  	    if ($ServiceConnectionNames -and $AgentPoolNames) {
-	  	    	$scanCommand = "Get-AzSKAzureDevOpsSecurityStatus -OrganizationName $OrgName -DoNotOpenOutputFolder -PATToken `$token -ProjectNames $ProjectNames -ServiceConnectionNames $ServiceConnectionNames -AgentPoolNames $AgentPoolNames -ResourceTypeName $ResourceTypeName"
+	  	    	$scanCommand = "Get-AzSKADOSecurityStatus -OrganizationName $OrgName -DoNotOpenOutputFolder -PATToken `$token -ProjectNames $ProjectNames -ServiceConnectionNames $ServiceConnectionNames -AgentPoolNames $AgentPoolNames -ResourceTypeName $ResourceTypeName"
 	  	    }
 	  	    else{
-	  	    	$scanCommand = "Get-AzSKAzureDevOpsSecurityStatus -OrganizationName $OrgName -DoNotOpenOutputFolder -PATToken `$token -ProjectNames $ProjectNames -ServiceConnectionNames $ServiceConnectionNames -ResourceTypeName $ResourceTypeName"
+	  	    	$scanCommand = "Get-AzSKADOSecurityStatus -OrganizationName $OrgName -DoNotOpenOutputFolder -PATToken `$token -ProjectNames $ProjectNames -ServiceConnectionNames $ServiceConnectionNames -ResourceTypeName $ResourceTypeName"
 	  	    }
 	    }
 	    else
 	    {
-	  	    $scanCommand = "Get-AzSKAzureDevOpsSecurityStatus -OrganizationName $OrgName -DoNotOpenOutputFolder -PATToken `$token -ProjectNames $ProjectNames -ResourceTypeName $ResourceTypeName"
+	  	    $scanCommand = "Get-AzSKADOSecurityStatus -OrganizationName $OrgName -DoNotOpenOutputFolder -PATToken `$token -ProjectNames $ProjectNames -ResourceTypeName $ResourceTypeName"
 	    }
 	}
 
 	if(-not [string]::IsNullOrEmpty($Severity))
 	{
-		$scanCommand += "-Severity ""$Severity"" ";
+		$scanCommand += " -Severity ""$Severity"" ";
 	}
 	if($AllowLongRunningScan -eq $true)
 	{
 		$scanCommand += " -AllowLongRunningScan ";
+	}
+
+	if(-not [string]::IsNullOrEmpty($AzSKExtendedCommand))
+	{
+		$scanCommand += " " + $AzSKExtendedCommand + " ";
 	}
 
 	if ($AzSKPartialCommit -eq $true)
@@ -295,11 +300,20 @@ try {
 		$CollectionUri = $CollectionUri.Substring(0,$CollectionUri.Length-1)
 		$TaskOrg = $CollectionUri -replace '.*\/'
 		# Org where pipeline is created.
-		if ($TaskOrg -match ".visualstudio.com"){ $TaskOrg= $TaskOrg -replace '.visualstudio.com','' }
-		if($env:BUILD_BUILDID){ $JobId = "ResourceTrackerFile_Build_" + $JobId }
-		else { $JobId = "ResourceTrackerFile_Release_" + $JobId	}
+		if ($TaskOrg -match ".visualstudio.com")
+		{ 
+			$TaskOrg= $TaskOrg -replace '.visualstudio.com','' 
+		}
 		
-		$partialScanURI =  "https://extmgmt.dev.azure.com/$TaskOrg/_apis/extensionmanagement/installedextensions/$publisherName/$extensionName/Data/Scopes/Default/Current/Collections/$OrgName/Documents/$JobId?api-version=5.1-preview.1"
+		if($env:BUILD_BUILDID)
+		{ 
+			$JobId = "ResourceTrackerFile_Build_" + $JobId 
+		}
+		else { 
+			$JobId = "ResourceTrackerFile_Release_" + $JobId	
+		}
+		
+		$partialScanURI =  "https://extmgmt.dev.azure.com/$TaskOrg/_apis/extensionmanagement/installedextensions/$publisherName/$extensionName/Data/Scopes/Default/Current/Collections/$OrgName/Documents/"+$JobId+"?api-version=5.1-preview.1"
 		$env:PartialScanURI = $partialScanURI
 	}
 	
@@ -335,7 +349,7 @@ try {
 			    $scanResultId = $varPrjName + $definitionId + $(get-date -f dd-MM-yyyy-HH-mm-ss)
 				Write-Host "Scan result will be save with id:" + $scanResultId
 				$body = @{"id" = "$scanResultId"; "__etag" = -1; "value"= $SVTResult;} | ConvertTo-Json
-
+				
 			    $webRequestResult = Invoke-RestMethod -Uri $uri -Method Put -ContentType "application/json" -Headers @{Authorization=("Basic {0}" -f $base64AuthInfo)} -Body $body
 			    Write-Host "Completed sending scan report to extension storage"
 			}
@@ -351,7 +365,6 @@ try {
 	}
 	else
 	{
-		Write-Host "Could not perform ADO Security SVTs scan. Please check if task configurations are correct. Please download the log from pipeline and check for details." -ForegroundColor Yellow
 		Write-Host "##vso[task.logissue type=error;]Could not perform ADO Security SVTs scan. Please check if task configurations are correct." 
 		throw
 	}
