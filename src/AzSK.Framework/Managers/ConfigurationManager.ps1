@@ -5,8 +5,9 @@ Set-StrictMode -Version Latest
 class ConfigurationManager
 {
 	hidden static [AzSKConfig] GetAzSKConfigData()
- {        
-		return [AzSKConfig]::GetInstance([ConfigurationManager]::GetAzSKSettings().UseOnlinePolicyStore, [ConfigurationManager]::GetAzSKSettings().OnlinePolicyStoreUrl, [ConfigurationManager]::GetAzSKSettings().EnableAADAuthForOnlinePolicyStore)		
+ {      
+		[AzSKSettings] $AzSKSettingsInstance = [ConfigurationManager]::GetAzSKSettings()
+		return [AzSKConfig]::GetInstance($AzSKSettingsInstance.UseOnlinePolicyStore, $AzSKSettingsInstance.OnlinePolicyStoreUrl, $AzSKSettingsInstance.EnableAADAuthForOnlinePolicyStore)		
 	}	
 	
 	hidden static [AzSKSettings] GetAzSKSettings()
@@ -25,10 +26,11 @@ class ConfigurationManager
 	}
 	
 	hidden static [SVTConfig] GetSVTConfig([string] $fileName)
- {       
-		$usePolicyStore = [ConfigurationManager]::GetAzSKSettings().UseOnlinePolicyStore
-		$policyStoreUrlOrFolder = [ConfigurationManager]::GetAzSKSettings().OnlinePolicyStoreUrl
-		$useAADAuthForPolicyStore = [ConfigurationManager]::GetAzSKSettings().EnableAADAuthForOnlinePolicyStore 
+ {     
+		[AzSKSettings] $AzSKSettingsInstance = [ConfigurationManager]::GetAzSKSettings()  
+		$usePolicyStore = $AzSKSettingsInstance.UseOnlinePolicyStore
+		$policyStoreUrlOrFolder = $AzSKSettingsInstance.OnlinePolicyStoreUrl
+		$useAADAuthForPolicyStore = $AzSKSettingsInstance.EnableAADAuthForOnlinePolicyStore 
 		$defaultConfigFile = [ConfigurationHelper]::LoadServerConfigFile($fileName, $usePolicyStore, $policyStoreUrlOrFolder, $useAADAuthForPolicyStore) 
 		$extendedFileName = $fileName.Replace(".json", ".ext.json");
 		$extendedConfigFile = $null
@@ -55,16 +57,19 @@ class ConfigurationManager
 
 	hidden static [PSObject] LoadServerConfigFile([string] $fileName)
  {
-		return [ConfigurationHelper]::LoadServerConfigFile($fileName, [ConfigurationManager]::GetAzSKSettings().UseOnlinePolicyStore, [ConfigurationManager]::GetAzSKSettings().OnlinePolicyStoreUrl, [ConfigurationManager]::GetAzSKSettings().EnableAADAuthForOnlinePolicyStore);
+		[AzSKSettings] $AzSKSettingsInstance = [ConfigurationManager]::GetAzSKSettings()
+		return [ConfigurationHelper]::LoadServerConfigFile($fileName, $AzSKSettingsInstance.UseOnlinePolicyStore, $AzSKSettingsInstance.OnlinePolicyStoreUrl, $AzSKSettingsInstance.EnableAADAuthForOnlinePolicyStore);
 	}
 
 	hidden static [PSObject] LoadServerFileRaw([string] $fileName)
  {
-		return [ConfigurationHelper]::LoadServerFileRaw($fileName, [ConfigurationManager]::GetAzSKSettings().UseOnlinePolicyStore, [ConfigurationManager]::GetAzSKSettings().OnlinePolicyStoreUrl, [ConfigurationManager]::GetAzSKSettings().EnableAADAuthForOnlinePolicyStore);
+		[AzSKSettings] $AzSKSettingsInstance = [ConfigurationManager]::GetAzSKSettings()
+		return [ConfigurationHelper]::LoadServerFileRaw($fileName, $AzSKSettingsInstance.UseOnlinePolicyStore, $AzSKSettingsInstance.OnlinePolicyStoreUrl, $AzSKSettingsInstance.EnableAADAuthForOnlinePolicyStore);
 	}
 
 	hidden static [string] LoadExtensionFile([string] $svtClassName)
  {
+		[AzSKSettings] $AzSKSettingsInstance = [ConfigurationManager]::GetAzSKSettings()
 		$extensionSVTClassName = $svtClassName + "Ext";
 		$extensionFilePath = ""
 		#check for extension type only if we dont find the type already loaded in to the current session
@@ -90,10 +95,10 @@ class ConfigurationManager
 			}
 			#We are in org-policy debug mode, use local org policy folder to look for .ext.ps1 file
 			#Check if an ext file exists for this class...
-			elseif ([ConfigurationHelper]::IsPolicyPresentOnServer($extensionSVTClassFileName, [ConfigurationManager]::GetAzSKSettings().UseOnlinePolicyStore, [ConfigurationManager]::GetAzSKSettings().OnlinePolicyStoreUrl, [ConfigurationManager]::GetAzSKSettings().EnableAADAuthForOnlinePolicyStore))
+			elseif ([ConfigurationHelper]::IsPolicyPresentOnServer($extensionSVTClassFileName, $AzSKSettingsInstance.UseOnlinePolicyStore, $AzSKSettingsInstance.OnlinePolicyStoreUrl, $AzSKSettingsInstance.EnableAADAuthForOnlinePolicyStore))
 			{
 				Write-Warning "########## Looking for .ext.ps1 file locally..... ##########"
-				$expectedExtFolder = Join-Path ([ConfigurationManager]::GetAzSKSettings().OnlinePolicyStoreUrl) 'Config'
+				$expectedExtFolder = Join-Path ($AzSKSettingsInstance.OnlinePolicyStoreUrl) 'Config'
 				$expectedExtFile = Join-Path $expectedExtFolder $extensionSVTClassFileName
 
 				if (Test-Path $expectedExtFile)

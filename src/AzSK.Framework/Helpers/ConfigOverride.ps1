@@ -117,5 +117,8 @@ class ConfigOverride
 		[ContextHelper]::currentRMContext = $null
 		[ConfigurationHelper]::PolicyCacheContent = @{}
 		[ConfigurationHelper]::NotExtendedTypes = @{}
+		[FeatureFlightingManager]::FeatureStatusCache = @{}
+		[RemoteReportHelper]::AIOrgTelemetryState = [AIOrgTelemetryStatus]::Undefined
+		[RemoteReportHelper]::TelemetryKey = ""
 	}
 }
