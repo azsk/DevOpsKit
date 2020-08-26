@@ -518,12 +518,7 @@
         "Scope"
       ],
       "Enabled": true,     
-      "Rationale": "The regular / day to day use accounts are subject to a lot of credential theft attacks due to various activities that a user conducts using such accounts (e.g., browsing the web, clicking on email links, etc.). A user account that gets compromised (say via a phishing attack) immediately subjects the entire cloud subscription to risk if it is a member of critical roles in the subscription. Use of smartcard-backed alternate (SC-ALT) accounts instead protects the cloud subscriptions from this risk. Moreover, for complete protection, all sensitive access must be done using a secure admin workstation (SAW) and Azure Privileged Identity Management (PIM).",
-      "IsAttestationDriftExpected": true,
-            "OnAttestationDrift": {
-                "ApplyToVersionsUpto": "4.12.0",
-                "ActionOnAttestationDrift": "RespectExistingAttestationExpiryPeriod"
-            }
+      "Rationale": "The regular / day to day use accounts are subject to a lot of credential theft attacks due to various activities that a user conducts using such accounts (e.g., browsing the web, clicking on email links, etc.). A user account that gets compromised (say via a phishing attack) immediately subjects the entire cloud subscription to risk if it is a member of critical roles in the subscription. Use of smartcard-backed alternate (SC-ALT) accounts instead protects the cloud subscriptions from this risk. Moreover, for complete protection, all sensitive access must be done using a secure admin workstation (SAW) and Azure Privileged Identity Management (PIM)."
     },
     {
       "ControlID": "Azure_Subscription_Config_ASC_Security_Policy",
