@@ -1659,7 +1659,7 @@ class SubscriptionCore: AzSVTBase
 				$nonAltPIMAccounts = $AssignmentsForCriticalRoles | Where-Object{$_.ObjectType -eq 'User' -and $_.PrincipalName -notmatch $AltAccountRegX}
 				if(($nonAltPIMAccounts | Measure-Object).Count -gt 0)
 				{
-					$nonAltPIMAccountsWithRoles = $AssignmentsForCriticalRoles | Where-Object{$_.DisplayName -in $nonAltPIMAccounts.DisplayName} | Select-Object -Property "PrincipalName", "RoleDefinitionName","Scope","ObjectType","MemberType"
+					$nonAltPIMAccountsWithRoles = $AssignmentsForCriticalRoles | Where-Object{$_.DisplayName -in $nonAltPIMAccounts.DisplayName} | Select-Object -Property "PrincipalName", "RoleDefinitionName","Scope","ObjectType"
 					$controlResult.AddMessage([VerificationResult]::Failed, "Non alternate accounts are assigned critical roles")
 					$controlResult.AddMessage($($nonAltPIMAccountsWithRoles))
 					$controlResult.SetStateData("Non alternate accounts are assigned critical roles:", @($nonAltPIMAccountsWithRoles));
@@ -1900,19 +1900,12 @@ class SubscriptionCore: AzSVTBase
 											$tempRBExtendObject = [TelemetryRBACExtended]::new($item, $roleAssignment.subject.principalName)
 											$this.PIMAssignmentswithPName.Add($tempRBExtendObject);
 										}
-										#For active group assignments
-										elseif (-not [string]::IsNullOrEmpty($roleAssignment.linkedEligibleRoleAssignmentId) -and $roleAssignment.memberType -eq "Group" )
-										{
-											$item.IsPIMEnabled=$true;
-											$this.PIMAssignments.Add($item);
-											$tempRBExtendObject = [TelemetryRBACExtended]::new($item, $roleAssignment.subject.principalName)
-											$this.PIMAssignmentswithPName.Add($tempRBExtendObject);
-										}
-										#Note: PIM active assignemnts are not added explicitly since they appear in PIM eligible list as well
 									}
 								}
+								#Note: 
+								#1.PIM active assignemnts are not added explicitly to PIMAssignments since they appear in PIM eligible list as well
+								#2.Individuals who activated assignement via group also appear in the list, but they are not being added to PIMAssignements as it may cause discrepancy in control state in subsequent scans when assignment is no longer active
 						}
-						
 					}
 					$this.IsSubAssignmentFetched = $true
 				}
@@ -1994,17 +1987,10 @@ class SubscriptionCore: AzSVTBase
 											$tempRBExtendObject = [TelemetryRBACExtended]::new($item, $roleAssignment.subject.principalName)
 											$this.PIMRGLevelAssignmentswithPName.Add($tempRBExtendObject);
 										}
-										#For active PIM assignments
-										elseif (-not [string]::IsNullOrEmpty($roleAssignment.linkedEligibleRoleAssignmentId) -and $roleAssignment.memberType -eq "Group" )
-										{
-											$item.IsPIMEnabled=$true;
-											$this.RGLevelPIMAssignments.Add($item);
-											$tempRBExtendObject = [TelemetryRBACExtended]::new($item, $roleAssignment.subject.principalName)
-											$this.PIMRGLevelAssignmentswithPName.Add($tempRBExtendObject);
-										}
-										#Note: PIM active assignemnts are not added explicitly since they appear in PIM eligible list as well
 									}
 								}
+								#1.PIM active assignemnts are not added explicitly to PIMAssignments since they appear in PIM eligible list as well
+								#2.Individuals who activated assignement via group also appear in the list, but they are not being added to PIMAssignements as it may cause discrepancy in control state in subsequent scans when assignment is no longer active
 							}
 						}
 					}
