@@ -154,6 +154,14 @@
           "Project Collection Build Service (MicrosoftIT)"
         ]
       }
+    ],
+    "ExcludeFromSecretsCheck": [
+        "system.debug",
+        "BuildConfiguration",
+        "BuildPlatform",
+        "InputFeeds",
+        "Environment",
+        "SolutionName"
     ]
   },
   "Release": {
@@ -172,6 +180,17 @@
       "Pre-Production",
       "Prod",
       "Pre-Prod"
+    ],
+    "ExcludeFromSecretsCheck": [
+        "Domain",
+        "UserName",
+        "Build",
+        "AgentPath",
+        "BuildNumber",
+        "MachineGroup",
+        "Environment",
+        "System.debug",
+        "BuildConfiguration"
     ]
   },
   "AgentPool": {

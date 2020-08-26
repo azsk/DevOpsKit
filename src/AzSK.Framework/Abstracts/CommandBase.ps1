@@ -243,11 +243,9 @@ class CommandBase: AzSKRoot {
 	# <TODO Framework: Move to module helper class>
 	# Function to validate module version based on Org policy and showcase warning for update or block commands if version is less than last two minor version
     [void] CheckModuleVersion() {
-		 
-		$currentModuleVersion = [System.Version] $this.GetCurrentModuleVersion()
 		$serverVersion = [System.Version] ([ConfigurationManager]::GetAzSKConfigData().GetLatestAzSKVersion($this.GetModuleName()));
 		$currentModuleVersion = [System.Version] $this.GetCurrentModuleVersion() 
-        if($currentModuleVersion -ne "0.0.0.0" -and $serverVersion -gt $this.GetCurrentModuleVersion()) {
+        if($currentModuleVersion -ne "0.0.0.0" -and $currentModuleVersion -ne "1.0.0.0" -and $serverVersion -gt $currentModuleVersion) {
 			$this.RunningLatestPSModule = $false;
 			$this.InvokeAutoUpdate()
 			$this.PublishCustomMessage(([Constants]::VersionCheckMessage -f $serverVersion), [MessageType]::Warning);

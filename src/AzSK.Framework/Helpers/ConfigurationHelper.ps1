@@ -186,10 +186,11 @@ class ConfigurationHelper {
 		if ($policyFileName -match "ControlSettings.json")
 		{	
 			#Compile regex-s once upon load. The Env setting is just to compare perf during dev-test.
+			#This code will overwrite the text regex with compiled version. (At point of usage, no change is needed.)
 			if ((@($fileContent.Patterns)).Count -gt 0 -and -not $env:AzSKNoCompileRegex)
 			{
 				$iPat = 0
-				$rgxOpt = [Text.RegularExpressions.RegexOptions]::Compiled;
+				$rgxOpt = [Text.RegularExpressions.RegexOptions]::Compiled; #default: case-sensitive match!
 				$fileContent.Patterns | % {
 					$regExList = @($_.RegexList)
 					$iReg=0

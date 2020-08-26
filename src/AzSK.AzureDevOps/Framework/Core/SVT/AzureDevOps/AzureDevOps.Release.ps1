@@ -5,7 +5,8 @@ class Release: ADOSVTBase
     hidden [PSObject] $ReleaseObj;
     hidden [string] $ProjectId;
     hidden [string] $securityNamespaceId;
-
+    hidden static [PSObject] $SecurityNamespacesObj = $null;
+    hidden static [PSObject] $ReleaseVarNames = @{};
     
     Release([string] $subscriptionId, [SVTResource] $svtResource): Base($subscriptionId,$svtResource) 
     {
@@ -22,11 +23,12 @@ class Release: ADOSVTBase
             $this.ProjectId = [regex]::match($this.ReleaseObj.url.ToLower(), $pattern.ToLower()).Groups[1].Value
         }
         # Get security namespace identifier of current release pipeline.
-        $apiURL = "https://dev.azure.com/{0}/_apis/securitynamespaces?api-version=5.0" -f $($this.SubscriptionContext.SubscriptionName)
-        $securityNamespacesObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
-        $this.SecurityNamespaceId = ($securityNamespacesObj | Where-Object { ($_.Name -eq "ReleaseManagement") -and ($_.actions.name -contains "ViewReleaseDefinition")}).namespaceId
-
-        $securityNamespacesObj = $null;
+        if ([Release]::SecurityNamespacesObj -eq $null)
+        {
+            $apiURL = "https://dev.azure.com/{0}/_apis/securitynamespaces?api-version=5.0" -f $($this.SubscriptionContext.SubscriptionName)
+            [Release]::SecurityNamespacesObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
+        }
+        $this.SecurityNamespaceId = ( [Release]::SecurityNamespacesObj | Where-Object { ($_.Name -eq "ReleaseManagement") -and ($_.actions.name -contains "ViewReleaseDefinition")}).namespaceId
     }
 
     hidden [ControlResult] CheckCredInVariables([ControlResult] $controlResult)
@@ -92,20 +94,38 @@ class Release: ADOSVTBase
                     $varList = @();
                     $noOfCredFound = 0;     
                     $patterns = $this.ControlSettings.Patterns | where {$_.RegexCode -eq "SecretsInRelease"} | Select-Object -Property RegexList;
+                    $exclusions = $this.ControlSettings.Release.ExcludeFromSecretsCheck;
                     if(($patterns | Measure-Object).Count -gt 0)
                     {        
                         Get-Member -InputObject $this.ReleaseObj.variables -MemberType Properties | ForEach-Object {
-                        if([Helpers]::CheckMember($this.ReleaseObj.variables.$($_.Name),"value") -and  (-not [Helpers]::CheckMember($this.ReleaseObj.variables.$($_.Name),"isSecret")))
-                        {
-                           $propertyName = $_.Name
-                          for ($i = 0; $i -lt $patterns.RegexList.Count; $i++) {
-                            if ($this.ReleaseObj.variables.$($propertyName).value -match $patterns.RegexList[$i]) { 
-                                $noOfCredFound +=1
-                                $varList += "$propertyName ";   
-                                break  
+                            if([Helpers]::CheckMember($this.ReleaseObj.variables.$($_.Name),"value") -and  (-not [Helpers]::CheckMember($this.ReleaseObj.variables.$($_.Name),"isSecret")))
+                            {
+                                $releaseVarName = $_.Name
+                                $releaseVarValue = $this.ReleaseObj[0].variables.$releaseVarName.value 
+                                <# code to collect stats for var names
+                                    if ([Release]::ReleaseVarNames.Keys -contains $releaseVarName)
+                                    {
+                                            [Release]::ReleaseVarNames.$releaseVarName++
+                                    }
+                                    else 
+                                    {
+                                        [Release]::ReleaseVarNames.$releaseVarName = 1
+                                    }
+                                #>
+                                if ($exclusions -notcontains $releaseVarName)
+                                {
+                                    for ($i = 0; $i -lt $patterns.RegexList.Count; $i++) {
+                                        #Note: We are using '-cmatch' here. 
+                                        #When we compile the regex, we don't specify ignoreCase flag.
+                                        #If regex is in text form, the match will be case-sensitive.
+                                        if ($releaseVarValue -cmatch $patterns.RegexList[$i]) { 
+                                            $noOfCredFound +=1
+                                            $varList += " $releaseVarName";   
+                                            break;  
+                                        }
+                                    }
                                 }
-                            }
-                        } 
+                            } 
                         }
                         if($noOfCredFound -gt 0)
                         {
