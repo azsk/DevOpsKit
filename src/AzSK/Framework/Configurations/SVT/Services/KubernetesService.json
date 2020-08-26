@@ -31,7 +31,7 @@
       "Automated": "Yes",
       "MethodName": "CheckAADEnabled",
       "Rationale": "Using the native enterprise directory for authentication ensures that there is a built-in high level of assurance in the user identity established for subsequent access control.All Enterprise subscriptions are automatically associated with their enterprise directory (xxx.onmicrosoft.com) and users in the native directory are trusted for authentication to enterprise subscriptions.",
-      "Recommendation": "Refer: https://docs.microsoft.com/en-us/azure/aks/aad-integration to configure AAD in Kubernetes Service.",
+      "Recommendation": "Go to Azure Portal --> Kubernetes Services --> Select Kubernetes Cluster --> Settings --> Configuration --> AKS-managed Azure Active Directory --> Enabled. For more details refer: https://docs.microsoft.com/en-us/azure/aks/managed-aad",
       "Tags": [
         "SDL",
         "Best Practice",
@@ -213,7 +213,7 @@
       "Automated": "Yes",
       "MethodName": "CheckMonitoringConfiguration",
       "Rationale": "Auditing enables log collection of important system events pertinent to security. Regular monitoring of audit logs can help to detect any suspicious and malicious activity early and respond in a timely manner.",
-      "Recommendation": "Refer: https://docs.microsoft.com/en-us/azure/azure-monitor/insights/container-insights-overview.",
+      "Recommendation": "Refer: https://docs.microsoft.com/en-us/azure/azure-monitor/insights/container-insights-enable-existing-clusters",
       "Tags": [
         "SDL",
         "TCP",
