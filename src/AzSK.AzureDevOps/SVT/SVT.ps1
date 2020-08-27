@@ -30,7 +30,6 @@ function Get-AzSKADOSecurityStatus
 	https://aka.ms/azskossdocs 
 
 	#>
-
 	[OutputType([String])]
 	[Alias("Get-AzSKAzureDevOpsSecurityStatus")]
 	Param
@@ -45,32 +44,31 @@ function Get-AzSKADOSecurityStatus
 		[string]
 		[Parameter( HelpMessage="Project names for which the security evaluation has to be performed.")]
 		[ValidateNotNullOrEmpty()]
-		[Alias("pn")]
+		[Alias("pns", "ProjectName", "pn")]
 		$ProjectNames,
 
 		[string]
 		[Parameter(HelpMessage="Build names for which the security evaluation has to be performed.")]
 		[ValidateNotNullOrEmpty()]
-		[Alias("bn")]
+		[Alias("bns", "BuildName","bn")]
 		$BuildNames,
 
 		[string]
 		[Parameter(HelpMessage="Release names for which the security evaluation has to be performed.")]
 		[ValidateNotNullOrEmpty()]
-		[Alias("rn")]
+		[Alias("rns", "ReleaseName","rn")]
 		$ReleaseNames,
 
 		[string]
 		[Parameter(HelpMessage="Agent Pool names for which the security evaluation has to be performed.")]
 		[ValidateNotNullOrEmpty()]
-		[Alias("ap")]
+		[Alias("ans", "AgentPoolName","an")]
 		$AgentPoolNames,
 
-		
 		[string]
 		[Parameter(HelpMessage="Service connection names for which the security evaluation has to be performed.")]
 		[ValidateNotNullOrEmpty()]
-		[Alias("sc")]
+		[Alias("sc", "ServiceConnectionName", "scs")]
 		$ServiceConnectionNames,
 
 		[switch]
@@ -107,9 +105,14 @@ function Get-AzSKADOSecurityStatus
 		$MaxObj = 0,
 
 		[System.Security.SecureString]
-		[Parameter(HelpMessage="Token to run scan in non-interactive mode")]
+		[Parameter(Mandatory = $false, HelpMessage="Token to run scan in non-interactive mode")]
 		[Alias("tk")]
 		$PATToken,
+
+		[switch]
+		[Parameter(Mandatory = $false, HelpMessage = "Switch to run scan using personal access token (PAT).")]
+		[Alias("upat")]
+		$UsePAT,
 
 		[ResourceTypeName]
 		[Alias("rtn")]
@@ -192,29 +195,43 @@ function Get-AzSKADOSecurityStatus
 	{
 	try 
 		{
-				$resolver = [SVTResourceResolver]::new($OrganizationName,$ProjectNames,$BuildNames,$ReleaseNames,$AgentPoolNames, $ServiceConnectionNames, $MaxObj, $ScanAllArtifacts, $PATToken,$ResourceTypeName, $AllowLongRunningScan);
-			    $secStatus = [ServicesSecurityStatus]::new($OrganizationName, $PSCmdlet.MyInvocation, $resolver);
-			    if ($secStatus) 
-			    {	
-					if ($null -ne $secStatus.Resolver.SVTResources) {
+			if($UsePAT -eq $true)
+			{
+				if($null -ne $PATToken)
+				{	
+					Write-Host "Parameters '-UsePAT' and '-PATToken' can not be used simultaneously in the scan command." -ForegroundColor Red
+					return;
+				}
+				else 
+				{
+					$PATToken = Read-Host "Provide PAT for [$OrganizationName] org:" -AsSecureString	
+				}
+			
+			}
+			$resolver = [SVTResourceResolver]::new($OrganizationName,$ProjectNames,$BuildNames,$ReleaseNames,$AgentPoolNames, $ServiceConnectionNames, $MaxObj, $ScanAllArtifacts, $PATToken,$ResourceTypeName, $AllowLongRunningScan);
+			$secStatus = [ServicesSecurityStatus]::new($OrganizationName, $PSCmdlet.MyInvocation, $resolver);
+			if($secStatus) 
+			{	
+				if($null -ne $secStatus.Resolver.SVTResources)
+				{
 							
-						$secStatus.ControlIdString = $ControlIds;
-						$secStatus.Severity = $Severity;
-						$secStatus.UseBaselineControls = $UseBaselineControls;
-						$secStatus.UsePreviewBaselineControls = $UsePreviewBaselineControls;
+					$secStatus.ControlIdString = $ControlIds;
+					$secStatus.Severity = $Severity;
+					$secStatus.UseBaselineControls = $UseBaselineControls;
+					$secStatus.UsePreviewBaselineControls = $UsePreviewBaselineControls;
 
-						#build the attestation options object
-						[AttestationOptions] $attestationOptions = [AttestationOptions]::new();
-						$attestationOptions.AttestControls = $ControlsToAttest				
-						$attestationOptions.JustificationText = $JustificationText
-						$attestationOptions.AttestationStatus = $AttestationStatus
-						$attestationOptions.IsBulkClearModeOn = $BulkClear
-						$attestationOptions.IsExemptModeOn = $AddException
-						$secStatus.AttestationOptions = $attestationOptions;	
+					#build the attestation options object
+					[AttestationOptions] $attestationOptions = [AttestationOptions]::new();
+					$attestationOptions.AttestControls = $ControlsToAttest				
+					$attestationOptions.JustificationText = $JustificationText
+					$attestationOptions.AttestationStatus = $AttestationStatus
+					$attestationOptions.IsBulkClearModeOn = $BulkClear
+					$attestationOptions.IsExemptModeOn = $AddException
+					$secStatus.AttestationOptions = $attestationOptions;	
 
-						return $secStatus.EvaluateControlStatus();
-					}
-			    }    
+					return $secStatus.EvaluateControlStatus();
+				}
+			}    
 		}
 		catch 
 		{
