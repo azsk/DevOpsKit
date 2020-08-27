@@ -195,6 +195,7 @@ class SVTResourceResolver: AzSKRoot {
                 foreach ($thisProj in $projects) 
                 {
                     $projectName = $thisProj.name
+                    $projectId = $thisProj.id;
                     if ($this.ResourceTypeName -in ([ResourceTypeName]::Project, [ResourceTypeName]::All, [ResourceTypeName]::Org_Project_User)) 
                     {
                         $link = $thisProj.url.Replace('/_apis/projects', '') + '/_settings/'
@@ -341,7 +342,7 @@ class SVTResourceResolver: AzSKRoot {
                             $nObj = $this.MaxObjectsToScan
                             foreach ($connectionObject in $Connections) {
                                 $resourceId = "Organization/$($this.organizationName)/Project/$projectName/$($connectionObject.Name)/$($connectionObject.Id)";
-                                $link = "https://dev.azure.com/$($this.organizationName)/$projectName/_settings/adminservices?resourceId=$($connectionObject.Id)"; 
+                                $link = "https://dev.azure.com/$($this.organizationName)/$projectId/_settings/adminservices?resourceId=$($connectionObject.Id)"; 
                                 $this.CreateSVTResource($connectionObject.name, $projectName, "AzureDevOps.ServiceConnection", $resourceId, $connectionObject, $link);
                                 
                                 if (--$nObj -eq 0) { break; }

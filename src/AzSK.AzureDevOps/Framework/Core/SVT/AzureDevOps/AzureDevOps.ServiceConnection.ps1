@@ -11,11 +11,7 @@ class ServiceConnection: ADOSVTBase
     ServiceConnection([string] $subscriptionId, [SVTResource] $svtResource): Base($subscriptionId,$svtResource)
     {
         # Get project id 
-        $apiURL = "https://dev.azure.com/{0}/_apis/projects/{1}?api-version=5.0" -f $($this.SubscriptionContext.SubscriptionName), $($this.ResourceContext.ResourceGroupName);
-        $projectObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
-        $this.ProjectId = $projectObj.id
-
-        $projectObj = $null;
+        $this.ProjectId = ($this.ResourceContext.ResourceDetails.ResourceLink -split $this.SubscriptionContext.SubscriptionName)[1].split("/")[1];
 
         # Get security namespace identifier of service endpoints.
         $apiURL = "https://dev.azure.com/{0}/_apis/securitynamespaces?api-version=5.0" -f $($this.SubscriptionContext.SubscriptionName)
