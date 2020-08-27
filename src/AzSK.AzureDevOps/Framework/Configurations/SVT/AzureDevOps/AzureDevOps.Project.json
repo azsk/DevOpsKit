@@ -124,7 +124,7 @@
     },
     {
       "ControlID": "AzureDevOps_Project_AuthZ_Limit_Pipeline_Access_To_Referenced_Repos",
-      "Description": "DLimit scope of access for pipelines to explicitly referenced Azure DevOps repositories.",
+      "Description": "Limit scope of access for pipelines to explicitly referenced Azure DevOps repositories.",
       "Id": "Project162",
       "ControlSeverity": "Medium",
       "Automated": "Yes",
