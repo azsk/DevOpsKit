@@ -61,7 +61,7 @@ class ControlsInfo: CommandBase
 
 		if (-not [string]::IsNullOrEmpty($this.ResourceType)) 
 		{
-			$resourcetypes += ([SVTMapping]::Mapping |
+			$resourcetypes += ([SVTMapping]::AzSKADOResourceMapping |
 					Where-Object { $_.ResourceType -eq $this.ResourceType } | Select-Object JsonFileName)
 		}
 		elseif($this.ResourceTypeName -ne [ResourceTypeName]::All)
@@ -71,7 +71,6 @@ class ControlsInfo: CommandBase
 		}
 		else
 		{
-			#AzSK:SubCore $resourcetypes += ([SVTMapping]::SubscriptionMapping | Select-Object JsonFileName)
 			$resourcetypes += ([SVTMapping]::AzSKADOResourceMapping | Sort-Object ResourceTypeName | Select-Object JsonFileName )
 		}
 

@@ -74,13 +74,13 @@ Repair-AzSKSubscriptionSecurity `
 				$mapping = $null;
 				if($eventContext.IsResource())
 				{
-					$mapping = ([SVTMapping]::Mapping | 
+					$mapping = ([SVTMapping]::AzSKADOResourceMapping | 
 								Where-Object { $_.ResourceTypeName -eq $eventContext.ResourceContext.ResourceTypeName } | 
 								Select-Object -First 1);
 				}
 				else
 				{
-					$mapping = [SVTMapping]::SubscriptionMapping;
+					Write-Host -ForegroundColor Yellow "Unexpected resource type."
 				}
 				
 				if($mapping -and (-not [string]::IsNullOrWhiteSpace($mapping.FixFileName)) -and (-not [string]::IsNullOrWhiteSpace($mapping.FixClassName)))

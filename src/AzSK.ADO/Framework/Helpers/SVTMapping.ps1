@@ -16,7 +16,7 @@ class SVTMapping
 	{
 		if($null -eq [SVTMapping]::SupportedResourceMap){
 			$supportedMap = @{}
-			foreach($map in [SVTMapping]::Mapping){
+			foreach($map in [SVTMapping]::AzSKADOResourceMapping){
 				if([string]::IsNullOrWhiteSpace($map.ResourceType) -or [string]::IsNullOrWhiteSpace($map.ResourceTypeName)){
 					continue;
 				}
@@ -27,15 +27,6 @@ class SVTMapping
 		}
 		return [SVTMapping]::SupportedResourceMap
 	}
-
-    static [ResourceTypeMapping[]] $Mapping = (
-		[ResourceTypeMapping]@{
-            ResourceType = "ADO.Organization";
-            JsonFileName = "ADO.Organization.json";
-            ClassName = "Organization";
-            ResourceTypeName = "Organization";            
-        }
-    );
 
     static [ResourceTypeMapping[]] $AzSKADOResourceMapping = (
 		[ResourceTypeMapping]@{
@@ -81,13 +72,6 @@ class SVTMapping
 			ResourceTypeName = "AgentPool";
         }
 	)
-	
-	static [SubscriptionMapping] $SubscriptionMapping =	@{
-		ClassName = "SubscriptionCore";
-        JsonFileName = "SubscriptionCore.json";
-		FixClassName = "SubscriptionCoreFix";
-		FixFileName = "SubscriptionCoreFix.ps1";
-	};
 }
 
 Invoke-Expression "enum ResourceTypeName { `r`n All `r`n $([SVTMapping]::GetResourceTypeEnumItems())`r`n Org_Project_User `r`n Build_Release `r`n Build_Release_SvcConn_AgentPool_User `r`n}";

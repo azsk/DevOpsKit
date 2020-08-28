@@ -16,8 +16,8 @@ class ADOSVTBase: SVTBase {
 	#Create instance for organization scan 
 	hidden [void] CreateInstance() {
 		[Helpers]::AbstractClass($this, [SVTBase]);
- 
-		$this.LoadSvtConfig([SVTMapping]::SubscriptionMapping.JsonFileName);
+		Write-Host -ForegroundColor Yellow "No mapping!? Do we use this .ctor?"
+		#$this.LoadSvtConfig([SVTMapping]::SubscriptionMapping.JsonFileName);
 		$this.ResourceId = $this.SubscriptionContext.Scope;	
 	}
    
