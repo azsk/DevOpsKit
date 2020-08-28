@@ -22,7 +22,7 @@ class ContextHelper {
         {
             $clientId = [Constants]::DefaultClientId ;          
             $replyUri = [Constants]::DefaultReplyUri; 
-            $azureDevOpsResourceId = [Constants]::DefaultAzureDevOpsResourceId;
+            $adoResourceId = [Constants]::DefaultADOResourceId;
             [AuthenticationContext] $ctx = $null;
 
             $ctx = [AuthenticationContext]::new("https://login.windows.net/common");
@@ -34,18 +34,18 @@ class ContextHelper {
                 if ($azSKUI.Value -eq 1) {
                     $PromptBehavior = [Microsoft.IdentityModel.Clients.ActiveDirectory.PromptBehavior]::Always 
                     $PlatformParameters = New-Object Microsoft.IdentityModel.Clients.ActiveDirectory.PlatformParameters -ArgumentList $PromptBehavior 
-                    $result = $ctx.AcquireTokenAsync($azureDevOpsResourceId, $clientId, [Uri]::new($replyUri),$PlatformParameters).Result;
+                    $result = $ctx.AcquireTokenAsync($adoResourceId, $clientId, [Uri]::new($replyUri),$PlatformParameters).Result;
                 }
                 else {
                     $PromptBehavior = [Microsoft.IdentityModel.Clients.ActiveDirectory.PromptBehavior]::Auto 
                     $PlatformParameters = New-Object Microsoft.IdentityModel.Clients.ActiveDirectory.PlatformParameters -ArgumentList $PromptBehavior 
-                    $result = $ctx.AcquireTokenAsync($azureDevOpsResourceId, $clientId, [Uri]::new($replyUri),$PlatformParameters).Result;
+                    $result = $ctx.AcquireTokenAsync($adoResourceId, $clientId, [Uri]::new($replyUri),$PlatformParameters).Result;
                 }
             }
             else {
                 $PromptBehavior = [Microsoft.IdentityModel.Clients.ActiveDirectory.PromptBehavior]::Auto 
                 $PlatformParameters = New-Object Microsoft.IdentityModel.Clients.ActiveDirectory.PlatformParameters -ArgumentList $PromptBehavior 
-                $result = $ctx.AcquireTokenAsync($azureDevOpsResourceId, $clientId, [Uri]::new($replyUri),$PlatformParameters).Result;
+                $result = $ctx.AcquireTokenAsync($adoResourceId, $clientId, [Uri]::new($replyUri),$PlatformParameters).Result;
             }
 
             [ContextHelper]::ConvertToContextObject($result)

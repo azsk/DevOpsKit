@@ -1,37 +1,25 @@
 {
     "MaintenanceMessage":  "WARNING: We are making some improvements to the {0} module. It is currently unavailable but will be back in action soon.",
-    "AzSKRGName":  "AzSKRG",
     "AzSKRepoURL":  "https://www.poshtestgallery.com/",
-    "CASetupRunbookURL":  "https://azsdkossepstaging.azureedge.net/1.0.0/RunbookCoreSetup.ps1",
     "PublicPSGalleryUrl":  "https://www.powershellgallery.com",
-    "SubscriptionMandatoryTags":  [
-                                      "Mandatory"
-                                  ],
     "DefaultControlExculdeTags":  [
                                       "Information"
                                   ],
     "DefaultControlFiltersTags":  [
 
                                   ],
-    "ERvNetResourceGroupNames":  "",
     "AzSKApiBaseURL":  "",
     "PublishVulnDataToApi":  false,
     "ControlTelemetryKey":  "00000000-0000-0000-0000-000000000000",
     "EnableControlTelemetry":  false,
-    "PolicyMessage":  "Running AzSK.AzureDevOps cmdlet...",
-    "UpdateCompatibleCCVersion":  "1.0.0",
-    "AzSKCAMinReqdRunbookVersion":  "2.1709.0",
-    "AzSKAlertsMinReqdVersion":  "2.1709.0",
-    "AzSKARMPolMinReqdVersion":  "2.1709.0",
-    "AzSKASCMinReqdVersion":  "2.1709.0",
-    "InstallationCommand":  "Install-Module -Name AzSKStaging.AzureDevOps -Repository AzSKStaging.AzureDevOps -Scope CurrentUser -AllowClobber -Force",
+    "PolicyMessage":  "Running AzSK.ADO cmdlet...",
+    "InstallationCommand":  "Install-Module -Name AzSKStaging.ADO -Repository AzSKStaging.ADO -Scope CurrentUser -AllowClobber -Force",
     "OutputFolderPath":  "",
     "BackwardCompatibleVersionCount":  2,
-    "AzSKCARunbookVersion":  "3.1803.0",
+
     "ConfigSchemaBaseVersion":  "1.0.0",
-    "RunbookScanAgentBaseVersion":  "1.0.0",
     "AllowSelfSignedWebhookCertificate":  false,
-    "CAScanIntervalInHours":  24,
+
     "EnableDevOpsKitSetupCheck":  false,
     "AzSKLocation":  "eastus2",
     "PrivacyAcceptedSources":  [
@@ -40,10 +28,6 @@
     "UpdateToLatestVersion":  false,
     "AzSKConfigURL":  "",
     "IsAlertMonitoringEnabled":  false,
-    "SupportDL":  "azskadosup@microsoft.com",
-    "PolicyOrgName":  "org-neutral",
-    "StoreComplianceSummaryInUserSubscriptions":  false,
-    "SchemaTemplateURL":  "https://azsdkossep.azureedge.net/schemas/3.1803.0/",
-    "AzSKInitiativeName":  "AzSKInitiative-Preview",
-    "EnableAzurePolicyBasedScan":  false
+    "SupportDL":  "AzSKADOSup@microsoft.com",
+    "PolicyOrgName":  "org-neutral"
 }

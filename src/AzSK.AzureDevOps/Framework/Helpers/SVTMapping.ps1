@@ -6,7 +6,7 @@ class SVTMapping
 
 	static [string] GetResourceTypeEnumItems()
 	{
-		return ([SVTMapping]::AzSKDevOpsResourceMapping |
+		return ([SVTMapping]::AzSKADOResourceMapping |
 					Where-Object { -not [string]::IsNullOrEmpty($_.ResourceTypeName) } |
 					ForEach-Object { "$($_.ResourceTypeName.Replace(' ', '')) `r`n" } |
 					Sort-Object);
@@ -30,54 +30,54 @@ class SVTMapping
 
     static [ResourceTypeMapping[]] $Mapping = (
 		[ResourceTypeMapping]@{
-            ResourceType = "AzureDevOps.Organization";
-            JsonFileName = "AzureDevOps.Organization.json";
+            ResourceType = "ADO.Organization";
+            JsonFileName = "ADO.Organization.json";
             ClassName = "Organization";
             ResourceTypeName = "Organization";            
         }
     );
 
-    static [ResourceTypeMapping[]] $AzSKDevOpsResourceMapping = (
+    static [ResourceTypeMapping[]] $AzSKADOResourceMapping = (
 		[ResourceTypeMapping]@{
-            ResourceType = "AzureDevOps.Organization";
-            JsonFileName = "AzureDevOps.Organization.json";
+            ResourceType = "ADO.Organization";
+            JsonFileName = "ADO.Organization.json";
             ClassName = "Organization";
             ResourceTypeName = "Organization";            
         },
         [ResourceTypeMapping]@{
-            ResourceType = "AzureDevOps.Project";
+            ResourceType = "ADO.Project";
 			ClassName = "Project";
-			JsonFileName = "AzureDevOps.Project.json";
+			JsonFileName = "ADO.Project.json";
 			ResourceTypeName = "Project";
         },
         [ResourceTypeMapping]@{
-            ResourceType = "AzureDevOps.User";
+            ResourceType = "ADO.User";
 			ClassName = "User";
-			JsonFileName = "AzureDevOps.User.json";
+			JsonFileName = "ADO.User.json";
 			ResourceTypeName = "User";
         },
         [ResourceTypeMapping]@{
-            ResourceType = "AzureDevOps.Build";
+            ResourceType = "ADO.Build";
 			ClassName = "Build";
-			JsonFileName = "AzureDevOps.Build.json";
+			JsonFileName = "ADO.Build.json";
 			ResourceTypeName = "Build";
         },
         [ResourceTypeMapping]@{
-            ResourceType = "AzureDevOps.Release";
+            ResourceType = "ADO.Release";
 			ClassName = "Release";
-			JsonFileName = "AzureDevOps.Release.json";
+			JsonFileName = "ADO.Release.json";
 			ResourceTypeName = "Release";
         },
         [ResourceTypeMapping]@{
-            ResourceType = "AzureDevOps.ServiceConnection";
+            ResourceType = "ADO.ServiceConnection";
 			ClassName = "ServiceConnection";
-			JsonFileName = "AzureDevOps.ServiceConnection.json";
+			JsonFileName = "ADO.ServiceConnection.json";
 			ResourceTypeName = "ServiceConnection";
         },
         [ResourceTypeMapping]@{
-            ResourceType = "AzureDevOps.AgentPool";
+            ResourceType = "ADO.AgentPool";
 			ClassName = "AgentPool";
-			JsonFileName = "AzureDevOps.AgentPool.json";
+			JsonFileName = "ADO.AgentPool.json";
 			ResourceTypeName = "AgentPool";
         }
 	)

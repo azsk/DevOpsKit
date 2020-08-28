@@ -4,10 +4,10 @@ function Get-AzSKADOInfo
 	
 	<#
 	.SYNOPSIS
-	This command would help users to get details of various components of AzSK.AzureDevOps.
+	This command would help users to get details of various components of AzSK.ADO.
 	
 	.DESCRIPTION
-	This command will fetch details of AzSK.AzureDevOps components and help user to provide details of different component using single command. Refer https://aka.ms/adoscanner/docs for more information 
+	This command will fetch details of AzSK.ADO components and help user to provide details of different component using single command. Refer https://aka.ms/adoscanner/docs for more information 
 	
 	.PARAMETER InfoType
 		InfoType for which type of information required by user.
@@ -18,7 +18,7 @@ function Get-AzSKADOInfo
 	.PARAMETER UseBaselineControls
 		This switch would scan only for baseline controls defined at org level
 	.PARAMETER ControlIds
-		Comma-separated control ids to filter the security controls. e.g.: AzureDevOps_Release_AuthZ_Disable_Inherited_Permissions, AzureDevOps_ServiceConnection_AuthZ_Dont_Grant_All_Pipelines_Access
+		Comma-separated control ids to filter the security controls. e.g.: ADO_Release_AuthZ_Disable_Inherited_Permissions, ADO_ServiceConnection_AuthZ_Dont_Grant_All_Pipelines_Access
 	.PARAMETER ControlSeverity
 		Select one of the control severity (Critical, High, Low, Medium)
 	.PARAMETER ControlIdContains

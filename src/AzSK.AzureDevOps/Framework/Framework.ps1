@@ -123,7 +123,7 @@ $FrameworkPath =  ((Get-Item $PSScriptRoot).Parent.Parent).FullName +"\AzSK.Fram
 
 #Core
 
-(Get-ChildItem -Path "$PSScriptRoot\Core\SVT\AzureDevOps\" -Recurse -File) |
+(Get-ChildItem -Path "$PSScriptRoot\Core\SVT\ADO\" -Recurse -File) |
     ForEach-Object {
     . $_.FullName
 }

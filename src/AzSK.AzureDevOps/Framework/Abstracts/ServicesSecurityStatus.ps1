@@ -308,9 +308,9 @@ class ServicesSecurityStatus: ADOSVTCommandBase
 		foreach ($items in $this.Resolver.SVTResources) {
 			$resourceType = $null;
 			$projectName = $null;
-			if ($items.ResourceType -ne "AzureDevOps.Organization") {
+			if ($items.ResourceType -ne "ADO.Organization") {
 				
-				if ($items.ResourceType -eq "AzureDevOps.Project") {
+				if ($items.ResourceType -eq "ADO.Project") {
 					$projectName = $items.ResourceName
 					$resourceType = "Project";
 				}

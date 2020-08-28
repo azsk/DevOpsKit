@@ -12,7 +12,7 @@ class Constants
 "        a) If the control has passed, no action is necessary.`r`n" +
 "        b) If the control has failed, look at the control evaluation detail in the LOG file to understand why.`r`n" +
 "        c) If the control status says 'Verify', it means that human judgement is required to determine the final control status. Look at the control evaluation output in the LOG file to make a determination.`r`n" +
-"        d) If the control status says 'Manual', it means that AzSK.AzureDevOps (currently) does not cover the control via automation OR AzSK.AzureDevOps is not able to fetch the data. You need to manually implement/verify it.`r`n" +
+"        d) If the control status says 'Manual', it means that AzSK.ADO (currently) does not cover the control via automation OR AzSK.ADO is not able to fetch the data. You need to manually implement/verify it.`r`n" +
 "`r`nNote: The 'Recommendation' column in the CSV file provides basic (generic) guidance that can help you fix a failed control. You can also use standard Azure product documentation. You should carefully consider the implications of making the required change in the context of your application. `r`n"
 
 	static [string] $BugLogMsg="** Bugs have been logged as per below: ** `r`n"+
@@ -28,38 +28,36 @@ class Constants
 "        c) If the control status says 'Skipped', it means that you have chosen to skip certain controls using the '-SkipControlsFromFile' parameter.`r`n" 
 
 
-	static [string] $DefaultInfoCmdMsg = "This command provides overall information about different components of the AzSK which includes subscription information, security controls information, attestation information, host information. 'Get-AzSKInfo' command can be used with 'InfoType' parameter to fetch information.`r`n" + 
-					"`r`nFollowing InfoType parameter values are currently supported by Get-AzSKInfo cmdlet.`r`n" +
+	static [string] $DefaultInfoCmdMsg = "This command provides overall information about different components of the AzSK which includes subscription information, security controls information, attestation information, host information. 'Get-AzSKADOInfo' command can be used with 'InfoType' parameter to fetch information.`r`n" + 
+					"`r`nFollowing InfoType parameter values are currently supported by Get-AzSKADOInfo cmdlet.`r`n" +
 					"`tSubscriptionInfo : To get version details about different component of AzSK configured in Subscription.`r`n" +
 					"`tControlInfo      : To get baseline, severity, description, rationale etc information about security controls.`r`n" +
 					"`tAttestationInfo  : To get statistics, attestation justification, expiry etc information about controls attestation.`r`n" +
 					"`tHostInfo         : To get information about machine details.`r`n" +
 					"`r`n`r`nExamples:`r`n" +
-					"`tGet-AzSKInfo -InfoType SubscriptionInfo -SubscriptionId <YourSubscriptionId> `r`n" +
-					"`tGet-AzSKInfo -InfoType ControlInfo -ResourceTypeName All -UseBaselineControls `r`n" +
-					"`tGet-AzSKInfo -InfoType AttestationInfo -SubscriptionId <YourSubscriptionId> -ResourceTypeName All -UseBaselineControls `r`n" +
-					"`tGet-AzSKInfo -InfoType HostInfo `r`n";
+					"`tGet-AzSKADOInfo -InfoType SubscriptionInfo -SubscriptionId <YourSubscriptionId> `r`n" +
+					"`tGet-AzSKADOInfo -InfoType ControlInfo -ResourceTypeName All -UseBaselineControls `r`n" +
+					"`tGet-AzSKADOInfo -InfoType AttestationInfo -SubscriptionId <YourSubscriptionId> -ResourceTypeName All -UseBaselineControls `r`n" +
+					"`tGet-AzSKADOInfo -InfoType HostInfo `r`n";
 
-	static [string] $DefaultControlInfoCmdMsg = "Run 'Get-AzSKInfo' command with below combination of parameter to get information about Azure services security control(s).`r`n`r`n" + 
-					"   All controls                          : Get-AzSKInfo -InfoType ControlInfo `r`n" +
-					"   Baseline controls information         : Get-AzSKInfo -InfoType ControlInfo -UseBaselineControls `r`n" +
-					"   Controls for specific resource type   : Get-AzSKInfo -InfoType ControlInfo -ResourceTypeName AppService `r`n" +
-					"   Controls with specific severity       : Get-AzSKInfo -InfoType ControlInfo -ControlSeverity 'High' `r`n" +
-					"   Controls with specific tag(s)         : Get-AzSKInfo -InfoType ControlInfo -FilterTags 'Automated, FunctionApp' `r`n" +
-					"   Controls with specific keyword        : Get-AzSKInfo -InfoType ControlInfo -ControlIdContains 'AppService_AuthZ_' `r`n" +
-					"   Control(s) with specific controlId(s) : Get-AzSKInfo -InfoType ControlInfo -ResourceTypeName AppService -ControlIds 'Azure_AppService_AuthZ_Grant_Min_RBAC_Access, Azure_AppService_DP_Use_CNAME_With_SSL'  `r`n" +
+	static [string] $DefaultControlInfoCmdMsg = "Run 'Get-AzSKADOInfo' command with below combination of parameter to get information about Azure services security control(s).`r`n`r`n" + 
+					"   All controls                          : Get-AzSKADOInfo -InfoType ControlInfo `r`n" +
+					"   Baseline controls information         : Get-AzSKADOInfo -InfoType ControlInfo -UseBaselineControls `r`n" +
+					"   Controls for specific resource type   : Get-AzSKADOInfo -InfoType ControlInfo -ResourceTypeName AppService `r`n" +
+					"   Controls with specific severity       : Get-AzSKADOInfo -InfoType ControlInfo -ControlSeverity 'High' `r`n" +
+					"   Controls with specific tag(s)         : Get-AzSKADOInfo -InfoType ControlInfo -FilterTags 'Automated, FunctionApp' `r`n" +
+					"   Controls with specific keyword        : Get-AzSKADOInfo -InfoType ControlInfo -ControlIdContains 'AppService_AuthZ_' `r`n" +
+					"   Control(s) with specific controlId(s) : Get-AzSKADOInfo -InfoType ControlInfo -ResourceTypeName AppService -ControlIds 'Azure_AppService_AuthZ_Grant_Min_RBAC_Access, Azure_AppService_DP_Use_CNAME_With_SSL'  `r`n" +
 					"   Get information on PS console         : Use any of above command with additional -Verbose argument`r`n";
 
     static [string] $OfflineModeWarning = "Running in offline policy mode. Commands will run against local JSON files!"
 	#Constants for AzSKConfig
-	static [string] $RunbookName = "Continuous_Assurance_Runbook"
-	static [string] $ScheduleName = "CA_Scan_Schedule"
-	static [string] $connectionAssetName = "AzureRunAsConnection"
 	static [string] $AzSKADORGName = "ADOScannerRG"
 	static [string] $AzSKADORGLocation = "eastus2"
-	static [string] $SupportDL = "azsksupext@microsoft.com"
-	static [string] $CICDShortLink = "https://aka.ms/devopskit/cicd"
 
+	static [string] $SupportDL = "AzSKADOSup@microsoft.com"
+
+	
 	#Constants for SVTs
 	static [string] $ParentFolder = "Org_"
     static [string] $ModuleStartHeading = [Constants]::DoubleDashLine +
@@ -101,12 +99,12 @@ class Constants
 
 	static [string] $AttRepoStorageUri = "https://dev.azure.com/{0}/{1}/_apis/git/repositories/{2}/pushes?api-version=5.0" 
 	static [string] $GetAttRepoStorageUri = "https://{0}.visualstudio.com/{1}/_apis/git/repositories/{2}/Items?path=%2F{3}&recursionLevel=0&includeContentMetadata=true&versionDescriptor.version={4}&versionDescriptor.versionOptions=0&versionDescriptor.versionType=0&includeContent=true&resolveLfs=true?api-version=4.1-preview.1" 
-	static [string] $AutoUpdateMessage = "Auto-update for AzSK.AzureDevOps is currently not enabled for your machine."
+	static [string] $AutoUpdateMessage = "Auto-update for AzSK.ADO is currently not enabled for your machine."
 	static [string] $AttestationRepo = "ADOScanner_Attestation"; 
 	static [string] $AttestationBranch = "master"; 
 	static [string] $OrgPolicyRepo = "ADOScanner_Policy_"; 
 	static [string] $OrgAttPrjExtFile = "Org_Config";
-	static [string] $ModuleAutoUpdateAvailableMsg = "A new version of AzSK.AzureDevOps is available. Starting the auto-update workflow...`nTo prepare for auto-update, please:`n`t a) Save your work from all active PS sessions including the current one and`n`t b) Close all PS sessions other than the current one. "; 
+	static [string] $ModuleAutoUpdateAvailableMsg = "A new version of AzSK.ADO is available. Starting the auto-update workflow...`nTo prepare for auto-update, please:`n`t a) Save your work from all active PS sessions including the current one and`n`t b) Close all PS sessions other than the current one. "; 
 
 	static [string] $AttestedControlsScanMsg = "You are almost done...we will perform a quick scan of controls attested within the last 24 hrs so that the backend will get the latest control status."
 	static [string] $LongRunningScanStopMsg = "`nThe set of parameters provided would result in scanning a large number of objects (> {0}). `nIf this is not what you intended, use a parameter set that would narrow down your target set. `nIf you would still like to scan all objects, rerun this command with the '-AllowLongRunningScan' switch.";
@@ -117,8 +115,8 @@ class Constants
 	static [string] $AzSKTempFolderPath = [Environment]::GetFolderPath('LocalApplicationData') + "/Temp" + "/" + [Constants]::AzSKModuleName + "/"
 	static [string] $AzSKExtensionsFolderPath = [Environment]::GetFolderPath('LocalApplicationData') + "/Microsoft/" + [Constants]::AzSKModuleName + "/Extensions"
 	static [string] $ARMManagementUri = "https://management.azure.com/";	
-	static [string] $VersionCheckMessage = "A newer version of AzSK.AzureDevOps is available: Version {0} `r`nTo update, run the command below in a fresh PS window:`r`n" ;
-	static [string] $VersionWarningMessage = ("Using the latest version ensures that AzSK.AzureDevOps security commands you run use the latest, most up-to-date controls. `r`nResults from the current version should not be considered towards compliance requirements.`r`n" + [Constants]::DoubleDashLine);
+	static [string] $VersionCheckMessage = "A newer version of AzSK.ADO is available: Version {0} `r`nTo update, run the command below in a fresh PS window:`r`n" ;
+	static [string] $VersionWarningMessage = ("Using the latest version ensures that AzSK.ADO security commands you run use the latest, most up-to-date controls. `r`nResults from the current version should not be considered towards compliance requirements.`r`n" + [Constants]::DoubleDashLine);
 	static [string] $UsageTelemetryKey = "59545085-0620-4106-a7bb-13ee2f5eb7a0";
 
 	static [string] $LAWSRequestURI = "https://management.azure.com/{0}?api-version=2015-03-20";
@@ -141,38 +139,10 @@ class Constants
 	static [string] $BlankScope = "/subscriptions/00000000-0000-0000-0000-000000000000";
 	static [string] $DefaultAzureEnvironment = "AzureCloud";
 
-	static [string] $CentralRBACVersionTagName = "CentralRBACVersion"
-	static [string] $DeprecatedRBACVersionTagName = "DeprecatedRBACVersion"
-	static [string] $ARMPolicyConfigVersionTagName = "ARMPolicyConfigVersion"
-	static [string] $AzSKAlertsVersionTagName = "AzSKAlertsVersion"
-	static [string] $SecurityCenterConfigVersionTagName = "SecurityCenterConfigVersion"
 	static [string] $NoActionRequiredMessage ="No Action Required"
-	static [string] $PolicyMigrationTagName = "PolicyMigratedOn"
-	static [string] $AlertRunbookName= "Alert_Runbook"
-	static [string] $Alert_ResourceCreation_Runbook= "Continuous_Assurance_ScanOnTrigger_Runbook"
-	static [string] $AutomationWebhookName="WebhookForAlertRunbook"
-	static [int] $AlertWebhookUriExpiryInDays = 60	
 
 	static [int] $DefaultControlExpiryInDays = 90
 	static [int] $PartialScanMaxRetryCount = 3
-
-	#CA variables names
-	static [string] $AppResourceGroupNames = "AppResourceGroupNames"
-	static [string] $ReportsStorageAccountName = "ReportsStorageAccountName"
-	static [string] $OMSWorkspaceId = "OMSWorkspaceId"
-	static [string] $OMSSharedKey = "OMSSharedKey"
-	static [string] $AltOMSWorkspaceId = "AltOMSWorkspaceId"
-	static [string] $AltOMSSharedKey = "AltOMSSharedKey"
-	static [string] $LAWSId = "LAWSId"
-	static [string] $LAWSSharedKey = "LAWSSharedKey"
-	static [string] $AltLAWSId = "AltLAWSId"
-	static [string] $AltLAWSSharedKey = "AltLAWSSharedKey"
-	static [string] $WebhookUrl = "WebhookUrl"
-	static [string] $WebhookAuthZHeaderName = "WebhookAuthZHeaderName"
-	static [string] $WebhookAuthZHeaderValue = "WebhookAuthZHeaderValue"
-	static [string] $DisableAlertRunbook = "DisableAlertRunbook"
-	static [string] $CATargetSubsBlobName= "TargetSubs.json"
-	static [string] $CoAdminElevatePermissionMsg = "(If you are 'Owner' then please elevate to 'Co-Admin' in the portal and re-run in a *fresh* PS console. `nNote: If the elevated permissions are not reflected, please run the 'Disconnect-AzAccount' command to clear the Azure cache and try again.)"
 
 	static [string] $CommandNameChangeWarning = "The command {0} shall be renamed to {1} in a future release ('SDK' shall be replaced with 'SK').";
 	static [string] $MultipleModulesWarning =  "Found multiple modules ({0} and {1}) loaded in the PS session.`r`n"+
@@ -200,16 +170,11 @@ class Constants
 
 	static [string] $ServerConfigMetadataFileName = "ServerConfigMetadata.json"
 
-	#Constants for credential rotation metadata
-	static [string] $RotationMetadataSubPath = (Join-Path "Temp" -ChildPath "RotationMetadata");
-	static [string] $RotationMetadataContainerName = "rotation-metadata"
-	static [string] $CredHygieneActionGroupName = "AzSKCredHygieneAG"
-	static [string] $CredHygieneActionGroupShortName = "azskchag"
 
-	#Constants for AzureDevOps
+	#Constants for ADO
 	static [string] $DefaultClientId = "872cd9fa-d31f-45e0-9eab-6e460a02d1f1"
 	static [string] $DefaultReplyUri = "urn:ietf:wg:oauth:2.0:oob"
-	static [string] $DefaultAzureDevOpsResourceId = "499b84ac-1321-427f-aa17-267ca6975798"
+	static [string] $DefaultADOResourceId = "499b84ac-1321-427f-aa17-267ca6975798"
 
 	#Constants for Debug mode
 	static [bool] $AzSKDebugModeOn = $false
@@ -245,10 +210,4 @@ class Constants
 	# LogAnalytics view file name
 	static [string] $LogAnalyticsGenericView = "AZSK.AM.LogAnalytics.GenericView.V6.lawsview"
 	static [string] $LogAnalyticsGenericViewWorkbook = "ADOScannerLAWorkbook.json"
-	# Constants for in cluster CA scanning
-	static [string] $DatabricksScanJobConfigurationUrl = "https://azsdkossep.azureedge.net/incluster_configuration/DatabricksConfiguration.json"
-	static [string] $DatabricksCANotebookUrl = "https://azsdkossep.azureedge.net/incluster_configuration/AzSK_DB.ipynb"
-	static [string] $HDInsightCANotebookUrl = "https://azsdkossep.azureedge.net/incluster_configuration/AzSK_HDI.ipynb"
-	static [string] $AzSKPyInstallUrl = "https://azsdkossep.azureedge.net/incluster_configuration/pipinstall.sh"
-	static [string] $AzSKPyUninstallUrl = "https://azsdkossep.azureedge.net/incluster_configuration/uninstall.sh"
 }

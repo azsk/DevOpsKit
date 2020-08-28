@@ -66,13 +66,13 @@ class ControlsInfo: CommandBase
 		}
 		elseif($this.ResourceTypeName -ne [ResourceTypeName]::All)
 		{
-			$resourcetypes += ([SVTMapping]::AzSKDevOpsResourceMapping |
+			$resourcetypes += ([SVTMapping]::AzSKADOResourceMapping |
 					Where-Object { $_.ResourceTypeName -eq $this.ResourceTypeName } | Select-Object JsonFileName)
 		}
 		else
 		{
 			#AzSK:SubCore $resourcetypes += ([SVTMapping]::SubscriptionMapping | Select-Object JsonFileName)
-			$resourcetypes += ([SVTMapping]::AzSKDevOpsResourceMapping | Sort-Object ResourceTypeName | Select-Object JsonFileName )
+			$resourcetypes += ([SVTMapping]::AzSKADOResourceMapping | Sort-Object ResourceTypeName | Select-Object JsonFileName )
 		}
 
 		# Fetch control Setting data

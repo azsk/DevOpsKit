@@ -3,7 +3,7 @@ function Install-AzSKADOContinuousAssurance
 {
 	<#
 	.SYNOPSIS
-	This command would help in setting up Continuous Assurance feature of AzSK.AzureDevOps in your subscription
+	This command would help in setting up Continuous Assurance feature of AzSK.ADO in your subscription
 	.DESCRIPTION
 	This command will create a resource group (Name: ADOScannerRG) which runs security scan on organization and projects which are specified during installation.
 	Security scan results will be populated in Log Analytics workspace which is configured during installation. Also, detailed logs will be stored in storage account (Name: adoscannersayyMMddHHmmss format).  
@@ -29,7 +29,7 @@ function Install-AzSKADOContinuousAssurance
 	.PARAMETER CreateWorkspace
 		Switch to create and map new log analytics workspace with CA setup.
 	.NOTES
-	This command helps the application team to verify whether their AzureDevOps resources are compliant with the security guidance or not 
+	This command helps the application team to verify whether their ADO resources are compliant with the security guidance or not 
 
 
 	#>
@@ -134,7 +134,7 @@ function Update-AzSKADOContinuousAssurance
 	.SYNOPSIS
 	This command would help in updating user configurable properties of Continuous Assurance in your subscription
 	.DESCRIPTION
-	This command will update configurations of existing AzSK.AzureDevOps CA setup in your subscription.
+	This command will update configurations of existing AzSK.ADO CA setup in your subscription.
 	Security scan results will be populated in Log Analytics workspace which is configured during installation. Also, detailed logs will be stored in storage account (Name: adoscannersayyMMddHHmmss format).  
 	
 	.PARAMETER SubscriptionId

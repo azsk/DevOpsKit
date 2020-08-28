@@ -189,8 +189,8 @@ class RemoteReportHelper
 
 	static [string] GetAIOrgTelemetryKey()
 	{
-		$settings = [ConfigurationManager]::GetAzSKConfigData();
-		$telemetryKey = $settings.ControlTelemetryKey
+		$azskConfig = [ConfigurationManager]::GetAzSKConfigData();
+		$telemetryKey = $azskConfig.ControlTelemetryKey
 		[guid]$key =  [guid]::Empty
 		if([guid]::TryParse($telemetryKey, [ref] $key) -and ![guid]::Empty.Equals($telemetryKey))
 		{
@@ -201,12 +201,12 @@ class RemoteReportHelper
 
 	static [bool] IsAIOrgTelemetryEnabled()
 	{
-		$settings = [ConfigurationManager]::GetAzSKConfigData();
-		$telemetryKey = $settings.ControlTelemetryKey
+		$azskConfig = [ConfigurationManager]::GetAzSKConfigData();
+		$telemetryKey = $azskConfig.ControlTelemetryKey
 		[guid]$key =  [guid]::Empty
 		if([guid]::TryParse($telemetryKey, [ref] $key) -and ![guid]::Empty.Equals($telemetryKey))
 		{
-			return $settings.EnableControlTelemetry;
+			return $azskConfig.EnableControlTelemetry;
 		}
 		return [ConfigurationManager]::GetAzSKSettings().LocalEnableControlTelemetry;
 	}
