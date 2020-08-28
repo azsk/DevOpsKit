@@ -26,13 +26,13 @@ class HostInfo: CommandBase
 		$this.PublishCustomMessage([Helpers]::ConvertObjectToString(($rmContext.Account | Select-Object -Property Id, Type), $true), [MessageType]::Default);
 		$this.PublishCustomMessage([Constants]::DoubleDashLine, [MessageType]::Default);
 		$this.PublishCustomMessage("`n`n");
-		$this.PublishCustomMessage("`r`nAzSK Settings`r`n" + [Constants]::SingleDashLine, [MessageType]::Default);
+		$this.PublishCustomMessage("`r`nAzSK.ADO Settings`r`n" + [Constants]::SingleDashLine, [MessageType]::Default);
 		$settingsRaw = [ConfigurationManager]::GetLocalAzSKSettings();
 		$settings = $this.MaskSettings($settingsRaw);
 		$this.PublishCustomMessage([Helpers]::ConvertObjectToString($settings, $true), [MessageType]::Default);
 		$this.PublishCustomMessage([Constants]::DoubleDashLine, [MessageType]::Default);
 		$this.PublishCustomMessage("`n`n");
-		$this.PublishCustomMessage("`r`nAzSK Configurations`r`n" + [Constants]::SingleDashLine, [MessageType]::Default);
+		$this.PublishCustomMessage("`r`nAzSK.ADO Configurations`r`n" + [Constants]::SingleDashLine, [MessageType]::Default);
 		$configurationsRaw = [ConfigurationManager]::GetAzSKConfigData();
 		$configurations = $this.MaskSettings($configurationsRaw);
 		$this.PublishCustomMessage([Helpers]::ConvertObjectToString($configurations, $true), [MessageType]::Default);

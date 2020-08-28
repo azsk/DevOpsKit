@@ -155,7 +155,7 @@ function Install-AzSKADOMonitoringSolution
 	.EXAMPLE
     
 	.NOTES
-	This command helps the application team to check compliance of Azure Subscriptions with the AzSK security guidance.  
+	This command helps the application team to check compliance of ADO against security standards.  
 
 	.LINK
 	https://aka.ms/azskossdocs

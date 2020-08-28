@@ -36,6 +36,6 @@ class Tenant{
 enum CommandType
 {
 	Azure
-	AzureDevOps
+	ADO
 	AAD
 }

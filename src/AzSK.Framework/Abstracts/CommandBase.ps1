@@ -277,7 +277,7 @@ class CommandBase: AzSKRoot {
 			$latestVersionAvailableFromGallery = $serverVersions | Where-Object {$_ -gt $serverVersion}
 			if(($latestVersionAvailableFromGallery | Measure-Object).Count -gt [ConfigurationManager]::GetAzSKConfigData().BackwardCompatibleVersionCount)
 			{
-				$this.PublishCustomMessage("Your Org AzSK version [$serverVersion] is too old. It must be updated to latest available version [$psGalleryVersion].",[MessageType]::Error);
+				$this.PublishCustomMessage("Your Org AzSK.ADO version [$serverVersion] is too old. It must be updated to latest available version [$psGalleryVersion].",[MessageType]::Error);
 			}
 		}
 		
