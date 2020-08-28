@@ -5,6 +5,6 @@
     "UsageTelemetryLevel":  "Anonymous",
     "LocalControlTelemetryKey":  "00000000-0000-0000-0000-000000000000",
     "LocalEnableControlTelemetry":  false,
-    "AutoUpdateCommand": "Install-Module AzSK -AllowClobber -Scope CurrentUser -Force",
+    "AutoUpdateCommand": "Install-Module AzSK.ADO -AllowClobber -Scope CurrentUser -Force",
     "BranchId": "master"
 }

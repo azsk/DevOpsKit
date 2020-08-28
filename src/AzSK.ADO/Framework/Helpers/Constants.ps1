@@ -28,9 +28,9 @@ class Constants
 "        c) If the control status says 'Skipped', it means that you have chosen to skip certain controls using the '-SkipControlsFromFile' parameter.`r`n" 
 
 
-	static [string] $DefaultInfoCmdMsg = "This command provides overall information about different components of the AzSK which includes subscription information, security controls information, attestation information, host information. 'Get-AzSKADOInfo' command can be used with 'InfoType' parameter to fetch information.`r`n" + 
+	static [string] $DefaultInfoCmdMsg = "This command provides overall information about different components of the AzSK.ADO which includes subscription information, security controls information, attestation information, host information. 'Get-AzSKADOInfo' command can be used with 'InfoType' parameter to fetch information.`r`n" + 
 					"`r`nFollowing InfoType parameter values are currently supported by Get-AzSKADOInfo cmdlet.`r`n" +
-					"`tSubscriptionInfo : To get version details about different component of AzSK configured in Subscription.`r`n" +
+					"`tSubscriptionInfo : To get version details about different component of AzSK.ADO configured in Subscription.`r`n" +
 					"`tControlInfo      : To get baseline, severity, description, rationale etc information about security controls.`r`n" +
 					"`tAttestationInfo  : To get statistics, attestation justification, expiry etc information about controls attestation.`r`n" +
 					"`tHostInfo         : To get information about machine details.`r`n" +
@@ -77,7 +77,7 @@ class Constants
     static [string] $CompletedAttestAnalysis = [Constants]::SingleDashLine + "`r`nCompleted attestation: [FeatureName: {0}] [ParentGroupName: {1}] [ResourceName: {2}] `r`n" + [Constants]::DoubleDashLine
     static [string] $CompletedAttestAnalysisSub = [Constants]::SingleDashLine + "`r`nCompleted attestation: [FeatureName: {0}] [OrgName: {1}] [OrgId: {2}] `r`n" + [Constants]::DoubleDashLine
 	static [System.Version] $AzSKCurrentModuleVersion=[System.Version]::new()
-	static [string] $AzSKModuleName = "AzSK.AzureDevOps";
+	static [string] $AzSKModuleName = "AzSK.ADO";
 	static [string] $AttestationDataContainerName = "attestation-data"
 	static [string] $CAMultiSubScanConfigContainerName = "ca-multisubscan-config"
 	static [string] $CAScanProgressSnapshotsContainerName = "ca-scan-checkpoints"
@@ -157,7 +157,7 @@ class Constants
 					"   [1] Create resources needed to support org policy `r`n" +
 					"   [2] Upload (default/base) policies to the policy server `r`n" +
 					"   [3] Generate an org-specific installer ('iwr' command) for your org `r`n" +
-					"   [4] Create a monitoring dashboard for AzSK setup/operational health across your org `r`n"
+					"   [4] Create a monitoring dashboard for AzSK.ADO setup/operational health across your org `r`n"
 	static [string] $UpdateOrgPolicyInstructionMsg = "This command will perform 2 important operations. It will:`r`n" + 
 	"   [1] Upload policies to the policy server `r`n" +
 	"   [2] Generate an org-specific installer ('iwr' command) for your org `r`n"

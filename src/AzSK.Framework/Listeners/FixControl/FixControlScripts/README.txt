@@ -1,4 +1,4 @@
-﻿*** This file describes how to interpret the different files created when AzSK cmdlets are executed with 'GenerateFixScript' parameter ***
+﻿*** This file describes how to interpret the different files created when AzSK.ADO cmdlets are executed with 'GenerateFixScript' parameter ***
 To implement the recommendations for controls,
 	1. The user can review the PowerShell files under 'Services' folder.
 	2. The user can update a parameters file (FixControlConfig.json) to provide input values for the fix script. This is required for controls where the fix/remediation requires input params to be supplied by the user (e.g., IP addresses, user alias, etc.).

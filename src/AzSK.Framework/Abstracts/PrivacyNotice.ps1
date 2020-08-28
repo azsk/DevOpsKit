@@ -2,6 +2,8 @@ Set-StrictMode -Version Latest
 class PrivacyNotice {
     static [void] ValidatePrivacyAcceptance()
 	{
+		Write-Host -ForegroundColor Red "Hard code warning!!!"
+		return 
         $appSettings = [ConfigurationManager]::GetLocalAzSKSettings();		
 		$source = "SDL"		
 

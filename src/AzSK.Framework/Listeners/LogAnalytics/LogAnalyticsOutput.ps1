@@ -229,7 +229,7 @@ class LogAnalyticsOutput: ListenerBase
 			{
 				if(-not [LogAnalyticsOutput]::IsIssueLogged)
 				{
-					$this.PublishCustomMessage("An error occurred while pushing data to Log Analytics. Please check logs for more details. AzSK control evaluation results will not be sent to the configured Log Analytics workspace from this environment until the error is resolved.", [MessageType]::Warning);
+					$this.PublishCustomMessage("An error occurred while pushing data to Log Analytics. Please check logs for more details. AzSK.ADO control evaluation results will not be sent to the configured Log Analytics workspace from this environment until the error is resolved.", [MessageType]::Warning);
 					$this.PublishException($_);
 					[LogAnalyticsOutput]::IsIssueLogged = $true
 				}
@@ -237,7 +237,7 @@ class LogAnalyticsOutput: ListenerBase
 		}
 		catch
 		{
-			[Exception] $ex = [Exception]::new("Error sending events to Log Analytics. The following exception occurred: `r`n$($_.Exception.Message) `r`nFor more on AzSK Log Analytics workspace setup, refer: https://aka.ms/devopskit/ca", $_.Exception)
+			[Exception] $ex = [Exception]::new("Error sending events to Log Analytics. The following exception occurred: `r`n$($_.Exception.Message) `r`nFor more on AzSK.ADO Log Analytics workspace setup, refer: https://aka.ms/adoscanner/la", $_.Exception)
 			throw [SuppressedException] $ex
 		}
 
