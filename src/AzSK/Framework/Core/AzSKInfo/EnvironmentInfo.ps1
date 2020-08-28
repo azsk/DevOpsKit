@@ -40,4 +40,5 @@ class EnvironmentInfo: CommandBase
 		$this.PublishCustomMessage("`r`nAz context`r`n" + [Constants]::SingleDashLine, [MessageType]::Default);
 		$this.PublishCustomMessage([Helpers]::ConvertObjectToString(($rmContext | Select-Object -Property Subscription, Tenant), $false), [MessageType]::Default);
 	}
+
 }

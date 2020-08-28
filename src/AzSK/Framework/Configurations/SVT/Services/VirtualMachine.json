@@ -95,11 +95,13 @@
           ],
           "Enabled": true,
           "DataObjectProperties": [
-             "PublicIpAllocationMethod",
-             "IpConfiguration",
-             "Id",
-             "DnsSettings"
-          ]
+             "Id"
+          ],
+          "IsAttestationDriftExpected": true,
+          "OnAttestationDrift": {
+            "ApplyToVersionsUpto": "4.10.0",
+            "ActionOnAttestationDrift": "RespectExistingAttestationExpiryPeriod"
+        }
        },
        {
           "ControlID": "Azure_VirtualMachine_DP_Enable_Disk_Encryption",
@@ -117,7 +119,8 @@
              "DP",
              "Windows",
              "ERvNet",
-             "VirtualMachine"
+             "VirtualMachine",
+             "ExcludeEphemeralDisk"
           ],
           "Enabled": true,
           "PolicyDefinitionGuid": "0961003e-5a0a-4549-abde-af6a37f2724d"

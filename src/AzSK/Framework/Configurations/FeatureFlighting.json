@@ -118,7 +118,7 @@
       "EnabledForSubs": [],
       "DisabledForSubs": [],
       "UnderPreview": false,
-      "IsEnabled": true
+      "IsEnabled": false
     },
     {
       "Name": "EnableVnetFixForSub",
@@ -127,7 +127,7 @@
       "EnabledForSubs": [],
       "DisabledForSubs": [],
       "UnderPreview": false,
-      "IsEnabled": false
+      "IsEnabled": true
     },
     {
       "Name": "EnableDetailedResourceTrackerTelemetry",
@@ -185,15 +185,6 @@
       "IsEnabled": true
     },
     {
-      "Name": "AddPolicyAssignmentsLocation",
-      "Description": "",
-      "Sources": ["*"],
-      "EnabledForSubs": [],
-      "DisabledForSubs": [],
-      "UnderPreview": false,
-      "IsEnabled": true
-    },
-    {
       "Name": "EnableAnonymouscheckforADLGen2",
       "Description": "",
       "Sources": ["*"],
@@ -219,6 +210,42 @@
       "DisabledForSubs": [],
       "UnderPreview": false,
       "IsEnabled": true
+    },
+    {
+      "Name": "EnableConditionalAccessRGControlEvaluation",
+      "Description": "",
+      "Sources": ["*"],
+      "EnabledForSubs": [],
+      "DisabledForSubs": [],
+      "UnderPreview": false,
+      "IsEnabled": true
+    },
+    {
+      "Name": "GetControlStateByResourceId",
+      "Description": "",
+      "Sources": ["*"],
+      "EnabledForSubs": [],
+      "DisabledForSubs": [],
+      "UnderPreview": false,
+      "IsEnabled": true
+    },
+    {
+      "Name": "EnableAttestationTrim",
+      "Description": "",
+      "Sources": ["*"],
+      "EnabledForSubs": [],
+      "DisabledForSubs": [],
+      "UnderPreview": false,
+      "IsEnabled": true
+    },
+    {
+      "Name": "FunctionAppKindMatch",
+      "Description": "",
+      "Sources": ["*"],
+      "EnabledForSubs": [],
+      "DisabledForSubs": [],
+      "UnderPreview": false,
+      "IsEnabled": false
     }
   ]
 }

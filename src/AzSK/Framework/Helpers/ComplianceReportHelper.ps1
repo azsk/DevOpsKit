@@ -24,7 +24,30 @@ class ComplianceReportHelper: ComplianceBase
 		}
         return [ComplianceReportHelper]::Instance
     }
-	
+	#Function to check if ComplianceStateCaching tag is present on "AzSKRG" resource group
+	#if this tag is missing, Compliance state table will not be used to store/fetch compliance data(default case)
+	static [bool] ValidateComplianceStateCaching()
+	{
+		$AzSKConfigData = [ConfigurationManager]::GetAzSKConfigData()
+		$IsLocalComplianceStoreEnabled = ($AzSKConfigData.StoreComplianceSummaryInUserSubscriptions) -or ([ConfigurationManager]::GetAzSKSettings().StoreComplianceSummaryInUserSubscriptions);
+		if(!$IsLocalComplianceStoreEnabled)
+			{$tagsOnSub =  [ResourceGroupHelper]::GetResourceGroupTags($AzSKConfigData.AzSKRGName)
+			if($tagsOnSub)
+			{
+				$ComplianceCacheTag = $tagsOnSub.GetEnumerator() | Where-Object {$_.Name -like "ComplianceStateCaching*"}
+				if(($ComplianceCacheTag | Measure-Object).Count -gt 0)
+				{
+					$ComplianceCacheTagValue =$ComplianceCacheTag.Value		
+					if(-not [string]::IsNullOrWhiteSpace($ComplianceCacheTagValue) -and  $ComplianceCacheTagValue -eq "true")
+					{
+						$IsLocalComplianceStoreEnabled = $true
+					}
+				}			
+			}
+		}
+		return $IsLocalComplianceStoreEnabled
+	}
+
 	hidden [ComplianceStateTableEntity[]] GetSubscriptionComplianceReport()
 	{
 		return $this.GetSubscriptionComplianceReport($null,$null);

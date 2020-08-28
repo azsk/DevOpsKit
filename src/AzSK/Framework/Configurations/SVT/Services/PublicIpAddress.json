@@ -1,0 +1,18 @@
+{
+    "FeatureName": "PublicIpAddress",
+    "Reference": "aka.ms/azsktcp/publicipaddress",
+    "IsMaintenanceMode": false,
+     "Controls": [
+        {
+           "ControlID": "Azure_PublicIpAddress_Justify_PublicIp",
+           "Description": "Verify public IP address.",
+           "Id": "PublicIp100",
+           "ControlSeverity": "Medium",
+           "Automated": "Yes",
+           "MethodName": "VerifyPublicIp",
+           "Rationale": "Public IPs provide direct access over the internet exposing a cloud resource to all type of attacks over the public network. Hence use of public IPs should be carefully scrutinized/reviewed.",
+           "Recommendation": "Verify public IP address used and delete the unwanted and unused ones immediately! To delete run 'Remove-AzPublicIpAddress -ResourceGroupName {ResourceGroupName} -Name {PublicIpAddressName}'. You might encounter an error if the public IP resource is associated with some other resource. Refer link: https://docs.microsoft.com/en-us/azure/virtual-network/virtual-network-public-ip-address#view-change-settings-for-or-delete-a-public-ip-address for more details",
+           "Enabled": true
+        }
+     ]
+ }

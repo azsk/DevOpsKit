@@ -146,7 +146,7 @@ class PolicySetup: AzCommandBase
 			$this.MonitoringDashboardLocation = $this.ResourceGroupLocation
 		}
 		
-		$this.FolderPath = Join-Path $([System.Environment]::GetFolderPath("Desktop")) ($prefix + "-Policy");
+		
 		if(-not [string]::IsNullOrWhiteSpace($localPolicyFolderPath))
 		{
 			try
@@ -162,6 +162,10 @@ class PolicySetup: AzCommandBase
 			{
 				throw ([SuppressedException]::new("Not able to access/modify the folder [$localPolicyFolderPath].`r`n$($_.ToString())", [SuppressedExceptionType]::InvalidOperation))
 			}
+		}
+		else{
+
+			$this.FolderPath = Join-Path $([System.Environment]::GetFolderPath([System.Environment+SpecialFolder]::Desktop, [System.Environment+SpecialFolderOption]::DoNotVerify)) ($prefix + "-Policy");
 		}
 
 		$this.StorageAccountInstance = [StorageHelper]::new($subscriptionId, $this.ResourceGroupName , $resourceGroupLocation, $this.StorageAccountName);
@@ -574,7 +578,7 @@ class PolicySetup: AzCommandBase
 			$parameters.Add("DashboardTitle","DevOps Kit Monitoring Dashboard [$($this.OrgFullName)]")
 
 			New-AzResourceGroupDeployment -Name "MonitoringDashboard" -TemplateFile $MonitoringDashboardTemplatePath   -ResourceGroupName $($this.ResourceGroupName) -TemplateParameterObject $parameters   
-			$this.PublishCustomMessage("Monitoring dashboard created successfully. It lets you monitor the operations for various DevOps Kit workflows at your org.(e.g., CA issues, anomalous control drifts, evaluation errors, etc.). You can access it through this link: ", [MessageType]::Update);
+			$this.PublishCustomMessage("Monitoring dashboard created successfully. It lets you monitor the operations for various DevOps Kit workflows at your org. (E.g., CA issues, anomalous control drifts, evaluation errors, etc.). You can access it through this link: ", [MessageType]::Update);
 			$rmContext = [ContextHelper]::GetCurrentRMContext();
 			$tenantId = $rmContext.Tenant.Id
 			$this.PublishCustomMessage("https://ms.portal.azure.com/#$($tenantId)/dashboard/arm/subscriptions/$($this.SubscriptionContext.SubscriptionId)/resourcegroups/$($this.ResourceGroupName)/providers/microsoft.portal/dashboards/devopskitmonitoring",[MessageType]::Update)
@@ -616,7 +620,7 @@ class PolicySetup: AzCommandBase
 
 		#region Check 01: Presence of Org policy resources		
 		$stepCount++		
-		$checkDescription = "Presence of Org policy resources(Policy StorageAccount/Telemetry AppInsights/Monitoring Dashboard)."
+		$checkDescription = "Presence of Org policy resources (Policy Storage Account/Telemetry AppInsights/Monitoring Dashboard)."
 		$policyResourceGroup= Get-AzResourceGroup -Name $($this.ResourceGroupName) -ErrorAction SilentlyContinue  
 		if(-not $policyResourceGroup)
 		{
@@ -698,7 +702,7 @@ class PolicySetup: AzCommandBase
 			
 		#region: Check 02: Presence of mandatory policies
 		$stepCount++		
-		$checkDescription = "Presence of mandatory policies(Installer/Runbooks/Configuration Index file etc)."
+		$checkDescription = "Presence of mandatory policies (Installer/Runbooks/Configuration Index file etc)."
 
 		$PolicyScanOutput.Policies = @{}
 		$policies = $PolicyScanOutput.Policies
@@ -811,7 +815,7 @@ class PolicySetup: AzCommandBase
 		$InstallOutput = $PolicyScanOutput.Configurations.Installer
 		
 		$stepCount++
-		$checkDescription = "Check installer contains policy url/AzSK Version For Org reference(AzSK-EasyInstaller.ps1)."
+		$checkDescription = "Check installer contains policy url/AzSK Version For Org reference (AzSK-EasyInstaller.ps1)."
 
 		if($PolicyScanOutput.Policies.Installer)
 		{
@@ -918,7 +922,7 @@ class PolicySetup: AzCommandBase
 		#region Check 04: Validate AzSKPre
 		$PolicyScanOutput.Configurations.AzSKPre = @{}
 		$stepCount++		
-		$checkDescription = "Check AzSK version configured for Org(AzSK.Pre.json)."		
+		$checkDescription = "Check AzSK version configured for Org (in AzSK.Pre.json)."		
 		if($PolicyScanOutput.Policies.AzSKPre)
 		{
 		$AzSKPreConfigPath = Get-ChildItem -Path $policyTempFolder -File "AzSK.Pre.json" -Recurse
@@ -1044,7 +1048,7 @@ class PolicySetup: AzCommandBase
 		#Check 06: Validate AzSKConfig
 		$PolicyScanOutput.Configurations.AzSKConfig = @{}
 		$stepCount++		
-		$checkDescription = "Check AzSKConfig configured with controlTelemetryKey, installation command, Org AzSK version reference etc.(AzSK.json)."
+		$checkDescription = "Check AzSKConfig configured with controlTelemetryKey, installation command, Org AzSK version reference etc. (AzSK.json)."
 		$AzSKConfiguOutput = $PolicyScanOutput.Configurations.AzSKConfig
 		if($PolicyScanOutput.Policies.AzSKConfig)
 		{
@@ -1297,8 +1301,10 @@ class PolicySetup: AzCommandBase
 			}
 			else
 			{
-				$failMsg = "Installed CA runbook is not configured with Org policy url"			
-				$resolvemsg = "Resolution: Run 'Update-AzSKContinuousAssurance -SubscriptionId <SubscriptionId>'."
+				
+				$failMsg = "The CA Runbook in the current subscription [$($this.SubscriptionContext.SubscriptionId) == $($this.SubscriptionContext.SubscriptionName)] has not been setup using the current org policy. `r`nThis may not itself impact org policy functioning but CA scans for this subscription might not be in accordance with the current policy."
+				$resolvemsg="Resolution: Run Install-AzSKContinuousAssurance or Update-AzSKContinuousAssurance from a PS console where the iwr (org-specific installer) corresponding to this org was used to setup AzSK."
+
 				$resultMsg = "$failMsg`r`n$resolvemsg"
 				$resultStatus = "Failed"
 				$shouldReturn = $false
@@ -1323,7 +1329,7 @@ class PolicySetup: AzCommandBase
 		#region Check 08: Validate Syntax exceptions for policy files
 		$PolicyScanOutput.SyntaxException= @{}
 		$stepCount++		
-		$checkDescription = "Check syntax exceptions for policies."
+		$checkDescription = "Check schema/syntax errors for policy JSON/PS1 (extension) files."
 
 		$include=@("*.ext.ps1","*.json",[Constants]::ServerConfigMetadataFileName)
 		$policyFiles = Get-ChildItem -Path $this.FolderPath -Include $include -Recurse
@@ -1338,11 +1344,11 @@ class PolicySetup: AzCommandBase
 					$policyContent = Get-Content  $_.FullName | ConvertFrom-Json 
 
 					$schemaUrl = [string]::Empty
-					$schemaDefination = $null
+					$schemaDefinition = $null
 					#Validate policy against the schema template
 					if([Helpers]::CheckMember($policyContent,"`$schema") -and -not [string]::IsNullOrEmpty($policyContent.'$schema'))
 					{
-						$schemaDefination = Invoke-RestMethod `
+						$schemaDefinition = Invoke-RestMethod `
 						-Method GET `
 						-Uri $policyContent.'$schema'  #
 						#-UseBasicParsing
@@ -1361,7 +1367,7 @@ class PolicySetup: AzCommandBase
 						$schemaUrl = $azskConfig.SchemaTemplateURL + $policyName
 						try
 						{
-							$schemaDefination = Invoke-RestMethod `
+							$schemaDefinition = Invoke-RestMethod `
 							-Method GET `
 							-Uri $schemaUrl
 						}
@@ -1372,26 +1378,26 @@ class PolicySetup: AzCommandBase
 						}
 						
 					}
-						if($schemaDefination)
+						if($schemaDefinition)
 						{
-							$schemaDefinationContent = $schemaDefination | ConvertTo-Json -Depth 10
+							$schemaDefinitionContent = $schemaDefinition | ConvertTo-Json -Depth 10
 							$jsonContent = Get-Content  $_.FullName
 							$libraryPath = Join-Path (Get-Item $PSScriptRoot).Parent.Parent.Parent.FullName "ARMCheckerLib";
 							$ErrorMessages= Start-Job  -ScriptBlock {
-								param($jsonContent,$schemaDefinationContent,$libraryPath )
+								param($jsonContent,$schemaDefinitionContent,$libraryPath )
 								Add-Type -Path (Join-Path $libraryPath "Newtonsoft.Json.dll")
 								Add-Type -Path (Join-Path $libraryPath "Newtonsoft.Json.Schema.dll")
 								$Token = [Newtonsoft.Json.Linq.JToken]::Parse($jsonContent)
-								$Schema = [Newtonsoft.Json.Schema.JSchema]::Parse($schemaDefinationContent)
+								$Schema = [Newtonsoft.Json.Schema.JSchema]::Parse($schemaDefinitionContent)
 								$ErrorMessages = New-Object "System.Collections.Generic.List[string]"						
 								$output= [Newtonsoft.Json.Schema.SchemaExtensions]::IsValid($Token, $Schema,[ref] $ErrorMessages)
 								$ErrorMessages
-							} -ArgumentList $jsonContent,$schemaDefinationContent,$libraryPath | Receive-Job -Wait -AutoRemoveJob 
+							} -ArgumentList $jsonContent,$schemaDefinitionContent,$libraryPath | Receive-Job -Wait -AutoRemoveJob 
 
 							if(-not [string]::IsNullOrEmpty($ErrorMessages) )
 							{
 								$InvalidSchemaJsonFiles += $fileName
-								$messages += $ErrorMessages								
+								$messages += "`r`n[$filename]:`r`n"+$ErrorMessages	
 							}
 						}											
 					
@@ -1429,7 +1435,7 @@ class PolicySetup: AzCommandBase
 				{
 					$failMsg +="PS1 files: $($InvalidSchemaPSFiles -Join ',')."
 				}						
-				$resolvemsg = "Resolution: Make sure there is no syntax issue or file is not in blocked state (Right click on file --> Properties --> Click 'Unblock' and Apply. For more details about syntax issue, refer detail logs.)"
+				$resolvemsg = "Resolution: Make sure there are no schema/syntax errors in JSON/PS1 files.`r`nSometimes web-downloaded files can be in blocked state (Right click on file --> Properties --> Click 'Unblock' and Apply.`r`nFor more info on syntax issues review the detailed log from this cmd.)"
 				$resultMsg = "$failMsg`r`n$resolvemsg"
 				$resultStatus = "Failed"
 				$shouldReturn = $false
@@ -1443,6 +1449,7 @@ class PolicySetup: AzCommandBase
 			}
 
 			$messages += ($this.FormatGetPolicyCheckMessage($stepCount,$checkDescription,$resultStatus,$resultMsg,$detailedMsg,$orgPolicyOverallSummary))				
+
 			if($shouldReturn)
 			{
 				return $messages
@@ -1456,8 +1463,9 @@ class PolicySetup: AzCommandBase
 
 		if(-not $PolicyScanOutput.Resources.Status -or -not $PolicyScanOutput.Policies.Status -or -not $InstallOutput.Status -or -not $PolicyScanOutput.Configurations.AzSKPre.Status -or  -not $PolicyScanOutput.Configurations.RunbookCoreSetup.Status -or  -not $AzSKConfiguOutput.Status -or -not $PolicyScanOutput.SyntaxException.Status -or -not $CARunbookOutput.Status)
 		{
+			$this.DoNotOpenOutputFolder = $false
 			$this.PublishCustomMessage([Constants]::SingleDashLine, [MessageType]::Warning)
-			$this.PublishCustomMessage("Your Org policy configuration is not correctly setup..`nReview the failed checks and follow the recommendations suggested.", [MessageType]::Warning) 
+			$this.PublishCustomMessage("Your Org policy configuration is not correctly setup..`nReview the failed checks and follow the recommendations suggested.`r`nSee detailed log file for more.", [MessageType]::Warning) 
 			$this.PublishCustomMessage([Constants]::SingleDashLine, [MessageType]::Warning)
 		}
 		else
@@ -1479,7 +1487,7 @@ class PolicySetup: AzCommandBase
 	{
 		[bool] $downloadPolicy = $true
 		$PolicyList =@()
-		$this.PublishCustomMessage("Downloading policies to location:[$($this.FolderPath)]...", [MessageType]::Info);	
+		$this.PublishCustomMessage("Downloading policies to location: [$($this.FolderPath)]...", [MessageType]::Info);	
 		$this.StorageAccountInstance.GetStorageAccountInstance()
 
 		if(Test-Path $this.FolderPath)
@@ -1557,12 +1565,12 @@ class PolicySetup: AzCommandBase
 			{
 				if(($InvalidSchemaJsonFiles | Measure-Object).Count -gt 0 )
 				{
-					$this.PublishCustomMessage("Invalid schema for Json files: $($InvalidSchemaJsonFiles -Join ',')", [MessageType]::Error);
+					$this.PublishCustomMessage("Invalid schema for Json files: $($InvalidSchemaJsonFiles -Join ', ')", [MessageType]::Error);
 				}
 
 				if(($InvalidSchemaPSFiles | Measure-Object).Count -gt 0 )
 				{
-					$this.PublishCustomMessage("Invalid schema for PS1 files: $($InvalidSchemaPSFiles -Join ','). Make sure there is no syntax issue or file is not in blocked state (Right click on file --> Properties --> Click 'Unblock' and Apply)", [MessageType]::Error);
+					$this.PublishCustomMessage("Invalid schema for PS1 files: $($InvalidSchemaPSFiles -Join ', '). Make sure there is no syntax issue or file is not in blocked state (Right click on file --> Properties --> Click 'Unblock' and Apply)", [MessageType]::Error);
 				}
 				throw ([SuppressedException]::new("Invalid schema found. Please correct schema and reupload extensions.", [SuppressedExceptionType]::Generic))
 			}

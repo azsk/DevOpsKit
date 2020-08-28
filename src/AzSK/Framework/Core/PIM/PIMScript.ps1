@@ -374,8 +374,8 @@ class PIM: AzCommandBase {
     hidden [PSObject] ListAssignmentsWithFilter($resourceId, $IsPermanent) {
         $this.AcquireToken()
         $url = $this.APIroot + "/resources/" + $resourceId + "`/roleAssignments?`$expand=subject,roleDefinition(`$expand=resource)"
-        #Write-Host $url
-        $roleAssignments = [WebRequestHelper]::InvokeWebRequest('Get', $url, $this.headerParams, $null, [string]::Empty, $false, $false )
+		#NextLink handled in the web request
+        $roleAssignments = [WebRequestHelper]::InvokeWebRequest('Get', $url, $this.headerParams, $null, [string]::Empty, @{} )
         $i = 0
         $obj = @()
         $assignments = @();
@@ -503,6 +503,8 @@ class PIM: AzCommandBase {
         {
             if (($assignments | Measure-Object).Count -gt 0 ) {
                 $matchingAssignment = $assignments | Where-Object { $_.OriginalId -in $resource.ExternalId -and $_.RoleName -eq $roleName -and $_.AssignmentState -eq 'Eligible' }
+                $matchingAssignment = $matchingAssignment | select -Unique
+                
                 if (($matchingAssignment | Measure-Object).Count -gt 0) {
                     $this.PublishCustomMessage("Requesting activation of your [$($matchingAssignment.RoleName)] role on [$($matchingAssignment.ResourceName)]... ", [MessageType]::Info);
                     $resourceId = $matchingAssignment.ResourceId
@@ -1156,16 +1158,16 @@ class PIM: AzCommandBase {
     }
 
     # Extend assignments for roles by n days from expiration date
-    hidden [void] ExtendSoonToExpireAssignments($managementGroupId, $SubscriptionId, $ResourceGroupName, $ResourceName, $RoleNames, $ExpiringInDays, $DurationInDays, $force)
+    hidden [void] ExtendSoonToExpireAssignments($managementGroupId, $SubscriptionId, $ResourceGroupName, $ResourceName, $RoleName, $ExpiringInDays, $DurationInDays, $force)
     {
         $soonToExpireAssignments = @();
         if(-not([string]::IsNullOrEmpty($ManagementGroupId)))
         {
-          $soonToExpireAssignments = $this.ListSoonToExpireAssignments($ManagementGroupId, $SubscriptionId, $ResourceGroupName, $ResourceName, $RoleNames, $ExpiringInDays);
+          $soonToExpireAssignments = $this.ListSoonToExpireAssignments($ManagementGroupId, $SubscriptionId, $ResourceGroupName, $ResourceName, $RoleName, $ExpiringInDays);
         }
         else
         {
-            $soonToExpireAssignments = $this.ListSoonToExpireAssignments($null, $SubscriptionId, $ResourceGroupName, $ResourceName, $RoleNames, $ExpiringInDays);
+            $soonToExpireAssignments = $this.ListSoonToExpireAssignments($null, $SubscriptionId, $ResourceGroupName, $ResourceName, $RoleName, $ExpiringInDays);
         }
           $AssignmentCount = ($soonToExpireAssignments | Measure-Object).Count
         if($AssignmentCount -gt 0)

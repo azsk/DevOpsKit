@@ -10,13 +10,19 @@ class SecurityCenter: AzSKRoot
 	[string] $ContactPhoneNumber;
 	[string] $ContactEmail;
 	[string] $AlertNotifStatus;
-	[string] $AlertAdminStatus;
+	[string] $AlertNotifSev;
+	[string] $NotificationRolesStatus;
+	[string] $NotificationRoles;
 	[string] $AutoProvisioningSettings = "";
 	[string] $ASCTier = "";
 	[string] $VMASCTier = "";
 	[string] $SQLASCTier = "";
 	[string] $AppSvcASCTier = "";
 	[string] $StorageASCTier = "";
+	[bool] $alertNotificationsstate = $false;
+	[bool] $alertNotificationsminimalSeverity = $false;
+	[bool] $notificationsByRolestate = $false;
+	[bool] $notificationsByRole = $false;
 
 	SecurityCenter([string] $subscriptionId,[bool]$registerASCProvider): 
         Base($subscriptionId)
@@ -181,55 +187,88 @@ class SecurityCenter: AzSKRoot
 		if($null -ne $this.PolicyObject -and $null -ne $this.PolicyObject.securityContacts)
 		{	
 			$ResourceAppIdURI = [WebRequestHelper]::GetResourceManagerUrl()		
-			$securityContactsUri = $ResourceAppIdURI + "subscriptions/$($this.SubscriptionContext.SubscriptionId)/providers/$([SecurityCenterHelper]::ProviderNamespace)/$([SecurityCenterHelper]::SecurityContactsApi)/default1$([SecurityCenterHelper]::ApiVersionNew)";
+			$securityContactsUri = $ResourceAppIdURI + "subscriptions/$($this.SubscriptionContext.SubscriptionId)/providers/$([SecurityCenterHelper]::ProviderNamespace)/$([SecurityCenterHelper]::SecurityContactsApi)/default$([SecurityCenterHelper]::NewApiVersionForSecContact)";
 			$body = $this.PolicyObject.securityContacts | ConvertTo-Json -Depth 10
-			$body = $body.Replace("{0}",$this.SubscriptionContext.SubscriptionId).Replace("{1}",$this.ContactEmail).Replace("{2}",$this.ContactPhoneNumber) | ConvertFrom-Json;
-		  	[WebRequestHelper]::InvokeWebRequest([Microsoft.PowerShell.Commands.WebRequestMethod]::Put, $securityContactsUri, $body);
+			$email = (($this.ContactEmail.split(",")).Trim()) -join ";"
+			$body = $body.Replace("{0}",$this.SubscriptionContext.SubscriptionId).Replace("{1}",$email).Replace("{2}",$this.ContactPhoneNumber) | ConvertFrom-Json;
+			try
+			{
+				[WebRequestHelper]::InvokeWebRequest([Microsoft.PowerShell.Commands.WebRequestMethod]::Put, $securityContactsUri, $body);
+			}
+			catch
+			{
+				throw [System.ArgumentException] ("Error occurred while configuring security contact settings.");
+			}
 		}
 		return $messages;
 	}
 
 	[string] CheckSecurityContactSettings()
 	{
+		[string] $messages = @();
+		$ControlSettings = $this.LoadServerConfigFile("ControlSettings.json");
 		if($null -ne $this.PolicyObject -and $null -ne $this.PolicyObject.securityContacts)
 		{
 			$ResourceAppIdURI = [WebRequestHelper]::GetResourceManagerUrl()
-			$securityContactsUri = $ResourceAppIdURI + "subscriptions/$($this.SubscriptionContext.SubscriptionId)/providers/$([SecurityCenterHelper]::ProviderNamespace)/$([SecurityCenterHelper]::SecurityContactsApi)/default1$([SecurityCenterHelper]::ApiVersionNew)";
+			$securityContactsUri = $ResourceAppIdURI + "subscriptions/$($this.SubscriptionContext.SubscriptionId)/providers/$([SecurityCenterHelper]::ProviderNamespace)/$([SecurityCenterHelper]::SecurityContactsApi)/default$([SecurityCenterHelper]::NewApiVersionForSecContact)";
 			
 			try
-            {
-                $response = [WebRequestHelper]::InvokeGetWebRequest($securityContactsUri);
-            }
-            catch
-            {
+            		{
+                		$response = [WebRequestHelper]::InvokeGetWebRequest($securityContactsUri);
+            		}
+            		catch
+            		{
 				#return failure status if api throws exception.
-                return "SecurityContactsConfig: [Security contact details is either not configured or not able to fetch configuration due to access issue]"
+                		return "Security contact details is either not configured or not able to fetch configuration due to access issue."
 			}
-			$secContactObject = $this.PolicyObject.securityContacts
-			if([Helpers]::CheckMember($response,"properties.email") -and -not [string]::IsNullOrWhiteSpace($response.properties.email) `
-				-and [Helpers]::CheckMember($response,"properties.phone") -and -not [string]::IsNullOrWhiteSpace($response.properties.phone))				
+			$secContactObject = $this.PolicyObject.securityContacts #SecurityCenter Object
+			if([Helpers]::CheckMember($response,"properties.emails") -and -not [string]::IsNullOrWhiteSpace($response.properties.emails) `
+				-and [Helpers]::CheckMember($response,"properties.notificationsByRole.roles") -and -not [string]::IsNullOrWhiteSpace($response.properties.notificationsByRole.roles) `
+				-and [Helpers]::CheckMember($response,"properties.notificationsByRole.state") -and -not [string]::IsNullOrWhiteSpace($response.properties.notificationsByRole.state) `
+				-and [Helpers]::CheckMember($response,"properties.alertNotifications.minimalSeverity") -and -not [string]::IsNullOrWhiteSpace($response.properties.alertNotifications.minimalSeverity) `
+				-and [Helpers]::CheckMember($response,"properties.alertNotifications.state") -and -not [string]::IsNullOrWhiteSpace($response.properties.alertNotifications.state))
+			
 			{
-				$this.ContactEmail = $response.properties.email;
-				$this.ContactPhoneNumber = $response.properties.phone;
-				if([Helpers]::CheckMember($response, "properties.alertNotifications"))
+				$this.ContactEmail = $response.properties.emails
+				if([Helpers]::CheckMember($response,"properties.phone"))
 				{
-					$this.AlertNotifStatus = $response.properties.alertNotifications;
+					$this.ContactPhoneNumber = $response.properties.phone
 				}
-				if([Helpers]::CheckMember($response, "properties.alertsToAdmins"))
+				#checking if alerts are configured as expected i.e. (state = ON and Severity = "Medium or Low")
+				if ([Helpers]::CheckMember($secContactObject,"properties.alertNotifications.state",$false) -and [Helpers]::CheckMember($secContactObject,"properties.alertNotifications.minimalSeverity",$false))
 				{
-					$this.AlertAdminStatus = $response.properties.alertsToAdmins;
+					$this.AlertNotifStatus = $response.properties.alertNotifications.state
+					$this.AlertNotifSev = $response.properties.alertNotifications.minimalSeverity
+					$this.alertNotificationsstate = $response.properties.alertNotifications.state -eq $secContactObject.properties.alertNotifications.state;
+					$this.alertNotificationsminimalSeverity = $ControlSettings.SeverityForSecContactAlerts -contains $response.properties.alertNotifications.minimalSeverity;
+					if (-not ($this.alertNotificationsstate -and $this.alertNotificationsminimalSeverity))
+					{
+						$messages += "-Alert Notifications should be configured for alerts with severity "+ $secContactObject.properties.alertNotifications.minimalSeverity + " and higher.`n"
+					} 
 				}
-				if(-not ((-not ([Helpers]::CheckMember($secContactObject,"properties.email",$false)) -or ([Helpers]::CheckMember($response,"properties.email") -and -not [string]::IsNullOrWhiteSpace($response.properties.email)))`
-					 -and (-not ([Helpers]::CheckMember($secContactObject,"properties.phone",$false)) -or ([Helpers]::CheckMember($response,"properties.phone") -and -not [string]::IsNullOrWhiteSpace($response.properties.phone)))`
-					 -and (-not ([Helpers]::CheckMember($secContactObject,"properties.alertNotifications",$false)) -or ([Helpers]::CheckMember($response,"properties.alertNotifications") -and ($response.properties.alertNotifications -eq $secContactObject.properties.alertNotifications)))`
-					 -and (-not ([Helpers]::CheckMember($secContactObject,"properties.alertsToAdmins",$false)) -or ([Helpers]::CheckMember($response,"properties.alertsToAdmins") -and ($response.properties.alertsToAdmins -eq $secContactObject.properties.alertsToAdmins)))))
+
+				#checking if roles for notification are configured as expected i.e. (state = ON and MinimumRoles = "Owner, ServiceAdmin")
+				if ([Helpers]::CheckMember($secContactObject,"properties.notificationsByRole.state",$false) -and [Helpers]::CheckMember($secContactObject,"properties.notificationsByRole.roles",$false))
+				{
+					$this.NotificationRolesStatus = $response.properties.notificationsByRole.state
+					$this.NotificationRoles = $response.properties.notificationsByRole.roles
+					$this.notificationsByRolestate = $response.properties.notificationsByRole.state -eq $secContactObject.properties.notificationsByRole.state
+					$this.notificationsByRole = -not @($secContactObject.properties.notificationsByRole.roles|
+															Where-Object {$response.properties.notificationsByRole.roles -notcontains $_}| Select-Object -first 1).Count
+					if ( -not $this.notificationsByRole)
+					{
+						$messages += "-Roles that should be configured to receive alert notifications: $($secContactObject.properties.notificationsByRole.roles -Join ',')"
+					}
+				}
+
+				if(-not ($this.alertNotificationsstate -and $this.alertNotificationsminimalSeverity -and $this.notificationsByRolestate -and $this.notificationsByRole))
 				{                   
-					return "SecurityContactsConfig: [Failed. One of the configuration(Email,Phone,SendEmailAlertNotification,SendEmailAlertsToAdmin) is missing]"
-				}				
+					return $messages
+				}			
 			}
             else
             {
-                return "SecurityContactsConfig: [Not able to find either email or phone number contact details]"
+                return "One of the configurations (Email,alertNotifications,notificationsByRole) is missing."
             }
 		}
 		return $null;
@@ -242,26 +281,32 @@ class SecurityCenter: AzSKRoot
 		[hashtable] $hashvalue = @{}
 		$ResourceUrl= [WebRequestHelper]::GetResourceManagerUrl()
 		$validatedUri ="$ResourceUrl/subscriptions/$($this.SubscriptionContext.SubscriptionId)/providers/Microsoft.Security/pricings/default?api-version=2017-08-01-preview"
-		$ascTierContentDetails = [WebRequestHelper]::InvokeGetWebRequest($validatedUri)
-
- 		if([Helpers]::CheckMember($ascTierContentDetails,"properties.pricingTier"))
+        try
 		{
-			$this.ASCTier = $ascTierContentDetails.properties.pricingTier
-		}
+		    $ascTierContentDetails = [WebRequestHelper]::InvokeGetWebRequest($validatedUri)
+ 			if([Helpers]::CheckMember($ascTierContentDetails,"properties.pricingTier"))
+			{
+				$this.ASCTier = $ascTierContentDetails.properties.pricingTier
+			}
 
-		$validatedUri = "$ResourceUrl/subscriptions/$($this.SubscriptionContext.SubscriptionId)/providers/Microsoft.Security/pricings?api-version=2018-06-01"
-		$ascTierResourceWiseDetails = [WebRequestHelper]::InvokeGetWebRequest($validatedUri)
+			$validatedUri = "$ResourceUrl/subscriptions/$($this.SubscriptionContext.SubscriptionId)/providers/Microsoft.Security/pricings?api-version=2018-06-01"
+			$ascTierResourceWiseDetails = [WebRequestHelper]::InvokeGetWebRequest($validatedUri)
 
-        foreach($resourceDetails in $ascTierResourceWiseDetails)
-        {
-            if([Helpers]::CheckMember($resourceDetails,"properties.pricingTier"))
-            {
-				$resourceName = $resourceDetails.name
-				$ResourceASCTier = $resourceDetails.properties.pricingTier
-				$hashvalue.Add($resourceName,$ResourceASCTier)
-            }
+        	foreach($resourceDetails in $ascTierResourceWiseDetails)
+        	{
+            	if([Helpers]::CheckMember($resourceDetails,"properties.pricingTier"))
+            	{
+					$resourceName = $resourceDetails.name
+					$ResourceASCTier = $resourceDetails.properties.pricingTier
+					$hashvalue.Add($resourceName,$ResourceASCTier)
+            	}
             
-		}  
+			} 
+		} 
+		catch
+		{
+			#TODO: need to handle it gracefully
+		}
 		return $hashvalue
 	}
 	
@@ -280,8 +325,7 @@ class SecurityCenter: AzSKRoot
 			$policyLocation = $null
 
 			#Get existing Policysetting to check if Location parameter is available (since policies set via Portal have an extra Location parameter)
-            if( ([FeatureFlightingManager]::GetFeatureStatus("AddPolicyAssignmentsLocation","*"))) {
-				try{
+            	try{
 					$policySettingsUri = $ResourceAppIdURI + "subscriptions/$($this.SubscriptionContext.SubscriptionId)/providers/Microsoft.Authorization/policyAssignments$([SecurityCenterHelper]::ApiVersionLatest)";
 					$existingsettings = [WebRequestHelper]::InvokeWebRequest([Microsoft.PowerShell.Commands.WebRequestMethod]::Get, $policySettingsUri, $null )
 					$scInitiative = [ConfigurationManager]::GetAzSKConfigData().AzSKSecurityCenterInitiativeName
@@ -297,17 +341,14 @@ class SecurityCenter: AzSKRoot
 				catch{
 					#eat exception, do not break existing flow
 				}
-			}
-
+			
 			$policySettingsUri = $ResourceAppIdURI + "subscriptions/$($this.SubscriptionContext.SubscriptionId)/providers/Microsoft.Authorization/policyAssignments/SecurityCenterBuiltIn$([SecurityCenterHelper]::ApiVersionLatest)";
 			$body = $this.PolicyObject.policySettings | ConvertTo-Json -Depth 10
 			$body = $body.Replace("{0}",$this.SubscriptionContext.SubscriptionId) | ConvertFrom-Json;
 
 			#If Location parameter is present in policy then append the property in the request body
-            if( ([FeatureFlightingManager]::GetFeatureStatus("AddPolicyAssignmentsLocation","*"))) {
-				if ($null -ne $policyLocation) {
-					$body | Add-Member -Name "Location" -value $policyLocation -MemberType NoteProperty
-				}
+            if ($null -ne $policyLocation) {
+				$body | Add-Member -Name "Location" -value $policyLocation -MemberType NoteProperty
 			}
 			
 		  	[WebRequestHelper]::InvokeWebRequest([Microsoft.PowerShell.Commands.WebRequestMethod]::Put, $policySettingsUri, $body);
@@ -348,13 +389,12 @@ class SecurityCenter: AzSKRoot
 						$body | Add-Member -NotePropertyName properties -NotePropertyValue $_.properties
 
 						#If Location parameter is present in policy then append the property in the request body
-						if( ([FeatureFlightingManager]::GetFeatureStatus("AddPolicyAssignmentsLocation","*"))) {
-							if($body.properties.policyDefinitionId -match $scInitiative) {
-								if ($null -ne $policyLocation) {
-									$body | Add-Member -NotePropertyName Location -NotePropertyValue $policyLocation
-								}
+						if($body.properties.policyDefinitionId -match $scInitiative) {
+							if ($null -ne $policyLocation) {
+								$body | Add-Member -NotePropertyName Location -NotePropertyValue $policyLocation
 							}
 						}
+						
 
 						[WebRequestHelper]::InvokeWebRequest([Microsoft.PowerShell.Commands.WebRequestMethod]::Put, $policySettingsUri, $body);
 					}

@@ -297,13 +297,17 @@ class WriteSummaryFile: FileOutputBase
 							}
 						}
 					}
-					if($_.IsControlInGrace -eq $true)
+					#Changes for compliance table dependency removal
+					if($item.IsLocalComplianceStoreEnabled)
 					{
-						$csvItem.IsControlInGrace = "Yes"
-					}
-					else 
-					{
-						$csvItem.IsControlInGrace = "No"
+						if($_.IsControlInGrace -eq $true)
+						{
+							$csvItem.IsControlInGrace = "Yes"
+						}
+						else 
+						{
+							$csvItem.IsControlInGrace = "No"
+						}
 					}					
                     $csvItems += $csvItem;
                 }                                
@@ -325,7 +329,7 @@ class WriteSummaryFile: FileOutputBase
 			{
 			  $nonNullProps += "UserComments";
 			}
-            $csvItems | Select-Object -Property $nonNullProps | Export-Csv $this.FilePath -NoTypeInformation
+			 $csvItems | Select-Object -Property $nonNullProps | Export-Csv $this.FilePath -NoTypeInformation
         }
     }	
 

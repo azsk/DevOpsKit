@@ -645,11 +645,6 @@
                                 "Title": "PreviewBaseline"
                             },
                             {
-                                "FieldName": "IsControlInGrace_b",
-                                "QueryForValues": "AzSK_CL | distinct tostring(IsControlInGrace_b)",
-                                "Title": "InGrace"
-                            },
-                            {
                                 "FieldName": "SubscriptionName_s",
                                 "QueryForValues": "AzSK_CL | distinct tostring(SubscriptionName_s)",
                                 "Title": "SubscriptionName"
