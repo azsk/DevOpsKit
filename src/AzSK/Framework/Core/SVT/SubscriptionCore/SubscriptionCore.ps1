@@ -969,6 +969,7 @@ class SubscriptionCore: AzSVTBase
 		{
 
 			$controlResult.AddMessage("Unable to fetch PIM data.")
+			$controlResult.AddMessage("Please make sure your subscription has onboarded Privileged Identity Management (PIM).")
 			$controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false;
 		}
 		else 
@@ -1027,6 +1028,7 @@ class SubscriptionCore: AzSVTBase
 			if (-not $this.IsRGAssignmentFetched) # if false then exception occured in GetRGLevelPIMRoles 
 			{
 				$controlResult.AddMessage("Unable to fetch PIM data.")
+				$controlResult.AddMessage("Please make sure your subscription has onboarded Privileged Identity Management (PIM).")
 				$controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false;
 				return $controlResult;
 			}
