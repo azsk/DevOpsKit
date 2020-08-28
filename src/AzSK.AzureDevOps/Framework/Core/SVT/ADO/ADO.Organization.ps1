@@ -198,7 +198,7 @@ class Organization: ADOSVTBase
                                     }
                                 }
                                 else{
-                                    $controlResult.AddMessage([VerificationResult]::Error, "Regular expressions for detecting SC-Alt account is not defined in the organization. Please update your ControlSettings.json as per the latest AzSK.AzureDevOps PowerShell module.");
+                                    $controlResult.AddMessage([VerificationResult]::Error, "Regular expressions for detecting SC-Alt account is not defined in the organization. Please update your ControlSettings.json as per the latest AzSK.ADO PowerShell module.");
                                 }   
                             }
                             else
@@ -223,7 +223,7 @@ class Organization: ADOSVTBase
             }
             else
             {
-                $controlResult.AddMessage([VerificationResult]::Error, "List of administrator groups for detecting non SC-Alt accounts is not defined in your organization. Please update your ControlSettings.json as per the latest AzSK.AzureDevOps PowerShell module.");
+                $controlResult.AddMessage([VerificationResult]::Error, "List of administrator groups for detecting non SC-Alt accounts is not defined in your organization. Please update your ControlSettings.json as per the latest AzSK.ADO PowerShell module.");
             }
         }
         catch

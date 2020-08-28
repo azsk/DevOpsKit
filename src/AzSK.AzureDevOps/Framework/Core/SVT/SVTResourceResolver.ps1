@@ -150,9 +150,9 @@ class SVTResourceResolver: AzSKRoot {
             #Select Org/User by default...
             $svtResource = [SVTResource]::new();
             $svtResource.ResourceName = $this.organizationName;
-            $svtResource.ResourceType = "AzureDevOps.Organization";
+            $svtResource.ResourceType = "ADO.Organization";
             $svtResource.ResourceId = "Organization/$($this.organizationName)/"
-            $svtResource.ResourceTypeMapping = ([SVTMapping]::AzSKDevOpsResourceMapping |
+            $svtResource.ResourceTypeMapping = ([SVTMapping]::AzSKADOResourceMapping |
                 Where-Object { $_.ResourceType -eq $svtResource.ResourceType } |
                 Select-Object -First 1)
 
@@ -163,9 +163,9 @@ class SVTResourceResolver: AzSKRoot {
         if ($this.ResourceTypeName -in ([ResourceTypeName]::User, [ResourceTypeName]::All, [ResourceTypeName]::Org_Project_User, [ResourceTypeName]::Build_Release_SvcConn_AgentPool_User)) {
             $svtResource = [SVTResource]::new();
             $svtResource.ResourceName = $this.organizationName;
-            $svtResource.ResourceType = "AzureDevOps.User";
+            $svtResource.ResourceType = "ADO.User";
             $svtResource.ResourceId = "Organization/$($this.organizationName)/User"
-            $svtResource.ResourceTypeMapping = ([SVTMapping]::AzSKDevOpsResourceMapping |
+            $svtResource.ResourceTypeMapping = ([SVTMapping]::AzSKADOResourceMapping |
                 Where-Object { $_.ResourceType -eq $svtResource.ResourceType } |
                 Select-Object -First 1)
            
@@ -219,9 +219,9 @@ class SVTResourceResolver: AzSKRoot {
                         $svtResource = [SVTResource]::new();
                         $svtResource.ResourceName = $thisProj.name;
                         $svtResource.ResourceGroupName = $this.organizationName
-                        $svtResource.ResourceType = "AzureDevOps.Project";
+                        $svtResource.ResourceType = "ADO.Project";
                         $svtResource.ResourceId = $thisProj.url
-                        $svtResource.ResourceTypeMapping = ([SVTMapping]::AzSKDevOpsResourceMapping |
+                        $svtResource.ResourceTypeMapping = ([SVTMapping]::AzSKADOResourceMapping |
                             Where-Object { $_.ResourceType -eq $svtResource.ResourceType } |
                             Select-Object -First 1)
                     
@@ -249,9 +249,9 @@ class SVTResourceResolver: AzSKRoot {
                                     $svtResource = [SVTResource]::new();
                                     $svtResource.ResourceName = $bldDef.name;
                                     $svtResource.ResourceGroupName = $bldDef.project.name;
-                                    $svtResource.ResourceType = "AzureDevOps.Build";
+                                    $svtResource.ResourceType = "ADO.Build";
                                     $svtResource.ResourceId = $bldDef.url.split('?')[0];
-                                    $svtResource.ResourceTypeMapping = ([SVTMapping]::AzSKDevOpsResourceMapping |
+                                    $svtResource.ResourceTypeMapping = ([SVTMapping]::AzSKADOResourceMapping |
                                         Where-Object { $_.ResourceType -eq $svtResource.ResourceType } |
                                         Select-Object -First 1)
                                     $svtResource.ResourceDetails = $bldDef
@@ -275,9 +275,9 @@ class SVTResourceResolver: AzSKRoot {
                                         $svtResource = [SVTResource]::new();
                                         $svtResource.ResourceName = $bldDef.name;
                                         $svtResource.ResourceGroupName = $bldDef.project.name;
-                                        $svtResource.ResourceType = "AzureDevOps.Build";
+                                        $svtResource.ResourceType = "ADO.Build";
                                         $svtResource.ResourceId = $bldDef.url.split('?')[0];
-                                        $svtResource.ResourceTypeMapping = ([SVTMapping]::AzSKDevOpsResourceMapping |
+                                        $svtResource.ResourceTypeMapping = ([SVTMapping]::AzSKADOResourceMapping |
                                             Where-Object { $_.ResourceType -eq $svtResource.ResourceType } |
                                             Select-Object -First 1)
         
@@ -312,9 +312,9 @@ class SVTResourceResolver: AzSKRoot {
                                     $svtResource = [SVTResource]::new();
                                     $svtResource.ResourceName = $relDef.name;
                                     $svtResource.ResourceGroupName = $projectName;
-                                    $svtResource.ResourceType = "AzureDevOps.Release";
+                                    $svtResource.ResourceType = "ADO.Release";
                                     $svtResource.ResourceId = $relDef.url
-                                    $svtResource.ResourceTypeMapping = ([SVTMapping]::AzSKDevOpsResourceMapping |
+                                    $svtResource.ResourceTypeMapping = ([SVTMapping]::AzSKADOResourceMapping |
                                         Where-Object { $_.ResourceType -eq $svtResource.ResourceType } |
                                         Select-Object -First 1)
 
@@ -356,9 +356,9 @@ class SVTResourceResolver: AzSKRoot {
                                             $svtResource = [SVTResource]::new();
                                             $svtResource.ResourceName = $relDef.name;
                                             $svtResource.ResourceGroupName = $projectName;
-                                            $svtResource.ResourceType = "AzureDevOps.Release";
+                                            $svtResource.ResourceType = "ADO.Release";
                                             $svtResource.ResourceId = $relDef.url
-                                            $svtResource.ResourceTypeMapping = ([SVTMapping]::AzSKDevOpsResourceMapping |
+                                            $svtResource.ResourceTypeMapping = ([SVTMapping]::AzSKADOResourceMapping |
                                                 Where-Object { $_.ResourceType -eq $svtResource.ResourceType } |
                                                 Select-Object -First 1)
 
@@ -413,9 +413,9 @@ class SVTResourceResolver: AzSKRoot {
                                 $svtResource = [SVTResource]::new();
                                 $svtResource.ResourceName = $connectionObject.Name;
                                 $svtResource.ResourceGroupName = $projectName;
-                                $svtResource.ResourceType = "AzureDevOps.ServiceConnection";
+                                $svtResource.ResourceType = "ADO.ServiceConnection";
                                 $svtResource.ResourceId = "Organization/$($this.organizationName)/Project/$projectName/$($connectionObject.Name)/$($connectionObject.Id)"
-                                $svtResource.ResourceTypeMapping = ([SVTMapping]::AzSKDevOpsResourceMapping |
+                                $svtResource.ResourceTypeMapping = ([SVTMapping]::AzSKADOResourceMapping |
                                     Where-Object { $_.ResourceType -eq $svtResource.ResourceType } |
                                     Select-Object -First 1)
                             
@@ -461,9 +461,9 @@ class SVTResourceResolver: AzSKRoot {
                                     $svtResource = [SVTResource]::new();
                                     $svtResource.ResourceName = $taq.name;
                                     $svtResource.ResourceGroupName = $projectName;
-                                    $svtResource.ResourceType = "AzureDevOps.AgentPool";
+                                    $svtResource.ResourceType = "ADO.AgentPool";
                                     $svtResource.ResourceId = "https://{0}.visualstudio.com/_apis/securityroles/scopes/distributedtask.agentqueuerole/roleassignments/resources/{1}_{2}" -f $($this.SubscriptionContext.SubscriptionName), $($taq.projectId), $taq.id   
-                                    $svtResource.ResourceTypeMapping = ([SVTMapping]::AzSKDevOpsResourceMapping |
+                                    $svtResource.ResourceTypeMapping = ([SVTMapping]::AzSKADOResourceMapping |
                                         Where-Object { $_.ResourceType -eq $svtResource.ResourceType } |
                                         Select-Object -First 1)
                                     $this.SVTResources += $svtResource

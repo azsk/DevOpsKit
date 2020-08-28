@@ -107,7 +107,7 @@
         PSData = @{
 
             # Tags applied to this module. These help with module discovery in online galleries.
-            Tags         = 'AzureDevOps', 'AzSK', 'AzureDevops_Security'
+            Tags         = 'ADO', 'AzSK', 'ADO_Security', 'ADO', 'ADO_Security'
 
             # A URL to the license for this module.
             LicenseUri   = 'https://github.com/azsk/azsk-docs/blob/master/LICENSE'

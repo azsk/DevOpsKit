@@ -76,8 +76,8 @@ class CommandHelper
 						$loadedVersions += $_.Version.ToString()
 					};
 					Write-Host "WARNING: Found multiple versions of Azure PowerShell ($($requiredModule.Name)) modules loaded in the session. ($($requiredModule.Name) versions found: $([string]::Join(", ", $loadedVersions)))" -ForegroundColor Yellow
-                    Write-Host "WARNING: This will lead to issues when running AzSK cmdlets." -ForegroundColor Yellow
-                    Write-Host 'Recommendation: Please start a fresh PowerShell session and run "Import-Module AzSK" first to avoid getting into this situation.' -ForegroundColor Yellow					
+                    Write-Host "WARNING: This will lead to issues when running AzSK.ADO cmdlets." -ForegroundColor Yellow
+                    Write-Host 'Recommendation: Please start a fresh PowerShell session and run "Import-Module AzSK.ADO" first to avoid getting into this situation.' -ForegroundColor Yellow					
 				}
 				else
 				{

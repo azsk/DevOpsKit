@@ -68,7 +68,7 @@ function Set-AzSKADOPrivacyNoticeResponse {
 
 function Clear-AzSKADOSessionState {
 
-    Write-Host "Clearing AzSK.AzureDevOps session state..." -ForegroundColor Yellow
+    Write-Host "Clearing $([Constants]::AzSKModuleName) session state..." -ForegroundColor Yellow
     [ConfigOverride]::ClearConfigInstance()
     Write-Host "Session state cleared." -ForegroundColor Yellow
 

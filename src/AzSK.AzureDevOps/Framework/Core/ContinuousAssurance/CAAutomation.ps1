@@ -388,7 +388,7 @@ class CAAutomation : ADOSVTCommandBase
 		
 				$this.PublishCustomMessage("Scan will begin at $($this.ScanTriggerLocalTime)", [MessageType]::Update);
 				$this.SetupComplete = $true
-				$messageData += [MessageData]::new("The following resources were created in resource group $($this.RGName) as part of AzSK.AzureDevOps Continuous Assurance", ($this.CreatedResources| Out-String))
+				$messageData += [MessageData]::new("The following resources were created in resource group $($this.RGName) as part of AzSK.ADO Continuous Assurance", ($this.CreatedResources| Out-String))
 			}
 		}
 		catch
