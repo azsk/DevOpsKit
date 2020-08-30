@@ -4,7 +4,7 @@ class Release: ADOSVTBase
 
     hidden [PSObject] $ReleaseObj;
     hidden [string] $ProjectId;
-    hidden [string] $securityNamespaceId;
+    hidden static [string] $securityNamespaceId;
 
     
     Release([string] $subscriptionId, [SVTResource] $svtResource): Base($subscriptionId,$svtResource) 
@@ -22,11 +22,13 @@ class Release: ADOSVTBase
             $this.ProjectId = [regex]::match($this.ReleaseObj.url.ToLower(), $pattern.ToLower()).Groups[1].Value
         }
         # Get security namespace identifier of current release pipeline.
-        $apiURL = "https://dev.azure.com/{0}/_apis/securitynamespaces?api-version=5.0" -f $($this.SubscriptionContext.SubscriptionName)
-        $securityNamespacesObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
-        $this.SecurityNamespaceId = ($securityNamespacesObj | Where-Object { ($_.Name -eq "ReleaseManagement") -and ($_.actions.name -contains "ViewReleaseDefinition")}).namespaceId
-
-        $securityNamespacesObj = $null;
+        if (![Release]::SecurityNamespaceId) {
+            $apiURL = "https://dev.azure.com/{0}/_apis/securitynamespaces?api-version=5.0" -f $($this.SubscriptionContext.SubscriptionName)
+            $securityNamespacesObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
+            [Release]::SecurityNamespaceId = ($securityNamespacesObj | Where-Object { ($_.Name -eq "ReleaseManagement") -and ($_.actions.name -contains "ViewReleaseDefinition")}).namespaceId
+    
+            $securityNamespacesObj = $null;
+        }
     }
 
     hidden [ControlResult] CheckCredInVariables([ControlResult] $controlResult)
@@ -212,7 +214,7 @@ class Release: ADOSVTBase
     hidden [ControlResult] CheckInheritPermissions([ControlResult] $controlResult)
     {
         # Here 'permissionSet' = security namespace identifier, 'token' = project id
-        $apiURL = "https://{0}.visualstudio.com/{1}/_admin/_security/index?useApiUrl=true&permissionSet={2}&token={3}%2F{4}&style=min" -f $($this.SubscriptionContext.SubscriptionName), $($this.ProjectId), $($this.SecurityNamespaceId), $($this.ProjectId), $($this.ReleaseObj.id);
+        $apiURL = "https://{0}.visualstudio.com/{1}/_admin/_security/index?useApiUrl=true&permissionSet={2}&token={3}%2F{4}&style=min" -f $($this.SubscriptionContext.SubscriptionName), $($this.ProjectId), $([Release]::SecurityNamespaceId), $($this.ProjectId), $($this.ReleaseObj.id);
         $header = [WebRequestHelper]::GetAuthHeaderFromUri($apiURL);
         $responseObj = Invoke-RestMethod -Method Get -Uri $apiURL -Headers $header -UseBasicParsing
         $responseObj = ($responseObj.SelectNodes("//script") | Where-Object { $_.class -eq "permissions-context" }).InnerXML | ConvertFrom-Json; 
@@ -323,7 +325,7 @@ class Release: ADOSVTBase
         {
             # This functions is to check users permissions on release definition. Groups' permissions check is not added here.
             $releaseDefinitionPath = $this.ReleaseObj.Path.Trim("\").Replace(" ","+").Replace("\","%2F")
-            $apiURL = "https://{0}.visualstudio.com/{1}/_api/_security/ReadExplicitIdentitiesJson?__v=5&permissionSetId={2}&permissionSetToken={3}%2F{4}%2F{5}" -f $($this.SubscriptionContext.SubscriptionName), $($this.ProjectId), $($this.SecurityNamespaceId), $($this.ProjectId), $($releaseDefinitionPath) ,$($this.ReleaseObj.id);
+            $apiURL = "https://{0}.visualstudio.com/{1}/_api/_security/ReadExplicitIdentitiesJson?__v=5&permissionSetId={2}&permissionSetToken={3}%2F{4}%2F{5}" -f $($this.SubscriptionContext.SubscriptionName), $($this.ProjectId), $([Release]::SecurityNamespaceId), $($this.ProjectId), $($releaseDefinitionPath) ,$($this.ReleaseObj.id);
             $responseObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
             $accessList = @()
             $exemptedUserIdentities = @()
@@ -344,7 +346,7 @@ class Release: ADOSVTBase
                     $identity = $_ 
                     if($exemptedUserIdentities -notcontains $identity.TeamFoundationId)
                     {
-                        $apiURL = "https://{0}.visualstudio.com/{1}/_api/_security/DisplayPermissions?__v=5&tfid={2}&permissionSetId={3}&permissionSetToken={4}%2F{5}%2F{6}" -f $($this.SubscriptionContext.SubscriptionName), $($this.ProjectId), $($identity.TeamFoundationId) ,$($this.SecurityNamespaceId), $($this.ProjectId), $($releaseDefinitionPath), $($this.ReleaseObj.id);
+                        $apiURL = "https://{0}.visualstudio.com/{1}/_api/_security/DisplayPermissions?__v=5&tfid={2}&permissionSetId={3}&permissionSetToken={4}%2F{5}%2F{6}" -f $($this.SubscriptionContext.SubscriptionName), $($this.ProjectId), $($identity.TeamFoundationId) ,$([Release]::SecurityNamespaceId), $($this.ProjectId), $($releaseDefinitionPath), $($this.ReleaseObj.id);
                         $identityPermissions = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
                         return @{ IdentityName = $identity.DisplayName; IdentityType = $identity.IdentityType; Permissions = ($identityPermissions.Permissions | Select-Object @{Name="Name"; Expression = {$_.displayName}},@{Name="Permission"; Expression = {$_.permissionDisplayString}}) }
                     }
@@ -352,7 +354,7 @@ class Release: ADOSVTBase
 
                 $accessList += $responseObj.identities | Where-Object { $_.IdentityType -eq "group" } | ForEach-Object {
                     $identity = $_ 
-                    $apiURL = "https://{0}.visualstudio.com/{1}/_api/_security/DisplayPermissions?__v=5&tfid={2}&permissionSetId={3}&permissionSetToken={4}%2F{5}%2F{6}" -f $($this.SubscriptionContext.SubscriptionName), $($this.ProjectId), $($identity.TeamFoundationId) ,$($this.SecurityNamespaceId), $($this.ProjectId), $($releaseDefinitionPath), $($this.ReleaseObj.id);
+                    $apiURL = "https://{0}.visualstudio.com/{1}/_api/_security/DisplayPermissions?__v=5&tfid={2}&permissionSetId={3}&permissionSetToken={4}%2F{5}%2F{6}" -f $($this.SubscriptionContext.SubscriptionName), $($this.ProjectId), $($identity.TeamFoundationId) ,$([Release]::SecurityNamespaceId), $($this.ProjectId), $($releaseDefinitionPath), $($this.ReleaseObj.id);
                     $identityPermissions = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
                     return @{ IdentityName = $identity.DisplayName; IdentityType = $identity.IdentityType; IsAadGroup = $identity.IsAadGroup ;Permissions = ($identityPermissions.Permissions | Select-Object @{Name="Name"; Expression = {$_.displayName}},@{Name="Permission"; Expression = {$_.permissionDisplayString}}) }
                 }

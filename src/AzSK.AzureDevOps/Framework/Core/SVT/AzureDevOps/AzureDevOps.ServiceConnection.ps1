@@ -2,7 +2,7 @@ Set-StrictMode -Version Latest
 class ServiceConnection: ADOSVTBase
 {
     hidden [PSObject] $ServiceEndpointsObj = $null;
-    hidden [string] $SecurityNamespaceId;
+    hidden static [string] $SecurityNamespaceId;
     hidden [PSObject] $ProjectId;
     hidden [PSObject] $ServiceConnEndPointDetail = $null;
     hidden [PSObject] $pipelinePermission = $null;
@@ -14,11 +14,14 @@ class ServiceConnection: ADOSVTBase
         $this.ProjectId = ($this.ResourceContext.ResourceDetails.ResourceLink -split $this.SubscriptionContext.SubscriptionName)[1].split("/")[1];
 
         # Get security namespace identifier of service endpoints.
-        $apiURL = "https://dev.azure.com/{0}/_apis/securitynamespaces?api-version=5.0" -f $($this.SubscriptionContext.SubscriptionName)
-        $securityNamespacesObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
-        $this.SecurityNamespaceId = ($securityNamespacesObj | Where-Object { ($_.Name -eq "ServiceEndpoints")}).namespaceId
-
-        $securityNamespacesObj = $null;
+        if(![ServiceConnection]::SecurityNamespaceId)
+        {
+            $apiURL = "https://dev.azure.com/{0}/_apis/securitynamespaces?api-version=5.0" -f $($this.SubscriptionContext.SubscriptionName)
+            $securityNamespacesObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
+            [ServiceConnection]::SecurityNamespaceId = ($securityNamespacesObj | Where-Object { ($_.Name -eq "ServiceEndpoints")}).namespaceId
+    
+            $securityNamespacesObj = $null;
+        }
 
         # Get service connection details https://dev.azure.com/{organization}/{project}/_admin/_services 
         $this.ServiceEndpointsObj = $this.ResourceContext.ResourceDetails
@@ -152,7 +155,7 @@ class ServiceConnection: ADOSVTBase
         try
         {
             $Endpoint = $this.ServiceEndpointsObj
-            $apiURL = "https://dev.azure.com/{0}/_apis/accesscontrollists/{1}?token=endpoints/{2}/{3}&api-version=5.0" -f $($this.SubscriptionContext.SubscriptionName),$($this.SecurityNamespaceId),$($this.ProjectId),$($Endpoint.id);
+            $apiURL = "https://dev.azure.com/{0}/_apis/accesscontrollists/{1}?token=endpoints/{2}/{3}&api-version=5.0" -f $($this.SubscriptionContext.SubscriptionName),$([ServiceConnection]::SecurityNamespaceId),$($this.ProjectId),$($Endpoint.id);
             $responseObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
             if(($responseObj | Measure-Object).Count -eq 0)
             {

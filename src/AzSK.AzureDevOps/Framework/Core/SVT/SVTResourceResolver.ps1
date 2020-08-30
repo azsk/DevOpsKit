@@ -243,7 +243,11 @@ class SVTResourceResolver: AzSKRoot {
                                     Remove-Variable buildDefnsObj;
                                 }
                             }
-                        }          
+                        }
+                        
+                        #Initialysing null to SecurityNamespaceId variable for new scan, it is static variable, setting once only in svc class and same value is applicable for all the svc con withing org
+                        [Build]::SecurityNamespaceId = $null;
+                            
                     }
                     #check if long running scan allowed or not.
                     if(!$this.isAllowLongRunningScanCheck())
@@ -309,6 +313,10 @@ class SVTResourceResolver: AzSKRoot {
                                 Write-Warning "Release pipelines for the project [$($projectName)] could not be fetched.";
                             }
                         }
+
+                        #Initialysing null to SecurityNamespaceId variable for new scan, it is static variable, setting once only in release class and same value is applicable for all the release pipelines withing org
+                        [Release]::SecurityNamespaceId = $null;
+                            
                     }
                     #check if long running scan allowed or not.
                     if(!$this.isAllowLongRunningScanCheck())
@@ -337,6 +345,8 @@ class SVTResourceResolver: AzSKRoot {
                                 $Connections = $serviceEndpointObj | Where-Object { ($_.type -eq "azurerm" -or $_.type -eq "azure" -or $_.type -eq "git" -or $_.type -eq "github" -or $_.type -eq "externaltfs") -and ($this.ServiceConnections -eq $_.name) }  
                             }
 
+                            #Initialysing null to SecurityNamespaceId variable for new scan, it is static variable, setting once only in svc class and same value is applicable for all the svc con withing org
+                            [ServiceConnection]::SecurityNamespaceId = $null;
                             $serviceEndpointObj = $null;
                             Remove-Variable  serviceEndpointObj;
                             $nObj = $this.MaxObjectsToScan
