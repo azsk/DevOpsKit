@@ -62,7 +62,7 @@ class HostInfo: CommandBase
 			$actionMessage = [Constants]::NoActionRequiredMessage
 		}
 
-		$this.AddConfigurationDetails('DevOpsKit (AzSK)', $configuredVersion, $serverVersion, $serverVersion, $actionMessage)
+		$this.AddConfigurationDetails('ADO Security Scaner (AzSK.ADO)', $configuredVersion, $serverVersion, $serverVersion, $actionMessage)
 	}
 
 	[PSObject] MaskSettings($settingsRaw)

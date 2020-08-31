@@ -4,7 +4,7 @@
   "IsMaintenanceMode": false,
   "Controls": [
     {
-      "ControlID": "AzureDevOps_Release_AuthZ_Grant_Min_RBAC_Access",
+      "ControlID": "ADO_Release_AuthZ_Grant_Min_RBAC_Access",
       "Description": "All teams/groups must be granted minimum required permissions on release definition",
       "Id": "Release110",
       "ControlSeverity": "High",
@@ -22,7 +22,7 @@
       "Enabled": true
     },
     {
-      "ControlID": "AzureDevOps_Release_DP_No_PlainText_Secrets_In_Definition",
+      "ControlID": "ADO_Release_DP_No_PlainText_Secrets_In_Definition",
       "Description": "Secrets and keys must not be stored as plain text in release variables/task parameters",
       "Id": "Release120",
       "ControlSeverity": "High",
@@ -39,7 +39,7 @@
       "Enabled": true
     },
     {
-      "ControlID": "AzureDevOps_Release_SI_Review_Inactive_Release",
+      "ControlID": "ADO_Release_SI_Review_Inactive_Release",
       "Description": "Inactive release pipelines must be removed if no more required.",
       "Id": "Release130",
       "ControlSeverity": "Low",
@@ -56,7 +56,7 @@
       "Enabled": true
     },
     {
-      "ControlID": "AzureDevOps_Release_AuthZ_Disable_Inherited_Permissions",
+      "ControlID": "ADO_Release_AuthZ_Disable_Inherited_Permissions",
       "Description": "Do not allow inherited permission on release definitions",
       "Id": "Release140",
       "ControlSeverity": "High",
@@ -74,7 +74,7 @@
       "Enabled": true
     },
     {
-      "ControlID": "AzureDevOps_Release_AuthZ_Enable_PreDeployment_Approvals",
+      "ControlID": "ADO_Release_AuthZ_Enable_PreDeployment_Approvals",
       "Description": "Releases pipeline for production deployments must have pre-deployment approval enabled.",
       "Id": "Release150",
       "ControlSeverity": "High",
@@ -92,7 +92,7 @@
       "Enabled": true
     },
     {
-      "ControlID": "AzureDevOps_Release_AuthZ_Review_PreDeployment_Approvers",
+      "ControlID": "ADO_Release_AuthZ_Review_PreDeployment_Approvers",
       "Description": "Only legitimate users should be added as approvers for a release pipeline",
       "Id": "Release160",
       "ControlSeverity": "Medium",
@@ -110,7 +110,7 @@
       "Enabled": true
     },
     {
-      "ControlID": "AzureDevOps_Release_SI_Use_Good_Branch_Hygiene",
+      "ControlID": "ADO_Release_SI_Use_Good_Branch_Hygiene",
       "Description": "All releases to Production or pre-Production stages must be done from one and only one (main) branch.",
       "Id": "Release170",
       "ControlSeverity": "Medium",
@@ -127,7 +127,7 @@
       "Enabled": true
     },
     {
-      "ControlID": "AzureDevOps_Release_SI_Review_External_Sources",
+      "ControlID": "ADO_Release_SI_Review_External_Sources",
       "Description": "Ensure that release pipelines consume artifacts from trustworthy repos.",
       "Id": "Release180",
       "ControlSeverity": "Medium",
@@ -144,7 +144,7 @@
       "Enabled": true
     },
     {
-      "ControlID": "AzureDevOps_Release_SI_Review_Variables_Settable_At_Release_Time",
+      "ControlID": "ADO_Release_SI_Review_Variables_Settable_At_Release_Time",
       "Description": "Pipeline variables marked settable at release time should be carefully reviewed.",
       "Id": "Release190",
       "ControlSeverity": "High",
@@ -161,7 +161,7 @@
       "Enabled": true
     },
     {
-      "ControlID": "AzureDevOps_Release_SI_Review_URL_Variables_Settable_At_Release_Time",
+      "ControlID": "ADO_Release_SI_Review_URL_Variables_Settable_At_Release_Time",
       "Description": "Pipeline variables marked settable at release time and containing URLs should be carefully reviewed.",
       "Id": "Release192",
       "ControlSeverity": "High",

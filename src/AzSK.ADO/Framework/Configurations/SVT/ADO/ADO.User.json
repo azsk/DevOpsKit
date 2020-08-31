@@ -4,7 +4,7 @@
   "IsMaintenanceMode": false,
   "Controls": [
     {
-      "ControlID": "AzureDevOps_User_AuthZ_PAT_Min_Access",
+      "ControlID": "ADO_User_AuthZ_PAT_Min_Access",
       "Description": "Personal access tokens (PAT) must be defined with minimum required permissions to resources",
       "Id": "User110",
       "ControlSeverity": "Medium",
@@ -21,7 +21,7 @@
       "Enabled": true
     },
     {
-      "ControlID": "AzureDevOps_User_AuthZ_Minimal_Token_Validity",
+      "ControlID": "ADO_User_AuthZ_Minimal_Token_Validity",
       "Description": "Personal access tokens (PAT) must have a shortest possible validity period",
       "Id": "User120",
       "ControlSeverity": "Medium",
@@ -38,7 +38,7 @@
       "Enabled": true
     },
     {
-      "ControlID": "AzureDevOps_User_AuthZ_Review_Token_Expiration",
+      "ControlID": "ADO_User_AuthZ_Review_Token_Expiration",
       "Description": "Personal access tokens (PAT) near expiry should be renewed.",
       "Id": "User121",
       "ControlSeverity": "Medium",
@@ -55,7 +55,7 @@
       "Enabled": true
     },
     {
-      "ControlID": "AzureDevOps_User_AuthN_Disable_Alternate_Credentials",
+      "ControlID": "ADO_User_AuthN_Disable_Alternate_Credentials",
       "Description": "Alternate credentials must be disabled",
       "Id": "User130",
       "ControlSeverity": "Medium",

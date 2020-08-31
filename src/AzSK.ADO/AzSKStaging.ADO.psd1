@@ -124,7 +124,9 @@
             * Organization
             * Project
             * User
-            * Pipeline (Build and Release) '
+            * Pipeline (Build and Release)
+            * Service Connection
+            * Agent Pool '
 
         }
     } # End of PSData hashtable

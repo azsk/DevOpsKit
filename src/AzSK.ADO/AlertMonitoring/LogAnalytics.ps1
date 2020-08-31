@@ -147,7 +147,7 @@ function Install-AzSKADOMonitoringSolution
 	.PARAMETER LAWSId
 		Workspace ID of the Log Analytics workspace which will be used for monitoring.
 	.PARAMETER ViewName
-		Provide the custom name for your DevOps Kit security view.
+		Provide the custom name for your ADO scanner security view.
 	.PARAMETER ValidateOnly
 		Provide this debug switch to validate the deployment. It is a predeployment check which validates all the provided params.
 	.PARAMETER DoNotOpenOutputFolder
@@ -181,7 +181,7 @@ function Install-AzSKADOMonitoringSolution
 		[ValidateNotNullOrEmpty()]
 		$LAWSId, 
 		
-		[Parameter(ParameterSetName="NewModel", HelpMessage="Provide the custom name for your DevOps Kit security view", Mandatory = $false)]
+		[Parameter(ParameterSetName="NewModel", HelpMessage="Provide the custom name for your ADO scanner security view", Mandatory = $false)]
         [string]
 		[Alias("vname")]
 		$ViewName = "SecurityCompliance", 

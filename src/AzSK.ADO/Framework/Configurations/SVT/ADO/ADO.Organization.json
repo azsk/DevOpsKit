@@ -4,7 +4,7 @@
   "IsMaintenanceMode": false,
   "Controls": [
     {
-      "ControlID": "AzureDevOps_Organization_AuthN_Use_AAD_Auth",
+      "ControlID": "ADO_Organization_AuthN_Use_AAD_Auth",
       "Description": "Organization must be configured to authenticate users using Azure Active Directory backed credentials.",
       "Id": "Organization110",
       "ControlSeverity": "High",
@@ -21,8 +21,8 @@
       "Enabled": true
     },
     {
-      "ControlID": "AzureDevOps_Organization_AuthN_Disable_External_Guest_Users",
-      "Description": "Do not grant access to external users (users with accounts outside your native directory) to your organization.",
+      "ControlID": "ADO_Organization_AuthN_Disable_External_Guest_Users",
+      "Description": "Do not enable access for external users in your organization.",
       "Id": "Organization120",
       "ControlSeverity": "High",
       "Automated": "Yes",
@@ -38,8 +38,8 @@
       "Enabled": true
     },
     {
-      "ControlID": "AzureDevOps_Organization_DP_Dont_Allow_Public_Projects",
-      "Description": "Public projects must be turned off for organization.",
+      "ControlID": "ADO_Organization_DP_Dont_Allow_Public_Projects",
+      "Description": "Public projects should be turned off for your organization.",
       "Id": "Organization130",
       "ControlSeverity": "High",
       "Automated": "Yes",
@@ -55,7 +55,7 @@
       "Enabled": true
     },
     {
-      "ControlID": "AzureDevOps_Organization_AuthZ_Justify_Guest_Identities",
+      "ControlID": "ADO_Organization_AuthZ_Justify_Guest_Identities",
       "Description": "Justify all guest identities that have been granted access to your organization.",
       "Id": "Organization140",
       "ControlSeverity": "High",
@@ -72,8 +72,8 @@
       "Enabled": true
     },
     {
-      "ControlID": "AzureDevOps_Organization_SI_Review_Installed_Extensions",
-      "Description": "Ensure that extensions enabled for your organization are trustworthy.",
+      "ControlID": "ADO_Organization_SI_Review_Installed_Extensions",
+      "Description": "Carefully review all extensions enabled for your organization.",
       "Id": "Organization150",
       "ControlSeverity": "High",
       "Automated": "Yes",
@@ -89,7 +89,7 @@
       "Enabled": true
     },
     {
-      "ControlID": "AzureDevOps_Organization_SI_Review_Shared_Extensions",
+      "ControlID": "ADO_Organization_SI_Review_Shared_Extensions",
       "Description": "Exercise due care when installing (private) shared extensions for your organization.",
       "Id": "Organization160",
       "ControlSeverity": "High",
@@ -106,8 +106,8 @@
       "Enabled": true
     },
     {
-      "ControlID": "AzureDevOps_Organization_AuthZ_Review_Extension_Managers",
-      "Description": "Review the list of users who have permission to manage extensions",
+      "ControlID": "ADO_Organization_AuthZ_Review_Extension_Managers",
+      "Description": "Review the set of users who have permission to manage extensions.",
       "Id": "Organization170",
       "ControlSeverity": "High",
       "Automated": "Yes",
@@ -123,8 +123,8 @@
       "Enabled": true
     },
     {
-      "ControlID": "AzureDevOps_Organization_SI_Review_Inactive_Users",
-      "Description": "Consider revoking access for inactive users.",
+      "ControlID": "ADO_Organization_AuthZ_Review_Inactive_Users",
+      "Description": "Consider revoking access for inactive users in your organization.",
       "Id": "Organization180",
       "ControlSeverity": "Medium",
       "Automated": "Yes",
@@ -135,12 +135,12 @@
         "SDL",
         "TCP",
         "Automated",
-        "SI"
+        "AuthZ"
       ],
       "Enabled": true
     },
     {
-      "ControlID": "AzureDevOps_Organization_AuthZ_Deleted_AD_DisconnectedUser_Access",
+      "ControlID": "ADO_Organization_AuthZ_Remove_Disconnected_Accounts",
       "Description": "Remove access entries for users whose accounts have been deleted/disconnected from Azure Active Directory.",
       "Id": "Organization190",
       "ControlSeverity": "Medium",
@@ -157,8 +157,8 @@
       "Enabled": true
     },
     {
-      "ControlID": "AzureDevOps_Organization_AuthZ_Min_RBAC_Access",
-      "Description": "All teams/groups must be granted minimum required permissions on Organization",
+      "ControlID": "ADO_Organization_AuthZ_Min_RBAC_Access",
+      "Description": "All teams/groups must be granted minimum required permissions in your organization.",
       "Id": "Organization200",
       "ControlSeverity": "High",
       "Automated": "No",
@@ -174,8 +174,8 @@
       "Enabled": true
     },
     {
-      "ControlID": "AzureDevOps_Organization_AuthZ_Review_Group_Members",
-      "Description": "Justify all identities that are granted with member access on groups and teams.",
+      "ControlID": "ADO_Organization_AuthZ_Review_Group_Members",
+      "Description": "Review membership of all organization level privileged groups and teams.",
       "Id": "Organization210",
       "ControlSeverity": "High",
       "Automated": "No",
@@ -191,7 +191,7 @@
       "Enabled": true
     },
     {
-      "ControlID": "AzureDevOps_Organization_Audit_Configure_Critical_Alerts",
+      "ControlID": "ADO_Organization_Audit_Configure_Critical_Alerts",
       "Description": "Alerts must be configured for critical actions on Organization",
       "Id": "Organization220",
       "ControlSeverity": "Medium",
@@ -208,13 +208,13 @@
       "Enabled": true
     },
     {
-      "ControlID": "AzureDevOps_Organization_AuthZ_Dont_Use_SVC_Accounts_No_MFA",
-      "Description": "Service accounts cannot support MFA and should not be used for Org activity",
+      "ControlID": "ADO_Organization_AuthZ_Dont_Use_Svc_Accounts",
+      "Description": "Service accounts cannot support MFA and should not be used for organization activity.",
       "Id": "Organization230",
       "ControlSeverity": "High",
       "Automated": "No",
       "MethodName": "",
-      "Rationale": "Service accounts are typically not multi-factor authentication capable. Quite often, teams who own these accounts don't exercise due care (e.g., someone may login interactively on servers using a service account exposing their credentials to attacks such as pass-the-hash, phishing, etc.) As a result, using service accounts in any privileged role in a AzureDevOps exposes the Organization data to 'credential theft'-related attack vectors. (In effect, the Organization data becomes accessible after just one factor (password) is compromised...this defeats the whole purpose of imposing the MFA requirement for Organizations.)",
+      "Rationale": "Service accounts are typically not multi-factor authentication capable. Quite often, teams who own these accounts don't exercise due care (e.g., someone may login interactively on servers using a service account exposing their credentials to attacks such as pass-the-hash, phishing, etc.) As a result, using service accounts in any privileged role in ADO exposes the Organization data to 'credential theft'-related attack vectors. (In effect, the Organization data becomes accessible after just one factor (password) is compromised...this defeats the whole purpose of imposing the MFA requirement for Organizations.)",
       "Recommendation": "Refer: https://docs.microsoft.com/en-us/azure/devops/notifications/concepts-events-and-notifications?view=vsts",
       "Tags": [
         "SDL",
@@ -225,8 +225,8 @@
       "Enabled": true
     },
     {
-      "ControlID": "AzureDevOps_Organization_AuthZ_Use_SC-ALT_Accounts",
-      "Description": " Smart Card Alt (SC-ALT) accounts must be used on Secure Admin Workstation(SAW) for privileged roles used for organization activity.",
+      "ControlID": "ADO_Organization_AuthN_Use_ALT_Accounts",
+      "Description": "Alternate (ALT) accounts should be used from Secure Admin Workstation (SAW) for privileged organization roles.",
       "Id": "Organization240",
       "ControlSeverity": "High",
       "Automated": "No",
@@ -237,13 +237,13 @@
         "SDL",
         "TCP",
         "Manual",
-        "AuthZ"
+        "AuthN"
       ],
       "Enabled": true
     },
     {
-      "ControlID": "AzureDevOps_Organization_AuthZ_Use_SC_ALT_Account_For_Admin",
-      "Description": "Smart Card Alt (SC-ALT) accounts must be used for assigning administrator roles in organization.",
+      "ControlID": "ADO_Organization_AuthN_Use_ALT_Accounts_For_Admin",
+      "Description": "Alternate (ALT) accounts must be used for administrative activity at organization scope.",
       "Id": "Organization242",
       "ControlSeverity": "High",
       "Automated": "Yes",
@@ -254,13 +254,13 @@
         "SDL",
         "TCP",
         "Automated",
-        "AuthZ"
+        "AuthN"
       ],
       "Enabled": true
     },
     {
-      "ControlID": "AzureDevOps_Organization_AuthZ_Review_Project_Collection_Service_Accounts",
-      "Description": "Minimize and review user/service accounts that are members of the Project Collection Service Accounts group.",
+      "ControlID": "ADO_Organization_AuthZ_Review_Project_Collection_Service_Accounts",
+      "Description": "Review and minimize accounts that are members of the Project Collection Service Accounts group.",
       "Id": "Organization250",
       "ControlSeverity": "High",
       "Automated": "Yes",
@@ -276,29 +276,12 @@
       "Enabled": true
     },
     {
-      "ControlID": "AzureDevOps_Organization_AuthN_Enable_App_Access_OAuth",
-      "Description": "OAuth should be enabled for third party application access",
-      "Id": "Organization260",
-      "ControlSeverity": "Medium",
-      "Automated": "Yes",
-      "MethodName": "CheckOAuthAppAccess",
-      "Rationale": "TBD",
-      "Recommendation": "Go to Organization Settings --> Security --> Policies --> Application connection policies --> Enable Third-party application access via OAuth",
-      "Tags": [
-        "SDL",
-        "TCP",
-        "Automated",
-        "AuthN"
-      ],
-      "Enabled": true
-    },
-    {
-      "ControlID": "AzureDevOps_Organization_SI_Review_Auto_Injected_Extensions",
+      "ControlID": "ADO_Organization_SI_Review_Auto_Injected_Extensions",
       "Description": "Set of auto-injected pipeline tasks should be carefully scrutinized.",
       "Id": "Organization270",
       "ControlSeverity": "Medium",
       "Automated": "Yes",
-      "MethodName": "AutoInjectedExtension",
+      "MethodName": "CheckAutoInjectedExtensions",
       "Rationale": "Auto-injected pipeline tasks will run in every pipeline. If an attacker can change/influence the task logic/code, it can have catastrophic consequences for the entire organization.",
       "Recommendation": "Go to Organization Settings --> Extensions -> Verify the auto-injected extensions.",
       "Tags": [
@@ -310,30 +293,13 @@
       "Enabled": true
     },
     {
-      "ControlID": "AzureDevOps_Organization_AuthN_Enable_SSH_Auth",
-      "Description": "SSH authentication should be enabled for Application connection policies",
-      "Id": "Organization280",
-      "ControlSeverity": "Medium",
-      "Automated": "Yes",
-      "MethodName": "CheckSSHAuthn",
-      "Rationale": "TBD",
-      "Recommendation": "Go to Organization Settings --> Security --> Policies --> Application connection policies --> Enable SSH Authentication",
-      "Tags": [
-        "SDL",
-        "TCP",
-        "Automated",
-        "AuthN"
-      ],
-      "Enabled": true
-    },
-    {
-      "ControlID": "AzureDevOps_Organization_AuthZ_Verify_Enterprise_Access_To_Projects",
+      "ControlID": "ADO_Organization_AuthZ_Verify_Enterprise_Access_To_Projects",
       "Description": "Enterprise access to projects should be verified.",
       "Id": "Organization290",
       "ControlSeverity": "Medium",
       "Automated": "Yes",
       "MethodName": "CheckEnterpriseAccess",
-      "Rationale": "Data/content in enterprise projects can be viewed/downloaded by anyone within the organization. This can lead to a compromise of sensitive corporate data.",
+      "Rationale": "If enterprise access to projects is enabled, data/content in enterprise projects can be viewed/downloaded by anyone within the organization. This can lead to a compromise of sensitive corporate data.",
       "Recommendation": "Go to Organization Settings --> Security --> Policies --> Security policies --> Disable 'Enterprise access to projects'.",
       "Tags": [
         "SDL",
@@ -344,8 +310,8 @@
       "Enabled": true
     },
     {
-      "ControlID": "AzureDevOps_Organization_AuthZ_Enable_AAD_Conditional_Access_Policy",
-      "Description": "AAD conditional access policy should be enabled in the organization.",
+      "ControlID": "ADO_Organization_AuthZ_Enable_AAD_Conditional_Access_Policy",
+      "Description": "Consider enabling AAD conditional access policy for your organization.",
       "Id": "Organization300",
       "ControlSeverity": "Medium",
       "Automated": "Yes",
@@ -361,8 +327,8 @@
       "Enabled": true
     },
     {
-      "ControlID": "AzureDevOps_Organization_DP_Disable_Anonymous_Access_To_Badges",
-      "Description": "Anonymous access to status badge API for parallel pipelines should be disabled.",
+      "ControlID": "ADO_Organization_DP_Disable_Anonymous_Access_To_Badges",
+      "Description": "Disable anonymous access to status badge API for parallel pipelines.",
       "Id": "Organization310",
       "ControlSeverity": "Low",
       "Automated": "Yes",
@@ -378,12 +344,12 @@
       "Enabled": true
     },
     {
-      "ControlID": "AzureDevOps_Organization_SI_Limit_Variables_Settable_At_Queue_Time",
-      "Description": "Pipeline variables marked settable at queue time should be limited and carefully reviewed.",
+      "ControlID": "ADO_Organization_SI_Limit_Variables_Settable_At_Queue_Time",
+      "Description": "Limit pipeline variables marked settable at queue time.",
       "Id": "Organization320",
       "ControlSeverity": "Medium",
       "Automated": "Yes",
-      "MethodName": "CheckSetQueueTime",
+      "MethodName": "CheckSettableQueueTime",
       "Rationale": "Pipeline variables not marked settable at queue time can only be changed by someone with elevated permissions. These variables (reasonably) can be used in ways that make code injection possible.",
       "Recommendation": "Go to Organization Settings --> Pipelines --> Settings --> Enable 'Limit variables that can be set at queue time'.",
       "Tags": [
@@ -395,8 +361,8 @@
       "Enabled": true
     },
     {
-      "ControlID": "AzureDevOps_Organization_AuthZ_Limit_Non_Release_Scope_To_Project",
-      "Description": "Do not run non-release pipelines using tokens that have project collection level access.",
+      "ControlID": "ADO_Organization_AuthZ_Limit_Non_Release_Pipeline_Access",
+      "Description": "Limit scope of access for non-release pipelines to the current project.",
       "Id": "Organization330",
       "ControlSeverity": "Medium",
       "Automated": "Yes",
@@ -412,8 +378,8 @@
       "Enabled": true
     },
     {
-      "ControlID": "AzureDevOps_Organization_AuthZ_Limit_Release_Scope_To_Project",
-      "Description": "Do not run release pipelines using tokens that have project collection level access.",
+      "ControlID": "ADO_Organization_AuthZ_Limit_Release_Pipeline_Access",
+      "Description": "Limit scope of access for release pipelines to the current project.",
       "Id": "Organization331",
       "ControlSeverity": "Medium",
       "Automated": "Yes",
@@ -429,8 +395,8 @@
       "Enabled": true
     },
     {
-      "ControlID": "AzureDevOps_Organization_AuthZ_Limit_Pipeline_Scope_To_Referenced_Repos",
-      "Description": "Do not run pipelines using tokens that have access to all Azure DevOps repositories in authorized projects.",
+      "ControlID": "ADO_Organization_AuthZ_Limit_Pipeline_Access_To_Referenced_Repos",
+      "Description": "Limit scope of access for pipelines to explicitly referenced Azure DevOps repositories.",
       "Id": "Organization332",
       "ControlSeverity": "Medium",
       "Automated": "Yes",
@@ -446,47 +412,13 @@
       "Enabled": true
     },
     {
-      "ControlID": "AzureDevOps_Organization_SI_Disable_BuiltIn_Task",
-      "Description": "Restrict built-in tasks from being used in pipelines.",
-      "Id": "Organization334",
-      "ControlSeverity": "Medium",
-      "Automated": "Yes",
-      "MethodName": "CheckBuiltInTask",
-      "Rationale": "Running built-in tasks from untrusted source can lead to all type of attacks and loss of sensitive enterprise data.",
-      "Recommendation": "Go to Organization settings --> Pipelines --> Settings --> Task restrictions --> Turn on 'Disable built-in tasks' flag.",
-      "Tags": [
-        "SDL",
-        "TCP",
-        "Automated",
-        "SI"
-      ],
-      "Enabled": true
-    },
-    {
-      "ControlID": "AzureDevOps_Organization_SI_Disable_Marketplace_Task",
-      "Description": "Restrict Marketplace tasks from being used in pipelines.",
-      "Id": "Organization336",
-      "ControlSeverity": "Medium",
-      "Automated": "Yes",
-      "MethodName": "CheckMarketplaceTask",
-      "Rationale": "Running Marketplace tasks from untrusted source can lead to all type of attacks and loss of sensitive enterprise data.",
-      "Recommendation": "Go to Organization settings --> Pipelines --> Settings --> Task restrictions --> Turn on 'Disable Marketplace tasks'.",
-      "Tags": [
-        "SDL",
-        "TCP",
-        "Automated",
-        "SI"
-      ],
-      "Enabled": true
-    },
-    {
-      "ControlID": "AzureDevOps_Organization_AuthZ_Dont_Allow_Project_Team_Admins_Invite_Users",
-      "Description": "New user invitations from project and team administrators should be restricted.",
+      "ControlID": "ADO_Organization_AuthZ_Review_Invite_Users_Setting",
+      "Description": "Review if project and team admins should be allowed to invite new users.",
       "Id": "Organization338",
       "ControlSeverity": "Medium",
       "Automated": "Yes",
       "MethodName": "CheckPolicyProjectTeamAdminUserInvitation",
-      "Rationale": "By default, all administrators can invite new users to Azure DevOps. Ideally, new users should be invited only via organization admins as users can then access resources within organization. Disabling the policy to invite new users by team and project administrators prevents users from accessing the organization and resources within the projects of organization.",
+      "Rationale": "By default, all administrators can invite new users to Azure DevOps. In some environments, you may want to restrict this setting so that new users can be invited only by organization admins.",
       "Recommendation": "Go to Organization Settings --> Policy --> User Policy --> Disable 'Allow team and project administrators to invite new users'.",
       "Tags": [
         "SDL",
@@ -497,31 +429,14 @@
       "Enabled": true
     },
     {
-      "ControlID": "AzureDevOps_Organization_AuthZ_Disable_Request_Access",
-      "Description": "Stop your users from requesting access to your organization or project within your organization, by disabling the request access policy.",
-      "Id": "Organization339",
-      "ControlSeverity": "Medium",
-      "Automated": "Yes",
-      "MethodName": "CheckRequestAccessPolicy",
-      "Rationale": "When request access policy is enabled, users can request access to a resource. Disabling this policy will prevent users from requesting access to organization or project within the organization.",
-      "Recommendation": "Go to Organization Settings --> Policy --> User Policy --> Disable 'Request Access'.",
-      "Tags": [
-        "SDL",
-        "TCP",
-        "Automated",
-        "AuthZ"
-      ],
-      "Enabled": true
-    },
-    {
-      "ControlID": "AzureDevOps_Organization_Auditing_Backup",
-      "Description": "Audit logs are stored for 90 days and then they’re deleted. Back up audit logs to an external location to keep the data for longer than the 90-day period.",
+      "ControlID": "ADO_Organization_Backup_Audit_Logs",
+      "Description": "Backup audit logs to an external location periodically.",
       "Id": "Organization340",
       "ControlSeverity": "Medium",
       "Automated": "No",
       "MethodName": "",
-      "Rationale": "Auditing contains many changes that occur throughout an Azure DevOps organization. Changes occur when a user or service identity within the organization edits the state of an artifact. In some limited cases, it can also include accessing an artifact. Think permissions changes, resource deletion, branch policy changes, accessing the auditing feature, and much more.",
-      "Recommendation": "Go to Organization Settings --> Auditing --> Download",
+      "Rationale": "By default, ADO keeps audit logs for 90 days. Most sensitive operation logs should be retained for 365 days (Auditing contains many changes that occur throughout an Azure DevOps organization. Changes occur when a user or service identity within the organization edits the state of an artifact. In some limited cases, it can also include accessing an artifact. Think permissions changes, resource deletion, branch policy changes, accessing the auditing feature, and much more.).",
+      "Recommendation": "Go to Organization Settings --> Auditing --> Export log",
       "Tags": [
         "SDL",
         "TCP",
@@ -531,25 +446,42 @@
       "Enabled": true
     },
     {
-      "ControlID": "AzureDevOps_Organization_AuthZ_Min_Admin_Count",
-      "Description": "There should be at least $($this.ControlSettings.Organization.MinPCAMembersPermissible) project collection administrators in your organization",
+      "ControlID": "ADO_Organization_Enable_Audit_Stream",
+      "Description": "Enable streaming of audit events from your organization to a stream target.",
+      "Id": "Organization342",
+      "ControlSeverity": "Medium",
+      "Automated": "Yes",
+      "MethodName": "CheckAuditStream",
+      "Rationale": "Enabling audit streaming sends data to other locations for further processing. Sending auditing data to other Security Incident and Event Management (SIEM) tools opens possibilities, such as alerting on specific auditing events, creating views on auditing data, and performing anomaly detection. It also allows you to store more than the 90-days worth of auditing data, which Azure DevOps keeps.",
+      "Recommendation": "Go to Organization Settings --> Auditing --> Streams -> New Stream -> Configure at least one of the streaming service. If at least one stream is already configured, ensure it is enabled.",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Automated",
+        "Audit"
+      ],
+      "Enabled": true
+    },
+    {
+      "ControlID": "ADO_Organization_BCDR_Min_Admin_Count",
+      "Description": "Ensure that there are at least $($this.ControlSettings.Organization.MinPCAMembersPermissible) project collection administrators in your organization.",
       "Id": "Organization350",
       "ControlSeverity": "Medium",
       "Automated": "Yes",
       "MethodName": "CheckMinPCACount",
-      "Rationale": "Having the minimum required number of administrators reduces the risk of losing admin access. This is useful in case of breakglass account scenarios.",
+      "Rationale": "Having the minimum required number of administrators reduces the risk of losing admin access. This is useful in case of break-glass account scenarios.",
       "Recommendation": "Go to Organization settings --> Security --> Permissions --> Groups --> Select the group : Project Collection Administrators --> Review the members of this group",
       "Tags": [
         "SDL",
-        "AuthZ",
+        "BCDR",
         "Automated",
         "Best Practice"
       ],
       "Enabled": true
     },
     {
-      "ControlID": "AzureDevOps_Organization_AuthZ_Limit_Admin_Count",
-      "Description": "Minimize the number of project collection administrators in an organization.",
+      "ControlID": "ADO_Organization_AuthZ_Limit_Admin_Count",
+      "Description": "Ensure that there are at most $($this.ControlSettings.Organization.MaxPCAMembersPermissible) project collection administrators in your organization.",
       "Id": "Organization360",
       "ControlSeverity": "Medium",
       "Automated": "Yes",
