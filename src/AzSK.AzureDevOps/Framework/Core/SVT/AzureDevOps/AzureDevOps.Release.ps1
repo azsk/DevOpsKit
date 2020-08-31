@@ -4,7 +4,7 @@ class Release: ADOSVTBase
 
     hidden [PSObject] $ReleaseObj;
     hidden [string] $ProjectId;
-    hidden static [string] $securityNamespaceId;
+    hidden static [string] $securityNamespaceId = $null;
 
     
     Release([string] $subscriptionId, [SVTResource] $svtResource): Base($subscriptionId,$svtResource) 
@@ -22,7 +22,7 @@ class Release: ADOSVTBase
             $this.ProjectId = [regex]::match($this.ReleaseObj.url.ToLower(), $pattern.ToLower()).Groups[1].Value
         }
         # Get security namespace identifier of current release pipeline.
-        if (![Release]::SecurityNamespaceId) {
+        if ([string]::IsNullOrEmpty([Release]::SecurityNamespaceId)) {
             $apiURL = "https://dev.azure.com/{0}/_apis/securitynamespaces?api-version=5.0" -f $($this.SubscriptionContext.SubscriptionName)
             $securityNamespacesObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
             [Release]::SecurityNamespaceId = ($securityNamespacesObj | Where-Object { ($_.Name -eq "ReleaseManagement") -and ($_.actions.name -contains "ViewReleaseDefinition")}).namespaceId
@@ -436,10 +436,10 @@ class Release: ADOSVTBase
             }
            } 
            if(($setablevar | Measure-Object).Count -gt 0){
-                $controlResult.AddMessage([VerificationResult]::Verify,"The below variables are settable at release time : ",$setablevar);
-                $controlResult.SetStateData("Variables settable at release time : ", $setablevar);
+                $controlResult.AddMessage([VerificationResult]::Verify,"The below variables are settable at release time: ",$setablevar);
+                $controlResult.SetStateData("Variables settable at release time: ", $setablevar);
                 if ($nonsetablevar) {
-                    $controlResult.AddMessage("The below variables are not settable at release time : ",$nonsetablevar);      
+                    $controlResult.AddMessage("The below variables are not settable at release time: ",$nonsetablevar);      
                 } 
            }
            else 
@@ -485,8 +485,8 @@ class Release: ADOSVTBase
                     } 
                     if ($count -gt 0) 
                     {
-                        $controlResult.AddMessage([VerificationResult]::Failed, "Found variables that are settable at release time and contain URL value : ", $settableURLVars);
-                        $controlResult.SetStateData("List of variables settable at release time and containing URL value : ", $settableURLVars);
+                        $controlResult.AddMessage([VerificationResult]::Failed, "Found variables that are settable at release time and contain URL value: ", $settableURLVars);
+                        $controlResult.SetStateData("List of variables settable at release time and containing URL value: ", $settableURLVars);
                     }
                     else {
                         $controlResult.AddMessage([VerificationResult]::Passed, "No variables were found in the release pipeline that are settable at release time and contain URL value.");   

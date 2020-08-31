@@ -2,7 +2,7 @@ Set-StrictMode -Version Latest
 class ServiceConnection: ADOSVTBase
 {
     hidden [PSObject] $ServiceEndpointsObj = $null;
-    hidden static [string] $SecurityNamespaceId;
+    hidden static [string] $SecurityNamespaceId = $null;
     hidden [PSObject] $ProjectId;
     hidden [PSObject] $ServiceConnEndPointDetail = $null;
     hidden [PSObject] $pipelinePermission = $null;
@@ -14,7 +14,7 @@ class ServiceConnection: ADOSVTBase
         $this.ProjectId = ($this.ResourceContext.ResourceDetails.ResourceLink -split $this.SubscriptionContext.SubscriptionName)[1].split("/")[1];
 
         # Get security namespace identifier of service endpoints.
-        if(![ServiceConnection]::SecurityNamespaceId)
+        if([string]::IsNullOrEmpty([ServiceConnection]::SecurityNamespaceId))
         {
             $apiURL = "https://dev.azure.com/{0}/_apis/securitynamespaces?api-version=5.0" -f $($this.SubscriptionContext.SubscriptionName)
             $securityNamespacesObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
@@ -189,7 +189,7 @@ class ServiceConnection: ADOSVTBase
         $failMsg = $null
         try
         {
-            if (!$this.serviceEndPointIdentity) {
+            if ($null -eq $this.serviceEndPointIdentity) {
                 $apiURL = "https://{0}.visualstudio.com/_apis/securityroles/scopes/distributedtask.serviceendpointrole/roleassignments/resources/{1}_{2}" -f $($this.SubscriptionContext.SubscriptionName), $($this.ProjectId),$($this.ServiceEndpointsObj.id);
                 $this.serviceEndPointIdentity = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
             }
@@ -239,7 +239,7 @@ class ServiceConnection: ADOSVTBase
         try
         {
             $isBuildSvcAccGrpFound = $false
-            if (!$this.serviceEndPointIdentity) {
+            if ($null -eq $this.serviceEndPointIdentity) {
                 $apiURL = "https://{0}.visualstudio.com/_apis/securityroles/scopes/distributedtask.serviceEndPointrole/roleassignments/resources/{1}_{2}" -f $($this.SubscriptionContext.SubscriptionName), $($this.ProjectId),$($this.ServiceEndpointsObj.id);
                 $this.serviceEndPointIdentity = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
             }
@@ -265,7 +265,6 @@ class ServiceConnection: ADOSVTBase
             else{
                 $controlResult.AddMessage([VerificationResult]::Passed,"'Project Collection Build Service Account' does not have access to service connection.");
             }
-            $responseObj = $null;
         }
         catch {
             $failMsg = $_
@@ -281,23 +280,23 @@ class ServiceConnection: ADOSVTBase
     hidden [ControlResult] CheckServiceConnectionBuildAccess([ControlResult] $controlResult)
     {
         try
-           {
-                if (!$this.pipelinePermission) {
-                   $apiURL = "https://dev.azure.com/{0}/{1}/_apis/pipelines/pipelinePermissions/endpoint/{2}?api-version=5.1-preview.1" -f $($this.SubscriptionContext.SubscriptionName),$($this.ProjectId),$($this.ServiceEndpointsObj.id) ;
-                   $this.pipelinePermission = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
-                }
-                if([Helpers]::CheckMember($this.pipelinePermission,"allPipelines")) {
-                    if($this.pipelinePermission.allPipelines.authorized){
-                       $controlResult.AddMessage([VerificationResult]::Failed,"Do not grant global security access to all pipeline.");
-                    } 
-                    else {
-                       $controlResult.AddMessage([VerificationResult]::Passed,"Service connection is not granted access to all pipeline");
-                    }             
-                 }
+        {
+            if ($null -eq $this.pipelinePermission) {
+               $apiURL = "https://dev.azure.com/{0}/{1}/_apis/pipelines/pipelinePermissions/endpoint/{2}?api-version=5.1-preview.1" -f $($this.SubscriptionContext.SubscriptionName),$($this.ProjectId),$($this.ServiceEndpointsObj.id) ;
+               $this.pipelinePermission = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
+            }
+            if([Helpers]::CheckMember($this.pipelinePermission,"allPipelines")) {
+                if($this.pipelinePermission.allPipelines.authorized){
+                   $controlResult.AddMessage([VerificationResult]::Failed,"Do not grant global security access to all pipeline.");
+                } 
                 else {
-                 $controlResult.AddMessage([VerificationResult]::Passed, "Service connection is not granted access to all pipeline");
-                }
-           }
+                   $controlResult.AddMessage([VerificationResult]::Passed,"Service connection is not granted access to all pipeline");
+                }             
+             }
+            else {
+             $controlResult.AddMessage([VerificationResult]::Passed, "Service connection is not granted access to all pipeline");
+            }
+        }
         catch {
             $controlResult.AddMessage([VerificationResult]::Manual,"Unable to fetch service connection details. $($_) Please verify from portal that you are not granting all pipeline access to service connections");
         }
@@ -382,8 +381,8 @@ class ServiceConnection: ADOSVTBase
                 $stateData = @();
                 $stateData += $svcProjectReferences | Select-Object name, projectReference
                 
-                $controlResult.AddMessage([VerificationResult]::Failed, "Review the list of projects that have access to the service connection : ", $stateData);
-                $controlResult.SetStateData("List of projects that have access to the service connection : ", $stateData); 
+                $controlResult.AddMessage([VerificationResult]::Failed, "Review the list of projects that have access to the service connection: ", $stateData);
+                $controlResult.SetStateData("List of projects that have access to the service connection: ", $stateData); 
             }
             else 
             {
@@ -400,7 +399,7 @@ class ServiceConnection: ADOSVTBase
     hidden [ControlResult] CheckCrossPipelineSharing([ControlResult] $controlResult) {  
         try 
         {
-            if (!$this.pipelinePermission) {
+            if ($null -eq $this.pipelinePermission) {
                 #Get pipeline access on svc conn
                 $apiURL = "https://dev.azure.com/{0}/{1}/_apis/pipelines/pipelinePermissions/endpoint/{2}?api-version=5.1-preview.1" -f $($this.SubscriptionContext.SubscriptionName), $($this.ProjectId), $($this.ServiceEndpointsObj.id) ;
                 $this.pipelinePermission = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
@@ -426,8 +425,8 @@ class ServiceConnection: ADOSVTBase
                 if ($pipelineObj -and ($pipelineObj | Measure-Object).Count -gt 0) 
                 {
                     $pipelines += $pipelineObj.name
-                    $controlResult.AddMessage("Review the list of pipelines that have access to the service connection : ", $pipelines);
-                    $controlResult.SetStateData("List of pipelines that have access to the service connection : ", $pipelines);   
+                    $controlResult.AddMessage("Review the list of pipelines that have access to the service connection: ", $pipelines);
+                    $controlResult.SetStateData("List of pipelines that have access to the service connection: ", $pipelines);   
                 }                    
             } 
             else 

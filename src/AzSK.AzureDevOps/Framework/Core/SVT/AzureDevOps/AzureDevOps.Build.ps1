@@ -3,12 +3,12 @@ class Build: ADOSVTBase
 {    
 
     hidden [PSObject] $BuildObj;
-    hidden static [string] $SecurityNamespaceId;
+    hidden static [string] $SecurityNamespaceId = $null;
     
     Build([string] $subscriptionId, [SVTResource] $svtResource): Base($subscriptionId,$svtResource) 
     {
         # Get security namespace identifier of current build.
-        if (![Build]::SecurityNamespaceId) {
+        if ([string]::IsNullOrEmpty([Build]::SecurityNamespaceId) ) {
             $apiURL = "https://dev.azure.com/{0}/_apis/securitynamespaces?api-version=5.0" -f $($this.SubscriptionContext.SubscriptionName)
             $securityNamespacesObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
             [Build]::SecurityNamespaceId = ($securityNamespacesObj | Where-Object { ($_.Name -eq "Build") -and ($_.actions.name -contains "ViewBuilds")}).namespaceId
@@ -294,10 +294,10 @@ class Build: ADOSVTBase
             }
            } 
            if(($setablevar | Measure-Object).Count -gt 0){
-                $controlResult.AddMessage([VerificationResult]::Verify,"The below variables are settable at queue time : ",$setablevar);
-                $controlResult.SetStateData("Variables settable at queue time : ", $setablevar);
+                $controlResult.AddMessage([VerificationResult]::Verify,"The below variables are settable at queue time: ",$setablevar);
+                $controlResult.SetStateData("Variables settable at queue time: ", $setablevar);
                 if ($nonsetablevar) {
-                    $controlResult.AddMessage("The below variables are not settable at queue time : ",$nonsetablevar);      
+                    $controlResult.AddMessage("The below variables are not settable at queue time: ",$nonsetablevar);      
                 } 
            }
            else
@@ -343,8 +343,8 @@ class Build: ADOSVTBase
                     } 
                     if ($count -gt 0) 
                     {
-                        $controlResult.AddMessage([VerificationResult]::Failed, "Found variables that are settable at queue time and contain URL value : ", $settableURLVars);
-                        $controlResult.SetStateData("List of variables settable at queue time and containing URL value : ", $settableURLVars);
+                        $controlResult.AddMessage([VerificationResult]::Failed, "Found variables that are settable at queue time and contain URL value: ", $settableURLVars);
+                        $controlResult.SetStateData("List of variables settable at queue time and containing URL value: ", $settableURLVars);
                     }
                     else {
                         $controlResult.AddMessage([VerificationResult]::Passed, "No variables were found in the build pipeline that are settable at queue time and contain URL value.");   
