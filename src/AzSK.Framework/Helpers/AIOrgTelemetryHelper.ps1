@@ -290,7 +290,8 @@ class AIOrgTelemetryHelper {
 
 	static [void] PublishEvent([string] $EventName, [hashtable] $Properties, [hashtable] $Metrics) {
 		try {
-			#return if telemetry key is empty
+            if (![RemoteReportHelper]::IsAIOrgTelemetryEnabled()) { return; };
+            #return if telemetry key is empty
 			$telemetryKey= [RemoteReportHelper]::GetAIOrgTelemetryKey()
 			if ([string]::IsNullOrWhiteSpace($telemetryKey)) { return; };
 			$eventObj = [AIOrgTelemetryHelper]::GetEventBaseObject($EventName)
