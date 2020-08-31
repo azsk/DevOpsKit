@@ -324,45 +324,44 @@ class Project: ADOSVTBase
 
     hidden [ControlResult] CheckMinPACount([ControlResult] $controlResult)
     {
-        $TotalPAMembers=0
-        if (!$this.PAMembers) {
+        $TotalPAMembers = 0;
+        if (($this.PAMembers | Measure-Object).Count -eq 0) {
             $this.PAMembers += [AdministratorHelper]::GetTotalPAMembers($this.SubscriptionContext.SubscriptionName,$this.ResourceContext.ResourceName)
             $this.PAMembers = $this.PAMembers | Select-Object displayName,mailAddress
         }
         $TotalPAMembers = ($this.PAMembers | Measure-Object).Count
         $controlResult.AddMessage("There are a total of $TotalPAMembers Project Administrators in your project.")
         if($TotalPAMembers -lt $this.ControlSettings.Project.MinPAMembersPermissible){
-            $controlResult.AddMessage([VerificationResult]::Failed,"Number of administrators configured are less than the minimum required administrators count : $($this.ControlSettings.Project.MinPAMembersPermissible).");
+            $controlResult.AddMessage([VerificationResult]::Failed,"Number of administrators configured are less than the minimum required administrators count: $($this.ControlSettings.Project.MinPAMembersPermissible).");
         }
         else{
-            $controlResult.AddMessage([VerificationResult]::Passed,"Number of administrators configured are more than the minimum required administrators count : $($this.ControlSettings.Project.MinPAMembersPermissible).");
+            $controlResult.AddMessage([VerificationResult]::Passed,"Number of administrators configured are more than the minimum required administrators count: $($this.ControlSettings.Project.MinPAMembersPermissible).");
         }
         if($TotalPAMembers -gt 0){
-            $controlResult.AddMessage("Verify the following Project Administrators : ",$this.PAMembers)
-            $controlResult.SetStateData("List of Project Administrators : ",$this.PAMembers)
+            $controlResult.AddMessage("Verify the following Project Administrators: ",$this.PAMembers)
+            $controlResult.SetStateData("List of Project Administrators: ",$this.PAMembers)
         }    
         return $controlResult
     }
 
     hidden [ControlResult] CheckMaxPACount([ControlResult] $controlResult)
     {
-        
-        $TotalPAMembers=0
-        if (!$this.PAMembers) {
+        $TotalPAMembers = 0;
+        if (($this.PAMembers | Measure-Object).Count -eq 0) {
             $this.PAMembers += [AdministratorHelper]::GetTotalPAMembers($this.SubscriptionContext.SubscriptionName,$this.ResourceContext.ResourceName)
             $this.PAMembers = $this.PAMembers | Select-Object displayName,mailAddress
         }
         $TotalPAMembers = ($this.PAMembers | Measure-Object).Count
         $controlResult.AddMessage("There are a total of $TotalPAMembers Project Administrators in your project.")
         if($TotalPAMembers -gt $this.ControlSettings.Project.MaxPAMembersPermissible){
-            $controlResult.AddMessage([VerificationResult]::Failed,"Number of administrators configured are more than the approved limit : $($this.ControlSettings.Project.MaxPAMembersPermissible).");
+            $controlResult.AddMessage([VerificationResult]::Failed,"Number of administrators configured are more than the approved limit: $($this.ControlSettings.Project.MaxPAMembersPermissible).");
         }
         else{
-            $controlResult.AddMessage([VerificationResult]::Passed,"Number of administrators configured are within than the approved limit : $($this.ControlSettings.Project.MaxPAMembersPermissible).");
+            $controlResult.AddMessage([VerificationResult]::Passed,"Number of administrators configured are within than the approved limit: $($this.ControlSettings.Project.MaxPAMembersPermissible).");
         }
         if($TotalPAMembers -gt 0){
-            $controlResult.AddMessage("Verify the following Project Administrators : ",$this.PAMembers)
-            $controlResult.SetStateData("List of Project Administrators : ",$this.PAMembers)
+            $controlResult.AddMessage("Verify the following Project Administrators: ",$this.PAMembers)
+            $controlResult.SetStateData("List of Project Administrators: ",$this.PAMembers)
         }         
         return $controlResult
     }
@@ -426,8 +425,8 @@ class Project: ADOSVTBase
                                             $nonSCMembers = $nonSCMembers | Select-Object name,mailAddress,groupName
                                             $stateData = @();
                                             $stateData += $nonSCMembers
-                                            $controlResult.AddMessage([VerificationResult]::Verify, "Review the users having admin privileges with non SC-Alt accounts : ", $stateData); 
-                                            $controlResult.SetStateData("List of users having admin privileges with non SC-Alt accounts : ", $stateData); 
+                                            $controlResult.AddMessage([VerificationResult]::Verify, "Review the users having admin privileges with non SC-Alt accounts: ", $stateData); 
+                                            $controlResult.SetStateData("List of users having admin privileges with non SC-Alt accounts: ", $stateData); 
                                         }
                                         else 
                                         {
