@@ -455,9 +455,10 @@ static [void] PublishEvent([System.Collections.ArrayList] $servicescantelemetryE
 
         $eventlist = [System.Collections.ArrayList]::new()
 
+        if (![RemoteReportHelper]::IsAIOrgTelemetryEnabled()) { return; };
+
         $servicescantelemetryEvents | ForEach-Object {
             
-        if (![RemoteReportHelper]::IsAIOrgTelemetryEnabled()) { return; };
         $eventObj = [AIOrgTelemetryHelper]::GetUsageEventBaseObject($_.Name,$type)
         #SetCommonProperties -EventObj $eventObj
 
