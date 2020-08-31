@@ -34,17 +34,17 @@ class CAAutomation : ADOSVTCommandBase
 	[PSObject] $ControlSettings;
 	
 	CAAutomation(
-	[string] $SubId, `
-	[string] $Loc, `
-	[string] $OrgName, `
-	[System.Security.SecureString] $PATToken, `
-	[string] $ResourceGroupName, `
-	[string] $LAWorkspaceId, `
-	[string] $LAWorkspaceKey, `
-	[string] $Proj, `
-	[string] $ExtCmd, `
-    [InvocationInfo] $invocationContext, `
-	[bool] $CreateLAWS) : Base($OrgName, $invocationContext)
+		[string] $SubId, `
+		[string] $Loc, `
+		[string] $OrgName, `
+		[System.Security.SecureString] $PATToken, `
+		[string] $ResourceGroupName, `
+		[string] $LAWorkspaceId, `
+		[string] $LAWorkspaceKey, `
+		[string] $Proj, `
+		[string] $ExtCmd, `
+		[InvocationInfo] $invocationContext, `
+		[bool] $CreateLAWS) : Base($OrgName, $invocationContext)
     {
 		$this.SubscriptionId = $SubId
 		$this.OrganizationToScan = $OrgName
@@ -388,6 +388,7 @@ class CAAutomation : ADOSVTCommandBase
 		
 				$this.PublishCustomMessage("Scan will begin at $($this.ScanTriggerLocalTime)", [MessageType]::Update);
 				$this.SetupComplete = $true
+				$this.DoNotOpenOutputFolder = $true
 				$messageData += [MessageData]::new("The following resources were created in resource group $($this.RGName) as part of AzSK.ADO Continuous Assurance", ($this.CreatedResources| Out-String))
 			}
 		}
@@ -551,6 +552,7 @@ class CAAutomation : ADOSVTCommandBase
 						}
 					}
 				}
+				$this.DoNotOpenOutputFolder = $true
 			}
 		}
 		catch

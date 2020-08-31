@@ -134,30 +134,21 @@ class WriteSummaryFile: FileOutputBase
 					{
 						$ExcludedType = 'None'
 					}
-					$ExcludedRGs = $message.DataObject.ExcludedResourceGroupNames
 					
 					$ExcludeResourceName = $message.DataObject.ExcludeResourceNames
 					$ExcludedResources = $message.DataObject.ExcludedResources  
-					$ExcludedRGsResources = $ExcludedResources | Where-Object {$_.ResourceGroupName -in $ExcludedRGs}
+
 					$ExcludedTypeResources = $ExcludedResources | Select-Object -ExpandProperty ResourceTypeMapping |Where-Object {$_.ResourceTypeName -in $ExcludedType}
 					$ExplicitlyExcludedResource =$ExcludedResources| Where-Object {$_.ResourceName -in $ExcludeResourceName}
-					$printMessage += [Constants]::DoubleDashLine +"`r`nNumber of resource groups excluded: $(($ExcludedRGs | Measure-Object).Count | Out-String)"
+					
 					$printMessage += "`r`nNumber of resources excluded: $(($ExcludedResources | Measure-Object).Count | Out-String)"
 					$printMessage += "`r`n`nDistribution of resources being excluded is as follows:"+"`r`n"+[Constants]::SingleDashLine
-					$printMessage += "`r`nNumber of resources excluded due to excluding resource groups: $(($ExcludedRGsResources | Measure-Object).Count | Out-String)"
 					$printMessage += "`r`nNumber of resources excluded due to excluding resource type '$ExcludedType': $(($ExcludedTypeResources | Measure-Object).Count | Out-String)"
 					$printMessage += "`r`nNumber of resources excluded explicitly: $(($ExplicitlyExcludedResource| Measure-Object).Count|Out-String)"
 					$printMessage += "`r`n"+[Constants]::SingleDashLine +"`r`n"+[Constants]::DoubleDashLine+"`r`nFollowing are the list of resource groups and resources being excluded" 
 					$printMessage += "`r`n"+[Constants]::SingleDashLine+"`r`nResource groups excluded:"
 					$detailedList += "`r`n-------------------------"
-					if(($ExcludedRGs | Measure-Object).Count -gt 0)
-					{
-						$detailedList +="`r`n$($ExcludedRGS |Sort-Object|Format-Table |Out-String)"
-					}
-					else 
-					{
-						$detailedList += "`r`n N/A"
-					}
+
 					$detailedList += "`r`nResources excluded:"
 					$detailedList += "`r`n-------------------------"
 					if(($ExcludedResources | Measure-Object).Count -gt 0)

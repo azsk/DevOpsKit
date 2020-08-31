@@ -65,14 +65,6 @@ class SVTBase: AzSKRoot
 		}
 		#EndRegion
 
-		#<TODO Framework: ResourceTypeMapping is already part of svtResource and populated from Resolver. Below validation is redudant.
-		if(-not $svtResource.ResourceTypeMapping)
-		{
-			$svtResource.ResourceTypeMapping = [SVTMapping]::Mapping |
-										Where-Object { $_.ClassName -eq $this.GetType().Name } |
-										Select-Object -First 1
-		}
-
         if (-not $svtResource.ResourceTypeMapping)
 		{
             throw [System.ArgumentException] ("No ResourceTypeMapping found");
@@ -366,23 +358,6 @@ class SVTBase: AzSKRoot
 			Write-Host "No attested control found.`n$([Constants]::SingleDashLine)" 
 		}
          return $resourceScanResult;
-	}
-
-	[SVTEventContext[]] ComputeApplicableControlsWithContext()
-    {
-        [SVTEventContext[]] $contexts = @();
-        if (-not $this.ValidateMaintenanceState()) {
-			$controls = $this.GetApplicableControls();
-			if($controls.Count -gt 0)
-			{
-				foreach($control in $controls) {
-					[SVTEventContext] $singleControlResult = $this.CreateSVTEventContextObject();
-					$singleControlResult.ControlItem = $control;
-					$contexts += $singleControlResult;
-				}
-			}
-        }
-        return $contexts;
 	}
 
 	[void] PostTelemetry()
@@ -739,7 +714,7 @@ class SVTBase: AzSKRoot
 		$svtResource.ResourceName = $ConnectionResourceName
 		$svtResource.ResourceType = $ResourceType; # 
 		$svtResource.Location = $Location;
-		$svtResource.ResourceTypeMapping = ([SVTMapping]::Mapping |
+		$svtResource.ResourceTypeMapping = ([SVTMapping]::AzSKADOResourceMapping |
 						Where-Object { $_.ResourceTypeName -eq $MappingName } |
 						Select-Object -First 1);
 

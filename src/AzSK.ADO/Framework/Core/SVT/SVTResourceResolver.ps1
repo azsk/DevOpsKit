@@ -12,10 +12,7 @@ class SVTResourceResolver: AzSKRoot {
     [string[]] $ExcludeResourceNames = @();
     [SVTResource[]] $ExcludedResources = @();
     [int] $MaxObjectsToScan;
-    [string] $ExcludeResourceWarningMessage = [string]::Empty
-    [string[]] $ExcludeResourceGroupNames = @();
-    [string[]] $ExcludedResourceGroupNames = @();
-    [string] $ExcludeResourceGroupWarningMessage = [string]::Empty
+
     [SVTResource[]] $SVTResources = @();
     [int] $SVTResourcesFoundCount = 0;
     

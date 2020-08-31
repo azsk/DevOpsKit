@@ -10,6 +10,7 @@ class ResourceInventory
         if($null -eq [ResourceInventory]::RawResources -or $null -eq [ResourceInventory]::FilteredResources)       
         {
             [ResourceInventory]::RawResources = Get-AzResource
+            Write-Host -ForegroundColor Yellow "Remove this ResourceInventory stuff..."
             $supportedResourceTypes = [SVTMapping]::GetSupportedResourceMap()
             # Not considering nested resources to reduce complexity
             if(-not [string]::IsNullOrWhiteSpace([ResourceInventory]::RawResources))

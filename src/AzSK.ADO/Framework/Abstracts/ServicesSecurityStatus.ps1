@@ -27,78 +27,6 @@ class ServicesSecurityStatus: ADOSVTCommandBase
 
 	}
 
-	[SVTEventContext[]] ComputeApplicableControls()
-	{
-		# if a scan is active - don't update the control inventory
-		[SVTEventContext[]] $result = @();
-		if($this.IsPartialCommitScanActive)
-		{
-			return $result;
-		}
-		$automatedResources = @();
-		$automatedResources += ($this.Resolver.SVTResources | Where-Object { $_.ResourceTypeMapping });
-		try
-        {
-		foreach($resource in $automatedResources) {
-			try
-			{
-				$svtClassName = $resource.ResourceTypeMapping.ClassName;
-				$svtObject = $null;
-				try
-				{
-					$svtObject = New-Object -TypeName $svtClassName -ArgumentList $this.SubscriptionContext.SubscriptionId, $resource
-				}
-				catch
-				{
-					$this.CommandError($_.Exception.InnerException.ErrorRecord);
-				}
-				if($svtObject)
-				{
-					$this.SetSVTBaseProperties($svtObject);
-					$result += $svtObject.ComputeApplicableControlsWithContext();
-				}
-			}
-			catch
-			{
-				$this.CommandError($_);
-			}
-			#[AzListenerHelper]::RegisterListeners();
-				 
-			}
-			$svtClassName = [SVTMapping]::SubscriptionMapping.ClassName;
-			$svtObject = $null;
-			try
-			{
-				$svtObject = New-Object -TypeName $svtClassName -ArgumentList $this.SubscriptionContext.SubscriptionId
-			}
-			catch
-			{
-				$this.CommandError($_.Exception.InnerException.ErrorRecord);
-			}
-			if($svtObject)
-			{
-				$this.SetSVTBaseProperties($svtObject);
-				$result += $svtObject.ComputeApplicableControlsWithContext();
-			}
-            
-		}
-		catch
-        {
-			$this.CommandError($_);
-        }
-		$this.PublishEvent([SVTEvent]::WriteInventory, $result);
-
-		if ($null -ne $result) 
-		{
-			[RemoteApiHelper]::PostApplicableControlSet($result);					
-			$this.PublishCustomMessage("Completed sending control inventory.");
-        }
-		else {
-			$this.PublishCustomMessage("There is an active scan going on. Please try later.");
-		}
-		return $result;
-	}
-
 	hidden [SVTEventContext[]] RunForAllResources([string] $methodNameToCall, [bool] $runNonAutomated, [PSObject] $resourcesList)
 	{
 		if ([string]::IsNullOrWhiteSpace($methodNameToCall))
@@ -124,10 +52,9 @@ class ServicesSecurityStatus: ADOSVTCommandBase
 		
 		$automatedResources += ($resourcesList | Where-Object { $_.ResourceTypeMapping });
 		
-		# Resources skipped from scan using excludeResourceName or -ExcludeResourceGroupNames parameters
-		$ExcludedResourceGroups=$this.resolver.ExcludedResourceGroupNames 
+		# Resources skipped from scan using excludeResourceName parameter
 		$ExcludedResources=$this.resolver.ExcludedResources ;
-		if(($this.resolver.ExcludeResourceGroupNames| Measure-Object).Count -gt 0 -or ($this.resolver.ExcludeResourceNames| Measure-Object).Count -gt 0)
+		if(($this.resolver.ExcludeResourceNames| Measure-Object).Count -gt 0)
 		{
 			$this.PublishCustomMessage("One or more resources/resource groups will be excluded from the scan based on exclude flags.")	
 			if(-not [string]::IsNullOrEmpty($this.resolver.ExcludeResourceGroupWarningMessage))
@@ -140,10 +67,7 @@ class ServicesSecurityStatus: ADOSVTCommandBase
 				$this.PublishCustomMessage("$($this.resolver.ExcludeResourceWarningMessage)",[MessageType]::Warning)
 			}
 			$this.PublishCustomMessage("Summary of exclusions: ");
-			if(($this.resolver.ExcludeResourceGroupNames| Measure-Object).Count -gt 0)
-			{
-				$this.PublishCustomMessage("	Resource groups excluded: $(($ExcludedResourceGroups | Measure-Object).Count)", [MessageType]::Info);	
-			}
+
 			$this.PublishCustomMessage("	Resources excluded: $(($ExcludedResources | Measure-Object).Count)(includes RGs,resourcetypenames and explicit exclusions).", [MessageType]::Info);	
 			$this.PublishCustomMessage("For a detailed list of excluded resources, see 'ExcludedResources-$($this.RunIdentifier).txt' in the output log folder.")
 			$this.ReportExcludedResources($this.resolver);
@@ -499,6 +423,7 @@ class ServicesSecurityStatus: ADOSVTCommandBase
         }
 }
 
+
 	#Get list of controlIds based control tags like OwnerAccess, GraphAccess,RBAC, Authz, SOX etc.
 	[void] MapTagsToControlIds()
 	{
@@ -508,7 +433,7 @@ class ServicesSecurityStatus: ADOSVTCommandBase
 			$resourcetypes = @() 
 			$controlList = @()
 			#Get list of all supported resource Types
-			$resourcetypes += ([SVTMapping]::Mapping | Sort-Object ResourceTypeName | Select-Object JsonFileName )
+			$resourcetypes += ([SVTMapping]::AzSKADOResourceMapping | Sort-Object ResourceTypeName | Select-Object JsonFileName )
 
 			$resourcetypes | ForEach-Object{
 				#Fetch control json for all resource type and collect all control jsons
@@ -570,7 +495,7 @@ class ServicesSecurityStatus: ADOSVTCommandBase
 	[void] ReportExcludedResources($SVTResolver)
 	{
 		$excludedObj=New-Object -TypeName PSObject;
-		$excludedObj | Add-Member -NotePropertyName ExcludedResourceGroupNames -NotePropertyValue $SVTResolver.ExcludedResourceGroupNames 
+
 		$excludedObj | Add-Member -NotePropertyName ExcludedResources -NotePropertyValue $SVTResolver.ExcludedResources
 		$excludedObj | Add-Member -NotePropertyName ExcludedResourceType -NotePropertyValue $SVTResolver.ExcludeResourceTypeName 
 		$excludedObj | Add-Member -NotePropertyName ExcludeResourceNames -NotePropertyValue $SVTResolver.ExcludeResourceNames 

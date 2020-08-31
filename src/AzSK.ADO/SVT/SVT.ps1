@@ -86,6 +86,16 @@ function Get-AzSKADOSecurityStatus
 		[AllowEmptyString()]
 		$ControlIds,
 
+		[string] 
+		[Parameter(Mandatory = $false)]
+		[Alias("ft")]
+		$FilterTags,
+
+		[string] 
+		[Parameter(Mandatory = $false)]
+		[Alias("xt")]
+		$ExcludeTags,
+
 		[switch]
 		[Parameter(Mandatory = $false)]
 		[Alias("ubc")]
@@ -202,6 +212,9 @@ function Get-AzSKADOSecurityStatus
 						$secStatus.Severity = $Severity;
 						$secStatus.UseBaselineControls = $UseBaselineControls;
 						$secStatus.UsePreviewBaselineControls = $UsePreviewBaselineControls;
+
+						$secStatus.FilterTags = $FilterTags;
+						$secStatus.ExcludeTags = $ExcludeTags;
 
 						#build the attestation options object
 						[AttestationOptions] $attestationOptions = [AttestationOptions]::new();
