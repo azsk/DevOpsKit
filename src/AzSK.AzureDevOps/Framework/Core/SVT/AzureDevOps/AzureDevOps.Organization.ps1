@@ -171,6 +171,9 @@ class Organization: ADOSVTBase
                             # clearing cached value in [AdministratorHelper]::AllPCAMembers as it can be used in attestation later and might have incorrect group loaded.
                             [AdministratorHelper]::AllPCAMembers = @();
                             
+                            # Filtering out distinct entries. A user might be added directly to the admin group or might be a member of a child group of the admin group.
+                            $allAdminMembers = $allAdminMembers| Sort-Object -Property mailAddress -Unique
+
                             if(($allAdminMembers | Measure-Object).Count -gt 0)
                             {
                                 if([Helpers]::CheckMember($this.ControlSettings, "AlernateAccountRegularExpressionForOrg")){
@@ -180,25 +183,35 @@ class Organization: ADOSVTBase
                                     {
                                         $nonSCMembers = @();
                                         $nonSCMembers += $allAdminMembers | Where-Object { $_.mailAddress -notmatch $matchToSCAlt }  
+                                        $SCMembers = @();
+                                        $SCMembers += $allAdminMembers | Where-Object { $_.mailAddress -match $matchToSCAlt }
+
                                         if (($nonSCMembers | Measure-Object).Count -gt 0) 
                                         {
                                             $nonSCMembers = $nonSCMembers | Select-Object name,mailAddress,groupName
                                             $stateData = @();
                                             $stateData += $nonSCMembers
-                                            $controlResult.AddMessage([VerificationResult]::Verify, "Review the users having admin privileges with non SC-Alt accounts : ", $stateData); 
-                                            $controlResult.SetStateData("List of users having admin privileges with non SC-Alt accounts : ", $stateData); 
+                                            $controlResult.AddMessage([VerificationResult]::Verify, "Review the users having admin privileges with non SC-ALT accounts : ", $stateData); 
+                                            $controlResult.SetStateData("List of users having admin privileges with non SC-ALT accounts : ", $stateData); 
                                         }
                                         else 
                                         {
-                                            $controlResult.AddMessage([VerificationResult]::Passed, "No users have admin privileges with non SC-Alt accounts.");
+                                            $controlResult.AddMessage([VerificationResult]::Passed, "No users have admin privileges with non SC-ALT accounts.");
+                                        }
+                                        if (($SCMembers | Measure-Object).Count -gt 0) 
+                                        {
+                                            $SCMembers = $SCMembers | Select-Object name,mailAddress,groupName
+                                            $SCData = @();
+                                            $SCData += $SCMembers
+                                            $controlResult.AddMessage("Users having admin privileges with SC-ALT accounts : ", $SCData);  
                                         }
                                     }
                                     else {
-                                        $controlResult.AddMessage([VerificationResult]::Manual, "Regular expressions for detecting SC-Alt account is not defined in the organization.");
+                                        $controlResult.AddMessage([VerificationResult]::Manual, "Regular expressions for detecting SC-ALT account is not defined in the organization.");
                                     }
                                 }
                                 else{
-                                    $controlResult.AddMessage([VerificationResult]::Error, "Regular expressions for detecting SC-Alt account is not defined in the organization. Please update your ControlSettings.json as per the latest AzSK.AzureDevOps PowerShell module.");
+                                    $controlResult.AddMessage([VerificationResult]::Error, "Regular expressions for detecting SC-ALT account is not defined in the organization. Please update your ControlSettings.json as per the latest AzSK.AzureDevOps PowerShell module.");
                                 }   
                             }
                             else
@@ -663,6 +676,25 @@ class Organization: ADOSVTBase
 
     hidden [ControlResult] CheckOAuthAppAccess([ControlResult] $controlResult)
     {
+        <# This control has been currently removed from control JSON file.
+        {
+            "ControlID": "AzureDevOps_Organization_AuthN_Enable_App_Access_OAuth",
+            "Description": "OAuth should be enabled for third party application access",
+            "Id": "Organization260",
+            "ControlSeverity": "Medium",
+            "Automated": "Yes",
+            "MethodName": "CheckOAuthAppAccess",
+            "Rationale": "TBD",
+            "Recommendation": "Go to Organization Settings --> Security --> Policies --> Application connection policies --> Enable Third-party application access via OAuth",
+            "Tags": [
+                "SDL",
+                "TCP",
+                "Automated",
+                "AuthN"
+            ],
+            "Enabled": true
+        },
+        #>
        if([Helpers]::CheckMember($this.OrgPolicyObj,"applicationConnection"))
        {
             $OAuthObj = $this.OrgPolicyObj.applicationConnection | Where-Object {$_.Policy.Name -eq "Policy.DisallowOAuthAuthentication"}
@@ -684,6 +716,25 @@ class Organization: ADOSVTBase
 
     hidden [ControlResult] CheckSSHAuthn([ControlResult] $controlResult)
     {
+        <#This control has been currently removed from control JSON file.
+        {
+            "ControlID": "AzureDevOps_Organization_AuthN_Enable_SSH_Auth",
+            "Description": "SSH authentication should be enabled for Application connection policies",
+            "Id": "Organization280",
+            "ControlSeverity": "Medium",
+            "Automated": "Yes",
+            "MethodName": "CheckSSHAuthn",
+            "Rationale": "TBD",
+            "Recommendation": "Go to Organization Settings --> Security --> Policies --> Application connection policies --> Enable SSH Authentication",
+            "Tags": [
+                "SDL",
+                "TCP",
+                "Automated",
+                "AuthN"
+            ],
+            "Enabled": true
+        },
+        #>
        if([Helpers]::CheckMember($this.OrgPolicyObj,"applicationConnection"))
        {
             $SSHAuthObj = $this.OrgPolicyObj.applicationConnection | Where-Object {$_.Policy.Name -eq "Policy.DisallowSecureShell"}
@@ -764,7 +815,7 @@ class Organization: ADOSVTBase
         return $controlResult
     }
 
-    hidden [ControlResult] CheckSetQueueTime([ControlResult] $controlResult)
+    hidden [ControlResult] CheckSettableQueueTime([ControlResult] $controlResult)
     {
        if($this.PipelineSettingsObj)
        {
@@ -845,6 +896,25 @@ class Organization: ADOSVTBase
 
     hidden [ControlResult] CheckBuiltInTask([ControlResult] $controlResult)
     {
+       <# This control has been currently removed from control JSON file.
+         {
+            "ControlID": "AzureDevOps_Organization_SI_Review_BuiltIn_Tasks_Setting",
+            "Description": "Review built-in tasks from being used in pipelines.",
+            "Id": "Organization334",
+            "ControlSeverity": "Medium",
+            "Automated": "Yes",
+            "MethodName": "CheckBuiltInTask",
+            "Rationale": "Running built-in tasks from untrusted source can lead to all type of attacks and loss of sensitive enterprise data.",
+            "Recommendation": "Go to Organization settings --> Pipelines --> Settings --> Task restrictions --> Turn on 'Disable built-in tasks' flag.",
+            "Tags": [
+                "SDL",
+                "TCP",
+                "Automated",
+                "SI"
+            ],
+            "Enabled": true
+         },
+       #>
        if($this.PipelineSettingsObj)
        {
             $orgLevelScope = $this.PipelineSettingsObj.disableInBoxTasksVar
@@ -867,6 +937,25 @@ class Organization: ADOSVTBase
 
     hidden [ControlResult] CheckMarketplaceTask([ControlResult] $controlResult)
     {
+        <# This control has been currently removed from control JSON file.
+         {
+            "ControlID": "AzureDevOps_Organization_SI_Review_Marketplace_Tasks_Setting",
+            "Description": "Review Marketplace tasks from being used in pipelines.",
+            "Id": "Organization336",
+            "ControlSeverity": "Medium",
+            "Automated": "Yes",
+            "MethodName": "CheckMarketplaceTask",
+            "Rationale": "Running Marketplace tasks from untrusted source can lead to all type of attacks and loss of sensitive enterprise data.",
+            "Recommendation": "Go to Organization settings --> Pipelines --> Settings --> Task restrictions --> Turn on 'Disable Marketplace tasks'.",
+            "Tags": [
+                "SDL",
+                "TCP",
+                "Automated",
+                "SI"
+            ],
+            "Enabled": true
+         },
+       #>
        if($this.PipelineSettingsObj)
        {
             $orgLevelScope = $this.PipelineSettingsObj.disableMarketplaceTasksVar
@@ -920,6 +1009,25 @@ class Organization: ADOSVTBase
 
     hidden [ControlResult] CheckRequestAccessPolicy([ControlResult] $controlResult)
     {
+        <# This control has been currently removed from control JSON file.
+        {
+            "ControlID": "AzureDevOps_Organization_AuthZ_Disable_Request_Access",
+            "Description": "Stop your users from requesting access to your organization or project within your organization, by disabling the request access policy.",
+            "Id": "Organization339",
+            "ControlSeverity": "Medium",
+            "Automated": "Yes",
+            "MethodName": "CheckRequestAccessPolicy",
+            "Rationale": "When request access policy is enabled, users can request access to a resource. Disabling this policy will prevent users from requesting access to organization or project within the organization.",
+            "Recommendation": "Go to Organization Settings --> Policy --> User Policy --> Disable 'Request Access'.",
+            "Tags": [
+                "SDL",
+                "TCP",
+                "Automated",
+                "AuthZ"
+            ],
+            "Enabled": true
+        },
+        #>
         if([Helpers]::CheckMember($this.OrgPolicyObj,"user"))
         {
             $userPolicyObj = $this.OrgPolicyObj.user
@@ -949,7 +1057,7 @@ class Organization: ADOSVTBase
         return $controlResult
     }
     
-    hidden [ControlResult] AutoInjectedExtension([ControlResult] $controlResult)
+    hidden [ControlResult] CheckAutoInjectedExtensions([ControlResult] $controlResult)
     {
         try
         {
@@ -1011,7 +1119,7 @@ class Organization: ADOSVTBase
         return $controlResult
 }
 
-hidden [ControlResult] CheckMaxPCACount([ControlResult] $controlResult)
+    hidden [ControlResult] CheckMaxPCACount([ControlResult] $controlResult)
     {
         
         $TotalPCAMembers=0
@@ -1032,6 +1140,48 @@ hidden [ControlResult] CheckMaxPCACount([ControlResult] $controlResult)
         }
     
         return $controlResult
-}
+    }
+
+    hidden [ControlResult] CheckAuditStream([ControlResult] $controlResult)
+    {
+        
+        try
+        {
+            $url ="https://{0}.auditservice.visualstudio.com/_apis/audit/streams?api-version=5.0-preview.1" -f $($this.SubscriptionContext.SubscriptionName);
+            $responseObj = [WebRequestHelper]::InvokeGetWebRequest($url);  
+            
+            # If no audit streams are configured, 'count' property is available for $responseObj[0] and its value is 0. 
+            # If audit streams are configured, 'count' property is not available for $responseObj[0]. 
+            #'Count' is a PSObject property and 'count' is response object property. Notice the case sensitivity here.
+            
+            # TODO: When there are no audit streams configured, CheckMember in the below condition returns false when checknull flag [third param in CheckMember] is not specified (default value is $true). Assiging it $false. Need to revisit.
+            if(([Helpers]::CheckMember($responseObj[0],"count",$false)) -and ($responseObj[0].count -eq 0))
+            {
+                $controlResult.AddMessage([VerificationResult]::Failed, "No audit stream has been configured on the organization.");
+            }
+             # When audit streams are configured - the below condition will be true.
+            elseif((-not ([Helpers]::CheckMember($responseObj[0],"count"))) -and ($responseObj.Count -gt 0)) 
+            {
+                $enabledStreams = $responseObj | Where-Object {$_.status -eq 'enabled'}
+                if(($enabledStreams | Measure-Object).Count -gt 0)
+                {
+                    $controlResult.AddMessage([VerificationResult]::Passed, "One or more audit streams configured on the organization are currently enabled.");
+                }
+                else
+                {
+                    $controlResult.AddMessage([VerificationResult]::Failed, "None of the audit streams that have been configured are currently enabled.");
+                }  
+            }
+            else 
+            {
+                $controlResult.AddMessage([VerificationResult]::Failed, "No audit stream has been configured on the organization.");
+            }   
+        }
+        catch
+        {
+            $controlResult.AddMessage([VerificationResult]::Error, "Could not fetch the list of audit streams enabled on the organization.");
+        }
+        return $controlResult
+    }
 
 }
