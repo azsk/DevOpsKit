@@ -447,7 +447,7 @@
     },
     {
       "ControlID": "ADO_Organization_Enable_Audit_Stream",
-      "Description": "Enable streaming of audit events from your organization to a stream target.",
+      "Description": "Enable audit streaming to support alerting, monitoring and analysis of audit logs over longer periods.",
       "Id": "Organization342",
       "ControlSeverity": "Medium",
       "Automated": "Yes",
