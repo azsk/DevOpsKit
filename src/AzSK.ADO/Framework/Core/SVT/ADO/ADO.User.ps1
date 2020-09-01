@@ -17,12 +17,12 @@ class User: ADOSVTBase {
                     if (($fullAccessPATList | Measure-Object).Count -gt 0) {
                         $fullAccessPATNames = $fullAccessPATList | Select displayName, scope 
                         $controlResult.AddMessage([VerificationResult]::Failed,
-                            "The following PATs have been configured with full access : ", $fullAccessPATNames);
+                            "The following PATs have been configured with full access: ", $fullAccessPATNames);
                     }
                     else {
                         $AccessPATNames = $responseObj | Select displayName, scope 
                         $controlResult.AddMessage([VerificationResult]::Verify,
-                            "Verify that the following PATs have minimum required permissions : ", $AccessPATNames)   
+                            "Verify that the following PATs have minimum required permissions: ", $AccessPATNames)   
                     }
                 }
                 else {
@@ -82,7 +82,7 @@ class User: ADOSVTBase {
                 
                     if (($res | Measure-Object).Count -gt 0) {
                         $PATList = ($res | Select-Object -Property @{Name = "Name"; Expression = { $_.displayName } }, @{Name = "ValidFrom"; Expression = { $_.validfrom } }, @{Name = "ValidTo"; Expression = { $_.validto } }, @{Name = "ValidationPeriod"; Expression = { ([datetime]::parseexact($_.validto.Split('T')[0], 'yyyy-MM-dd', $null) - [datetime]::parseexact($_.validfrom.Split('T')[0], 'yyyy-MM-dd', $null)).Days } });    
-                        $controlResult.AddMessage([VerificationResult]::Failed, "The following PATs have validity period of more than 180 days : ", $PATList)  
+                        $controlResult.AddMessage([VerificationResult]::Failed, "The following PATs have validity period of more than 180 days: ", $PATList)  
                     }
                     else {
                         $controlResult.AddMessage([VerificationResult]::Passed,
@@ -124,16 +124,16 @@ class User: ADOSVTBase {
 
                     if (($PATExpri7Days | Measure-Object).Count -gt 0) {
                         $PAT7List = ($PATExpri7Days | Select-Object -Property @{Name = "Name"; Expression = { $_.displayName } }, @{Name = "ValidFrom"; Expression = { $_.validfrom } }, @{Name = "ValidTo"; Expression = { $_.validto } }, @{Name = "Remaining"; Expression = { ([datetime]::parseexact($_.validto.Split('T')[0], 'yyyy-MM-dd', $null) - $date).Days } });    
-                        $controlResult.AddMessage("The following PATs expire within 7 days : ", $PAT7List )
+                        $controlResult.AddMessage("The following PATs expire within 7 days: ", $PAT7List )
                     }
                     if (($PATExpri30Days | Measure-Object).Count -gt 0) {
                         $PAT30List = ($PATExpri30Days | Select-Object -Property @{Name = "Name"; Expression = { $_.displayName } }, @{Name = "ValidFrom"; Expression = { $_.validfrom } }, @{Name = "ValidTo"; Expression = { $_.validto } }, @{Name = "Remaining"; Expression = { ([datetime]::parseexact($_.validto.Split('T')[0], 'yyyy-MM-dd', $null) - $date).Days } });    
-                        $controlResult.AddMessage("The following PATs expire after 7 days but within 30 days : ", $PAT30List )
+                        $controlResult.AddMessage("The following PATs expire after 7 days but within 30 days: ", $PAT30List )
                     }
               
                     if (($PATOther | Measure-Object).Count -gt 0) {
                         $PATOList = ($PATOther | Select-Object -Property @{Name = "Name"; Expression = { $_.displayName } }, @{Name = "ValidFrom"; Expression = { $_.validfrom } }, @{Name = "ValidTo"; Expression = { $_.validto } }, @{Name = "Remaining"; Expression = { ([datetime]::parseexact($_.validto.Split('T')[0], 'yyyy-MM-dd', $null) - $date).Days } });    
-                        $controlResult.AddMessage("The following PATs expire after 30 days : ", $PATOList )
+                        $controlResult.AddMessage("The following PATs expire after 30 days: ", $PATOList )
                     }
                     if (($PATExpri7Days | Measure-Object).Count -gt 0) {
                         $controlResult.AddMessage([VerificationResult]::Failed)
