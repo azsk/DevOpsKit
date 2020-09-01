@@ -484,4 +484,4 @@ class Project: ADOSVTBase
        
         return $controlResult
     }
-   }
+}
