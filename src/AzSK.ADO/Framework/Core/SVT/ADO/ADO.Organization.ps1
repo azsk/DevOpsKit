@@ -102,8 +102,8 @@ class Organization: ADOSVTBase
                         $responsePrCollData = $responsePrCollData | Select-Object displayName,mailAddress,subjectKind
                         $stateData = @();
                         $stateData += $responsePrCollData
-                        $controlResult.AddMessage([VerificationResult]::Verify, "Review the members of the group Project Collection Service Accounts : ", $stateData); 
-                        $controlResult.SetStateData("Members of the Project Collection Service Accounts group : ", $stateData); 
+                        $controlResult.AddMessage([VerificationResult]::Verify, "Review the members of the group Project Collection Service Accounts: ", $stateData); 
+                        $controlResult.SetStateData("Members of the Project Collection Service Accounts group: ", $stateData); 
                     }
                     else
                     { #count is 0 then there is no member in the prj coll ser acc group
@@ -374,7 +374,7 @@ class Organization: ADOSVTBase
 
                 if($extCount -gt 0)
                 {               
-                    $controlResult.AddMessage("No. of extensions installed : " + $extCount);
+                    $controlResult.AddMessage("No. of extensions installed: " + $extCount);
 
                     $trustedExtPublishers = $this.ControlSettings.Organization.TrustedExtensionPublishers;
 
@@ -384,9 +384,9 @@ class Organization: ADOSVTBase
                     $unTrustedExtensions = @(); #Publishers not trusted by Microsoft
                     $unTrustedExtensions += $extensionList | Where-Object {$_.publisherName -notin $trustedExtPublishers}
                         
-                    $controlResult.AddMessage([VerificationResult]::Verify, "Review the below list of installed extensions : ");  
-                    $controlResult.AddMessage("Extensions (from trusted publisher) : ", $trustedExtensions);
-                    $controlResult.AddMessage("Extensions (from untrusted publisher) : ", $unTrustedExtensions);
+                    $controlResult.AddMessage([VerificationResult]::Verify, "Review the below list of installed extensions: ");  
+                    $controlResult.AddMessage("Extensions (from trusted publisher): ", $trustedExtensions);
+                    $controlResult.AddMessage("Extensions (from untrusted publisher): ", $unTrustedExtensions);
 
                     $stateData = @{
                         Trusted_Extensions = @();
@@ -396,7 +396,7 @@ class Organization: ADOSVTBase
                     $stateData.Trusted_Extensions += $trustedExtensions
                     $stateData.Untrusted_Extensions += $unTrustedExtensions
 
-                    $controlResult.SetStateData("List of installed extensions : ", $stateData);
+                    $controlResult.SetStateData("List of installed extensions: ", $stateData);
                 }
                 else 
                 {
@@ -433,13 +433,13 @@ class Organization: ADOSVTBase
 
                 if(($sharedExtensions | Measure-Object).Count -gt 0)
                 {
-                    $controlResult.AddMessage("No. of shared extensions :" + $sharedExtensions.Count)
+                    $controlResult.AddMessage("No. of shared extensions: " + $sharedExtensions.Count)
                     $extensionList = @();
                     $extensionList +=  ($sharedExtensions | Select-Object extensionName,publisherId,publisherName,version) 
 
-                    $controlResult.AddMessage([VerificationResult]::Verify, "Review the below list of shared extensions : ",$extensionList); 
+                    $controlResult.AddMessage([VerificationResult]::Verify, "Review the below list of shared extensions: ",$extensionList); 
                                                     
-                    $controlResult.SetStateData("List of shared extensions : ", $extensionList);                                
+                    $controlResult.SetStateData("List of shared extensions: ", $extensionList);                                
                 }
                 else 
                 {
@@ -467,10 +467,10 @@ class Organization: ADOSVTBase
         
             if(($responseObj -ne $null) -and ($responseObj[0].totalCount -gt 0) -and ([Helpers]::CheckMember($responseObj[0], 'members')))
             {
-                $controlResult.AddMessage("No. of guest identities present:" + ($responseObj[0].totalCount));
+                $controlResult.AddMessage("No. of guest identities present: " + ($responseObj[0].totalCount));
                 $guestList = @();
                 $guestList +=  ($responseObj[0].members | Select-Object @{Name="IdentityType"; Expression = {$_.user.subjectKind}},@{Name="DisplayName"; Expression = {$_.user.displayName}}, @{Name="MailAddress"; Expression = {$_.user.mailAddress}},@{Name="AccessLevel"; Expression = {$_.accessLevel.licenseDisplayName}},@{Name="LastAccessedDate"; Expression = {$_.lastAccessedDate}})
-                $controlResult.AddMessage([VerificationResult]::Verify, "Review the below list of guest users : ",$guestList);      
+                $controlResult.AddMessage([VerificationResult]::Verify, "Review the below list of guest users: ",$guestList);      
                 $controlResult.SetStateData("Guest users list: ", $guestList);    
             }
             else #external guest access notion is not applicable when AAD is not configured. Instead GitHub user notion is available in non-AAD backed orgs.
@@ -507,11 +507,11 @@ class Organization: ADOSVTBase
              # When there are managers - the below condition will be true.
             elseif((-not ([Helpers]::CheckMember($responseObj[0],"count"))) -and ($responseObj.Count -gt 0)) 
             {
-                $controlResult.AddMessage("No. of extension managers present : " + $responseObj.Count)
+                $controlResult.AddMessage("No. of extension managers present: " + $responseObj.Count)
                 $extensionManagerList = @();
                 $extensionManagerList +=  ($responseObj | Select-Object @{Name="IdentityName"; Expression = {$_.identity.displayName}},@{Name="Role"; Expression = {$_.role.displayName}})
-                $controlResult.AddMessage([VerificationResult]::Verify, "Review the below list of extension managers : ",$extensionManagerList);        
-                $controlResult.SetStateData("List of extension managers : ", $extensionManagerList);   
+                $controlResult.AddMessage([VerificationResult]::Verify, "Review the below list of extension managers: ",$extensionManagerList);        
+                $controlResult.SetStateData("List of extension managers: ", $extensionManagerList);   
             }
             else 
             {
@@ -554,7 +554,7 @@ class Organization: ADOSVTBase
                 $inactiveUsers = ($inactiveUsers | Select-Object -Property @{Name="Name"; Expression = {$_.User.displayName}},@{Name="mailAddress"; Expression = {$_.User.mailAddress}})
                 
                 $controlResult.AddMessage([VerificationResult]::Failed,
-                                        "Review users present in the organization who are inactive from last $($this.ControlSettings.Organization.InActiveUserActivityLogsPeriodInDays) days : ",$inactiveUsersWithDays);
+                                        "Review users present in the organization who are inactive from last $($this.ControlSettings.Organization.InActiveUserActivityLogsPeriodInDays) days: ",$inactiveUsersWithDays);
                 $controlResult.SetStateData("Inactive users list: ", $inactiveUsers);
             }
             else {
@@ -586,7 +586,7 @@ class Organization: ADOSVTBase
         
                     $userNames = @();   
                     $userNames += ($responseObj[0].users | Select-Object -Property @{Name = "Name"; Expression = { $_.displayName } }, @{Name = "mailAddress"; Expression = { $_.preferredEmailAddress } })
-                    $controlResult.AddMessage([VerificationResult]::Failed, "Remove access for below disconnected users : ", $userNames);  
+                    $controlResult.AddMessage([VerificationResult]::Failed, "Remove access for below disconnected users: ", $userNames);  
                     $controlResult.SetStateData("Disconnected users list: ", $userNames);
                 }
                 else 
@@ -1082,7 +1082,7 @@ class Organization: ADOSVTBase
 
             if (($autoInjExt | Measure-Object).Count -gt 0)
             {
-                $controlResult.AddMessage([VerificationResult]::Verify,"Verify the below auto-injected tasks at organization level:", $autoInjExt);
+                $controlResult.AddMessage([VerificationResult]::Verify,"Verify the below auto-injected tasks at organization level: ", $autoInjExt);
                 $controlResult.SetStateData("Auto-injected tasks list: ", $autoInjExt); 
             }
             else 
@@ -1107,14 +1107,14 @@ class Organization: ADOSVTBase
         $PCAMembers = $PCAMembers | Select-Object displayName,mailAddress
         $controlResult.AddMessage("There are a total of $TotalPCAMembers Project Collection Administrators in your organization")
         if($TotalPCAMembers -lt $this.ControlSettings.Organization.MinPCAMembersPermissible){
-            $controlResult.AddMessage([VerificationResult]::Failed,"Number of administrators configured are less than the minimum required administrators count : $($this.ControlSettings.Organization.MinPCAMembersPermissible)");
+            $controlResult.AddMessage([VerificationResult]::Failed,"Number of administrators configured are less than the minimum required administrators count: $($this.ControlSettings.Organization.MinPCAMembersPermissible)");
         }
         else{
-            $controlResult.AddMessage([VerificationResult]::Passed,"Number of administrators configured are more than the minimum required administrators count : $($this.ControlSettings.Organization.MinPCAMembersPermissible)");
+            $controlResult.AddMessage([VerificationResult]::Passed,"Number of administrators configured are more than the minimum required administrators count: $($this.ControlSettings.Organization.MinPCAMembersPermissible)");
         }
         if($TotalPCAMembers -gt 0){
-            $controlResult.AddMessage("Verify the following Project Collection Administrators : ",$PCAMembers)
-            $controlResult.SetStateData("List of Project Collection Administrators : ",$PCAMembers)
+            $controlResult.AddMessage("Verify the following Project Collection Administrators: ",$PCAMembers)
+            $controlResult.SetStateData("List of Project Collection Administrators: ",$PCAMembers)
         }        
         return $controlResult
 }
@@ -1129,14 +1129,14 @@ class Organization: ADOSVTBase
         $PCAMembers = $PCAMembers | Select-Object displayName,mailAddress
         $controlResult.AddMessage("There are a total of $TotalPCAMembers Project Collection Administrators in your organization")
         if($TotalPCAMembers -gt $this.ControlSettings.Organization.MaxPCAMembersPermissible){
-            $controlResult.AddMessage([VerificationResult]::Failed,"Number of administrators configured are more than the approved limit : $($this.ControlSettings.Organization.MaxPCAMembersPermissible)");
+            $controlResult.AddMessage([VerificationResult]::Failed,"Number of administrators configured are more than the approved limit: $($this.ControlSettings.Organization.MaxPCAMembersPermissible)");
         }
         else{
-            $controlResult.AddMessage([VerificationResult]::Passed,"Number of administrators configured are within than the approved limit : $($this.ControlSettings.Organization.MaxPCAMembersPermissible)");
+            $controlResult.AddMessage([VerificationResult]::Passed,"Number of administrators configured are within than the approved limit: $($this.ControlSettings.Organization.MaxPCAMembersPermissible)");
         }
         if($TotalPCAMembers -gt 0){
-            $controlResult.AddMessage("Verify the following Project Collection Administrators : ",$PCAMembers)
-            $controlResult.SetStateData("List of Project Collection Administrators : ",$PCAMembers)
+            $controlResult.AddMessage("Verify the following Project Collection Administrators: ",$PCAMembers)
+            $controlResult.SetStateData("List of Project Collection Administrators: ",$PCAMembers)
         }
     
         return $controlResult
