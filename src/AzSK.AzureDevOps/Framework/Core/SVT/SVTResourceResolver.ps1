@@ -148,29 +148,16 @@ class SVTResourceResolver: AzSKRoot {
             }
 
             #Select Org/User by default...
-            $svtResource = [SVTResource]::new();
-            $svtResource.ResourceName = $this.organizationName;
-            $svtResource.ResourceType = "AzureDevOps.Organization";
-            $svtResource.ResourceId = "Organization/$($this.organizationName)/"
-            $svtResource.ResourceTypeMapping = ([SVTMapping]::AzSKDevOpsResourceMapping |
-                Where-Object { $_.ResourceType -eq $svtResource.ResourceType } |
-                Select-Object -First 1)
-
-            $svtResource.ResourceDetails = New-Object -TypeName psobject -Property @{ ResourceLink = $svtResource.ResourceId.Replace('Organization', 'https://dev.azure.com') + "_settings/"; }
-            $this.SVTResources += $svtResource
+            $link = "https://dev.azure.com/$($this.organizationName)/_settings"
+            $this.CreateSVTResource($this.organizationName, $null ,"AzureDevOps.Organization", "Organization/$($this.organizationName)/", $null, $link);
+            
         }
 
         if ($this.ResourceTypeName -in ([ResourceTypeName]::User, [ResourceTypeName]::All, [ResourceTypeName]::Org_Project_User, [ResourceTypeName]::Build_Release_SvcConn_AgentPool_User)) {
-            $svtResource = [SVTResource]::new();
-            $svtResource.ResourceName = $this.organizationName;
-            $svtResource.ResourceType = "AzureDevOps.User";
-            $svtResource.ResourceId = "Organization/$($this.organizationName)/User"
-            $svtResource.ResourceTypeMapping = ([SVTMapping]::AzSKDevOpsResourceMapping |
-                Where-Object { $_.ResourceType -eq $svtResource.ResourceType } |
-                Select-Object -First 1)
-           
-            $svtResource.ResourceDetails = New-Object -TypeName psobject -Property @{ ResourceLink = "https://dev.azure.com/$($this.organizationName)/_settings/users" }
-            $this.SVTResources += $svtResource
+
+            $link = "https://dev.azure.com/$($this.organizationName)/_settings/users"
+            $this.CreateSVTResource($this.organizationName, $null,"AzureDevOps.User", "Organization/$($this.organizationName)/User", $null, $link);
+            
         }
 
         $topNQueryString = ""
@@ -214,20 +201,12 @@ class SVTResourceResolver: AzSKRoot {
                 foreach ($thisProj in $projects) 
                 {
                     $projectName = $thisProj.name
+                    $projectId = $thisProj.id;
                     if ($this.ResourceTypeName -in ([ResourceTypeName]::Project, [ResourceTypeName]::All, [ResourceTypeName]::Org_Project_User)) 
                     {
-                        $svtResource = [SVTResource]::new();
-                        $svtResource.ResourceName = $thisProj.name;
-                        $svtResource.ResourceGroupName = $this.organizationName
-                        $svtResource.ResourceType = "AzureDevOps.Project";
-                        $svtResource.ResourceId = $thisProj.url
-                        $svtResource.ResourceTypeMapping = ([SVTMapping]::AzSKDevOpsResourceMapping |
-                            Where-Object { $_.ResourceType -eq $svtResource.ResourceType } |
-                            Select-Object -First 1)
-                    
-                
-                        $svtResource.ResourceDetails = New-Object -TypeName psobject -Property @{ ResourceLink = ($svtResource.ResourceId.Replace('/_apis/projects', '') + '/_settings/') }
-                        $this.SVTResources += $svtResource
+                        $link = $thisProj.url.Replace('/_apis/projects', '') + '/_settings/'
+                        $this.CreateSVTResource($thisProj.name, $this.organizationName,"AzureDevOps.Project", $thisProj.url, $null, $link);
+                        
                     }
                     #check if long running scan allowed or not.
                     if(!$this.isAllowLongRunningScanCheck())
@@ -246,19 +225,9 @@ class SVTResourceResolver: AzSKRoot {
                             if (([Helpers]::CheckMember($buildDefnsObj, "count") -and $buildDefnsObj[0].count -gt 0) -or (($buildDefnsObj | Measure-Object).Count -gt 0 -and [Helpers]::CheckMember($buildDefnsObj[0], "name"))) {
                                 $nObj = $this.MaxObjectsToScan
                                 foreach ($bldDef in $buildDefnsObj) {
-                                    $svtResource = [SVTResource]::new();
-                                    $svtResource.ResourceName = $bldDef.name;
-                                    $svtResource.ResourceGroupName = $bldDef.project.name;
-                                    $svtResource.ResourceType = "AzureDevOps.Build";
-                                    $svtResource.ResourceId = $bldDef.url.split('?')[0];
-                                    $svtResource.ResourceTypeMapping = ([SVTMapping]::AzSKDevOpsResourceMapping |
-                                        Where-Object { $_.ResourceType -eq $svtResource.ResourceType } |
-                                        Select-Object -First 1)
-                                    $svtResource.ResourceDetails = $bldDef
-                                    $link = $svtResource.ResourceId.replace('_apis/build/Definitions/', '_build?definitionId=');
-                                    $svtResource.ResourceDetails | Add-Member -Name 'ResourceLink' -Type NoteProperty -Value $link;
-                                    $this.SVTResources += $svtResource
-
+                                    $link = $bldDef.url.split('?')[0].replace('_apis/build/Definitions/', '_build?definitionId=');
+                                    $this.CreateSVTResource($bldDef.name, $bldDef.project.name, "AzureDevOps.Build", $bldDef.url.split('?')[0], $bldDef, $link);
+                                   
                                     if (--$nObj -eq 0) { break; } 
                                 }
                                 $buildDefnsObj = $null;
@@ -272,25 +241,19 @@ class SVTResourceResolver: AzSKRoot {
                                 $buildDefnsObj = [WebRequestHelper]::InvokeGetWebRequest($buildDefnURL) 
                                 if (([Helpers]::CheckMember($buildDefnsObj, "count") -and $buildDefnsObj[0].count -gt 0) -or (($buildDefnsObj | Measure-Object).Count -gt 0 -and [Helpers]::CheckMember($buildDefnsObj[0], "name"))) {
                                     foreach ($bldDef in $buildDefnsObj) {
-                                        $svtResource = [SVTResource]::new();
-                                        $svtResource.ResourceName = $bldDef.name;
-                                        $svtResource.ResourceGroupName = $bldDef.project.name;
-                                        $svtResource.ResourceType = "AzureDevOps.Build";
-                                        $svtResource.ResourceId = $bldDef.url.split('?')[0];
-                                        $svtResource.ResourceTypeMapping = ([SVTMapping]::AzSKDevOpsResourceMapping |
-                                            Where-Object { $_.ResourceType -eq $svtResource.ResourceType } |
-                                            Select-Object -First 1)
-        
-                                        $link = $svtResource.ResourceId.replace('_apis/build/Definitions/', '_build?definitionId=');
-                                        $svtResource.ResourceDetails = New-Object -TypeName psobject -Property @{ ResourceLink = $link }
-                                                                                                        
-                                        $this.SVTResources += $svtResource
+                                        $link = $bldDef.url.split('?')[0].replace('_apis/build/Definitions/', '_build?definitionId=');
+                                        $this.CreateSVTResource($bldDef.name, $bldDef.project.name, "AzureDevOps.Build", $bldDef.url.split('?')[0], $bldDef, $link);
+                                        
                                     }
                                     $buildDefnsObj = $null;
                                     Remove-Variable buildDefnsObj;
                                 }
                             }
-                        }          
+                        }
+                        
+                        #Initialysing null to SecurityNamespaceId variable for new scan, it is static variable, setting once only in svc class and same value is applicable for all the svc con withing org
+                        [Build]::SecurityNamespaceId = $null;
+                            
                     }
                     #check if long running scan allowed or not.
                     if(!$this.isAllowLongRunningScanCheck())
@@ -309,20 +272,9 @@ class SVTResourceResolver: AzSKRoot {
                             if (([Helpers]::CheckMember($releaseDefnsObj, "count") -and $releaseDefnsObj[0].count -gt 0) -or (($releaseDefnsObj | Measure-Object).Count -gt 0 -and [Helpers]::CheckMember($releaseDefnsObj[0], "name"))) {
                                 $nObj = $this.MaxObjectsToScan
                                 foreach ($relDef in $releaseDefnsObj) {
-                                    $svtResource = [SVTResource]::new();
-                                    $svtResource.ResourceName = $relDef.name;
-                                    $svtResource.ResourceGroupName = $projectName;
-                                    $svtResource.ResourceType = "AzureDevOps.Release";
-                                    $svtResource.ResourceId = $relDef.url
-                                    $svtResource.ResourceTypeMapping = ([SVTMapping]::AzSKDevOpsResourceMapping |
-                                        Where-Object { $_.ResourceType -eq $svtResource.ResourceType } |
-                                        Select-Object -First 1)
-
-                                    $link = "https://dev.azure.com/{0}/{1}/_release?_a=releases&view=mine&definitionId={2}" -f $this.SubscriptionContext.SubscriptionName, $projectName, $svtResource.ResourceId.split('/')[-1];
-                                    $svtResource.ResourceDetails = New-Object -TypeName psobject -Property @{ ResourceLink = $link }
-                                                                    
-                                    $this.SVTResources += $svtResource
-
+                                    $link = "https://dev.azure.com/{0}/{1}/_release?_a=releases&view=mine&definitionId={2}" -f $this.SubscriptionContext.SubscriptionName, $projectName, $relDef.url.split('/')[-1];
+                                    $this.CreateSVTResource($relDef.name, $projectName, "AzureDevOps.Release", $relDef.url, $null, $link);
+                                    
                                     if (--$nObj -eq 0) { break; } 
                                 }
                                 $releaseDefnsObj = $null;
@@ -353,19 +305,9 @@ class SVTResourceResolver: AzSKRoot {
                                     if (([Helpers]::CheckMember($releaseDefnsObj, "dataProviders") -and $releaseDefnsObj.dataProviders."ms.vss-releaseManagement-web.search-definitions-data-provider") -and [Helpers]::CheckMember($releaseDefnsObj.dataProviders."ms.vss-releaseManagement-web.search-definitions-data-provider", "releaseDefinitions") ) {
                                         $releaseDefinitions = $releaseDefnsObj.dataProviders."ms.vss-releaseManagement-web.search-definitions-data-provider".releaseDefinitions  
                                         foreach ($relDef in $releaseDefinitions) {
-                                            $svtResource = [SVTResource]::new();
-                                            $svtResource.ResourceName = $relDef.name;
-                                            $svtResource.ResourceGroupName = $projectName;
-                                            $svtResource.ResourceType = "AzureDevOps.Release";
-                                            $svtResource.ResourceId = $relDef.url
-                                            $svtResource.ResourceTypeMapping = ([SVTMapping]::AzSKDevOpsResourceMapping |
-                                                Where-Object { $_.ResourceType -eq $svtResource.ResourceType } |
-                                                Select-Object -First 1)
-
-                                            $link = "https://dev.azure.com/{0}/{1}/_release?_a=releases&view=mine&definitionId={2}" -f $this.SubscriptionContext.SubscriptionName, $projectName, $svtResource.ResourceId.split('/')[-1];
-                                            $svtResource.ResourceDetails = New-Object -TypeName psobject -Property @{ ResourceLink = $link }
-                                                                        
-                                            $this.SVTResources += $svtResource
+                                            $link = "https://dev.azure.com/{0}/{1}/_release?_a=releases&view=mine&definitionId={2}" -f $this.SubscriptionContext.SubscriptionName, $projectName, $relDef.url.split('/')[-1];
+                                            $this.CreateSVTResource($relDef.name, $projectName, "AzureDevOps.Release", $relDef.url, $null, $link);
+                                            
                                         }
                                         $releaseDefinitions = $null;
                                     }
@@ -377,6 +319,10 @@ class SVTResourceResolver: AzSKRoot {
                                 Write-Warning "Release pipelines for the project [$($projectName)] could not be fetched.";
                             }
                         }
+
+                        #Initialysing null to SecurityNamespaceId variable for new scan, it is static variable, setting once only in release class and same value is applicable for all the release pipelines withing org
+                        [Release]::SecurityNamespaceId = $null;
+                            
                     }
                     #check if long running scan allowed or not.
                     if(!$this.isAllowLongRunningScanCheck())
@@ -406,25 +352,16 @@ class SVTResourceResolver: AzSKRoot {
                                 $Connections = $serviceEndpointObj | Where-Object { ($_.type -eq "azurerm" -or $_.type -eq "azure" -or $_.type -eq "git" -or $_.type -eq "github" -or $_.type -eq "externaltfs") -and ($this.ServiceConnections -eq $_.name) }  
                             }
 
+                            #Initialysing null to SecurityNamespaceId variable for new scan, it is static variable, setting once only in svc class and same value is applicable for all the svc con withing org
+                            [ServiceConnection]::SecurityNamespaceId = $null;
                             $serviceEndpointObj = $null;
                             Remove-Variable  serviceEndpointObj;
                             $nObj = $this.MaxObjectsToScan
                             foreach ($connectionObject in $Connections) {
-                                $svtResource = [SVTResource]::new();
-                                $svtResource.ResourceName = $connectionObject.Name;
-                                $svtResource.ResourceGroupName = $projectName;
-                                $svtResource.ResourceType = "AzureDevOps.ServiceConnection";
-                                $svtResource.ResourceId = "Organization/$($this.organizationName)/Project/$projectName/$($connectionObject.Name)/$($connectionObject.Id)"
-                                $svtResource.ResourceTypeMapping = ([SVTMapping]::AzSKDevOpsResourceMapping |
-                                    Where-Object { $_.ResourceType -eq $svtResource.ResourceType } |
-                                    Select-Object -First 1)
-                            
-                                $svtResource.ResourceDetails = $connectionObject
-                            
-                                $link = "https://dev.azure.com/$($this.organizationName)/$projectName/_settings/adminservices?resourceId=$($connectionObject.Id)"; 
-                                $svtResource.ResourceDetails | Add-Member -Name 'ResourceLink' -Type NoteProperty -Value $link;
-                                $this.SVTResources += $svtResource
-
+                                $resourceId = "Organization/$($this.organizationName)/Project/$projectName/$($connectionObject.Name)/$($connectionObject.Id)";
+                                $link = "https://dev.azure.com/$($this.organizationName)/$projectId/_settings/adminservices?resourceId=$($connectionObject.Id)"; 
+                                $this.CreateSVTResource($connectionObject.name, $projectName, "AzureDevOps.ServiceConnection", $resourceId, $connectionObject, $link);
+                                
                                 if (--$nObj -eq 0) { break; }
                             }
                         }
@@ -458,16 +395,10 @@ class SVTResourceResolver: AzSKRoot {
                                 }
                                 
                                 foreach ($taq in $taskAgentQueues) {
-                                    $svtResource = [SVTResource]::new();
-                                    $svtResource.ResourceName = $taq.name;
-                                    $svtResource.ResourceGroupName = $projectName;
-                                    $svtResource.ResourceType = "AzureDevOps.AgentPool";
-                                    $svtResource.ResourceId = "https://{0}.visualstudio.com/_apis/securityroles/scopes/distributedtask.agentqueuerole/roleassignments/resources/{1}_{2}" -f $($this.SubscriptionContext.SubscriptionName), $($taq.projectId), $taq.id   
-                                    $svtResource.ResourceTypeMapping = ([SVTMapping]::AzSKDevOpsResourceMapping |
-                                        Where-Object { $_.ResourceType -eq $svtResource.ResourceType } |
-                                        Select-Object -First 1)
-                                    $this.SVTResources += $svtResource
-
+                                    $resourceId = "https://{0}.visualstudio.com/_apis/securityroles/scopes/distributedtask.agentqueuerole/roleassignments/resources/{1}_{2}" -f $($this.SubscriptionContext.SubscriptionName), $($taq.projectId), $taq.id
+                                    $link = "https://{0}.visualstudio.com/{1}/_settings/agentqueues?queueId={2}&view=security" -f $($this.SubscriptionContext.SubscriptionName), $($taq.projectId), $taq.id
+                                    $this.CreateSVTResource($taq.name, $projectName, "AzureDevOps.AgentPool", $resourceId, $null, $link);
+                                    
                                     if (--$nObj -eq 0) { break; }
                                 }
                                 $taskAgentQueues = $null;
@@ -508,5 +439,27 @@ class SVTResourceResolver: AzSKRoot {
             }
         }
         return $true;
+    }
+
+    [void] CreateSVTResource([string] $name, [string] $resourceGroupName, [string] $resourceType, [string] $resourceId, [PSObject] $resourceDetailsObj, $resourceLink)
+    {
+        $svtResource = [SVTResource]::new();
+        $svtResource.ResourceName = $name;
+        if ($resourceGroupName) {
+            $svtResource.ResourceGroupName = $resourceGroupName;
+        }
+        $svtResource.ResourceType = $resourceType;
+        $svtResource.ResourceId = $resourceId;
+        $svtResource.ResourceTypeMapping = ([SVTMapping]::AzSKDevOpsResourceMapping | Where-Object { $_.ResourceType -eq $resourceType } | Select-Object -First 1)
+
+        if ($resourceDetailsObj) {
+            $svtResource.ResourceDetails = $resourceDetailsObj;
+            $svtResource.ResourceDetails | Add-Member -Name 'ResourceLink' -Type NoteProperty -Value $resourceLink;
+        }
+        else {
+            $svtResource.ResourceDetails = New-Object -TypeName psobject -Property @{ ResourceLink = $resourceLink }
+        }                         
+                                        
+        $this.SVTResources += $svtResource
     }
 }
