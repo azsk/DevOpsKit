@@ -160,6 +160,12 @@ class SVTResourceResolver: AzSKRoot {
             
         }
 
+        $topNQueryString = ""
+        if ($this.MaxObjectsToScan -ne 0)
+        {
+            #Add this to QS only if $MaxObj is specified. If so, this will download only $maxObj configs.
+            $topNQueryString = '&$top='+ $this.MaxObjectsToScan
+        }
         #Get project resources
         if ($this.ProjectNames.Count -gt 0) {
             $this.PublishCustomMessage("Querying api for resources to be scanned. This may take a while...");
@@ -214,7 +220,7 @@ class SVTResourceResolver: AzSKRoot {
                         }
 
                         if ($this.BuildNames -eq "*") {
-                            $buildDefnURL = "https://dev.azure.com/{0}/{1}/_apis/build/definitions?api-version=4.1" -f $($this.SubscriptionContext.SubscriptionName), $thisProj.name;
+                            $buildDefnURL = ("https://dev.azure.com/{0}/{1}/_apis/build/definitions?api-version=4.1" +$topNQueryString) -f $($this.SubscriptionContext.SubscriptionName), $thisProj.name;
                             $buildDefnsObj = [WebRequestHelper]::InvokeGetWebRequest($buildDefnURL) 
                             if (([Helpers]::CheckMember($buildDefnsObj, "count") -and $buildDefnsObj[0].count -gt 0) -or (($buildDefnsObj | Measure-Object).Count -gt 0 -and [Helpers]::CheckMember($buildDefnsObj[0], "name"))) {
                                 $nObj = $this.MaxObjectsToScan
@@ -261,7 +267,7 @@ class SVTResourceResolver: AzSKRoot {
                         }
                         if ($this.ReleaseNames -eq "*") 
                         {
-                            $releaseDefnURL = "https://vsrm.dev.azure.com/{0}/{1}/_apis/release/definitions?api-version=4.1-preview.3" -f $($this.SubscriptionContext.SubscriptionName), $projectName;
+                            $releaseDefnURL = ("https://vsrm.dev.azure.com/{0}/{1}/_apis/release/definitions?api-version=4.1-preview.3" +$topNQueryString) -f $($this.SubscriptionContext.SubscriptionName), $projectName;
                             $releaseDefnsObj = [WebRequestHelper]::InvokeGetWebRequest($releaseDefnURL);
                             if (([Helpers]::CheckMember($releaseDefnsObj, "count") -and $releaseDefnsObj[0].count -gt 0) -or (($releaseDefnsObj | Measure-Object).Count -gt 0 -and [Helpers]::CheckMember($releaseDefnsObj[0], "name"))) {
                                 $nObj = $this.MaxObjectsToScan
@@ -324,6 +330,7 @@ class SVTResourceResolver: AzSKRoot {
                         return;
                     }
 
+                    #Note: $topNQueryString is currently not supported in the SvcConn and AgentPool APIs.
                     if ($this.ServiceConnections.Count -gt 0 -and ($this.ResourceTypeName -in ([ResourceTypeName]::ServiceConnection, [ResourceTypeName]::All, [ResourceTypeName]::Build_Release_SvcConn_AgentPool_User)))
                     {
                         if ($this.ProjectNames -ne "*") {
@@ -331,7 +338,7 @@ class SVTResourceResolver: AzSKRoot {
                         }
                     
                         # Here we are fetching all the svc conns in the project and then filtering out. But in build & release we fetch them individually unless '*' is used for fetching all of them.
-                        $serviceEndpointURL = "https://dev.azure.com/{0}/{1}/_apis/serviceendpoint/endpoints?api-version=4.1-preview.1" -f $($this.organizationName), $($projectName);
+                        $serviceEndpointURL = ("https://dev.azure.com/{0}/{1}/_apis/serviceendpoint/endpoints?api-version=4.1-preview.1") -f $($this.organizationName), $($projectName);
                         $serviceEndpointObj = [WebRequestHelper]::InvokeGetWebRequest($serviceEndpointURL)
                     
                         if (([Helpers]::CheckMember($serviceEndpointObj, "count") -and $serviceEndpointObj[0].count -gt 0) -or (($serviceEndpointObj | Measure-Object).Count -gt 0 -and [Helpers]::CheckMember($serviceEndpointObj[0], "name"))) {
@@ -370,7 +377,7 @@ class SVTResourceResolver: AzSKRoot {
                             $this.PublishCustomMessage("Getting agent pools configurations...");
                         }
                         # Here we are fetching all the agent pools in the project and then filtering out. But in build & release we fetch them individually unless '*' is used for fetching all of them.
-                        $agentPoolsDefnURL = "https://{0}.visualstudio.com/{1}/_settings/agentqueues?__rt=fps&__ver=2" -f $($this.SubscriptionContext.SubscriptionName), $projectName;
+                        $agentPoolsDefnURL = ("https://{0}.visualstudio.com/{1}/_settings/agentqueues?__rt=fps&__ver=2") -f $($this.SubscriptionContext.SubscriptionName), $projectName;
                         try {
                         
                             $agentPoolsDefnsObj = [WebRequestHelper]::InvokeGetWebRequest($agentPoolsDefnURL);

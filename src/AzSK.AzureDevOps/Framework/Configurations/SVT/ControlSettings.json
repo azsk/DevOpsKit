@@ -12,23 +12,23 @@
           "AzureDevOps_Organization_AuthZ_Review_Extension_Managers",
           "AzureDevOps_Organization_AuthZ_Review_Project_Collection_Service_Accounts",
           "AzureDevOps_Organization_SI_Review_Auto_Injected_Extensions",
-          "AzureDevOps_Organization_AuthZ_Limit_Non_Release_Scope_To_Project",
-          "AzureDevOps_Organization_AuthZ_Limit_Release_Scope_To_Project",
-          "AzureDevOps_Organization_AuthZ_Limit_Pipeline_Scope_To_Referenced_Repos",
+          "AzureDevOps_Organization_AuthZ_Limit_Non_Release_Pipeline_Access",
+          "AzureDevOps_Organization_AuthZ_Limit_Release_Pipeline_Access",
+          "AzureDevOps_Organization_AuthZ_Limit_Pipeline_Access_To_Referenced_Repos",
           "AzureDevOps_Organization_DP_Dont_Allow_Public_Projects",
-          "AzureDevOps_Organization_AuthZ_Min_Admin_Count",
-          "AzureDevOps_Organization_AuthZ_Use_SC_ALT_Account_For_Admin"          
+          "AzureDevOps_Organization_BCDR_Min_Admin_Count",
+          "AzureDevOps_Organization_AuthN_Use_ALT_Accounts_For_Admin"
         ]
       },
       {
         "ResourceType": "Project",
         "ControlIds": [
           "AzureDevOps_Project_AuthZ_Set_Visibility_Private_Or_Enterprise",
-          "AzureDevOps_Project_AuthZ_Min_Admin_Count",
-          "AzureDevOps_Project_AuthZ_Limit_Non_Release_Scope_To_Project",
-          "AzureDevOps_Project_AuthZ_Limit_Release_Scope_To_Project",
-          "AzureDevOps_Project_AuthZ_Limit_Pipeline_Scope_To_Referenced_Repos",
-          "AzureDevOps_Project_AuthZ_Use_SC_ALT_Account_For_Admin"
+          "AzureDevOps_Project_BCDR_Min_Admin_Count",
+          "AzureDevOps_Project_AuthZ_Limit_Non_Release_Pipeline_Access",
+          "AzureDevOps_Project_AuthZ_Limit_Release_Pipeline_Access",
+          "AzureDevOps_Project_AuthZ_Limit_Pipeline_Access_To_Referenced_Repos",
+          "AzureDevOps_Project_AuthN_Use_ALT_Accounts_For_Admin"
         ]
       },
       {
@@ -78,8 +78,8 @@
     "ResourceTrackerValidforDays": 3,
     "StoreResourceTrackerLocally": "True"
   },
-  "DockerImage":{
-    "ImageName" : "azskado/adosecurityscan"
+  "DockerImage": {
+    "ImageName": "azskado/adosecurityscan"
   },
   "AllowAttestationResourceType": [
     "Organization",
@@ -154,6 +154,14 @@
           "Project Collection Build Service (MicrosoftIT)"
         ]
       }
+    ],
+    "ExcludeFromSecretsCheck": [
+      "system.debug",
+      "BuildConfiguration",
+      "BuildPlatform",
+      "InputFeeds",
+      "Environment",
+      "SolutionName"
     ]
   },
   "Release": {
@@ -172,6 +180,17 @@
       "Pre-Production",
       "Prod",
       "Pre-Prod"
+    ],
+    "ExcludeFromSecretsCheck": [
+      "Domain",
+      "UserName",
+      "Build",
+      "AgentPath",
+      "BuildNumber",
+      "MachineGroup",
+      "Environment",
+      "System.debug",
+      "BuildConfiguration"
     ]
   },
   "AgentPool": {
@@ -223,31 +242,27 @@
   },
   "Patterns": [
     {
-      "RegexCode": "Build",
+      "RegexCode": "SecretsInBuild",
       "RegexList": [
-        "(?=^.{6,12}$)((?=.*\\d)(?=.*[A-Z])(?=.*[a-z])|(?=.*\\d)(?=.*[^A-Za-z0-9])(?=.*[a-z])&(?=.*[^A-Za-z0-9])(?=.*[A-Z])(?=.*[a-z])&(?=.*\\d)(?=.*[A-Z])(?=.*[^A-Za-z0-9]))^.*",
-        "(pwd|password)\\s*=\\s*(?<pwd>('(([^'])|(''))+'|[^';]+))",
-        "^(?=.*\\d)(?=.*[a-z])(?=.*[A-Z])(?!.*\\s).{6,18}$",
-        "^(?=.*\\d)(?=.*[a-z])(?=.*[A-Z]).{4,8}$",
-        "(?=^.{6,10}$)(?=.*\\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&amp;*()_+}{&quot;:;'?/&gt;.&lt;,])(?!.*\\s).*$",
-        "(?=^.{7,20}$)(?=.*\\d)(?=.*[a-zA-Z])(?!.*\\s)[0-9a-zA-Z*$-+?_&=!%{}/'.]*$"
+        "(?# To match general passwords.)^(?=\\D*\\d)(?=[^a-z]*[a-z])(?=[^A-Z]*[A-Z])(?=(\\w*\\W|\\w*))[0-9\\Wa-zA-Z]{7,20}$",
+        "(?# To match SQL/MySQL conn strings.)((P|p)assword|pwd)\\s*=\\s*\\w+;?",
+        "(?# To match Azure storage keys.)^[A-Za-z0-9/+]{86}==$",
+        "(?# To match storage SAS.)([^?]*\\?sv=)[^&]+(&s[a-z]=[^&]+){4}"
       ]
     },
     {
-      "RegexCode": "Release",
+      "RegexCode": "SecretsInRelease",
       "RegexList": [
-        "(?=^.{6,12}$)((?=.*\\d)(?=.*[A-Z])(?=.*[a-z])|(?=.*\\d)(?=.*[^A-Za-z0-9])(?=.*[a-z])&(?=.*[^A-Za-z0-9])(?=.*[A-Z])(?=.*[a-z])&(?=.*\\d)(?=.*[A-Z])(?=.*[^A-Za-z0-9]))^.*",
-        "(pwd|password)\\s*=\\s*(?<pwd>('(([^'])|(''))+'|[^';]+))",
-        "^(?=.*\\d)(?=.*[a-z])(?=.*[A-Z])(?!.*\\s).{6,18}$",
-        "^(?=.*\\d)(?=.*[a-z])(?=.*[A-Z]).{4,8}$",
-        "(?=^.{6,10}$)(?=.*\\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&amp;*()_+}{&quot;:;'?/&gt;.&lt;,])(?!.*\\s).*$",
-        "(?=^.{7,20}$)(?=.*\\d)(?=.*[a-zA-Z])(?!.*\\s)[0-9a-zA-Z*$-+?_&=!%{}/'.]*$"
+        "(?# To match general passwords.)^(?=\\D*\\d)(?=[^a-z]*[a-z])(?=[^A-Z]*[A-Z])(?=(\\w*\\W|\\w*))[0-9\\Wa-zA-Z]{7,20}$",
+        "(?# To match SQL/MySQL conn strings.)((P|p)assword|pwd)\\s*=\\s*\\w+;?",
+        "(?# To match Azure storage keys.)^[A-Za-z0-9/+]{86}==$",
+        "(?# To match storage SAS.)([^?]*\\?sv=)[^&]+(&s[a-z]=[^&]+){4}"
       ]
     },
     {
       "RegexCode": "URLs",
       "RegexList": [
-        "(www.|http:|https:)+[^\\s]+[\\w]"
+        "(?# To match any URL.)(www.|http:|https:)+[^\\s]+[\\w]"
       ]
     }
   ],
@@ -259,5 +274,5 @@
     "AutoCloseProjectBug": true,
     "AutoCloseOrgBug": true
   },
-  "GenerateSecurityEvaluationJsonFile" : false
+  "GenerateSecurityEvaluationJsonFile": false
 }

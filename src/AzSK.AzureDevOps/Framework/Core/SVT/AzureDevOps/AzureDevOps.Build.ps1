@@ -4,6 +4,7 @@ class Build: ADOSVTBase
 
     hidden [PSObject] $BuildObj;
     hidden static [string] $SecurityNamespaceId = $null;
+    hidden static [PSObject] $BuildVarNames = @{};
     
     Build([string] $subscriptionId, [SVTResource] $svtResource): Base($subscriptionId,$svtResource) 
     {
@@ -84,21 +85,40 @@ class Build: ADOSVTBase
             {
                 $varList = @();
                 $noOfCredFound = 0;     
-                $patterns = $this.ControlSettings.Patterns | where {$_.RegexCode -eq "Build"} | Select-Object -Property RegexList;
+                $patterns = $this.ControlSettings.Patterns | where {$_.RegexCode -eq "SecretsInBuild"} | Select-Object -Property RegexList;
+                $exclusions = $this.ControlSettings.Build.ExcludeFromSecretsCheck;
                 if(($patterns | Measure-Object).Count -gt 0)
                 {                
                     Get-Member -InputObject $this.BuildObj[0].variables -MemberType Properties | ForEach-Object {
-                    if([Helpers]::CheckMember($this.BuildObj[0].variables.$($_.Name),"value") -and  (-not [Helpers]::CheckMember($this.BuildObj[0].variables.$($_.Name),"isSecret")))
-                    {
-                       $propertyName = $_.Name
-                      for ($i = 0; $i -lt $patterns.RegexList.Count; $i++) {
-                        if ($this.BuildObj[0].variables.$($propertyName).value -match $patterns.RegexList[$i]) { 
-                            $noOfCredFound +=1
-                            $varList += "$propertyName ";   
-                            break  
+                        if([Helpers]::CheckMember($this.BuildObj[0].variables.$($_.Name),"value") -and  (-not [Helpers]::CheckMember($this.BuildObj[0].variables.$($_.Name),"isSecret")))
+                        {
+                            
+                            $buildVarName = $_.Name
+                            $buildVarValue = $this.BuildObj[0].variables.$buildVarName.value 
+                            <# helper code to build a list of vars and counts
+                            if ([Build]::BuildVarNames.Keys -contains $buildVarName)
+                            {
+                                    [Build]::BuildVarNames.$buildVarName++
                             }
-                        }
-                    } 
+                            else 
+                            {
+                                [Build]::BuildVarNames.$buildVarName = 1
+                            }
+                            #>
+                            if ($exclusions -notcontains $buildVarName)
+                            {
+                                for ($i = 0; $i -lt $patterns.RegexList.Count; $i++) {
+                                    #Note: We are using '-cmatch' here. 
+                                    #When we compile the regex, we don't specify ignoreCase flag.
+                                    #If regex is in text form, the match will be case-sensitive.
+                                    if ($buildVarValue -cmatch $patterns.RegexList[$i]) { 
+                                        $noOfCredFound +=1
+                                        $varList += " $buildVarName";   
+                                        break  
+                                        }
+                                    }
+                            }
+                        } 
                     }
                     if($noOfCredFound -gt 0)
                     {

@@ -93,7 +93,7 @@ class Project: ADOSVTBase
         return $controlResult
     }
 
-    hidden [ControlResult] CheckSetQueueTime([ControlResult] $controlResult)
+    hidden [ControlResult] CheckSettableQueueTime([ControlResult] $controlResult)
     {
        if($this.PipelineSettingsObj)
        {
@@ -410,6 +410,8 @@ class Project: ADOSVTBase
                             
                             # clearing cached value in [AdministratorHelper]::AllPAMembers as it can be used in attestation later and might have incorrect group loaded.
                             [AdministratorHelper]::AllPAMembers = @();
+                            # Filtering out distinct entries. A user might be added directly to the admin group or might be a member of a child group of the admin group.
+                            $allAdminMembers = $allAdminMembers| Sort-Object -Property mailAddress -Unique
 
                             if(($allAdminMembers | Measure-Object).Count -gt 0)
                             {
@@ -419,26 +421,35 @@ class Project: ADOSVTBase
                                     if (-not [string]::IsNullOrEmpty($matchToSCAlt)) 
                                     {
                                         $nonSCMembers = @();
-                                        $nonSCMembers += $allAdminMembers | Where-Object { $_.mailAddress -notmatch $matchToSCAlt }  
+                                        $nonSCMembers += $allAdminMembers | Where-Object { $_.mailAddress -notmatch $matchToSCAlt }
+                                        $SCMembers = @();
+                                        $SCMembers += $allAdminMembers | Where-Object { $_.mailAddress -match $matchToSCAlt }   
                                         if (($nonSCMembers | Measure-Object).Count -gt 0) 
                                         {
                                             $nonSCMembers = $nonSCMembers | Select-Object name,mailAddress,groupName
                                             $stateData = @();
                                             $stateData += $nonSCMembers
-                                            $controlResult.AddMessage([VerificationResult]::Verify, "Review the users having admin privileges with non SC-Alt accounts: ", $stateData); 
-                                            $controlResult.SetStateData("List of users having admin privileges with non SC-Alt accounts: ", $stateData); 
+                                            $controlResult.AddMessage([VerificationResult]::Verify, "Review the users having admin privileges with non SC-ALT accounts: ", $stateData); 
+                                            $controlResult.SetStateData("List of users having admin privileges with non SC-ALT accounts: ", $stateData); 
                                         }
                                         else 
                                         {
-                                            $controlResult.AddMessage([VerificationResult]::Passed, "No users have admin privileges with non SC-Alt accounts.");
+                                            $controlResult.AddMessage([VerificationResult]::Passed, "No users have admin privileges with non SC-ALT accounts.");
+                                        }
+                                        if (($SCMembers | Measure-Object).Count -gt 0) 
+                                        {
+                                            $SCMembers = $SCMembers | Select-Object name,mailAddress,groupName
+                                            $SCData = @();
+                                            $SCData += $SCMembers
+                                            $controlResult.AddMessage("Users having admin privileges with SC-ALT accounts: ", $SCData);
                                         }
                                     }
                                     else {
-                                        $controlResult.AddMessage([VerificationResult]::Manual, "Regular expressions for detecting SC-Alt account is not defined in the organization.");
+                                        $controlResult.AddMessage([VerificationResult]::Manual, "Regular expressions for detecting SC-ALT account is not defined in the organization.");
                                     }
                                 }
                                 else{
-                                    $controlResult.AddMessage([VerificationResult]::Error, "Regular expressions for detecting SC-Alt account is not defined in the organization. Please update your ControlSettings.json as per the latest AzSK.AzureDevOps PowerShell module.");
+                                    $controlResult.AddMessage([VerificationResult]::Error, "Regular expressions for detecting SC-ALT account is not defined in the organization. Please update your ControlSettings.json as per the latest AzSK.ADO PowerShell module.");
                                 }   
                             }
                             else
@@ -458,12 +469,12 @@ class Project: ADOSVTBase
                 }
                 else
                 {
-                    $controlResult.AddMessage([VerificationResult]::Manual, "List of administrator groups for detecting non SC-Alt accounts is not defined in your project.");    
+                    $controlResult.AddMessage([VerificationResult]::Manual, "List of administrator groups for detecting non SC-ALT accounts is not defined in your project.");    
                 }
             }
             else
             {
-                $controlResult.AddMessage([VerificationResult]::Error, "List of administrator groups for detecting non SC-Alt accounts is not defined in your project. Please update your ControlSettings.json as per the latest AzSK.AzureDevOps PowerShell module.");
+                $controlResult.AddMessage([VerificationResult]::Error, "List of administrator groups for detecting non SC-ALT accounts is not defined in your project. Please update your ControlSettings.json as per the latest AzSK.ADO PowerShell module.");
             }
         }
         catch
@@ -473,4 +484,4 @@ class Project: ADOSVTBase
        
         return $controlResult
     }
-}
+   }
