@@ -427,8 +427,8 @@ class Project: ADOSVTBase
                                             $nonSCMembers = $nonSCMembers | Select-Object name,mailAddress,groupName
                                             $stateData = @();
                                             $stateData += $nonSCMembers
-                                            $controlResult.AddMessage([VerificationResult]::Verify, "Review the users having admin privileges with non SC-ALT accounts : ", $stateData); 
-                                            $controlResult.SetStateData("List of users having admin privileges with non SC-ALT accounts : ", $stateData); 
+                                            $controlResult.AddMessage([VerificationResult]::Verify, "Review the users having admin privileges with non SC-ALT accounts: ", $stateData); 
+                                            $controlResult.SetStateData("List of users having admin privileges with non SC-ALT accounts: ", $stateData); 
                                         }
                                         else 
                                         {
@@ -439,7 +439,7 @@ class Project: ADOSVTBase
                                             $SCMembers = $SCMembers | Select-Object name,mailAddress,groupName
                                             $SCData = @();
                                             $SCData += $SCMembers
-                                            $controlResult.AddMessage("Users having admin privileges with SC-ALT accounts : ", $SCData);
+                                            $controlResult.AddMessage("Users having admin privileges with SC-ALT accounts: ", $SCData);
                                         }
                                     }
                                     else {
