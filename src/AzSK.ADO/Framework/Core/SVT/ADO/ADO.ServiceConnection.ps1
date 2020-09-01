@@ -333,13 +333,13 @@ class ServiceConnection: ADOSVTBase
                     $svcLastRunDate = $this.ServiceConnEndPointDetail.serviceEndpointExecutionHistory[0].data.finishTime;
                     
                     #format date
-                    $formatLastRunDate = ([datetime]::parseexact($svcLastRunDate.Split('T')[0], 'yyyy-MM-dd', $null))
+                    $formatLastRunTimeSpan = New-TimeSpan -Start (Get-Date $svcLastRunDate)
                     
                     # $inactiveLimit denotes the upper limit on number of days of inactivity before the svc conn is deemed inactive.
                     if ($this.ControlSettings -and [Helpers]::CheckMember($this.ControlSettings, "ServiceConnection.ServiceConnectionHistoryPeriodInDays") ) 
                     {
                         $inactiveLimit = $this.ControlSettings.ServiceConnection.ServiceConnectionHistoryPeriodInDays
-                        if ((((Get-Date) - $formatLastRunDate).Days) -gt $inactiveLimit)
+                        if ($formatLastRunTimeSpan.Days -gt $inactiveLimit)
                         {
                             $controlResult.AddMessage([VerificationResult]::Failed, "Service connection has not been used in the last $inactiveLimit days.");
                         }

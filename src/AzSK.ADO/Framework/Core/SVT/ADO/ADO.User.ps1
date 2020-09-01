@@ -81,7 +81,7 @@ class User: ADOSVTBase {
                     $res = $AccessPATList | Where-Object {(New-Timespan -Start $_.ValidFrom -End $_.ValidTo).Days -gt 180 }
                 
                     if (($res | Measure-Object).Count -gt 0) {
-                        $PATList = ($res | Select-Object -Property @{Name = "Name"; Expression = { $_.displayName } }, @{Name = "ValidFrom"; Expression = { $_.validfrom } }, @{Name = "ValidTo"; Expression = { $_.validto } }, @{Name = "ValidationPeriod"; Expression = { ([datetime]::parseexact($_.validto.Split('T')[0], 'yyyy-MM-dd', $null) - [datetime]::parseexact($_.validfrom.Split('T')[0], 'yyyy-MM-dd', $null)).Days } });    
+                        $PATList = ($res | Select-Object -Property @{Name = "Name"; Expression = { $_.displayName } }, @{Name = "ValidFrom"; Expression = { $_.validfrom } }, @{Name = "ValidTo"; Expression = { $_.validto } }, @{Name = "ValidationPeriod"; Expression = { (New-Timespan -Start $_.ValidFrom -End $_.ValidTo).Days } });    
                         $controlResult.AddMessage([VerificationResult]::Failed, "The following PATs have validity period of more than 180 days: ", $PATList)  
                     }
                     else {
@@ -123,16 +123,16 @@ class User: ADOSVTBase {
                     $PATOther = $AccessPATList | Where-Object { ((New-Timespan -Start $date -End $_.validto).Days -gt 30) };
 
                     if (($PATExpri7Days | Measure-Object).Count -gt 0) {
-                        $PAT7List = ($PATExpri7Days | Select-Object -Property @{Name = "Name"; Expression = { $_.displayName } }, @{Name = "ValidFrom"; Expression = { $_.validfrom } }, @{Name = "ValidTo"; Expression = { $_.validto } }, @{Name = "Remaining"; Expression = { ([datetime]::parseexact($_.validto.Split('T')[0], 'yyyy-MM-dd', $null) - $date).Days } });    
+                        $PAT7List = ($PATExpri7Days | Select-Object -Property @{Name = "Name"; Expression = { $_.displayName } }, @{Name = "ValidFrom"; Expression = { $_.validfrom } }, @{Name = "ValidTo"; Expression = { $_.validto } }, @{Name = "Remaining"; Expression = { (New-Timespan -Start $date -End $_.validto).Days } });    
                         $controlResult.AddMessage("The following PATs expire within 7 days: ", $PAT7List )
                     }
                     if (($PATExpri30Days | Measure-Object).Count -gt 0) {
-                        $PAT30List = ($PATExpri30Days | Select-Object -Property @{Name = "Name"; Expression = { $_.displayName } }, @{Name = "ValidFrom"; Expression = { $_.validfrom } }, @{Name = "ValidTo"; Expression = { $_.validto } }, @{Name = "Remaining"; Expression = { ([datetime]::parseexact($_.validto.Split('T')[0], 'yyyy-MM-dd', $null) - $date).Days } });    
+                        $PAT30List = ($PATExpri30Days | Select-Object -Property @{Name = "Name"; Expression = { $_.displayName } }, @{Name = "ValidFrom"; Expression = { $_.validfrom } }, @{Name = "ValidTo"; Expression = { $_.validto } }, @{Name = "Remaining"; Expression = { (New-Timespan -Start $date -End $_.validto).Days } });    
                         $controlResult.AddMessage("The following PATs expire after 7 days but within 30 days: ", $PAT30List )
                     }
               
                     if (($PATOther | Measure-Object).Count -gt 0) {
-                        $PATOList = ($PATOther | Select-Object -Property @{Name = "Name"; Expression = { $_.displayName } }, @{Name = "ValidFrom"; Expression = { $_.validfrom } }, @{Name = "ValidTo"; Expression = { $_.validto } }, @{Name = "Remaining"; Expression = { ([datetime]::parseexact($_.validto.Split('T')[0], 'yyyy-MM-dd', $null) - $date).Days } });    
+                        $PATOList = ($PATOther | Select-Object -Property @{Name = "Name"; Expression = { $_.displayName } }, @{Name = "ValidFrom"; Expression = { $_.validfrom } }, @{Name = "ValidTo"; Expression = { $_.validto } }, @{Name = "Remaining"; Expression = { (New-Timespan -Start $date -End $_.validto).Days } });    
                         $controlResult.AddMessage("The following PATs expire after 30 days: ", $PATOList )
                     }
                     if (($PATExpri7Days | Measure-Object).Count -gt 0) {
