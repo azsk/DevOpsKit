@@ -4,7 +4,7 @@
   "IsMaintenanceMode": false,
   "Controls": [
     {
-      "ControlID": "AzureDevOps_Build_AuthZ_Grant_Min_RBAC_Access",
+      "ControlID": "ADO_Build_AuthZ_Grant_Min_RBAC_Access",
       "Description": "All teams/groups must be granted minimum required permissions on build definition",
       "Id": "Build110",
       "ControlSeverity": "High",
@@ -22,7 +22,7 @@
       "Enabled": true
     },
     {
-      "ControlID": "AzureDevOps_Build_DP_No_PlainText_Secrets_In_Definition",
+      "ControlID": "ADO_Build_DP_No_PlainText_Secrets_In_Definition",
       "Description": "Secrets and keys must not be stored as plain text in build variables/task parameters",
       "Id": "Build120",
       "ControlSeverity": "High",
@@ -39,7 +39,7 @@
       "Enabled": true
     },
     {
-      "ControlID": "AzureDevOps_Build_Config_Add_Static_Code_Analyzer",
+      "ControlID": "ADO_Build_Config_Add_Static_Code_Analyzer",
       "Description": "Consider adding static code analysis step in your pipelines.",
       "Id": "Build130",
       "ControlSeverity": "High",
@@ -56,7 +56,7 @@
       "Enabled": true
     },
     {
-      "ControlID": "AzureDevOps_Build_DP_Store_SecretFiles_in_Secure_Library",
+      "ControlID": "ADO_Build_DP_Store_SecretFiles_in_Secure_Library",
       "Description": " Secure Files library must be used to store secret files such as signing certificates, Apple Provisioning Profiles, Android KeyStore files, and SSH keys",
       "Id": "Build140",
       "ControlSeverity": "Medium",
@@ -73,7 +73,7 @@
       "Enabled": true
     },
     {
-      "ControlID": "AzureDevOps_Build_SI_Review_Inactive_Build",
+      "ControlID": "ADO_Build_SI_Review_Inactive_Build",
       "Description": "Inactive build pipelines must be removed if no more required.",
       "Id": "Build150",
       "ControlSeverity": "Low",
@@ -90,7 +90,7 @@
       "Enabled": true
     },
     {
-      "ControlID": "AzureDevOps_Build_AuthZ_Disable_Inherited_Permissions",
+      "ControlID": "ADO_Build_AuthZ_Disable_Inherited_Permissions",
       "Description": "Do not allow inherited permission on build definitions",
       "Id": "Build160",
       "ControlSeverity": "High",
@@ -108,7 +108,7 @@
       "Enabled": true
     },
     {
-      "ControlID": "AzureDevOps_Build_SI_Review_Variables_Settable_At_Queue_Time",
+      "ControlID": "ADO_Build_SI_Review_Variables_Settable_At_Queue_Time",
       "Description": "Pipeline variables marked settable at queue time should be carefully reviewed.",
       "Id": "Build170",
       "ControlSeverity": "High",
@@ -125,7 +125,7 @@
       "Enabled": true
     },
     {
-      "ControlID": "AzureDevOps_Build_SI_Review_URL_Variables_Settable_At_Queue_Time",
+      "ControlID": "ADO_Build_SI_Review_URL_Variables_Settable_At_Queue_Time",
       "Description": "Pipeline variables marked settable at queue time and containing URLs should be carefully reviewed.",
       "Id": "Build172",
       "ControlSeverity": "High",
@@ -142,7 +142,7 @@
       "Enabled": true
     },
     {
-      "ControlID": "AzureDevOps_Build_SI_Check_External_Source_Self_Hosted_Build",
+      "ControlID": "ADO_Build_SI_Check_External_Source_Self_Hosted_Build",
       "Description": "Building code from untrusted external sources is effectively allowing external parties to execute arbitrary code on your computer.",
       "Id": "Build180",
       "ControlSeverity": "High",

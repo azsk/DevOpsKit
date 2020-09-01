@@ -4,7 +4,7 @@
   "IsMaintenanceMode": false,
   "Controls": [
     {
-      "ControlID": "AzureDevOps_AgentPool_AuthZ_Grant_Min_RBAC_Access",
+      "ControlID": "ADO_AgentPool_AuthZ_Grant_Min_RBAC_Access",
       "Description": "All teams/groups must be granted minimum required permissions on agent pool",
       "Id": "AgentPool110",
       "ControlSeverity": "High",
@@ -22,7 +22,7 @@
       "Enabled": true
     },
     {
-      "ControlID": "AzureDevOps_AgentPool_SI_Apply_Security_Patches",
+      "ControlID": "ADO_AgentPool_SI_Apply_Security_Patches",
       "Description": "Non-hosted agent virtual machine must have all the required security patches installed.",
       "Id": "AgentPool120",
       "ControlSeverity": "High",
@@ -39,7 +39,7 @@
       "Enabled": true
     },
     {
-      "ControlID": "AzureDevOps_AgentPool_SI_Lockdown_Machine",
+      "ControlID": "ADO_AgentPool_SI_Lockdown_Machine",
       "Description": "Use a security hardened, locked down OS image for self-hosted VMs in agent pool.",
       "Id": "AgentPool130",
       "ControlSeverity": "Medium",
@@ -56,7 +56,7 @@
       "Enabled": true
     },
     {
-      "ControlID": "AzureDevOps_AgentPool_AuthZ_Disable_Inherited_Permissions",
+      "ControlID": "ADO_AgentPool_AuthZ_Disable_Inherited_Permissions",
       "Description": "Do not allow inherited permission on agent pool",
       "Id": "AgentPool140",
       "ControlSeverity": "High",
@@ -74,7 +74,7 @@
       "Enabled": true
     },
     {
-      "ControlID": "AzureDevOps_AgentPool_AuthZ_Dont_Enable_Auto_Provisioning",
+      "ControlID": "ADO_AgentPool_AuthZ_Dont_Enable_Auto_Provisioning",
       "Description": "Do not enable auto-provisioning for agent pools.",
       "Id": "AgentPool150",
       "ControlSeverity": "High",
@@ -90,9 +90,9 @@
         "RBAC"
       ],
       "Enabled": true
-    },    
+    },
     {
-      "ControlID": "AzureDevOps_AgentPool_AuthZ_Project_Dont_Grant_All_Pipeline_Access",
+      "ControlID": "ADO_AgentPool_AuthZ_Project_Dont_Grant_All_Pipeline_Access",
       "Description": "Do not make agent pool accesible to all pipelines in the project.",
       "Id": "AgentPool160",
       "ControlSeverity": "High",
@@ -110,7 +110,7 @@
       "Enabled": true
     },
     {
-      "ControlID": "AzureDevOps_AgentPool_SI_Review_Inactive_Pool",
+      "ControlID": "ADO_AgentPool_SI_Review_Inactive_Pool",
       "Description": "Inactive agent pool must be removed if no more required.",
       "Id": "AgentPool170",
       "ControlSeverity": "Medium",

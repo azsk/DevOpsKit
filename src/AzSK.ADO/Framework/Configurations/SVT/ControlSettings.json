@@ -4,69 +4,69 @@
       {
         "ResourceType": "Organization",
         "ControlIds": [
-          "AzureDevOps_Organization_AuthN_Use_AAD_Auth",
-          "AzureDevOps_Organization_AuthN_Disable_External_Guest_Users",
-          "AzureDevOps_Organization_AuthZ_Justify_Guest_Identities",
-          "AzureDevOps_Organization_SI_Review_Installed_Extensions",
-          "AzureDevOps_Organization_SI_Review_Shared_Extensions",
-          "AzureDevOps_Organization_AuthZ_Review_Extension_Managers",
-          "AzureDevOps_Organization_AuthZ_Review_Project_Collection_Service_Accounts",
-          "AzureDevOps_Organization_SI_Review_Auto_Injected_Extensions",
-          "AzureDevOps_Organization_AuthZ_Limit_Non_Release_Scope_To_Project",
-          "AzureDevOps_Organization_AuthZ_Limit_Release_Scope_To_Project",
-          "AzureDevOps_Organization_AuthZ_Limit_Pipeline_Scope_To_Referenced_Repos",
-          "AzureDevOps_Organization_DP_Dont_Allow_Public_Projects",
-          "AzureDevOps_Organization_AuthZ_Min_Admin_Count",
-          "AzureDevOps_Organization_AuthZ_Use_SC_ALT_Account_For_Admin"          
+          "ADO_Organization_AuthN_Use_AAD_Auth",
+          "ADO_Organization_AuthN_Disable_External_Guest_Users",
+          "ADO_Organization_AuthZ_Justify_Guest_Identities",
+          "ADO_Organization_SI_Review_Installed_Extensions",
+          "ADO_Organization_SI_Review_Shared_Extensions",
+          "ADO_Organization_AuthZ_Review_Extension_Managers",
+          "ADO_Organization_AuthZ_Review_Project_Collection_Service_Accounts",
+          "ADO_Organization_SI_Review_Auto_Injected_Extensions",
+          "ADO_Organization_AuthZ_Limit_Non_Release_Pipeline_Access",
+          "ADO_Organization_AuthZ_Limit_Release_Pipeline_Access",
+          "ADO_Organization_AuthZ_Limit_Pipeline_Access_To_Referenced_Repos",
+          "ADO_Organization_DP_Dont_Allow_Public_Projects",
+          "ADO_Organization_BCDR_Min_Admin_Count",
+          "ADO_Organization_AuthN_Use_ALT_Accounts_For_Admin"          
         ]
       },
       {
         "ResourceType": "Project",
         "ControlIds": [
-          "AzureDevOps_Project_AuthZ_Set_Visibility_Private_Or_Enterprise",
-          "AzureDevOps_Project_AuthZ_Min_Admin_Count",
-          "AzureDevOps_Project_AuthZ_Limit_Non_Release_Scope_To_Project",
-          "AzureDevOps_Project_AuthZ_Limit_Release_Scope_To_Project",
-          "AzureDevOps_Project_AuthZ_Limit_Pipeline_Scope_To_Referenced_Repos",
-          "AzureDevOps_Project_AuthZ_Use_SC_ALT_Account_For_Admin"
+          "ADO_Project_AuthZ_Set_Visibility_Private_Or_Enterprise",
+          "ADO_Project_BCDR_Min_Admin_Count",
+          "ADO_Project_AuthZ_Limit_Non_Release_Pipeline_Access",
+          "ADO_Project_AuthZ_Limit_Release_Pipeline_Access",
+          "ADO_Project_AuthZ_Limit_Pipeline_Access_To_Referenced_Repos",
+          "ADO_Project_AuthN_Use_ALT_Accounts_For_Admin"
         ]
       },
       {
         "ResourceType": "ServiceConnection",
         "ControlIds": [
-          "AzureDevOps_ServiceConnection_AuthZ_Dont_Use_Classic_Connections",
-          "AzureDevOps_ServiceConnection_AuthZ_Disable_Inherited_Permissions",
-          "AzureDevOps_ServiceConnection_AuthZ_Dont_Grant_All_Pipelines_Access",
-          "AzureDevOps_ServiceConnection_AuthZ_Dont_Allow_Global_Groups",
-          "AzureDevOps_ServiceConnection_SI_Review_Inactive_Connection",
-          "AzureDevOps_ServiceConnection_SI_Dont_Allow_Project_Sharing",
-          "AzureDevOps_ServiceConnection_AuthZ_Dont_Grant_Subscription_Access"
+          "ADO_ServiceConnection_AuthZ_Dont_Use_Classic_Connections",
+          "ADO_ServiceConnection_AuthZ_Disable_Inherited_Permissions",
+          "ADO_ServiceConnection_AuthZ_Dont_Grant_All_Pipelines_Access",
+          "ADO_ServiceConnection_AuthZ_Dont_Allow_Global_Groups",
+          "ADO_ServiceConnection_SI_Review_Inactive_Connection",
+          "ADO_ServiceConnection_SI_Dont_Allow_Project_Sharing",
+          "ADO_ServiceConnection_AuthZ_Dont_Grant_Subscription_Access"
         ]
       },
       {
         "ResourceType": "Build",
         "ControlIds": [
-          "AzureDevOps_Build_AuthZ_Disable_Inherited_Permissions",
-          "AzureDevOps_Build_DP_No_PlainText_Secrets_In_Definition",
-          "AzureDevOps_Build_SI_Review_URL_Variables_Settable_At_Queue_Time"
+          "ADO_Build_AuthZ_Disable_Inherited_Permissions",
+          "ADO_Build_DP_No_PlainText_Secrets_In_Definition",
+          "ADO_Build_SI_Review_URL_Variables_Settable_At_Queue_Time"
         ]
       },
       {
         "ResourceType": "Release",
         "ControlIds": [
-          "AzureDevOps_Release_AuthZ_Disable_Inherited_Permissions",
-          "AzureDevOps_Release_SI_Review_External_Sources",
-          "AzureDevOps_Release_DP_No_PlainText_Secrets_In_Definition",
-          "AzureDevOps_Release_SI_Review_URL_Variables_Settable_At_Release_Time"
+          "ADO_Release_AuthZ_Disable_Inherited_Permissions",
+          "ADO_Release_SI_Review_External_Sources",
+          "ADO_Release_DP_No_PlainText_Secrets_In_Definition",
+          "ADO_Release_SI_Review_URL_Variables_Settable_At_Release_Time"
         ]
       },
       {
         "ResourceType": "AgentPool",
         "ControlIds": [
-          "AzureDevOps_AgentPool_AuthZ_Disable_Inherited_Permissions",
-          "AzureDevOps_AgentPool_AuthZ_Project_Dont_Grant_All_Pipeline_Access",
-          "AzureDevOps_AgentPool_AuthZ_Dont_Enable_Auto_Provisioning",
-          "AzureDevOps_AgentPool_SI_Review_Inactive_Pool"
+          "ADO_AgentPool_AuthZ_Disable_Inherited_Permissions",
+          "ADO_AgentPool_AuthZ_Project_Dont_Grant_All_Pipeline_Access",
+          "ADO_AgentPool_AuthZ_Dont_Enable_Auto_Provisioning",
+          "ADO_AgentPool_SI_Review_Inactive_Pool"
         ]
       }
     ]

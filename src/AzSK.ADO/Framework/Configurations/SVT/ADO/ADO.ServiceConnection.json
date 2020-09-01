@@ -4,7 +4,7 @@
   "IsMaintenanceMode": false,
   "Controls": [
     {
-      "ControlID": "AzureDevOps_ServiceConnection_AuthN_Use_Cert_Auth_for_SPN",
+      "ControlID": "ADO_ServiceConnection_AuthN_Use_Cert_Auth_for_SPN",
       "Description": "Azure Active Directory applications, which used in pipeline, must use certificate based authentication",
       "Id": "ServiceConnection110",
       "ControlSeverity": "High",
@@ -22,7 +22,7 @@
       "Enabled": true
     },
     {
-      "ControlID": "AzureDevOps_ServiceConnection_AuthZ_Dont_Grant_Subscription_Access",
+      "ControlID": "ADO_ServiceConnection_AuthZ_Dont_Grant_Subscription_Access",
       "Description": "Service Connection should not be provided access at subscription level.",
       "Id": "ServiceConnection120",
       "ControlSeverity": "High",
@@ -39,7 +39,7 @@
       "Enabled": true
     },
     {
-      "ControlID": "AzureDevOps_ServiceConnection_AuthZ_Justify_Connection_Admin",
+      "ControlID": "ADO_ServiceConnection_AuthZ_Justify_Connection_Admin",
       "Description": "Justify all users/groups that have access to the service connection.",
       "Id": "ServiceConnection130",
       "ControlSeverity": "High",
@@ -56,7 +56,7 @@
       "Enabled": true
     },
     {
-      "ControlID": "AzureDevOps_ServiceConnection_Audit_Usage_History",
+      "ControlID": "ADO_ServiceConnection_Audit_Usage_History",
       "Description": "Periodically review usage history of service connection to validate use from legitimate pipelines.",
       "Id": "ServiceConnection140",
       "ControlSeverity": "High",
@@ -73,7 +73,7 @@
       "Enabled": true
     },
     {
-      "ControlID": "AzureDevOps_ServiceConnection_AuthZ_Dont_Use_Classic_Connections",
+      "ControlID": "ADO_ServiceConnection_AuthZ_Dont_Use_Classic_Connections",
       "Description": "Do not use Azure classic service connections to grant access on a subscription.",
       "Id": "ServiceConnection150",
       "ControlSeverity": "High",
@@ -90,7 +90,7 @@
       "Enabled": true
     },
     {
-      "ControlID": "AzureDevOps_ServiceConnection_AuthZ_Disable_Inherited_Permissions",
+      "ControlID": "ADO_ServiceConnection_AuthZ_Disable_Inherited_Permissions",
       "Description": "Do not allow inherited permissions on service connections",
       "Id": "ServiceConnection160",
       "ControlSeverity": "High",
@@ -108,7 +108,7 @@
       "Enabled": true
     },
     {
-      "ControlID": "AzureDevOps_ServiceConnection_AuthZ_Dont_Allow_Global_Groups",
+      "ControlID": "ADO_ServiceConnection_AuthZ_Dont_Allow_Global_Groups",
       "Description": "Do not grant global groups access to service connections",
       "Id": "ServiceConnection170",
       "ControlSeverity": "High",
@@ -126,7 +126,7 @@
       "Enabled": true
     },
     {
-      "ControlID": "AzureDevOps_ServiceConnection_AuthZ_Dont_Grant_BuildServAcc_Permission",
+      "ControlID": "ADO_ServiceConnection_AuthZ_Dont_Grant_BuildServAcc_Permission",
       "Description": "Do not grant Build Service Account access for connections",
       "Id": "ServiceConnection180",
       "ControlSeverity": "High",
@@ -144,7 +144,7 @@
       "Enabled": true
     },
     {
-      "ControlID": "AzureDevOps_ServiceConnection_AuthZ_Dont_Grant_All_Pipelines_Access",
+      "ControlID": "ADO_ServiceConnection_AuthZ_Dont_Grant_All_Pipelines_Access",
       "Description": "Do not make service connections accessible to all pipelines.",
       "Id": "ServiceConnection190",
       "ControlSeverity": "High",
@@ -162,7 +162,7 @@
       "Enabled": true
     },
     {
-      "ControlID": "AzureDevOps_ServiceConnection_AuthZ_PAT_Or_Auth",
+      "ControlID": "ADO_ServiceConnection_AuthZ_PAT_Or_Auth",
       "Description": "Justify GitHub service connections are authenticated with full scope GitHub PATs instead of the OAuth flow.",
       "Id": "ServiceConnection200",
       "ControlSeverity": "High",
@@ -179,7 +179,7 @@
       "Enabled": true
     },
     {
-      "ControlID": "AzureDevOps_ServiceConnection_SI_Review_Inactive_Connection",
+      "ControlID": "ADO_ServiceConnection_SI_Review_Inactive_Connection",
       "Description": "Inactive service connection must be removed if no more required.",
       "Id": "ServiceConnection210",
       "ControlSeverity": "High",
@@ -196,7 +196,7 @@
       "Enabled": true
     },
     {
-      "ControlID": "AzureDevOps_ServiceConnection_SI_Dont_Allow_Project_Sharing",
+      "ControlID": "ADO_ServiceConnection_SI_Dont_Allow_Project_Sharing",
       "Description": "Service connections should not be shared across multiple projects.",
       "Id": "ServiceConnection220",
       "ControlSeverity": "High",
@@ -214,7 +214,7 @@
       "Enabled": true
     },
     {
-      "ControlID": "AzureDevOps_ServiceConnection_SI_Review_Pipeline_Sharing",
+      "ControlID": "ADO_ServiceConnection_SI_Review_Pipeline_Sharing",
       "Description": "Service connections should not be shared across multiple pieplines.",
       "Id": "ServiceConnection230",
       "ControlSeverity": "High",
