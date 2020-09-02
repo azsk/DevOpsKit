@@ -75,7 +75,7 @@ class KubernetesService: AzSVTBase
 					[MessageData]::new("AAD profile configuration details", $this.ResourceObject.Properties.aadProfile));
 			}
 			# AKS-managed Azure AD integration
-			elseif ([Helpers]::CheckMember($this.ResourceObject.Properties, "aadProfile") -and [Helpers]::CheckMember($this.ResourceObject.Properties.aadProfile, "managed") -and [Helpers]::CheckMember($this.ResourceObject.Properties.aadProfile, "adminGroupObjectIDs"))
+			elseif ([Helpers]::CheckMember($this.ResourceObject.Properties, "aadProfile") -and [Helpers]::CheckMember($this.ResourceObject.Properties.aadProfile, "managed"))
 			{
 				$controlResult.AddMessage([VerificationResult]::Passed,
 					[MessageData]::new("AAD profile configuration details", $this.ResourceObject.Properties.aadProfile));
