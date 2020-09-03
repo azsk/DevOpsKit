@@ -231,12 +231,13 @@
       "Automated": "Yes",
       "MethodName": "CheckNodeOpenPorts",
       "Rationale": "Open remote management ports expose a VM/compute node to a high level of risk from internet-based attacks that attempt to brute force credentials to gain admin access to the machine.",
-      "Recommendation": "Go to Azure Portal --> VM Settings --> Networking --> Inbound security rules --> Select security rule which allows management ports (e.g. RDP-3389, WINRM-5985, SSH-22) --> Click 'Deny' under Action --> Click Save.",
+      "Recommendation": "Go to Azure Portal --> Kubernetes Node Resource Group --> VM/VMSS Settings --> Networking --> Inbound security rules --> Select security rule which allows management ports (e.g. RDP-3389, WINRM-5985, SSH-22) --> Click 'Deny' under Action --> Click Save.",
       "Tags": [
         "SDL",
         "TCP",
         "Manual",
         "NetSec",
+        "OwnerAccess",
         "KubernetesService"
       ],
       "Enabled": true
