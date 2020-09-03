@@ -250,9 +250,10 @@ class KubernetesService: AzSVTBase
 								$vulnerableRules = @()
 								if ($VMControlSettings -and $VMControlSettings.ManagementPortList)
 								{
+									$inbloundRules = $effectiveNSG.EffectiveSecurityRules | Where-Object { ($_.direction -eq "Inbound" -and $_.Name -notlike "defaultsecurityrules*") }
 									Foreach ($PortDetails in $VMControlSettings.ManagementPortList)
 									{
-										$portVulnerableRules = $this.CheckIfPortIsOpened($effectiveNSG, $PortDetails.Port)
+										$portVulnerableRules = $this.CheckIfPortIsOpened($inbloundRules, $PortDetails.Port)
 										if (($null -ne $portVulnerableRules) -and ($portVulnerableRules | Measure-Object).Count -gt 0)
 										{
 											$vulnerableRules += $PortDetails
@@ -323,7 +324,7 @@ class KubernetesService: AzSVTBase
 			$openPortsList =@();
 			$nsgAtSubnetLevelChecked = $false
 			$nsgAtSubnetLevel = $null
-			
+			$vmssMgtPortList = @($this.ControlSettings.VirtualMachineScaleSet.Linux.ManagementPortList + $this.ControlSettings.VirtualMachineScaleSet.Windows.ManagementPortList )
 			$applicableNSGForVMSS =  @{}
 			$vmss | ForEach-Object {
 				$currentVMSS = $_
@@ -337,46 +338,48 @@ class KubernetesService: AzSVTBase
 							$nsgAtSubnetLevelChecked = $true
 							$subnetId = $_.IpConfigurations[0].Subnet.Id;		
 							$subnetName = $subnetId.Substring($subnetId.LastIndexOf("/") + 1);
-							#vnet id = trim '/subnets/' from subnet id 
-							$vnetResource = Get-AzResource -ResourceId $subnetId.Substring(0, $subnetId.IndexOf("/subnets/"))
-							if($vnetResource)
+							# get vnet name and rg name from subnet id
+							# sample subnet id: /subscriptions/00000000000000000000/resourceGroups/rgName/providers/Microsoft.Network/virtualNetworks/vnetName/subnets/subNetName
+							$subnetIdParts = $subnetId.Trim().Split("/")
+							$vnetResourceGroupName = $subnetIdParts[4]
+							$vnetResourceName = $subnetIdParts[8]
+							$vnetObject = Get-AzVirtualNetwork -Name $vnetResourceName -ResourceGroupName $vnetResourceGroupName
+							if($vnetObject)
 							{
-								$vnetObject = Get-AzVirtualNetwork -Name $vnetResource.Name -ResourceGroupName $vnetResource.ResourceGroupName
-								if($vnetObject)
+								$subnetConfig = Get-AzVirtualNetworkSubnetConfig -Name $subnetName -VirtualNetwork $vnetObject
+								if($subnetConfig -and $subnetConfig.NetworkSecurityGroup -and $subnetConfig.NetworkSecurityGroup.Id)
 								{
-									$subnetConfig = Get-AzVirtualNetworkSubnetConfig -Name $subnetName -VirtualNetwork $vnetObject
-									if($subnetConfig -and $subnetConfig.NetworkSecurityGroup -and $subnetConfig.NetworkSecurityGroup.Id)
+									# get nsg name and rg name from nsg id
+									# sample nsg id: /subscriptions/000000000000000000/resourceGroups/rgName/providers/Microsoft.Network/networkSecurityGroups/nsgName
+									$nsgIdParts = $subnetConfig.NetworkSecurityGroup.Id.Trim().Split("/")
+									$nsgResourceGroupName = $nsgIdParts[4]
+									$nsgResourceName = $nsgIdParts[8]
+									$nsgObject = Get-AzNetworkSecurityGroup -Name $nsgResourceName -ResourceGroupName $nsgResourceGroupName
+									if($nsgObject)
 									{
-										$nsgResource = Get-AzResource -ResourceId $subnetConfig.NetworkSecurityGroup.Id
-										if($nsgResource)
-										{
-											$nsgObject = Get-AzNetworkSecurityGroup -Name $nsgResource.Name -ResourceGroupName $nsgResource.ResourceGroupName
-											if($nsgObject)
-											{
-												$nsgAtSubnetLevel = $nsgObject
-												$applicableNSGForVMSS[$nsgAtSubnetLevel.Id] =  $nsgAtSubnetLevel
-											}
-										}
+										$nsgAtSubnetLevel = $nsgObject
+										$applicableNSGForVMSS[$nsgAtSubnetLevel.Id] =  $nsgAtSubnetLevel
 									}
 								}
-							}
-								          
+							}          
 						}          
 						#Get NSGs applied at NIC level
 						if($_.NetworkSecurityGroup)
 						{
 							if (-not $applicableNSGForVMSS.ContainsKey($_.NetworkSecurityGroup.Id)){
-								$nsgResource = Get-AzResource -ResourceId $_.NetworkSecurityGroup.Id
-							    if($nsgResource){
-									$nsgObject = Get-AzNetworkSecurityGroup -Name $nsgResource.Name -ResourceGroupName $nsgResource.ResourceGroupName
-									if($nsgObject)
-									{
-										$effectiveNSGForCurrentNIC = $nsgObject.Id
-										$applicableNSGForVMSS[$_.NetworkSecurityGroup.Id] =  $nsgObject
-									}else
-									{
-										$effectiveNSGForCurrentNIC = $nsgAtSubnetLevel.Id
-									}	
+								# get nsg name and rg name from nsg id
+								# sample nsg id: /subscriptions/000000000000000000/resourceGroups/rgName/providers/Microsoft.Network/networkSecurityGroups/nsgName
+								$nsgIdParts = $_.NetworkSecurityGroup.Id.Trim().Split("/")
+								$nsgResourceGroupName = $nsgIdParts[4]
+								$nsgResourceName = $nsgIdParts[8]
+								$nsgObject = Get-AzNetworkSecurityGroup -Name $nsgResourceName -ResourceGroupName $nsgResourceGroupName
+								if($nsgObject)
+								{
+									$effectiveNSGForCurrentNIC = $nsgObject.Id
+									$applicableNSGForVMSS[$_.NetworkSecurityGroup.Id] =  $nsgObject
+								}else
+								{
+									$effectiveNSGForCurrentNIC = $nsgAtSubnetLevel
 								}	
 							}else{
 								$effectiveNSGForCurrentNIC = $_.NetworkSecurityGroup.Id
@@ -387,36 +390,37 @@ class KubernetesService: AzSVTBase
 							$vmssWithoutNSG = $currentVMSS.Name
 						}
 					}
-
-					$effectiveNSGForCurrentNIC.Keys | ForEach-Object {
-						$currentNSG = $effectiveNSGForCurrentNIC[$_]
-						$vulnerableRules = @()
-						#if($this.VMSSControlSettings -and $this.VMSSControlSettings.ManagementPortList)
-						#{
-							$mgtPorts = @(22,3389)
-							Foreach($PortDetails in  $mgtPorts)
-							{
-								$portVulnerableRules = $this.CheckIfPortIsOpened($currentNSG,$PortDetails.Port)
-								if(($null -ne $portVulnerableRules) -and ($portVulnerableRules | Measure-Object).Count -gt 0)
-								{
-									$vulnerableRules += $PortDetails
-								}
-							}							
-						#}				
-						if($vulnerableRules.Count -ne 0)
-						{
-							$vulnerableNSGsWithRules += @{
-								NetworkSecurityGroupName = $effectiveNSG.Name;
-								NetworkSecurityGroupId = $effectiveNSG.Id;
-								VulnerableRules = $vulnerableRules
-							};
-						}						
-					}
 				}else{
 					$isManual = $true
 				}
 			}
-
+			
+			$applicableNSGForVMSS.Keys | ForEach-Object {
+				$currentNSG = $applicableNSGForVMSS[$_]
+				$vulnerableRules = @()
+				if($vmssMgtPortList.Count -gt 0)
+				{
+					$vmssMgtPortList = $vmssMgtPortList  | Select-Object -Unique -Property Port,Name
+					$inbloundRules = $currentNSG.SecurityRules | Where-Object { ($_.direction -eq "Inbound" ) }
+					Foreach($PortDetails in  $vmssMgtPortList)
+					{
+						$portVulnerableRules = $this.CheckIfPortIsOpened($inbloundRules,$PortDetails.Port)
+						if(($null -ne $portVulnerableRules) -and ($portVulnerableRules | Measure-Object).Count -gt 0)
+						{
+							$vulnerableRules += $PortDetails
+						}
+					}							
+				}				
+				if($vulnerableRules.Count -ne 0)
+				{
+					$vulnerableNSGsWithRules += @{
+						NetworkSecurityGroupName = $currentNSG.Name;
+						NetworkSecurityGroupId = $currentNSG.Id;
+						VulnerableRules = $vulnerableRules
+					};
+				}						
+			}
+			
 			if ($isManual)
 			{
 				$controlResult.AddMessage([VerificationResult]::Manual, "Unable to check the NSG rules. Please validate manually.");
@@ -424,10 +428,10 @@ class KubernetesService: AzSVTBase
 				$controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false;
 				if ($vulnerableNSGsWithRules.Count -ne 0)
 				{
-					$controlResult.AddMessage([VerificationResult]::Manual, "Management ports are open on node VMSS. Please verify and remove the NSG rules in order to comply.", $vulnerableNSGsWithRules);
+					$controlResult.AddMessage([VerificationResult]::Manual, "Management ports are open on AKS backend node pools. Please verify and remove the NSG rules in order to comply.", $vulnerableNSGsWithRules);
 				}
 			}
-			elseif (($vmssWithoutNSG | Measure-Object) -gt 0)
+			elseif (($vmssWithoutNSG | Measure-Object).Count -gt 0)
 			{
 				#If the VMSS is connected to ERNetwork and there is no NSG, then we should not fail as this would directly conflict with the NSG control as well.
 				$controlResult.AddMessage([VerificationResult]::Failed, "Verify if NSG is attached to all node pools.");
@@ -437,28 +441,28 @@ class KubernetesService: AzSVTBase
 				#If the VM is connected to ERNetwork or not and there is NSG, then teams should apply the recommendation and attest this control for now.
 				if ($vulnerableNSGsWithRules.Count -eq 0)
 				{              
-					$controlResult.AddMessage([VerificationResult]::Passed, "No management ports are open on node VMSS");  
+					$controlResult.AddMessage([VerificationResult]::Passed, "No management ports are open on AKS backend node pools");  
 				}
 				else
 				{
-					$controlResult.AddMessage([VerificationResult]::Verify, "Management ports are open on node VMSS. Please verify and remove the NSG rules in order to comply.", $vulnerableNSGsWithRules);
-					$controlResult.SetStateData("Management ports list on node VMSS", $vulnerableNSGsWithRules);
+					$controlResult.AddMessage([VerificationResult]::Verify, "Management ports are open on AKS backend node pools. Please verify and remove the NSG rules in order to comply.", $vulnerableNSGsWithRules);
+					$controlResult.SetStateData("Management ports list on AKS backend node pools", $vulnerableNSGsWithRules);
 				}
 			}
 		}
 		return $controlResult;
 	}
 
-	hidden [PSObject] CheckIfPortIsOpened([PSObject] $effectiveNSG, [int] $port )
+	hidden [PSObject] CheckIfPortIsOpened([PSObject] $inbloundRules, [int] $port )
 	{
 		$vulnerableRules = @();
-		$inbloundRules = $effectiveNSG.EffectiveSecurityRules | Where-Object { ($_.direction -eq "Inbound" -and $_.Name -notlike "defaultsecurityrules*") }
 		foreach ($securityRule in $inbloundRules)
 		{
 			foreach ($destPort in $securityRule.destinationPortRange)
 			{
 				$range = $destPort.Split("-")
-				#For ex. if we provide the input 22 in the destination port range field, it will be interpreted as 22-22
+				#For ex. in case of VM if we provide the input 22 in the destination port range field, it will be interpreted as 22-22 as we are passing effective NSG secuirty rules
+				#Or if NSG rules contains a open port range like 22-28
 				if ($range.Count -eq 2)
 				{
 					$startPort = $range[0]
@@ -476,11 +480,12 @@ class KubernetesService: AzSVTBase
 						continue;
 					}
 				}
-				else 
+				#In case of VMSS if we are passing the raw NSG secuirty rules so it will keep single port as single port only  
+				elseif($range.Count -eq 1 -and $destPort -eq $port) 
 				{
-					throw "Error while reading port range $($destPort)."
+					$vulnerableRules += $securityRule
 				}
-	
+			
 			}
 		}
 		return $vulnerableRules;
