@@ -267,7 +267,7 @@ class KubernetesService: AzSVTBase
 										Association          = $effectiveNSG.Association;
 										NetworkSecurityGroup = $effectiveNSG.NetworkSecurityGroup;
 										VulnerableRules      = $vulnerableRules;
-										NicName              = $_.Name
+										NicId              = $_.Id
 									};
 								}						
 							}
@@ -293,6 +293,7 @@ class KubernetesService: AzSVTBase
 				{
 					#If the VM is connected to ERNetwork and there is no NSG, then we should not fail as this would directly conflict with the NSG control as well.
 					$controlResult.AddMessage([VerificationResult]::Failed, "Verify if NSG is attached to all node VM.");
+					$controlResult.AddMessage("Following VM nodes don't have any NSG attached:", $vmWithoutNSG);
 				}
 				else
 				{
@@ -362,7 +363,8 @@ class KubernetesService: AzSVTBase
 									}
 								}
 							}          
-						}          
+						}      
+						
 						#Get NSGs applied at NIC level
 						if($_.NetworkSecurityGroup)
 						{
@@ -384,7 +386,9 @@ class KubernetesService: AzSVTBase
 							}else{
 								$effectiveNSGForCurrentNIC = $_.NetworkSecurityGroup.Id
 							}
-						}  
+						} else{
+							$effectiveNSGForCurrentNIC = $nsgAtSubnetLevel 
+						} 
 
 						if(-not $effectiveNSGForCurrentNIC){
 							$vmssWithoutNSG = $currentVMSS.Name
@@ -420,7 +424,7 @@ class KubernetesService: AzSVTBase
 					};
 				}						
 			}
-			
+
 			if ($isManual)
 			{
 				$controlResult.AddMessage([VerificationResult]::Manual, "Unable to check the NSG rules. Please validate manually.");
@@ -433,12 +437,11 @@ class KubernetesService: AzSVTBase
 			}
 			elseif (($vmssWithoutNSG | Measure-Object).Count -gt 0)
 			{
-				#If the VMSS is connected to ERNetwork and there is no NSG, then we should not fail as this would directly conflict with the NSG control as well.
 				$controlResult.AddMessage([VerificationResult]::Failed, "Verify if NSG is attached to all node pools.");
+				$controlResult.AddMessage("Following VMSS node pools don't have any NSG attached:", $vmssWithoutNSG);
 			}
 			else
 			{
-				#If the VM is connected to ERNetwork or not and there is NSG, then teams should apply the recommendation and attest this control for now.
 				if ($vulnerableNSGsWithRules.Count -eq 0)
 				{              
 					$controlResult.AddMessage([VerificationResult]::Passed, "No management ports are open on AKS backend node pools");  
