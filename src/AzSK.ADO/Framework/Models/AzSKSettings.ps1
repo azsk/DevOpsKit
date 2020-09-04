@@ -44,11 +44,20 @@ class AzSKSettings {
 	AzSKSettings()
 	{	
 	}
-    AzSKSettings([SubscriptionContext] $subscriptionContext, [InvocationInfo] $invocationContext)
+
+	static InitContexts([SubscriptionContext] $subscriptionContext, [InvocationInfo] $invocationContext)
 	{
 		[AzSKSettings]::SubscriptionContext = $subscriptionContext;
 		[AzSKSettings]::InvocationContext = $invocationContext;		
 	}
+
+    AzSKSettings([SubscriptionContext] $subscriptionContext, [InvocationInfo] $invocationContext)
+	{
+		Write-Host -ForegroundColor Yellow "Investigate!"
+		[AzSKSettings]::SubscriptionContext = $subscriptionContext;
+		[AzSKSettings]::InvocationContext = $invocationContext;		
+	}
+	
 	hidden static SetDefaultSettings([AzSKSettings] $settings) {
 		if($null -ne  $settings -and [string]::IsNullOrWhiteSpace( $settings.AzureEnvironment))
 		{

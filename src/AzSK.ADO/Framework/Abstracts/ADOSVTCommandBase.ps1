@@ -98,6 +98,7 @@ class ADOSVTCommandBase: SVTCommandBase {
 
     [void] InitializeControlState() {
       if (-not $this.ControlStateExt) {
+          Write-Host -ForegroundColor Yellow "Remove call to AzSKSettings::new"
           $settings = [AzSKSettings]::new($this.SubscriptionContext, $this.InvocationContext);
           $this.ControlStateExt = [ControlStateExtension]::new($this.SubscriptionContext, $this.InvocationContext);
           $this.ControlStateExt.UniqueRunId = $this.AttestationUniqueRunId

@@ -200,3 +200,6 @@ ModelManifest.xml
 /src/AzSK.PowerPlatform/.vscode/launch.json
 /src/AzSK.PowerPlatform/MyScript.ps1
 /src/AzSK.AzureDevOps/.vscode/launch.json
+
+#Ignore settings.json
+.vscode
