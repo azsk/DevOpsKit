@@ -194,7 +194,14 @@ function Update-AzSKADOContinuousAssurance
 		[Parameter(Mandatory = $false, ParameterSetName = "Default", HelpMessage = "Use extended command to narrow down the scans.")]
 		[Alias("ex")]
 		[string]
-		$ExtendedCommand
+		$ExtendedCommand,
+
+		#Dev-Test support params below this
+		[string] $RsrcTimeStamp, 
+		[string] $ContainerImageName, 
+		[string] $ModuleEnv, 
+		[bool] $UseDevTestImage, 
+		[int] $TriggerNextScanInMin
     )
 	Begin
 	{
@@ -208,7 +215,9 @@ function Update-AzSKADOContinuousAssurance
 			$resolver = [Resolver]::new($OrganizationName)
 			$caAccount = [CAAutomation]::new($SubscriptionId, $OrganizationName, $PATToken, `
 											$ResourceGroupName, $LAWSId, $LAWSSharedKey, `
-											$ProjectNames, $ExtendedCommand, $PSCmdlet.MyInvocation);
+											$ProjectNames, $ExtendedCommand, `
+											$RsrcTimeStamp, $ContainerImageName, $ModuleEnv, $UseDevTestImage, $TriggerNextScanInMin, `
+											$PSCmdlet.MyInvocation);
             
 			return $caAccount.InvokeFunction($caAccount.UpdateAzSKADOContinuousAssurance);
 		}
