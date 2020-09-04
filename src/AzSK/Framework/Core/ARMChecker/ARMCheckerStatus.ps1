@@ -375,7 +375,7 @@ class ARMCheckerStatus: EventBase
 			}	
 		}
 		
-		if($csvResults.Count -ge 0)
+		if($csvResults.Count -gt 0)
 		{
 		    $csvResults| Export-Csv $csvFilePath -NoTypeInformation -Force
         }
