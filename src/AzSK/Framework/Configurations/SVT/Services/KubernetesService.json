@@ -11,7 +11,7 @@
       "Automated": "Yes",
       "MethodName": "CheckClusterRBAC",
       "Rationale": "Enabling RBAC in a cluster lets you finely control access to various operations at the cluster/node/pod/namespace scopes for different stakeholders. Without RBAC enabled, every user has full access to the cluster which is a violation of the principle of least privilege. Note that Azure Kubernetes Service does not currently support other mechanisms to define authorization in Kubernetes (such as Attribute-based Access Control authorization or Node authorization).",
-      "Recommendation": "RBAC flag must be enabled while creating the Kubernetes Service. Existing non-RBAC enabled Kubernetes Service clusters cannot currently be updated for RBAC use. Refer: https://docs.microsoft.com/en-us/azure/aks/aad-integration.",
+      "Recommendation": "RBAC flag must be enabled while creating the Kubernetes Service. Existing non-RBAC enabled Kubernetes Service clusters cannot currently be updated for RBAC use. Refer: https://docs.microsoft.com/en-us/azure/aks/concepts-identity#kubernetes-role-based-access-control-rbac",
       "Tags": [
         "SDL",
         "TCP",
