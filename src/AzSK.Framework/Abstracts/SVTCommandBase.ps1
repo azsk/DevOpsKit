@@ -34,6 +34,12 @@ class SVTCommandBase: CommandBase {
     SVTCommandBase([string] $subscriptionId, [InvocationInfo] $invocationContext):
     Base($subscriptionId, $invocationContext) {
 
+        #Adding below auto update call here bcz this code runs very earlier befor resource fetching.
+        $versionMessage = $this.CheckModuleVersion();
+        if ($versionMessage) {
+            $Messages += $versionMessage;
+        }
+
         [Helpers]::AbstractClass($this, [SVTCommandBase]);
         
     }
@@ -50,11 +56,12 @@ class SVTCommandBase: CommandBase {
     hidden [void] CommandStarted() {
 
         [SVTEventContext] $arg = $this.CreateSVTEventContextObject();
-               
-        $versionMessage = $this.CheckModuleVersion();
-        if ($versionMessage) {
-            $arg.Messages += $versionMessage;
-        }
+        
+        #Removing below auto update call bcz this code runs after SVTResourceResolver.       
+        #$versionMessage = $this.CheckModuleVersion();
+        #if ($versionMessage) {
+        #    $arg.Messages += $versionMessage;
+        #}
 
         if ($null -ne $this.AttestationOptions -and $this.AttestationOptions.AttestControls -eq [AttestControls]::NotAttested -and $this.AttestationOptions.IsBulkClearModeOn) {
             throw [SuppressedException] ("The 'BulkClear' option does not apply to 'NotAttested' controls.`n")
