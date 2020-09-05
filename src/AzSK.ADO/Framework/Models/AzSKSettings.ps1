@@ -179,8 +179,12 @@ class AzSKSettings {
 						{
 							$branch = $parsedSettings.BranchId;
 						}
-
-			            $parsedSettings.OnlinePolicyStoreUrl = $parsedSettings.OnlinePolicyStoreUrl -f $orgName, $projectName, $repoName, $branch
+						$parsedSettings.OnlinePolicyStoreUrl = $parsedSettings.OnlinePolicyStoreUrl -f $orgName, $projectName, $repoName, $branch
+						Write-Host -ForegroundColor Green "Using policy from: [$orgName::$projectName::$repoName]"
+					}
+					else 
+					{
+						Write-Host -ForegroundColor Yellow "Not using online policy. No project specified. (*TODO*: Use explicit policyProject param?)"
 					}
 				}
 				
