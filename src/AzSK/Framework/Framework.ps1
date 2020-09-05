@@ -78,7 +78,6 @@ $FrameworkPath =  ((Get-Item $PSScriptRoot).Parent.Parent).FullName +"\AzSK.Fram
 . $FrameworkPath\Managers\PartialScanManager.ps1
 
 . $FrameworkPath\Helpers\LogAnalyticsHelper.ps1
-#. $FrameworkPath\Helpers\RemoteReportHelper.ps1
 . $FrameworkPath\Helpers\RemoteApiHelper.ps1
 . $FrameworkPath\Abstracts\PrivacyNotice.ps1
 

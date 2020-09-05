@@ -177,7 +177,7 @@ enum AssignmentType
 	Active
 }
 
-enum PolicyStatus 
+enum PolicyCacheStatus 
 {
 	Raw
 	Final

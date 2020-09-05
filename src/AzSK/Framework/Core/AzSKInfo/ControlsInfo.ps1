@@ -119,7 +119,7 @@ class ControlsInfo: AzCommandBase
 		$resourcetypes | ForEach-Object{
 					$controls = [ConfigurationManager]::GetSVTConfig($_.JsonFileName); 
 					[bool] $PolicyExpandedFlag = $false #Flag to represent whether control attributes have been updated or not
-					if([ConfigurationHelper]::PolicyCacheContent[$_.JsonFileName].State -eq [PolicyStatus]::Final)
+					if([ConfigurationHelper]::PolicyCacheContent[$_.JsonFileName].State -eq [PolicyCacheStatus]::Final)
 					{
 						$PolicyExpandedFlag = $true
 					}

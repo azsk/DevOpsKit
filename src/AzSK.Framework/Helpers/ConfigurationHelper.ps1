@@ -204,7 +204,7 @@ class ConfigurationHelper
 		
 		#Store policy file content into cache with state as Raw.Here Raw as State specifies that policy attributes have not been updated.
 		$policy = [Policy]@{
-			State    = [PolicyStatus]::Raw
+			State    = [PolicyCacheStatus]::Raw
 			Content = $fileContent
 		}
 		[ConfigurationHelper]::PolicyCacheContent[$policyFileName] = $policy
@@ -436,7 +436,7 @@ class ConfigurationHelper
 #Used in ConfigurationHelper to cache online policy files
 class Policy
 {
-	[PolicyStatus] $State
+	[PolicyCacheStatus] $State
 	[PSObject] $Content
 }
 

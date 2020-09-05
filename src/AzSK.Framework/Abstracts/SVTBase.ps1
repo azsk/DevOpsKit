@@ -121,7 +121,7 @@ class SVTBase: AzSKRoot
 				[Policy]$policy = [ConfigurationHelper]::PolicyCacheContent[$controlsJsonFileName]
 				$this.SVTConfig = $policy.Content
 				#If policy is already in Final State simply return
-				if ($policy.State -eq [PolicyStatus]::Final)
+				if ($policy.State -eq [PolicyCacheStatus]::Final)
 				{
 					return
 				}
@@ -165,7 +165,7 @@ class SVTBase: AzSKRoot
 			}
 			#Save the final SVTConfig in cache
 			$policy = [Policy]@{
-				State    = [PolicyStatus]::Final
+				State    = [PolicyCacheStatus]::Final
 				Content = $this.SVTConfig
 			}
 			[ConfigurationHelper]::PolicyCacheContent[$controlsJsonFileName] = $policy
