@@ -33,12 +33,9 @@ class SVTCommandBase: CommandBase {
     #Region Constructor
     SVTCommandBase([string] $subscriptionId, [InvocationInfo] $invocationContext):
     Base($subscriptionId, $invocationContext) {
-
+        
         #Adding below auto update call here bcz this code runs very earlier befor resource fetching.
-        $versionMessage = $this.CheckModuleVersion();
-        if ($versionMessage) {
-            $Messages += $versionMessage;
-        }
+        $this.CheckModuleVersion();
 
         [Helpers]::AbstractClass($this, [SVTCommandBase]);
         
