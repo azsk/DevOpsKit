@@ -104,13 +104,13 @@ class PartialScanManager
 			try {
 				#Validate if Storage is found 
 				$keys = Get-AzStorageAccountKey -ResourceGroupName $env:StorageRG -Name $env:StorageName
-					$this.StorageContext = New-AzStorageContext -StorageAccountName $env:StorageName -StorageAccountKey $keys[0].Value -Protocol Https
-					$containerObject = Get-AzStorageContainer -Context $this.StorageContext -Name "ado-checkpoint-logs" -ErrorAction SilentlyContinue
+				$this.StorageContext = New-AzStorageContext -StorageAccountName $env:StorageName -StorageAccountKey $keys[0].Value -Protocol Https
+				$containerObject = Get-AzStorageContainer -Context $this.StorageContext -Name $this.CAScanProgressSnapshotsContainerName -ErrorAction SilentlyContinue
 					
 				#If checkpoint container is found then get ResourceTracker.json (if exists)
 				if($null -ne $containerObject)
 				{
-					$controlStateBlob = Get-AzStorageBlob -Container "ado-checkpoint-logs" -Context $this.StorageContext -Blob "$($this.ResourceScanTrackerFileName)" -ErrorAction SilentlyContinue
+					$controlStateBlob = Get-AzStorageBlob -Container $this.CAScanProgressSnapshotsContainerName -Context $this.StorageContext -Blob "$($this.ResourceScanTrackerFileName)" -ErrorAction SilentlyContinue
 
 					if ($null -ne $controlStateBlob)
 					{
@@ -125,18 +125,12 @@ class PartialScanManager
 							Get-AzStorageBlobContent -CloudBlob $controlStateBlob.ICloudBlob -Context $this.StorageContext -Destination $this.masterFilePath -Force                
 							$this.ScanPendingForResources  = Get-ChildItem -Path $this.masterFilePath -Force | Get-Content | ConvertFrom-Json
 						}
-						else {
-
-							#Get file content directly in memory
-							#$this.ScanPendingForResources = Get-AzureStorageBlob -Container "ado-checkpoint-logs" -Blob "$($this.ResourceScanTrackerFileName)" | Get-AzureStorageBlobContent                
-							#$this.ScanPendingForResources  = Get-ChildItem -Path $this.masterFilePath -Force | Get-Content | ConvertFrom-Json
-						}
 					}
 					$this.isDurableStorageFound = $true
 				}
 				#If checkpoint container is not found then create new
 				else {
-					$containerObject = New-AzStorageContainer -Name "ado-checkpoint-logs" -Context $this.StorageContext -ErrorAction SilentlyContinue
+					$containerObject = New-AzStorageContainer -Name $this.CAScanProgressSnapshotsContainerName -Context $this.StorageContext -ErrorAction SilentlyContinue
 					if ($null -ne $containerObject )
 					{
 						$this.isDurableStorageFound = $true
@@ -267,12 +261,12 @@ class PartialScanManager
 			}
 		}
 		elseif ($this.scanSource -eq "CA") {
-			$controlStateBlob = Get-AzStorageBlob -Container "ado-checkpoint-logs" -Context $this.storageContext -Blob "$($this.ResourceScanTrackerFileName)" -ErrorAction SilentlyContinue
+			$controlStateBlob = Get-AzStorageBlob -Container $this.CAScanProgressSnapshotsContainerName -Context $this.storageContext -Blob "$($this.ResourceScanTrackerFileName)" -ErrorAction SilentlyContinue
 
 			if($null -ne $controlStateBlob)
 			{
 				$archiveName = "Checkpoint_" +(Get-Date).ToUniversalTime().ToString("yyyyMMddHHmmss") + ".json";
-				Set-AzStorageBlobContent -File $this.masterFilePath -Container "ado-checkpoint-logs" -Blob (Join-Path "Archive" $archiveName) -BlobType Block -Context $this.storageContext -Force
+				Set-AzStorageBlobContent -File $this.masterFilePath -Container $this.CAScanProgressSnapshotsContainerName -Blob (Join-Path "Archive" $archiveName) -BlobType Block -Context $this.storageContext -Force
 				Remove-AzStorageBlob -CloudBlob $controlStateBlob.ICloudBlob -Force -Context $this.StorageContext 
 			}	
 		}
@@ -417,7 +411,7 @@ class PartialScanManager
 		}
         elseif ($this.scanSource -eq "CA" -and $this.isDurableStorageFound) 
         {
-			Set-AzStorageBlobContent -File $this.masterFilePath -Container "ado-checkpoint-logs" -Blob "$($this.ResourceScanTrackerFileName)" -BlobType Block -Context $this.StorageContext -Force
+			Set-AzStorageBlobContent -File $this.masterFilePath -Container $this.CAScanProgressSnapshotsContainerName -Blob "$($this.ResourceScanTrackerFileName)" -BlobType Block -Context $this.StorageContext -Force
         }
 	}
 
