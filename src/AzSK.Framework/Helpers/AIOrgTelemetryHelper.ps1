@@ -290,7 +290,6 @@ class AIOrgTelemetryHelper {
 
 	static [void] PublishEvent([string] $EventName, [hashtable] $Properties, [hashtable] $Metrics) {
 		try {
-            if (![RemoteReportHelper]::IsAIOrgTelemetryEnabled()) { return; };
 			#return if telemetry key is empty
 			$telemetryKey= [RemoteReportHelper]::GetAIOrgTelemetryKey()
 			if ([string]::IsNullOrWhiteSpace($telemetryKey)) { return; };
@@ -456,7 +455,6 @@ static [void] PublishEvent([System.Collections.ArrayList] $servicescantelemetryE
 
         $eventlist = [System.Collections.ArrayList]::new()
 
-        if (![RemoteReportHelper]::IsAIOrgTelemetryEnabled()) { return; };
         $servicescantelemetryEvents | ForEach-Object {
         
         $eventObj = [AIOrgTelemetryHelper]::GetUsageEventBaseObject($_.Name,$type)
