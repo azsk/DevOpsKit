@@ -192,9 +192,13 @@ function Get-AzSKADOSecurityStatus
 		[switch]
 		[Parameter(HelpMessage="Allow long running scan.")]
 		[Alias("als")]
-		$AllowLongRunningScan
+		$AllowLongRunningScan,
 
-
+		[string]
+		[Parameter(Mandatory = $false, HelpMessage="Project name to fetch organization policy.")]
+		[ValidateNotNullOrEmpty()]
+		[Alias("pp")]
+		$PolicyProject
 
 	)
 	Begin
