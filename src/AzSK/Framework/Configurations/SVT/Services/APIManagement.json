@@ -409,6 +409,7 @@
                 "Automated",
                 "AuthN",
                 "DeveloperSku",
+                "BasicSku",
                 "StandardSku",
                 "PremiumSku",
                 "APIManagement"
