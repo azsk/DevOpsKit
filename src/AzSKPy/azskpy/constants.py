@@ -1,5 +1,5 @@
 __name__ = "azskpy"
-__version__ = "0.9.58"
+__version__ = "0.9.65"
 PASSED = "Passed"
 FAILED = "Failed"
 MANUAL = "Verify"

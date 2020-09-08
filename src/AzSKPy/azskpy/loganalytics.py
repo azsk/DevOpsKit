@@ -48,6 +48,6 @@ class LogAnalyticsClient:
 	def post_data(self, json_log, log_name):
 		response = self.__post_data(log_name, json_log)
 		if response.status_code == 200:
-			print('Telemetry sent to Log Analytics')
+			print('Telemetry sent to Log Analytics workspace')
 		else:
 			print("Failure in posting to Log Analytics: Error code:{}".format(response.status_code))

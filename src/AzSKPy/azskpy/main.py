@@ -253,7 +253,7 @@ class HDISparkControlTester:
 	def send_telemetry(self, df):
 		ik = self.get_ik()
 		df = df[["ControlName", "Result"]]
-		if ik is "":
+		if ik == "":
 			print("Skipping Telemetry")
 		else:
 			df_dict = df.to_dict("list")
@@ -319,16 +319,30 @@ class AKSControlTester:
 	def __init__(self):
 		self.context = "kubernetes"
 		self.controls = [CheckContainerRunAsNonRoot,
-						 CheckContainerPrivilegeEscalation, CheckContainerPrivilegeMode,
+						 CheckContainerPrivilegeEscalation,
+						 CheckContainerPrivilegeMode,
 						 CheckInactiveServiceAccounts,
-						 CheckClusterManagedIdentity,
+						 CheckClusterPodIdentity,
 						 CheckContainerReadOnlyRootFilesystem,
 						 CheckDefaultSvcRoleBinding,
 						 CheckDefaultNamespaceResources,
 						 CheckResourcesWithSecrets,
 						 CheckKubernetesVersion,
+						 CheckHTTPSIngress,
 						 CheckExternalServices,
-						 CheckMountedImages]
+						 CheckMountedImages,
+						 CheckForKured,
+						 CheckResourcesLimitsAndRequests,
+						 CheckStorageClassReclaimPolicy,
+						 CheckPodSecurityPolicies,
+						 CheckNetworkPolicies,
+						 CheckLimitRanges,
+						 CheckResourceQuotas,
+						 CheckRoleBindings,
+						 CheckClusterEvents,
+						 CheckAppArmorSeccomp,
+						 CheckFirewallForEgressTraffic,
+						 CheckCertificateRotation]
 
 	def run(self):
 		print("DevOps Kit (AzSK) for Cluster Security v", __version__)
@@ -353,25 +367,42 @@ class AKSControlTester:
 		self.print_report(df)
 		self.print_detailed_logs(detailed_logs_list)
 		self.save_report(df)
+		self.send_events_log_analytics(df)
 
 	def line(self):
 		print("-" * 138)
 
-	def send_events_log_analytics(self, df, cluster_name):
-		oms_workspace_id = self.get_secret("LAWorkspaceId")
-		shared_key = self.get_secret("LASharedSecret")
-		la_client = LogAnalyticsClient(oms_workspace_id, shared_key)
-		df_dict = df.to_dict("list")
-		df_dict = {x: y for x, y in
-				   zip(df_dict["ControlName"], df_dict["Result"])}
-		tm_list = []
-		for control_name in df_dict:
-			tm_dict = self.get_base_telemetry()
-			tm_dict["ControlID"] = control_name
-			tm_dict["VerificationResult"] = df_dict[control_name]
-			tm_dict["ClusterName"] = cluster_name
-			tm_list.append(tm_dict)
-		la_client.post_data(tm_list, "AzSKInCluster")
+	def get_base_telemetry(self):
+		return {
+			"ResourceType":       "Kubernetes",
+			"EventName":          "Control Scanned",
+			"ResourceName":       os.environ.get("RESOURCE_NAME", None),
+			"SubscriptionId":     os.environ.get("SUBSCRIPTION_ID", None),
+			"ResourceGroupName":  os.environ.get("RG_NAME", None),
+			"ControlID":          None,
+			"VerificationResult": None
+		}
+
+	def send_events_log_analytics(self, df):
+		try:
+			oms_workspace_id = os.environ.get("LA_WS_ID", None)
+			shared_key = os.environ.get("LA_WS_SHAREDKEY", None)
+			print("LA WS ID:", oms_workspace_id)
+			la_client = LogAnalyticsClient(oms_workspace_id, shared_key)
+			df_dict = df.to_dict("list")
+			df_dict = {x: y for x, y in
+					zip(df_dict["ControlName"], df_dict["Result"])}
+			tm_list = []
+			for control_name in df_dict:
+				tm_dict = self.get_base_telemetry()
+				tm_dict["ControlID"] = control_name
+				tm_dict["VerificationResult"] = df_dict[control_name]
+				tm_list.append(tm_dict)
+			la_client.post_data(tm_list, "AzSKInCluster")
+			
+		except Exception as e:
+			print("Error occurred while sending data to Log Analytics")
+			print(e)
 
 	def save_report(self, df):
 		pass
@@ -391,58 +422,97 @@ class AKSControlTester:
 		self.line()
 		detailed_log_printed = False
 		for detailed_logs_item in detailed_logs_ls:
-			if len(detailed_logs_item['non_compliant_containers']) > 0:
+			if detailed_logs_item["type"] == "non_compliant_containers":
 				detailed_log_printed = True
-				df = pd.DataFrame(detailed_logs_item['non_compliant_containers'])
+				df = pd.DataFrame(detailed_logs_item["logs"])
 				print("{0} : {1}".format(detailed_logs_item['control_id'], detailed_logs_item['desc']))
 				print("   {0: <25}{1: <50}{2: <25}".format("Namespace", "Pod", "Container"))
 				for indx, x in df.iterrows():
-					print("{0: <3}{1: <25}{2: <50}{3: <25}".format(indx + 1, x["namespace"], x["pod_name"],
-																   x["container"]))
+					print("{0: <3}{1: <25}{2: <50}{3: <25}".format(indx + 1, x["namespace"], x["pod_name"], x["container"]))
 				self.line()
-			elif len(detailed_logs_item['service_accounts']) > 0:
+			elif detailed_logs_item["type"] == "service_accounts":
 				detailed_log_printed = True
 				print("{0} : {1}".format(detailed_logs_item['control_id'], detailed_logs_item['desc']))
-				df = pd.DataFrame(list(detailed_logs_item['service_accounts']),
+				df = pd.DataFrame(list(detailed_logs_item["logs"]),
 								  columns=['ServiceAccountName', 'NameSpace'])
 				print("   {0: <25}{1: <50}".format("Namespace", "ServiceAccount"))
 				for indx, x in df.iterrows():
 					print("{0: <3}{1: <25}{2: <50}".format(indx + 1, x[1], x[0]))
 				self.line()
-			elif len(detailed_logs_item['non_compliant_pods']) > 0:
+			elif detailed_logs_item["type"] == "non_compliant_pods":
 				detailed_log_printed = True
 				print("{0} : {1}".format(detailed_logs_item['control_id'], detailed_logs_item['desc']))
-				for pod in detailed_logs_item['non_compliant_pods']:
-					print(pod)
+				for pod in detailed_logs_item["logs"]:
+					print(pod["pod_name"])
 				self.line()
-			elif len(detailed_logs_item['pods_with_secrets']) > 0:
+			elif detailed_logs_item["type"] == "pods_with_secrets":
 				detailed_log_printed = True
 				print("{0} : {1}".format(detailed_logs_item['control_id'], detailed_logs_item['desc']))
-				df = pd.DataFrame(list(detailed_logs_item['pods_with_secrets']))
+				df = pd.DataFrame(list(detailed_logs_item["logs"]))
 				print("   {0: <25}{1: <50}".format("Namespace", "Pod"))
 				for indx, x in df.iterrows():
 					print("{0: <3}{1: <25}{2: <50}".format(indx + 1, x[0], x[1]))
 				self.line()
-			elif len(detailed_logs_item['container_images']) > 0:
+			elif detailed_logs_item["type"] == "non_compliant_namespaces":
 				detailed_log_printed = True
 				print("{0} : {1}".format(detailed_logs_item['control_id'], detailed_logs_item['desc']))
-				df = pd.DataFrame(list(detailed_logs_item['container_images']))
+				for namespace in detailed_logs_item["logs"]:
+					print(namespace)
+				self.line()
+			elif detailed_logs_item["type"] == "storage_class_delete_reclaim_policy":
+				detailed_log_printed = True
+				print("{0} : {1}".format(detailed_logs_item['control_id'], detailed_logs_item['desc']))
+				for storage_class in detailed_logs_item["logs"]:
+					print(storage_class["name"])
+				self.line()
+			elif detailed_logs_item["type"] == "missing_resource_limits_requests_pods":
+				detailed_log_printed = True
+				print("{0} : {1}".format(detailed_logs_item['control_id'], detailed_logs_item['desc']))
+				print("   {0: <25}{1: <40}{2: <25}{3: <30}".format("Namespace", "Pod", "Container", "Issue"))
+				indx = 1
+				for check_data in detailed_logs_item["logs"]:
+					for check in check_data["checks"]:
+						print("{0: <3}{1: <25}{2: <40}{3: <25}{4: <30}".format(indx, check_data["namespace"], check_data["pod_name"], check_data["container"], check))
+						indx += 1
+				self.line()
+			elif detailed_logs_item["type"] == "container_images":
+				detailed_log_printed = True
+				print("{0} : {1}".format(detailed_logs_item['control_id'], detailed_logs_item['desc']))
+				df = pd.DataFrame(list(detailed_logs_item['logs']))
 				for indx, x in df.iterrows():
 					print("{0: <3}{1: <25}".format(indx + 1, x[0]))
 				self.line()
-			elif len(detailed_logs_item['non_compliant_services']) > 0:
+			elif detailed_logs_item["type"] == "non_compliant_services":
 				detailed_log_printed = True
 				print("{0} : {1}".format(detailed_logs_item['control_id'], detailed_logs_item['desc']))
-				df = pd.DataFrame(list(detailed_logs_item['non_compliant_services']),
+				df = pd.DataFrame(list(detailed_logs_item['logs']),
 								  columns=['NameSpace','ServiceName'])
 				print("   {0: <25}{1: <50}".format("Namespace", "Service Name"))
 				for indx, x in df.iterrows():
 					print("{0: <3}{1: <25}{2: <50}".format(indx + 1, x[0], x[1]))
 				self.line()
+			elif detailed_logs_item["type"] == "recommendations":
+				detailed_log_printed = True
+				print("{0} : {1}".format(detailed_logs_item['control_id'], detailed_logs_item['desc']))
+				self.line()
+			elif detailed_logs_item["type"] == "event_logs":
+				detailed_log_printed = True
+				print("{0} : {1}".format(detailed_logs_item['control_id'], detailed_logs_item['desc']))
+				df = pd.DataFrame(list(detailed_logs_item["logs"]))
+				print("   {0: <50}{1: <20}{2: <20}{3: <40}".format("Object", "Reason", "Type", "Message"))
+				for indx, x in df.iterrows():
+					print("{0: <3}{1: <50}{2: <20}{3: <20}{4: <40}".format(indx + 1, x["involved_object"], x["reason"], x["type"], x["message"]))
+				self.line()
+			elif detailed_logs_item["type"] == "non_compliant_ingresses":
+				detailed_log_printed = True
+				print("{0} : {1}".format(detailed_logs_item['control_id'], detailed_logs_item['desc']))
+				for ingress in detailed_logs_item["logs"]:
+					print(ingress)
+				self.line()
+
 		if (not detailed_log_printed):
 			print("No detailed logs to show.")
 			self.line()
-
 
 def run_aks_cluster_scan():
 	AKSControlTester().run()
