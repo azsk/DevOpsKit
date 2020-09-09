@@ -1713,8 +1713,8 @@ class CCAutomation: AzCommandBase
 		catch 
 		{
 			$resultStatus = "Failed"
-            $failMsg = "Unable to fetch details from storage account, User do not have required permission."
-			$resolvemsg = "Please elevate the Owner/Contributor access to perform scan."
+            $failMsg = "Unable to access AzSK scan details from storage account, The user does not seem to have the required permission."
+			$resolvemsg = "Please re-run the command after elevating owner/contributor permission."
             $resultMsg = "$failMsg`r`n$resolvemsg"
 			$shouldReturn = $true
 			$messages += ($this.FormatGetCACheckMessage($stepCount,$checkDescription,$resultStatus,$resultMsg,$detailedMsg,$caOverallSummary))	
@@ -4090,7 +4090,7 @@ class CCAutomation: AzCommandBase
 		}
 		catch
 		{
-			throw "Unable to fetch details from storage account, User do not have required permission.`n Please elevate the Owner/Contributor access to perform scan."
+			throw "Unable to access AzSK scan details from storage account, The user does not seem to have the required permission. Please re-run the command after elevating owner/contributor permission."
 		}
 		return $recentCAScanDataBlobObject
 	}
