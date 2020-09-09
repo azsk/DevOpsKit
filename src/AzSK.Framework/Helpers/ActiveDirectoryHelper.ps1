@@ -180,7 +180,7 @@ class ActiveDirectoryHelper {
 
 			$ADApplication =  [ActiveDirectoryHelper]::GetADAppByAppId($ApplicationID)
 
-            if($Delete -eq "Select")
+            if($Delete -eq "DeleteSelected")
             {
                 
                # Collecting all Certificates -> Old + Latest Certificates
@@ -204,7 +204,7 @@ class ActiveDirectoryHelper {
                 Write-Host "Please select an action from below: `n[A]: Delete All`n[N]: Delete None`n[S]: Delete Selected" -ForegroundColor Cyan         
                 
                 # Initializing an empty array list to add certificates for deletion
-                [System.Collections.ArrayList] $removedCerts = @() 
+                [System.Collections.ArrayList] $CertificatesToRemove = @() 
                 
                 $userChoice=""
                 while($userChoice -ne 'A' -and $userChoice -ne 'N' -and $userChoice -ne 'S')
@@ -265,11 +265,11 @@ class ActiveDirectoryHelper {
                             {
                              $indexArray = $indexs.Split(',',[System.StringSplitOptions]::RemoveEmptyEntries).Trim()
                              $indexArray | ForEach-Object{
-                                                             $i=$_
+                                                             $currentIndex=$_
                                                              try
                                                              {
                                                               #Using Array index property to validate whether the index is valid or not.
-                                                              if($OldCerts[$i]){ }
+                                                              if($OldCerts[$currentIndex]){ }
                                                              }
                                                              catch
                                                              {
@@ -277,7 +277,7 @@ class ActiveDirectoryHelper {
 
                                                                 # Collecting all invalid indexes and making a comma separated string like '1,2,'
                                                                 # so that same string can be displayed in case of invalid indexes 
-                                                                $invalidindexes += $i+","
+                                                                $invalidindexes += $currentIndex+","
                                                              }
                                                          }
                              if($validIndexFlag)
@@ -286,13 +286,13 @@ class ActiveDirectoryHelper {
                                     $OldCerts | ForEach-Object { 
                                                                         if($indexArray -contains $OldCerts.IndexOf($_))
                                                                          {
-                                                                            $removedCerts.add($OldCerts[$OldCerts.IndexOf($_)])
+                                                                            $CertificatesToRemove.add($OldCerts[$OldCerts.IndexOf($_)])
                                                                          }
                                                     
                                                                  }
 
                                          Write-Host "Certificates selected for deletion: " -ForegroundColor Cyan 
-                                         $output=$removedCerts|Format-Table -Property @{name="Thumbprint";expression={$_.customKeyIdentifier}} | Out-String 
+                                         $output=$CertificatesToRemove|Format-Table -Property @{name="Thumbprint";expression={$_.customKeyIdentifier}} | Out-String 
                                          Write-Host $output
                                     while($confirmation.ToUpper() -ne 'Y' -and $confirmation.ToUpper() -ne 'N')
                                      {
@@ -305,7 +305,7 @@ class ActiveDirectoryHelper {
                                     if($confirmation.ToUpper() -eq 'Y')
                                     { 
                                          
-                                         $ADApplication.keyCredentials	= $AllCerts | Where-Object { $removedCerts -notcontains $_ }
+                                         $ADApplication.keyCredentials	= $AllCerts | Where-Object { $CertificatesToRemove -notcontains $_ }
                                          Write-Host "Selected Certificates are deleted." -ForegroundColor Yellow
                                     }
                                     else

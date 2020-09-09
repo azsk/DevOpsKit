@@ -45,9 +45,9 @@ class CCAutomation: AzCommandBase
 	[bool] $AltLAWSVariablesExist = $false;
 	[bool] $OMSVariablesExist = $false;
 	[bool] $AltOMSVariablesExist = $false;
-    [bool] $SkipDeletionFlag = $false;
-    hidden [System.DateTime]$CertStartDate 
-    hidden [System.DateTime]$CertEndDate 
+    	[bool] $SkipDeletionFlag = $false;
+    	hidden [System.DateTime]$CertStartDate 
+    	hidden [System.DateTime]$CertEndDate 
 	
 	CCAutomation(
 	[string] $subscriptionId, `
@@ -3221,7 +3221,8 @@ class CCAutomation: AzCommandBase
 			-ResourceGroupName  $this.AutomationAccount.ResourceGroup -Name $this.connectionAssetName -ErrorAction Stop
 		
 			$appID = $connection.FieldDefinitionValues.ApplicationId
-			$azskADAppName = (Get-AzADApplication -ApplicationId $connection.FieldDefinitionValues.ApplicationId -ErrorAction stop).DisplayName		    
+			$azskADAppName = (Get-AzADApplication -ApplicationId $connection.FieldDefinitionValues.ApplicationId -ErrorAction stop).DisplayName
+		    
             
 			$this.CAAADApplicationID = $appID;
 		
@@ -4364,7 +4365,7 @@ class CCAutomation: AzCommandBase
 
     [void] DeleteExistingCertificateForSPN()
     {
-          [ActiveDirectoryHelper]::UpdateADAppCredential($this.CAAADApplicationID,$null,$this.CertStartDate,$this.CertEndDate,"Select")
+          [ActiveDirectoryHelper]::UpdateADAppCredential($this.CAAADApplicationID,$null,$this.CertStartDate,$this.CertEndDate,"DeleteSelected")
     }
 }
 

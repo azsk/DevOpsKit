@@ -328,7 +328,7 @@ function Update-AzSKContinuousAssurance
 	.PARAMETER DoNotOpenOutputFolder
 		Switch to specify whether to open output folder.
     .PARAMETER SkipCertificateCleanup
-		Use this switch to skip process for deleting old certificates configured with the CA SPN .
+		Use this switch in case of skipping process for deleting old certificates configured with CA SPN.
 	.NOTES
 	
 
