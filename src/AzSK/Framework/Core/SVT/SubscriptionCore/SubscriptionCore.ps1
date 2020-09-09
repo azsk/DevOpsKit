@@ -2156,5 +2156,295 @@ class SubscriptionCore: AzSVTBase
 		}
 		return $controlResult
 	}
+
+	hidden [ControlResult] CheckDeletedApplicationObjects([ControlResult] $controlResult)
+	{
+		# Get all role assignments
+        $allRAs = Get-AzRoleAssignment -Scope "/subscriptions/$($this.SubscriptionContext.SubscriptionId)"
+
+		# Unknown identities at all scopes
+		$unknownRAsAllScope = $allRAs | Where-Object {$_.ObjectType -eq 'Unknown'}
+		#$deletedApplications = ($unknownRAsAllScope | Measure-Object).Count
+		
+		if(($unknownRAsAllScope | Measure-Object).Count -gt 0)
+		{
+			if(-not([string]::IsNullOrEmpty($this.InvocationContext.BoundParameters['ControlIds'])) -or  -not( [string]::IsNullOrEmpty($this.InvocationContext.BoundParameters['ControlsToAttest'])))
+			{
+				$controlResult.AddMessage([VerificationResult]::Failed, [MessageData]::new("Found " + ($unknownRAsAllScope | Measure-Object).Count +" deleted applications that have access on subscription`n",($unknownRAsAllScope | Select ObjectId,RoleDefinitionName,Scope)));
+			}
+			else {
+				$controlResult.AddMessage([VerificationResult]::Failed, [MessageData]::new("Found  " + ($unknownRAsAllScope | Measure-Object).Count + " deleted applications that have access on subscription.`nTo find details of application(s), evaluate the control from PS console by specifying the control id explicitly in the scan cmdlet (e.g., gss -s <sub_id> -cids 'Azure_Subscription_Check_Deleted_Application_Objects'"));
+			}
+		}
+		else
+		{
+			$controlResult.AddMessage([VerificationResult]::Passed, [MessageData]::new("No deleted application object(s) found."));
+		}
+		
+		return $controlResult
+	}
+
+	hidden [ControlResult] CheckApplicationObjectsWithoutOwners([ControlResult] $controlResult)
+	{
+		$tenantId = ([ContextHelper]::GetCurrentRMContext()).Tenant.Id
+		#Just get RAs at sub scope (not incl MG or RG or Rsrc level RAs)
+        $allRAsSubScope = Get-AzRoleAssignment -Scope "/subscriptions/$($this.SubscriptionContext.SubscriptionId)"
+
+        $allValidRAs = $allRAsSubScope | Where-Object {$_.ObjectType -ne 'Unknown'}
+
+        $privilegedRoles = @('Owner','Contributor','User Access Administrator')
+
+        $allPrivRAs = $allValidRAs | Where-Object {$privilegedRoles -contains $_.RoleDefinitionName}
+
+		$allPrivSPNRAs = $allPrivRAs | Where-Object {$_.ObjectType -eq 'ServicePrincipal'}
+		
+		$allPrivSPNOwners = @()
+        $spnWithoutOwners = @()
+        $spnWithoutApps =  @()
+		$spnOwner = $null
+		$GraphApiURI = [WebRequestHelper]::GetGraphUrl()
+		
+		$allPrivSPNRAs | ForEach-Object {
+			#Check if AD application has any Owner
+               # Skip MSPIM applications
+               if($_.DisplayName -ine 'MS-PIM')
+               {
+
+                    $spnDetails = Get-AzADServicePrincipal -ObjectId $_.ObjectId
+
+                    $appDetails = Get-AzADApplication -ApplicationId $spnDetails.ApplicationId  -ErrorAction SilentlyContinue
+
+                    if(($appDetails | Measure-Object).Count -gt 0)
+                    {
+                        $appOwners = $null
+						$appDetailsOid = $appDetails.ObjectId
+                        $ApplicationOwnerAPI = $GraphApiURI + "$($tenantId)/applications/$($appDetailsOid)/owners?api-version=1.6"
+                        try
+                        {
+                            $response = [WebRequestHelper]::InvokeGetWebRequest($ApplicationOwnerAPI);
+                        }
+                        catch
+                        {
+				            #return failure status if api throws exception.
+                        }
+                        if ([Helpers]::CheckMember($response,"displayName")-and ([Helpers]::CheckMember($response,"objectId")))
+                        {
+							$appOwners = $response.objectId
+                            
+                        }
+                        if(  ($appOwners | Measure-Object).Count -eq 0)
+                            {
+                                $spnWithoutOwners += $_
+                            }
+                    }
+                    # SPN without application details can be enterprise apps which does not get returned with the help of Get-AzADApp
+                    else
+                    {
+                        $spnWithoutApps +=  $_
+					}
+			   }	
+		}
+		
+		if(($spnWithoutOwners | Measure-Object).Count -gt 0)
+		{
+			
+			if(-not([string]::IsNullOrEmpty($this.InvocationContext.BoundParameters['ControlIds'])) -or  -not( [string]::IsNullOrEmpty($this.InvocationContext.BoundParameters['ControlsToAttest'])))
+			{
+				$controlResult.AddMessage([VerificationResult]::Failed, [MessageData]::new("Found " +($spnWithoutOwners | Measure-Object).Count+ " applications(s) without owner(s)`n",($spnWithoutOwners | select ObjectId, DisplayName, RoleDefinitionName, Scope)));
+			}
+			else 
+			{
+				$controlResult.AddMessage([VerificationResult]::Failed, [MessageData]::new("Found " +($spnWithoutOwners | Measure-Object).Count+ " application(s) without owner(s).`nTo find details of application(s), evaluate the control from PS console by specifying the control id explicitly in the scan cmdlet (e.g., gss -s <sub_id> -cids 'Azure_Subscription_Check_Application_Objects_Without_Owners'"));
+			}
+		}
+		else
+		{
+			$controlResult.AddMessage([VerificationResult]::Passed, [MessageData]::new("No application(s) found without owner(s)"));
+		}
+		
+		return $controlResult
+	}
+
+	hidden [ControlResult] CheckSPNwithoutOwnersAccessOnSub([ControlResult] $controlResult)
+	{
+		$tenantId = ([ContextHelper]::GetCurrentRMContext()).Tenant.Id
+		$GraphApiURI = [WebRequestHelper]::GetGraphUrl()
+		
+        $allRAsSubScope = Get-AzRoleAssignment -Scope "/subscriptions/$($this.SubscriptionContext.SubscriptionId)"
+
+        $allValidRAs = $allRAsSubScope | Where-Object {$_.ObjectType -ne 'Unknown'}
+		$this.GetPIMRoles();
+		$pimroles = $this.PIMAssignments #list of Eligible Pim assignments
+		$allValidRAs += $pimroles
+
+        $privilegedRoles = @('Owner','Contributor','User Access Administrator')
+
+        $allPrivRAs = $allValidRAs | Where-Object {$privilegedRoles -contains $_.RoleDefinitionName}
+
+		$allPrivSPNRAs = $allPrivRAs | Where-Object {$_.ObjectType -eq 'ServicePrincipal'}
+		
+		$allPrivSPNOwners = @()
+		$spnOwner = $null
+		
+		$allPrivSPNRAs | ForEach-Object {
+			$spnOid = $_.ObjectId
+            $PrincipalOwnerAPI = $GraphApiURI + "$($tenantId)/servicePrincipals/$($spnOid)/owners?api-version=1.6"
+            try
+            {
+                $response = [WebRequestHelper]::InvokeGetWebRequest($PrincipalOwnerAPI);
+            }
+            catch
+            {
+				#return failure status if api throws exception.
+            }
+            if ([Helpers]::CheckMember($response,"displayName") -and ([Helpers]::CheckMember($response,"objectId")))
+            {
+				$allPrivSPNOwners+= [PSCustomObject]@{"SPNOwnerObjectId"= $response.objectId;"DisplayName" = $response.displayName;"SPNObjectId" = $spnOid; "UserPrincipalName" = $response.userPrincipalName; "SPNScope" = $_.Scope; "SPNRole" = $_.RoleDefinitionName}
+            }
+		}
+		#Sort unique, this is list of (end user) owners of privileged SPNs
+        $allPrivSPNOwners = $allPrivSPNOwners | Sort-Object SPNOwnerObjectId -Unique
+
+        #Get all users in privileged roles
+        $allPrivUserRAs = $allPrivRAs | Where-Object {$_.ObjectType -eq 'User'}
+
+        #Sort unique, this is list of end users with privileged roles
+        $allPrivUserRAs = $allPrivUserRAs | Sort-Object ObjectId -Unique
+        $allPrivUsersOids = $allPrivUserRAs.ObjectId
+
+        #Get all SPNs whose owners are themselves *not* in privileged roles in the sub.
+		$lsasUsers = $allPrivSPNOwners | Where-Object { $allPrivUsersOids -notcontains $_.SPNOwnerObjectId}
+
+		
+		if(($lsasUsers | Measure-Object).Count -gt 0)
+		{
+			if(-not([string]::IsNullOrEmpty($this.InvocationContext.BoundParameters['ControlIds'])) -or  -not( [string]::IsNullOrEmpty($this.InvocationContext.BoundParameters['ControlsToAttest'])))
+			{
+				$controlResult.AddMessage([VerificationResult]::Failed, [MessageData]::new("Found " +($lsasUsers | Measure-Object).Count+ " application(s) with privileged roles whose owner does not have role in subscription:`n",$lsasUsers));
+			}
+			else 
+			{
+				$controlResult.AddMessage([VerificationResult]::Failed, [MessageData]::new("Found " +($lsasUsers | Measure-Object).Count+ " application(s) with privileged roles whose owner does not have role in subscription.`nTo find details of application(s), evaluate the control from PS console by specifying the control id explicitly in the scan cmdlet (e.g., gss -s <sub_id> -cids 'Azure_Subscription_Check_Application_Objects_Without_Owner_Having_Access_On_Sub'"));
+			}
+		}
+		else
+		{
+			$controlResult.AddMessage([VerificationResult]::Passed, [MessageData]::new("No application(s) found with privileged roles without owner(s) having access on subscriptions"));
+		}
+		
+		return $controlResult
+	}
+	
+	hidden [ControlResult] CheckInactiveIdentities([ControlResult] $controlResult)
+	{
+		$allRAs = Get-AzRoleAssignment -Scope "/subscriptions/$($this.SubscriptionContext.SubscriptionId)"
+		$AzuremanagementUri = [WebRequestHelper]::GetResourceManagerUrl()
+		$workspaceAPI = $AzuremanagementUri + "subscriptions/$($this.SubscriptionContext.SubscriptionId)/providers/Microsoft.OperationalInsights/workspaces?api-version=2020-08-01"
+        try
+        {
+			$inactiveIdenties = $null
+            [int] $retryCount = 5
+            $wapiResponse = [WebRequestHelper]::InvokeGetWebRequest($workspaceAPI);
+            if($wapiResponse.properties -and $wapiResponse.properties.customerId)
+            {
+				$uniqueworkspace = $wapiResponse.properties.customerId | Sort-Object -Unique
+				
+                $uniqueworkspace | foreach-object {
+					if($retryCount -gt 0)
+					{
+						
+						$workspaceId = $_
+						if(($workspaceId | Measure-Object).Count -gt 0 )
+						{
+							$workspaceAPI = "https://api.loganalytics.io/v1/workspaces/$WorkSpaceID/query"
+							$activeIdentitiesQuery = "{'query': 'AzureActivity\r\n| where TimeGenerated > ago(90d) and  Type == \'AzureActivity\' and SubscriptionId == \'$($SubscriptionID)\'\r\n| summarize arg_max(TimeGenerated, *) by Caller \r\n| project Caller, TimeGenerated\r\n'}" | ConvertFrom-Json
+							$apiResponse = [WebRequestHelper]::InvokeWebRequest([Microsoft.PowerShell.Commands.WebRequestMethod]::Post, $workspaceAPI, $activeIdentitiesQuery);
+						
+							$activeIdentitiesDetails = $apiResponse
+							$activeIdentities =@()
+
+							if ([Helpers]::CheckMember($activeIdentitiesDetails.tables,"rows"))
+							{
+								$activeIdentitiesDetails.tables.rows | foreach-object { 
+									[Guid] $validatedId = [Guid]::Empty;
+									if([Guid]::TryParse($_[0], [ref] $validatedId))
+									{
+										$activeIdentities += @{ "SignInName" = ""; "LastActivityDate" = $_[1]; "ObjectId" = $_[0];"ObjectType"= "ServicePrincipal" }
+									}
+									else
+									{
+										$activeIdentities += @{ "SignInName" = $_[0]; "LastActivityDate" = $_[1]; "ObjectId" = "";"ObjectType"= "NonSPN" }
+									}                    
+								}
+
+								# Skip management group assignments + groups + MS-PIM 
+								$activeAssignments =  $allRAs | where {$_.Scope -notmatch "/providers/Microsoft.Management" -and $_.ObjectType -ne 'Unknown' -and $_.ObjectType -ne "Group" -and $_.DisplayName -notmatch "MS-PIM"} | Select-Object SignInName, ObjectId, ObjectType -Unique
+								$inactiveIdenties = @()
+								$activeAssignments | ForEach-Object {
+								$identity = $_
+								if($identity.ObjectType -eq "User")
+								{
+									$identityAssignment = $activeIdentities | Where-Object {$_.SignInName -eq $identity.SignInName}
+
+									if(($identityAssignment | Measure-Object).Count -eq 0)
+									{
+										$inactiveIdenties += $identity.ObjectId
+									}
+								}
+								elseif($_.ObjectType -eq "ServicePrincipal")
+								{
+									$identityAssignment = $activeIdentities | Where-Object {$_.ObjectId -eq $identity.ObjectId}
+
+									if(($identityAssignment | Measure-Object).Count -eq 0)
+									{
+										$inactiveIdenties += $identity.ObjectId
+									}
+								}
+								else{
+									Write-Debug "Type $($identity.ObjectType) not supported for validation"   
+									}
+								}
+
+									if(($inactiveIdenties | Measure-Object).Count -gt 0)
+									{
+										$inactiveIdenties = $inactiveIdenties | Select-Object -Unique
+										$inactiveIdentityAssignments = $allRAs | Where-Object { $_.ObjectId -in $inactiveIdenties} | Select-Object DisplayName, ObjectId, ObjectType, @{label="RoleDefinitionName";expression={if($_.RoleDefinitionName.Length -gt 20) { $_.RoleDefinitionName.Substring(0,17) + "..." } else {$_.RoleDefinitionName }}}, Scope
+										if(-not([string]::IsNullOrEmpty($this.InvocationContext.BoundParameters['ControlIds'])) -or  -not( [string]::IsNullOrEmpty($this.InvocationContext.BoundParameters['ControlsToAttest'])))
+										{
+										$controlResult.AddMessage([VerificationResult]::Failed, [MessageData]::new("Found following " +($inactiveIdenties | Measure-Object).Count+ " inactive identitiy(s) :`n", $inactiveIdentityAssignments));
+										}
+										else
+										{
+											$controlResult.AddMessage([VerificationResult]::Failed, [MessageData]::new("Found " +($inactiveIdenties | Measure-Object).Count+ " inactive identity(s).`nTo find details of inactive users, evaluate the control from PS console by specifying the control id explicitly in the scan cmdlet (e.g., gss -s <sub_id> -cids 'Azure_Subscription_Check_Inactive_Identities'"));
+										}
+									}
+									else
+									{
+										$controlResult.AddMessage([VerificationResult]::Passed, [MessageData]::new("No inactive user(s) or application(s) found"));
+									}
+							}
+						}
+					}
+					$retryCount = $retryCount -1;
+				}
+		   
+				if ($inactiveIdenties -eq $null)
+				{
+					$controlResult.AddMessage([VerificationResult]::Verify, [MessageData]::new("Activity logs workspace resource not found to validate active identities."));
+				}
+            }
+            else
+            {
+                $controlResult.AddMessage([VerificationResult]::Verify, [MessageData]::new("Activity logs workspace resource not found to validate active identities."));
+            }
+
+        }
+		catch
+		{
+			$controlResult.AddMessage([VerificationResult]::Failed, [MessageData]::new("Activity logs can not be checked."));
+        }
+		
+		return $controlResult
+	}
 }
 
