@@ -1260,11 +1260,12 @@ class CCAutomation: AzCommandBase
 		$this.PublishCustomMessage($newMsg);
 
 		$this.PublishCustomMessage([MessageData]::new([Constants]::SingleDashLine));
-		$returnMsg += [MessageData]::new([Constants]::SingleDashLine);
+
 		if($null -ne $detailedMsg)
 		{
 			$returnMsg += $detailedMsg
 		}
+		$returnMsg += [MessageData]::new([Constants]::SingleDashLine);
 		if($summaryTable.Count -gt 0)
 		{
 			$summaryTable | ForEach-Object{
