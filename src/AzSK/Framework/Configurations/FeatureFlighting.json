@@ -246,6 +246,15 @@
       "DisabledForSubs": [],
       "UnderPreview": false,
       "IsEnabled": false
+    },
+    {
+      "Name": "CheckASCForIrrelevantVMRecommendation",
+      "Description": "",
+      "Sources": ["*"],
+      "EnabledForSubs": [],
+      "DisabledForSubs": [],
+      "UnderPreview": false,
+      "IsEnabled": true
     }
   ]
 }
