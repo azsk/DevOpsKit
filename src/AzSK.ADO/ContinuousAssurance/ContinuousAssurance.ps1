@@ -18,15 +18,21 @@ function Install-AzSKADOContinuousAssurance
 		Workspace ID of Log Analytics workspace where security scan results will be sent
 	.PARAMETER LAWSSharedKey
 		Shared key of Log Analytics workspace which is used to monitor security scan results.
+	.PARAMETER AltLAWSId
+		Alternate workspace ID of Log Analytics workspace where security scan results will be sent
+	.PARAMETER AltLAWSSharedKey
+		Alternate shared key of Log Analytics workspace which is used to monitor security scan results.
 	.PARAMETER OrganizationName
 		Organization name for which scan will be performed.
 	.PARAMETER PATToken
 		PAT token secure string for organization to be scanned.
-	.PARAMETER ProjectNames
-		Project names to be scanned within the organization. If not provided then all projects will be scanned.
+	.PARAMETER ProjectName
+		Project to be scanned within the organization.
 	.PARAMETER ExtendedCommand
 		Extended command to narrow down the scans.
-	.PARAMETER CreateWorkspace
+	.PARAMETER ScanIntervalInHours
+		Overrides the default scan interval (24hrs) with the custom provided value.
+	.PARAMETER CreateLAWorkspace
 		Switch to create and map new log analytics workspace with CA setup.
 	.NOTES
 	This command helps the application team to verify whether their ADO resources are compliant with the security guidance or not 
@@ -45,10 +51,10 @@ function Install-AzSKADOContinuousAssurance
 		[string]
 		$OrganizationName,
 
-		[Parameter(Mandatory = $false, ParameterSetName = "Default", HelpMessage = "List of projects to be scanned within the organization. If not provided, then all projects will be scanned.")]
-		[Alias("pns", "ProjectName","pn")]
+		[Parameter(Mandatory = $true, ParameterSetName = "Default", HelpMessage = "Project to be scanned within the organization.")]
+		[Alias("pns", "ProjectNames","pn")]
 		[string]
-		$ProjectNames,
+		$ProjectName,
 
 		[Parameter(Mandatory = $false, ParameterSetName = "Default", HelpMessage = "PAT token secure string for organization to be scanned.")]
 		[ValidateNotNullOrEmpty()]
@@ -80,6 +86,18 @@ function Install-AzSKADOContinuousAssurance
 		[Alias("lwkey","wkey")]
 		$LAWSSharedKey,
 		
+        [Parameter(Mandatory = $false, ParameterSetName = "Default", HelpMessage="Alternate workspace ID of Log Analytics workspace which is used to monitor security scan results.")]
+        [string]
+		[ValidateNotNullOrEmpty()]
+		[Alias("alwid","awid")]
+		$AltLAWSId,
+
+        [Parameter(Mandatory = $false, ParameterSetName = "Default", HelpMessage="Alternate shared key of Log Analytics workspace which is used to monitor security scan results.")]
+        [string]
+		[ValidateNotNullOrEmpty()]
+		[Alias("alwkey","awkey")]
+		$AltLAWSSharedKey,
+
 		[switch]
 		[Parameter(Mandatory = $false, HelpMessage = "Switch to create and map new Log Analytics workspace with CA setup.")]
 		[Alias("cws")]
@@ -89,6 +107,11 @@ function Install-AzSKADOContinuousAssurance
 		[Alias("ex")]
 		[string]
 		$ExtendedCommand,
+
+		[Parameter(Mandatory = $false, ParameterSetName = "Default", HelpMessage = "Overrides the default scan interval (24hrs) with the custom provided value.")]
+		[Alias("si")]
+		[int]
+		$ScanIntervalInHours,
 
 		[switch]
 		[Parameter(Mandatory = $false, HelpMessage = "Switch to specify whether to open output folder or not.")]
@@ -113,7 +136,8 @@ function Install-AzSKADOContinuousAssurance
 
 			$caAccount = [CAAutomation]::new($SubscriptionId, $Location,`
 											$OrganizationName, $PATToken, $ResourceGroupName, $LAWSId,`
-											$LAWSSharedKey, $ProjectNames, $ExtendedCommand, $PSCmdlet.MyInvocation, $CreateLAWorkspace);
+											$LAWSSharedKey, $AltLAWSId, $AltLAWSSharedKey, $ProjectName,`
+											$ExtendedCommand,  $ScanIntervalInHours, $PSCmdlet.MyInvocation, $CreateLAWorkspace);
             
 			return $caAccount.InvokeFunction($caAccount.InstallAzSKADOContinuousAssurance);
 		}
@@ -145,15 +169,22 @@ function Update-AzSKADOContinuousAssurance
 		Workspace ID of Log Analytics workspace which is used to monitor security scan results.
 	.PARAMETER LAWSSharedKey
 		Shared key of Log Analytics workspace which is used to monitor security scan results.
+	.PARAMETER AltLAWSId
+		Alternate workspace ID of Log Analytics workspace where security scan results will be sent
+	.PARAMETER AltLAWSSharedKey
+		Alternate shared key of Log Analytics workspace which is used to monitor security scan results.
 	.PARAMETER OrganizationName
 		Organization name for which scan will be performed.
 	.PARAMETER PATToken
 		PAT token secure string for organization to be scanned.
-	.PARAMETER ProjectNames
-		List of projects to be scanned within the organization.
+	.PARAMETER ProjectName
+		Project to be scanned within the organization.
 	.PARAMETER ExtendedCommand
 		Extended command to narrow down the target scan.
-
+	.PARAMETER ScanIntervalInHours
+		Overrides the default scan interval (24hrs) with the custom provided value.
+	.PARAMETER ClearExtendedCommand
+		Use to clear extended command.
 	#>
 	Param(
 		[Parameter(Mandatory = $true, ParameterSetName = "Default", HelpMessage="Subscription id in which CA setup is present.")]
@@ -166,10 +197,10 @@ function Update-AzSKADOContinuousAssurance
 		[string]
 		$OrganizationName,
 
-		[Parameter(Mandatory = $false, ParameterSetName = "Default", HelpMessage = "Project names to be scanned within the organization. If not provided then all projects will be scanned.")]
-		[Alias("pns", "ProjectName", "pn")]
+		[Parameter(Mandatory = $true, ParameterSetName = "Default", HelpMessage = "Project to be scanned within the organization.")]
+		[Alias("pns", "ProjectNames", "pn")]
 		[string]
-		$ProjectNames,
+		$ProjectName,
 		
 		[Parameter(Mandatory = $false, ParameterSetName = "Default", HelpMessage = "PAT token secure string for organization to be scanned.")]
 		[Alias("pat")]
@@ -190,11 +221,33 @@ function Update-AzSKADOContinuousAssurance
         [string]
 		[Alias("lwkey","wkey","SharedKey")]
 		$LAWSSharedKey,
-		
+
+		[Parameter(Mandatory = $false, ParameterSetName = "Default", HelpMessage="Alternate workspace ID of Log Analytics workspace which is used to monitor security scan results.")]
+        [string]
+		[ValidateNotNullOrEmpty()]
+		[Alias("alwid","awid")]
+		$AltLAWSId,
+
+        [Parameter(Mandatory = $false, ParameterSetName = "Default", HelpMessage="Alternate shared key of Log Analytics workspace which is used to monitor security scan results.")]
+        [string]
+		[ValidateNotNullOrEmpty()]
+		[Alias("alwkey","awkey")]
+		$AltLAWSSharedKey,
+
 		[Parameter(Mandatory = $false, ParameterSetName = "Default", HelpMessage = "Use extended command to narrow down the scans.")]
 		[Alias("ex")]
 		[string]
 		$ExtendedCommand,
+
+		[Parameter(Mandatory = $false, ParameterSetName = "Default", HelpMessage = "Overrides the default scan interval (24hrs) with the custom provided value.")]
+		[Alias("si")]
+		[int]
+		$ScanIntervalInHours,
+
+		[Parameter(Mandatory = $false, ParameterSetName = "Default", HelpMessage = "Use to clear extended command.")]
+		[Alias("cec")]
+		[switch]
+		$ClearExtendedCommand,
 
 		#Dev-Test support params below this
 		[string] $RsrcTimeStamp, 
@@ -215,9 +268,9 @@ function Update-AzSKADOContinuousAssurance
 			$resolver = [Resolver]::new($OrganizationName)
 			$caAccount = [CAAutomation]::new($SubscriptionId, $OrganizationName, $PATToken, `
 											$ResourceGroupName, $LAWSId, $LAWSSharedKey, `
-											$ProjectNames, $ExtendedCommand, `
+											$AltLAWSId, $AltLAWSSharedKey, $ProjectName, $ExtendedCommand, `
 											$RsrcTimeStamp, $ContainerImageName, $ModuleEnv, $UseDevTestImage, $TriggerNextScanInMin, `
-											$PSCmdlet.MyInvocation);
+											$ScanIntervalInHours, $ClearExtendedCommand, $PSCmdlet.MyInvocation);
             
 			return $caAccount.InvokeFunction($caAccount.UpdateAzSKADOContinuousAssurance);
 		}
