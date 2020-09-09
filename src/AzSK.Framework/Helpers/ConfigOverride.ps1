@@ -117,5 +117,6 @@ class ConfigOverride
 		[ContextHelper]::currentRMContext = $null
 		[ConfigurationHelper]::PolicyCacheContent = @()
 		[ConfigurationHelper]::NotExtendedTypes = @{}
+		[FeatureFlightingManager]::FeatureStatusCache = @{}
 	}
 }
