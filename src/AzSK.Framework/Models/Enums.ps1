@@ -176,3 +176,16 @@ enum AssignmentType
 	Eligible
 	Active
 }
+
+enum PolicyCacheStatus 
+{
+	Raw
+	Final
+}
+
+enum AIOrgTelemetryStatus
+{
+	Undefined
+	Enabled
+	Disabled
+}

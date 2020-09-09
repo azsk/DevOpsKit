@@ -116,17 +116,23 @@ class SVTBase: AzSKRoot
 		if (-not $this.SVTConfig)
 		{
 			#Check if SVTConfig is present in cache and fetch the same if present
-			$cachedPolicyContent = [ConfigurationHelper]::PolicyCacheContent | Where-Object { $_.Name -eq $controlsJsonFileName }
-			if ($cachedPolicyContent)
+			if ([ConfigurationHelper]::PolicyCacheContent.ContainsKey($controlsJsonFileName))
 			{
-				$this.SVTConfig = $cachedPolicyContent.Content
-				if ($this.SVTConfig)
+				[Policy]$policy = [ConfigurationHelper]::PolicyCacheContent[$controlsJsonFileName]
+				$this.SVTConfig = $policy.Content
+				#If policy is already in Final State simply return
+				if ($policy.State -eq [PolicyCacheStatus]::Final)
 				{
 					return
 				}
 			}
-			$this.SVTConfig = [ConfigurationManager]::GetSVTConfig($controlsJsonFileName);
+			# If Policy is not present in the Cache
+			if(-not $this.SVTConfig)
+			{
+				$this.SVTConfig = [ConfigurationManager]::GetSVTConfig($controlsJsonFileName);
+			}
 			
+			# Code proceeds here if either the policy was not in the cache and we fetched it from policy server or it was present in cache but in Raw state
 			$this.SVTConfig.Controls | Foreach-Object {
 
 				#Expand description and recommendation string if any dynamic values defined field using control settings
@@ -158,24 +164,12 @@ class SVTBase: AzSKRoot
 				}
 			}
 			#Save the final SVTConfig in cache
-			<#Below code is required as the policy is added to cache by [ConfigurationHelper]::LoadServerConfigFile method
-			also which needs to be overwritten here with the final SVTConfig.#>
-			[bool] $ConfigFoundInCache = $false
-			[ConfigurationHelper]::PolicyCacheContent | Foreach-Object {
-				if ($_.Name -eq $controlsJsonFileName)
-				{
-					$_.Content = $this.SVTConfig
-					$ConfigFoundInCache = $true
-				} 
+			$policy = [Policy]@{
+				State    = [PolicyCacheStatus]::Final
+				Content = $this.SVTConfig
 			}
-			if (-not $ConfigFoundInCache)
-			{
-				$policy = [Policy]@{
-					Name    = $controlsJsonFileName
-					Content = $this.SVTConfig
-				}
-				[ConfigurationHelper]::PolicyCacheContent += $policy
-			}
+			[ConfigurationHelper]::PolicyCacheContent[$controlsJsonFileName] = $policy
+			
 		}
 	}
 	#stub to be used when Baseline configuration exists 

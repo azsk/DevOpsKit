@@ -62,6 +62,7 @@ $FrameworkPath =  ((Get-Item $PSScriptRoot).Parent.Parent).FullName +"\AzSK.Fram
 . $PSScriptRoot\Helpers\SecurityCenterHelper.ps1
 . $FrameworkPath\Helpers\SVTMapping.ps1
 . $FrameworkPath\Helpers\IdentityHelpers.ps1
+. $FrameworkPath\Helpers\RemoteReportHelper.ps1
 . $FrameworkPath\Helpers\ConfigOverride.ps1
 . $FrameworkPath\Helpers\ControlHelper.ps1
 
@@ -77,7 +78,6 @@ $FrameworkPath =  ((Get-Item $PSScriptRoot).Parent.Parent).FullName +"\AzSK.Fram
 . $FrameworkPath\Managers\PartialScanManager.ps1
 
 . $FrameworkPath\Helpers\LogAnalyticsHelper.ps1
-. $FrameworkPath\Helpers\RemoteReportHelper.ps1
 . $FrameworkPath\Helpers\RemoteApiHelper.ps1
 . $FrameworkPath\Abstracts\PrivacyNotice.ps1
 
