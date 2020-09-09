@@ -40,12 +40,7 @@
                 "OwnerAccess",
                 "GraphRead"
             ],
-            "Enabled": true,
-            "IsAttestationDriftExpected": true,
-            "OnAttestationDrift": {
-                "ApplyToVersionsUpto": "4.9.0",
-                "ActionOnAttestationDrift": "RespectExistingAttestationExpiryPeriod"
-            }
+            "Enabled": true
         },
         {
             "ControlID": "Azure_KeyVault_AuthZ_Grant_Min_RBAC_Access",

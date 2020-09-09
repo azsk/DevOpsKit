@@ -119,5 +119,6 @@ class ConfigOverride
 		[ConfigurationHelper]::NotExtendedTypes = @{}
 		[RemoteReportHelper]::AIOrgTelemetryState = [AIOrgTelemetryStatus]::Undefined
 		[RemoteReportHelper]::TelemetryKey = ""
+		[FeatureFlightingManager]::FeatureStatusCache = @{}
 	}
 }

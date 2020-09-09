@@ -258,7 +258,7 @@ class APIManagement: AzSVTBase
 			# Check if registration using 'Username and Password' is enabled
 			$IsBasicRegistrationEnabled = $false
 			$ResourceAppIdURI = [WebRequestHelper]::GetResourceManagerUrl()			
-			$uri=[system.string]::Format($ResourceAppIdURI+"subscriptions/{0}/resourceGroups/{1}/providers/Microsoft.ApiManagement/service/{2}/tenant/settings?api-version=2018-06-01-preview",$this.SubscriptionContext.SubscriptionId,$this.ResourceContext.ResourceGroupName,$this.ResourceContext.ResourceName)
+			$uri=[system.string]::Format($ResourceAppIdURI+"subscriptions/{0}/resourceGroups/{1}/providers/Microsoft.ApiManagement/service/{2}/portalsettings/signup?api-version=2019-12-01",$this.SubscriptionContext.SubscriptionId,$this.ResourceContext.ResourceGroupName,$this.ResourceContext.ResourceName)
 			$json=$null;
         	try 
 			{
@@ -272,9 +272,9 @@ class APIManagement: AzSVTBase
 			$failMsg = ""
 			if($null -ne $json)
 			{
-				if([Helpers]::CheckMember($json,"settings"))
+				if([Helpers]::CheckMember($json,"properties") -and ($json.properties | Get-Member -Name enabled))
 				{
-					$IsBasicRegistrationEnabled = $json.settings.'CustomPortalSettings.RegistrationEnabled'
+					$IsBasicRegistrationEnabled = $json.properties.enabled;
 				}
 				else
 				{

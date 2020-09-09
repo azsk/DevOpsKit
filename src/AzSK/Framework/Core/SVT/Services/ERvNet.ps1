@@ -449,21 +449,14 @@ class ERvNet : SVTIaasBase
 	hidden [ControlResult] CheckResourceLockConfigured([ControlResult] $controlResult)
     {
         $locks = [array](Get-AzResourceLock -ResourceGroupName $this.ResourceContext.ResourceGroupName -AtScope)
-
+        # Look for the existence of a lock on all ERNETWORK RGs, regardless of type. If no lock exist fail the control.
         if($null -eq $locks -or $locks.Length -le 0)
         {
 			$controlResult.AddMessage([VerificationResult]::Failed, [MessageData]::new("No resource locks are configured at the ResourceGroup scope for - ["+ $this.ResourceContext.ResourceName +"]"));
         }
         else
 		{
-			if(($locks | Where-Object {$_.Properties.Level -eq $this.ControlSettings.ERvNet.ResourceLockLevel } | Measure-Object).Count -gt 0)
-			{
-				$controlResult.AddMessage([VerificationResult]::Passed, [MessageData]::new("Found resource locks configured at the ResourceGroup scope for - ["+ $this.ResourceContext.ResourceName +"]", $locks));
-			}
-			else
-			{
-				$controlResult.AddMessage([VerificationResult]::Failed, [MessageData]::new("No *$($this.ControlSettings.ERvNet.ResourceLockLevel)* resource locks are configured at the ResourceGroup scope for - ["+ $this.ResourceContext.ResourceName +"]"));
-			}
+			$controlResult.AddMessage([VerificationResult]::Passed, [MessageData]::new("Found resource locks configured at the ResourceGroup scope for - ["+ $this.ResourceContext.ResourceName +"]", $locks));
         }
 
         return $controlResult;

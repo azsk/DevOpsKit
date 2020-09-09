@@ -1085,7 +1085,7 @@ class SVTBase: AzSKRoot
 																}
 																else
 																{
-																	if ([Helpers]::CompareObject($childResourceState.State.DataObject, $currentStateDataObject, $false))
+																	if ([Helpers]::CompareObject($currentStateDataObject, $childResourceState.State.DataObject, $false))
 																	{
 																		$this.ModifyControlResult($currentItem, $childResourceState);
 																	}
