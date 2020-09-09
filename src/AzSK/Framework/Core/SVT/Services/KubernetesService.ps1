@@ -21,7 +21,7 @@ class KubernetesService: AzSVTBase
 				$header = "Bearer " + $AccessToken
 				$headers = @{"Authorization"=$header;"Content-Type"="application/json";}
 
-				$uri=[system.string]::Format("{0}subscriptions/{1}/resourceGroups/{2}/providers/Microsoft.ContainerService/managedClusters/{3}?api-version=2018-03-31",$ResourceAppIdURI,$this.SubscriptionContext.SubscriptionId, $this.ResourceContext.ResourceGroupName, $this.ResourceContext.ResourceName)
+				$uri=[system.string]::Format("{0}subscriptions/{1}/resourceGroups/{2}/providers/Microsoft.ContainerService/managedClusters/{3}?api-version=2020-06-01",$ResourceAppIdURI,$this.SubscriptionContext.SubscriptionId, $this.ResourceContext.ResourceGroupName, $this.ResourceContext.ResourceName)
 				$result = ""
 				$err = $null
 				try {
@@ -66,8 +66,14 @@ class KubernetesService: AzSVTBase
 	{
 		if([Helpers]::CheckMember($this.ResourceObject,"Properties"))
 		{
+			# Legacy AAD Auth integration
 			if([Helpers]::CheckMember($this.ResourceObject.Properties,"aadProfile") -and [Helpers]::CheckMember($this.ResourceObject.Properties.aadProfile,"clientAppID") -and [Helpers]::CheckMember($this.ResourceObject.Properties.aadProfile,"serverAppID") -and [Helpers]::CheckMember($this.ResourceObject.Properties.aadProfile,"tenantID"))
 			{
+				$controlResult.AddMessage([VerificationResult]::Passed,
+										[MessageData]::new("AAD profile configuration details", $this.ResourceObject.Properties.aadProfile));
+			}
+			# AKS-managed Azure AD integration
+			elseif([Helpers]::CheckMember($this.ResourceObject.Properties,"aadProfile") -and [Helpers]::CheckMember($this.ResourceObject.Properties.aadProfile,"managed") -and [Helpers]::CheckMember($this.ResourceObject.Properties.aadProfile,"adminGroupObjectIDs")){
 				$controlResult.AddMessage([VerificationResult]::Passed,
 										[MessageData]::new("AAD profile configuration details", $this.ResourceObject.Properties.aadProfile));
 			}
