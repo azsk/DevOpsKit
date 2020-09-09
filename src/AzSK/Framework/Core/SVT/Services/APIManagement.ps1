@@ -272,7 +272,7 @@ class APIManagement: AzSVTBase
 			$failMsg = ""
 			if($null -ne $json)
 			{
-				if([Helpers]::CheckMember($json,"properties.enabled"))
+				if([Helpers]::CheckMember($json,"properties") -and ($json.properties | Get-Member -Name enabled))
 				{
 					$IsBasicRegistrationEnabled = $json.properties.enabled;
 				}
