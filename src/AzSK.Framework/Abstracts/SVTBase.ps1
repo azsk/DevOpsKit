@@ -49,7 +49,6 @@ class SVTBase: AzSKRoot
 		$this.CreateInstance($svtResource);
 	}
 
-
 	#Create instance for resource scan
 	hidden [void] CreateInstance([SVTResource] $svtResource)
  {
@@ -1217,9 +1216,14 @@ class SVTBase: AzSKRoot
 						-and $this.ControlSettings.AttestationExpiryPeriodInDays.Default -gt 0)
 				{
 					$defaultAttestationExpiryInDays = $this.ControlSettings.AttestationExpiryPeriodInDays.Default
-				}			
+				}	
+				#If control has Owner Access tag and is a baseline control, assign expiry days as per value defined in control settings i.e. 180 days.
+				if(($eventcontext.ControlItem.Tags -contains "OwnerAccess") -and ($eventcontext.ControlItem.IsBaselineControl) -and ([Helpers]::CheckMember($this.ControlSettings, "OwnerControlsCustomExpiryPeriod")))
+				{
+					$expiryInDays = $this.ControlSettings.OwnerControlsCustomExpiryPeriod
+				}	
 				#Expiry in the case of WillFixLater or StateConfirmed/Recurring Attestation state will be based on Control Severity.
-				if ($controlState.AttestationStatus -eq [AttestationStatus]::NotAnIssue -or $controlState.AttestationStatus -eq [AttestationStatus]::NotApplicable)
+				elseif ($controlState.AttestationStatus -eq [AttestationStatus]::NotAnIssue -or $controlState.AttestationStatus -eq [AttestationStatus]::NotApplicable)
 				{
 					$expiryInDays = $defaultAttestationExpiryInDays;
 				}
