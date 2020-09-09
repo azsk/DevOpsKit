@@ -258,6 +258,48 @@ class VirtualMachine: AzSVTBase
 		return $null;
 	}
 
+	# Method to get ASC assessment for current reosurce by assessmentName
+	hidden [PSObject] GetASCAssessment([string] $assessmentName)
+	{
+		$result = $null;
+		try 
+		{ 	
+			$result = [SecurityCenterHelper]::InvokeSecurityCenterAssessment($assessmentName, $this.ResourceContext.ResourceId);
+			if(($result | Measure-Object).Count -gt 0)
+			{			
+				return $result;			
+			}			
+		}
+		catch
+		{
+			#eat exception if no ASC assessment can be found 
+		}
+		return $null;
+	}
+
+	# Method to check if ASC assessment status is 'Not Applicable' with cause defined in Control settings
+	hidden [bool] CheckForASCNotApplicableStatus([string] $assessmentKey){
+		$isNotApplicable = $false
+		$isFeatureFlagEnabled = [FeatureFlightingManager]::GetFeatureStatus("CheckASCForIrrelevantVMRecommendation",$($this.SubscriptionContext.SubscriptionId)) 
+		# If feature flag is disabled then return initial false status
+		if($isFeatureFlagEnabled){
+			# If control settings does not have required configuration then return initial false status
+			if([Helpers]::CheckMember($this.ControlSettings.VirtualMachine.ASCPolicies, "ASCAssessmentsForIrrelevantRecommendation.$assessmentKey")){
+				$ascAssessment = $this.ControlSettings.VirtualMachine.ASCPolicies.ASCAssessmentsForIrrelevantRecommendation.$assessmentKey
+			    $ascAssessmentStatus = $this.GetASCAssessment($ascAssessment.assessmentName);
+			    if($null -ne $ascAssessmentStatus -and [Helpers]::CheckMember($ascAssessmentStatus, "properties.status") -and [Helpers]::CheckMember($ascAssessmentStatus.properties.status, "cause") -and [Helpers]::CheckMember($ascAssessmentStatus.properties.status, "code")){
+					$statusCode = $ascAssessmentStatus.properties.status.code
+					$statusCause = $ascAssessmentStatus.properties.status.cause
+					# Mark control as NA if ASC status is 'Not Applicable' and cause is in defined allowed cause list
+					if($statusCode -eq "NotApplicable" -and $ascAssessment.allowedCauses -contains $statusCause){
+						$isNotApplicable = $true
+					}
+			    }
+		    }
+		}
+		return $isNotApplicable
+	}
+
 	hidden [PSNetworkInterface[]] GetVMNICObjects()
     {
         if (-not $this.VMNICs) 
@@ -373,7 +415,13 @@ class VirtualMachine: AzSVTBase
 
 					if(-not $this.VMDetails.IsVMDeallocated)
 					{
-						$controlResult.AddMessage([VerificationResult]::Failed,"Antimalware is not configured on the VM. Validated the status through ASC workspace query."); 
+						# Pass the control if ASC assessment status is Not Applicable for equivalent ASC assessment for current control
+						$isASCStatusNotApplicable = $this.CheckForASCNotApplicableStatus("EndpointProtectionAssessmentKey");
+						if($isASCStatusNotApplicable){
+							$controlResult.AddMessage([VerificationResult]::Passed,"Control is Not Applicable, validated the status through ASC."); 
+						}else{
+							$controlResult.AddMessage([VerificationResult]::Failed,"Antimalware is not configured on the VM. Validated the status through ASC workspace query."); 
+						}
 					}
 					else 
 					{
@@ -384,7 +432,13 @@ class VirtualMachine: AzSVTBase
 				}
 			}
 			else {
-				$controlResult.AddMessage([VerificationResult]::Manual, "We are not able to check Security Center workspace status. Please validate VM antimalware status manually.");
+				# Pass the control if ASC assessment status is Not Applicable for equivalent ASC assessment for current control
+				$isASCStatusNotApplicable = $this.CheckForASCNotApplicableStatus("EndpointProtectionAssessmentKey");
+				if($isASCStatusNotApplicable){
+					$controlResult.AddMessage([VerificationResult]::Passed,"Control is Not Applicable, validated the status through ASC."); 
+				}else{
+					$controlResult.AddMessage([VerificationResult]::Manual, "We are not able to check Security Center workspace status. Please validate VM antimalware status manually.");
+				}
 			}
 			
 		}
@@ -469,10 +523,22 @@ class VirtualMachine: AzSVTBase
 						$controlResult.AddMessage([VerificationResult]::Passed, "Required vulnerability assessment solution '$($requiredVulnExtension)' is present in VM.");
 					}
 				}else{
-					$controlResult.AddMessage([VerificationResult]::Failed, "Required vulnerability assessment solution '$($requiredVulnExtension)' is not present in VM.");
+					# Pass the control if ASC assessment status is Not Applicable for equivalent ASC assessment for current control
+					$isASCStatusNotApplicable = $this.CheckForASCNotApplicableStatus("VulnerabilitySolutionAssessmentKey");
+					if($isASCStatusNotApplicable){
+						$controlResult.AddMessage([VerificationResult]::Passed,"Control is Not Applicable, validated the status through ASC."); 
+					}else{
+						$controlResult.AddMessage([VerificationResult]::Failed, "Required vulnerability assessment solution '$($requiredVulnExtension)' is not present in VM.");
+					}
 				}
 			}else{
-				$controlResult.AddMessage([VerificationResult]::Failed, "Required vulnerability assessment solution '$($requiredVulnExtension)' is not present in VM.");
+				# Pass the control if ASC assessment status is Not Applicable for equivalent ASC assessment for current control
+				$isASCStatusNotApplicable = $this.CheckForASCNotApplicableStatus("VulnerabilitySolutionAssessmentKey");
+				if($isASCStatusNotApplicable){
+					$controlResult.AddMessage([VerificationResult]::Passed,"Control is Not Applicable, validated the status through ASC."); 
+				}else{
+					$controlResult.AddMessage([VerificationResult]::Failed, "Required vulnerability assessment solution '$($requiredVulnExtension)' is not present in VM.");
+				}
 			}
 		}
 		else

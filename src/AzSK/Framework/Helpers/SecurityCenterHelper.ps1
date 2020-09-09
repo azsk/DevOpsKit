@@ -90,6 +90,29 @@ class SecurityCenterHelper
 		}       
 	}
 
+	static [PSObject] InvokeSecurityCenterAssessment([string] $assessmentName, [string] $resourceId)
+	{
+		try 
+		{ 	
+			if((-not [string]::IsNullOrEmpty($assessmentName)) -and (-not [String]::IsNullOrEmpty($resourceId))) 
+			{
+				$rmContext = [ContextHelper]::GetCurrentRMContext();
+		        $ResourceAppIdURI = [WebRequestHelper]::GetResourceManagerUrl()
+				$uri = [System.String]::Format("{0}/{1}/providers/Microsoft.Security/assessments/{2}?api-version=2020-01-01", $ResourceAppIdURI,$resourceId,$assessmentName)
+				$result = [WebRequestHelper]::InvokeGetWebRequest($uri);					
+				if(($result | Measure-Object).Count -gt 0)
+				{
+					return $result				
+				}										
+			}				
+			return $null
+		} 
+		catch
+		{ 
+			return $null;
+		}       
+	}
+
 
 	hidden static [PSObject] InvokeGetASCTasks([string] $subscriptionId)
 	{
