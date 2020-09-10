@@ -53,7 +53,7 @@ class AzSKSettings {
 
     AzSKSettings([SubscriptionContext] $subscriptionContext, [InvocationInfo] $invocationContext)
 	{
-		Write-Host -ForegroundColor Yellow "Investigate!"
+		#Write-Host -ForegroundColor Yellow "Investigate!"
 		[AzSKSettings]::SubscriptionContext = $subscriptionContext;
 		[AzSKSettings]::InvocationContext = $invocationContext;		
 	}
