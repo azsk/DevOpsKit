@@ -56,7 +56,8 @@ class ControlResult
 	[DateTime] $FirstScannedOn = [Constants]::AzSKDefaultDateTime;
 	[int] $MaximumAllowedGraceDays=0;
 	[String] $UserComments	
-    [MessageData[]] $Messages = @();
+	[MessageData[]] $Messages = @();
+	[int] $ScanTimeInMilliSec	
 
     [void] AddMessage([MessageData] $messageData)
     {
