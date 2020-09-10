@@ -45,9 +45,9 @@ class CCAutomation: AzCommandBase
 	[bool] $AltLAWSVariablesExist = $false;
 	[bool] $OMSVariablesExist = $false;
 	[bool] $AltOMSVariablesExist = $false;
-    	[bool] $SkipDeletionFlag = $false;
-    	hidden [System.DateTime]$CertStartDate 
-    	hidden [System.DateTime]$CertEndDate 
+    [bool] $SkipDeletionFlag = $false;
+    hidden [System.DateTime]$CertStartDate 
+    hidden [System.DateTime]$CertEndDate 
 	
 	CCAutomation(
 	[string] $subscriptionId, `
@@ -539,9 +539,9 @@ class CCAutomation: AzCommandBase
             }
 
             if($SkipCertificateCleanup)
-                    {
-                        $this.SkipDeletionFlag = $true
-                    }
+            {
+                $this.SkipDeletionFlag = $true
+            }
 
 			#region :Check if automation account is compatible for update
 			$existingAccount = $this.GetCABasicResourceInstance()
@@ -612,7 +612,7 @@ class CCAutomation: AzCommandBase
                             
                             if(-not $this.SkipDeletionFlag)
                             {
-                            $this.DeleteExistingCertificateForSPN()
+                            	$this.DeleteExistingCertificateForSPN()
                             }
 							$this.isExistingADApp = $true
 						}
@@ -4366,8 +4366,9 @@ class CCAutomation: AzCommandBase
     [void] DeleteExistingCertificateForSPN()
     {
 		try{
+				$this.PublishCustomMessage("Starting Old Certificates Clean Up process...")
 				[ActiveDirectoryHelper]::UpdateADAppCredential($this.CAAADApplicationID,$null,$this.CertStartDate,$this.CertEndDate,"DeleteSelected")
-				$this.PublishCustomMessage("Old Certificates are deleted.")
+				$this.PublishCustomMessage("Old Certificates clean up process completed.")
 			}
 		catch
 		{

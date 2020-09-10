@@ -316,10 +316,10 @@ class ActiveDirectoryHelper {
                               			{
                                    			 # All indexes are valid.
                                     		$OldCerts | Where-Object { 
-                                                                        	if($indexArray -contains $OldCerts.IndexOf($_))
-                                                                         	{
-                                                                           		 $CertificatesToRemove.add($OldCerts[$OldCerts.IndexOf($_)])
-                                                                         	}
+                                                                        if($indexArray -contains $OldCerts.IndexOf($_))
+                                                                        {
+                                                                           	$CertificatesToRemove.add($OldCerts[$OldCerts.IndexOf($_)])
+                                                                        }
                                                     
                                                                  	 }
 
@@ -397,14 +397,14 @@ class ActiveDirectoryHelper {
 
 			if($null -eq $updateResult)
 			{
-				 Throw "There was a problem while updating the service principal with new certificate"    
+				Throw "There was a problem while updating the service principal with new certificate"    
 			}
 	
 		}
 		
 		static [PSObject] NewSelfSignedCertificate($AppName,$CertStartDate,$CertEndDate,$Provider)
 		{
-				$newCertificate = New-SelfSignedCertificate -DnsName $AppName `
+			$newCertificate = New-SelfSignedCertificate -DnsName $AppName `
 																	-Subject "CN=$AppName" `
 																	-CertStoreLocation Cert:\CurrentUser\My `
 																	-KeyExportPolicy Exportable `
@@ -416,6 +416,6 @@ class ActiveDirectoryHelper {
 																	-KeyUsageProperty Decrypt `
 																	-Provider $Provider `
 																	-ErrorAction Stop 
-				return $newCertificate
+			return $newCertificate
 		}
 }

@@ -451,7 +451,6 @@ function Update-AzSKContinuousAssurance
 		[Alias("nra")]
 		$NewRuntimeAccount,
 
-
 		[Parameter(Mandatory = $false, ParameterSetName = "Default")]
 		[Parameter(Mandatory = $false, ParameterSetName = "CentralScanMode")]
         [switch]
