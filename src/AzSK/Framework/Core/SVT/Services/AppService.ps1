@@ -139,7 +139,6 @@ class AppService: AzSVTBase
 		else
 		{
 			$IsAllowedAuthenticationProvidersConfigured = $false;
-			$IsConfiguredExtRedirectURLsAllowed = $false;
 			$ConfiguredAuthenticationProvidersSettings = New-Object PSObject
 			$ConfiguredExternalRedirectURLs= @()
 			if([FeatureFlightingManager]::GetFeatureStatus("EnableAppServiceCustomAuth",$($this.SubscriptionContext.SubscriptionId)) -eq $true)
@@ -308,21 +307,7 @@ class AppService: AzSVTBase
 
 				#Check if feature flag is enabled for AppServiceCustomAuthAllowed
 				if($IsAppServiceCustomAuthAllowed)
-				{
-					#Check if Configured ExternalRedirectURLs for app service is matching AllowedExternalRedirectURLs URL from ControlSetting
-					if([Helpers]::CheckMember($this.ControlSettings,"AppService.AllowedExternalRedirectURLs"))
-					{
-						$AllowedExternalRedirectURLs = $this.ControlSettings.AppService.AllowedExternalRedirectURLs
-						$ConfiguredExternalRedirectURLs = $this.AuthenticationSettings.properties.allowedExternalRedirectUrls
-						#Get External redirect URLs that are configured for app service but not allowed as per controlsettings
-						$RedirectURLsNotInAllowed= @($ConfiguredExternalRedirectURLs|Where-Object{$AllowedExternalRedirectURLs -notcontains $_})
-							
-						if($null -ne $RedirectURLsNotInAllowed -and $RedirectURLsNotInAllowed.Count -gt 0)
-						{
-							$IsConfiguredExtRedirectURLsAllowed = $false;
-						}	
-					}
-					
+				{										
 					#Check if any of the AllowedAuthenticationProviders is configured
 					#For Auth providers those are not allowed , check is done already using control settings for ControlSettings,"AppService.NonAADAuthProperties"
 					if([Helpers]::CheckMember($this.ControlSettings,"AppService.AllowedAuthenticationProviders"))
@@ -340,7 +325,7 @@ class AppService: AzSVTBase
 					}			
 				}
 				
-				if($AADEnabled -or ($IsAllowedAuthenticationProvidersConfigured -or $IsConfiguredExtRedirectURLsAllowed))
+				if($AADEnabled -or $IsAllowedAuthenticationProvidersConfigured)
 				{
 					if([FeatureFlightingManager]::GetFeatureStatus("EnableAppServiceAADAuthAllowAnonymousCheck",$($this.SubscriptionContext.SubscriptionId)) -eq $true)
 					{
@@ -365,12 +350,7 @@ class AppService: AzSVTBase
 					{
 						$controlResult.AddMessage([MessageData]::new("Authentication Providers configured for " + $this.ResourceContext.ResourceName));
 						$controlResult.AddMessage([MessageData]::new($ConfiguredAuthenticationProvidersSettings));
-					}
-					if($IsConfiguredExtRedirectURLsAllowed)
-					{
-						$controlResult.AddMessage([MessageData]::new("External redirect URLs configured for " + $this.ResourceContext.ResourceName));
-						$controlResult.AddMessage([MessageData]::new($ConfiguredExternalRedirectURLs));
-					}
+					}		
 					if($AADEnabled)	{												
 					$controlResult.AddMessage([MessageData]::new("AAD Authentication for resource " + $this.ResourceContext.ResourceName + " is enabled", $aadSettings));
 					}
