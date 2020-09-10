@@ -29,6 +29,8 @@ class CommandBase: AzSKRoot {
 		$this.InvocationContext = $invocationContext;
 		
 		#Validate if privacy is accepted by user
+		#Ensure that AzSKSettings statics are setup at this point (before calling Privacy notice)
+		[AzSKSettings]::InitContexts($this.SubscriptionContext, $this.InvocationContext);
 		[PrivacyNotice]::ValidatePrivacyAcceptance()
 
 		#Initialize common parameter sets

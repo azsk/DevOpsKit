@@ -91,7 +91,9 @@ class ConfigurationHelper {
 				throw [System.ArgumentException] ("The argument 'onlineStoreUri' is null");
 			} 
 			
-			if ($policyFileName -eq [Constants]::ServerConfigMetadataFileName -and $null -ne [ConfigurationHelper]::ServerConfigMetadata) {
+			#Remember if the file we are attempting is SCMD.json
+			$bFetchingSCMD = ($policyFileName -eq [Constants]::ServerConfigMetadataFileName)
+			if ($bFetchingSCMD -and $null -ne [ConfigurationHelper]::ServerConfigMetadata) {
 				return [ConfigurationHelper]::ServerConfigMetadata;
 			}
 			#First load offline OSS Content
@@ -150,7 +152,7 @@ class ConfigurationHelper {
 							[EventBase]::PublishGenericCustomMessage(("Not able to fetch org-specific policy. The current Azure subscription is not linked to your org tenant."), [MessageType]::Warning);
 							[ConfigurationHelper]::IsIssueLogged = $true
 						}
-						elseif ($policyFileName -eq [Constants]::ServerConfigMetadataFileName) {
+						elseif ($bFetchingSCMD ) {
 							[EventBase]::PublishGenericCustomMessage(("Not able to fetch org-specific policy. Validate if org policy URL is correct."), [MessageType]::Warning);
 							[ConfigurationHelper]::IsIssueLogged = $true
 						}
@@ -161,6 +163,15 @@ class ConfigurationHelper {
 						}
 					}            
 				}					
+			}
+
+			#If we were trying to fetch SCMD and the returned JSON does not have 'OnlinePolicyList' something is wrong!
+			#In ADO this happens if ADOScanner_Policy_<ProjName> repo does not exist.
+			#ADOTOD: Perhaps we should query for repo being present when the OnlinePolicyURL is formed (or first used)
+			if ($bFetchingSCMD -and -not [Helpers]::CheckMember($fileContent, "OnlinePolicyList"))
+			{
+				[EventBase]::PublishGenericCustomMessage(("Org policy URL may be incorrect or policy-repo does not exist!`r`nReverting to local policy."), [MessageType]::Warning);
+				$fileContent = [ConfigurationHelper]::LoadOfflineConfigFile($policyFileName)
 			}
 
 			if (-not $fileContent) {
@@ -289,8 +300,9 @@ class ConfigurationHelper {
 		$base64AuthInfo = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(("{0}:{1}" -f $user, $rmContext.AccessToken)))
 		try {
 			$FileName = $policyFileName;
+			#$ResponseHeaders = $null #The '-ResponseHeadersVariable' param is supported in PS core, we should enable after moving to PS core. Will allow us to check response content-type etc.
 			$uri = $global:ExecutionContext.InvokeCommand.ExpandString($onlineStoreUri)
-			$webRequestResult = Invoke-RestMethod -Uri $uri -Method Get -ContentType "application/json" -Headers @{Authorization = ("Basic {0}" -f $base64AuthInfo) }
+			$webRequestResult = Invoke-RestMethod -Uri $uri -Method Get -ContentType "application/json" -Headers @{Authorization = ("Basic {0}" -f $base64AuthInfo) } #-ResponseHeadersVariable 'ResponseHeaders'
 			return $webRequestResult;
 		}
 		catch {
