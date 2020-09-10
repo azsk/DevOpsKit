@@ -218,7 +218,6 @@ class AzSKSettings {
 	{
 		$projectName = "";
 		$orgName = [AzSKSettings]::SubscriptionContext.SubscriptionName;
-		$repoName = "";
 		
 		if([AzSKSettings]::InvocationContext.BoundParameters["PolicyProject"]){
 			$projectName = [AzSKSettings]::InvocationContext.BoundParameters["PolicyProject"];
@@ -236,6 +235,7 @@ class AzSKSettings {
 		{
 			$branch = "master";
 		}
+		$repoName = [Constants]::OrgPolicyRepo + $projectName;
 		Write-Host -ForegroundColor Green "Online policy URL set to: [$orgName::$projectName::$repoName]"
 		return $onlinePolicyStoreUrl -f $orgName, $projectName, $repoName, $branch
 	}
