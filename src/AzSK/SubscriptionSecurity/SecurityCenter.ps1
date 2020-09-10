@@ -58,7 +58,7 @@ function Set-AzSKAzureSecurityCenterPolicies
         [switch]
         [Parameter(Mandatory = $false, HelpMessage = "Switch to set Standard Prcing tier for ASC.")]
 		[Alias("sats")]
-		$SetASCTierToStandard
+		$SetASCTier
     )
 
 	Begin
@@ -91,7 +91,7 @@ function Set-AzSKAzureSecurityCenterPolicies
 				
 				
 				
-				return $secCenter.SetPolicies($updateSecurityContacts,$setOptionalPolicy,$SetASCTierToStandard);
+				return $secCenter.SetPolicies($updateSecurityContacts,$setOptionalPolicy,$SetASCTier);
 			}
 		}
 		catch 

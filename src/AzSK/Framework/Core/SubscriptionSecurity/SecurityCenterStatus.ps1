@@ -13,7 +13,7 @@ class SecurityCenterStatus: AzCommandBase
         Base($subscriptionId, $invocationContext)
     { }
 
-	[string] SetPolicies([bool] $updateSecurityContacts,[bool] $setOptionalPolicy,[bool] $SetASCTierToStandard)
+	[string] SetPolicies([bool] $updateSecurityContacts,[bool] $setOptionalPolicy,[bool] $SetASCTier)
     {	
 		$secCenter = [SecurityCenter]::new($this.SubscriptionContext.SubscriptionId,$this.SecurityContactEmails, $this.SecurityPhoneNumber);
 
@@ -22,7 +22,7 @@ class SecurityCenterStatus: AzCommandBase
 			$updatePolicies = $true;
 			#$updateSecurityContacts = $true;
 			$updateProvisioningSettings = $true;
-			return $this.InvokeFunction($secCenter.SetPolicies,@($updateProvisioningSettings,$updatePolicies,$updateSecurityContacts,$setOptionalPolicy,$SetASCTierToStandard));
+			return $this.InvokeFunction($secCenter.SetPolicies,@($updateProvisioningSettings,$updatePolicies,$updateSecurityContacts,$setOptionalPolicy,$SetASCTier));
 		}
 		
 
