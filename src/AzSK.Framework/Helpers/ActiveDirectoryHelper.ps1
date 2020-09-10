@@ -1,7 +1,5 @@
 Set-StrictMode -Version Latest 
-class ActiveDirectoryHelper {
-
-       
+class ActiveDirectoryHelper {       
 
 		static [PSObject] GetADAppServicePrincipalByAppId($ApplicationId)
 		{
@@ -126,7 +124,7 @@ class ActiveDirectoryHelper {
 			{
 				 Throw "There was a problem while updating the service principal with new certificate"    
 			}
-	}
+		}
 
 		static [PSObject] GetADAppByAppId($ApplicationId)
 		{
@@ -176,8 +174,7 @@ class ActiveDirectoryHelper {
 					throw "Public Certificate cannot be null"
 				}
 			}
-			$ADApplication =  [ActiveDirectoryHelper]::GetADAppByAppId($ApplicationID)            
-		
+			$ADApplication =  [ActiveDirectoryHelper]::GetADAppByAppId($ApplicationID)	
 			if($Delete -eq "False")
 			{             
 				$publicCertString = [System.Convert]::ToBase64String($PublicCert.GetRawCertData());
@@ -314,7 +311,7 @@ class ActiveDirectoryHelper {
                                                                 			# so that same string can be displayed in case of invalid indexes 
                                                                 			$invalidindexes += $currentIndex+","
                                                              			}
-                                                        			 }
+                                                        			}
                              			if($validIndexFlag)
                               			{
                                    			 # All indexes are valid.
@@ -324,7 +321,7 @@ class ActiveDirectoryHelper {
                                                                            		 $CertificatesToRemove.add($OldCerts[$OldCerts.IndexOf($_)])
                                                                          	}
                                                     
-                                                                 		}
+                                                                 	 }
 
                                          	Write-Host "Certificates selected for deletion: " -ForegroundColor Cyan 
                                          	$output=$CertificatesToRemove|Format-Table -Property @{name="Thumbprint";expression={$_.customKeyIdentifier}} | Out-String 
@@ -367,7 +364,7 @@ class ActiveDirectoryHelper {
                                 			Write-Host "No Certificates are deleted !!!" -ForegroundColor Yellow
                              			} 
                          			} 
-                        		}while(-not($validIndexFlag))
+                        	  }while(-not($validIndexFlag))
                              break
 			        	}
 						Default 
