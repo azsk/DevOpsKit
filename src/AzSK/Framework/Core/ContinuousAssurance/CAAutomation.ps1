@@ -1711,7 +1711,7 @@ class CCAutomation: AzCommandBase
 		catch 
 		{
 			$resultStatus = "Failed"
-			$failMsg = "Unable to access AzSK scan details from storage account, The user does not seem to have the required permission."
+			$failMsg = "Unable to access AzSK scan details from storage account, the user does not seem to have the required permission."
 			$resolvemsg = "Please re-run the command after elevating owner/contributor permission."
 			$resultMsg = "$failMsg`r`n$resolvemsg"
 			$shouldReturn = $true
