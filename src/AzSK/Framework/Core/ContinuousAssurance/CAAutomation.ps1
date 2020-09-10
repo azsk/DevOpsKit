@@ -1258,13 +1258,15 @@ class CCAutomation: AzCommandBase
 		$newMsg = [MessageData]::new("Status:   $resultStatus. $resultMsg",$messageType)
 		$returnMsg += $newMsg
 		$this.PublishCustomMessage($newMsg);
-
-		$this.PublishCustomMessage([MessageData]::new([Constants]::SingleDashLine));
-
 		if($null -ne $detailedMsg)
 		{
 			$returnMsg += $detailedMsg
 		}
+		if($resultStatus -eq "Failed" -and $null -ne $detailedMsg)
+		{
+            $this.PublishCustomMessage([MessageData]::new("$detailedMsg",  [MessageType]::Warning))
+        }
+		$this.PublishCustomMessage([MessageData]::new([Constants]::SingleDashLine));
 		$returnMsg += [MessageData]::new([Constants]::SingleDashLine);
 		if($summaryTable.Count -gt 0)
 		{
@@ -1715,7 +1717,8 @@ class CCAutomation: AzCommandBase
 			$resultStatus = "Failed"
             $failMsg = "Unable to access AzSK scan details from storage account, The user does not seem to have the required permission."
 			$resolvemsg = "Please re-run the command after elevating owner/contributor permission."
-            $resultMsg = "$failMsg`r`n$resolvemsg"
+			$resultMsg = "$failMsg`r"
+			$detailedMsg += "$resolvemsg"
 			$shouldReturn = $true
 			$messages += ($this.FormatGetCACheckMessage($stepCount,$checkDescription,$resultStatus,$resultMsg,$detailedMsg,$caOverallSummary))	
 			return $messages	
