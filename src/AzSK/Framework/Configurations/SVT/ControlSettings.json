@@ -414,8 +414,6 @@
       "microsoftAccountClientId"
     ],
     "AllowedAuthenticationProviders": [
-    ],
-    "AllowedExternalRedirectURLs": [
     ]
   },
   "DataBricksFilters":{
