@@ -290,7 +290,7 @@ class LogAnalyticsOutput: ListenerBase
 		{
 			$commandModel.PartialScanIdentifier = $arg.PartialScanIdentifier
 		}
-		[LogAnalyticsHelper]::WriteControlResult($commandModel,"AzSK_CommandEvent")
+		[LogAnalyticsHelper]::WriteControlResult($commandModel,"AzSK_ADO_CommandEvent")
 	}
 	}
 

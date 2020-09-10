@@ -299,7 +299,7 @@ class SVTResourceResolver: AzSKRoot {
                                 
                                     $releaseDefnsObj = [WebRequestHelper]::InvokePostWebRequest($releaseDefnURL, $inputbody);
                                     if (([Helpers]::CheckMember($releaseDefnsObj, "dataProviders") -and $releaseDefnsObj.dataProviders."ms.vss-releaseManagement-web.search-definitions-data-provider") -and [Helpers]::CheckMember($releaseDefnsObj.dataProviders."ms.vss-releaseManagement-web.search-definitions-data-provider", "releaseDefinitions") ) {
-                                        $releaseDefinitions = $releaseDefnsObj.dataProviders."ms.vss-releaseManagement-web.search-definitions-data-provider".releaseDefinitions  
+                                        $releaseDefinitions = $releaseDefnsObj.dataProviders."ms.vss-releaseManagement-web.search-definitions-data-provider".releaseDefinitions  | Where-Object { $_.name -eq $releaseName }; 
                                         foreach ($relDef in $releaseDefinitions) {
                                             $link = "https://dev.azure.com/{0}/{1}/_release?_a=releases&view=mine&definitionId={2}" -f $this.SubscriptionContext.SubscriptionName, $projectName, $relDef.url.split('/')[-1];
                                             $this.AddSVTResource($relDef.name, $projectName, "ADO.Release", $relDef.url, $null, $link);

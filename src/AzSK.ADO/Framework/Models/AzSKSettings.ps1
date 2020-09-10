@@ -20,7 +20,7 @@ class AzSKSettings {
 	[string] $WebhookType;
 	[string] $WebhookSource;
 	[string] $AutoUpdateCommand;
-	[AutoUpdate] $AutoUpdateSwitch = [AutoUpdate]::NotSet;
+	[AutoUpdate] $AutoUpdateSwitch = [AutoUpdate]::On;
 
 	[string] $OutputFolderPath;
 
@@ -55,7 +55,7 @@ class AzSKSettings {
 	{
 		#Write-Host -ForegroundColor Yellow "Investigate!"
 		[AzSKSettings]::SubscriptionContext = $subscriptionContext;
-		[AzSKSettings]::InvocationContext = $invocationContext;		
+		[AzSKSettings]::InvocationContext = $invocationContext;	
 	}
 	
 	hidden static SetDefaultSettings([AzSKSettings] $settings) {
@@ -164,28 +164,9 @@ class AzSKSettings {
 			#Step 3: Get the latest server settings and merge with that
 			if(-not $loadUserCopy)
 			{
-				$projectName = "";
-				$orgName = "";
 				if([AzSKSettings]::InvocationContext)
 				{
-					if([AzSKSettings]::InvocationContext.BoundParameters["ProjectNames"]){
-					    $projectName = [AzSKSettings]::InvocationContext.BoundParameters["ProjectNames"].split(',')[0];
-					    $orgName = [AzSKSettings]::SubscriptionContext.SubscriptionName;
-
-						$repoName = [Constants]::OrgPolicyRepo + $projectName;
-						# Declaring $branch variable with its default value as 'master' (production policy branch)
-					    $branch = "master";
-					    if($parsedSettings.BranchId)
-						{
-							$branch = $parsedSettings.BranchId;
-						}
-						$parsedSettings.OnlinePolicyStoreUrl = $parsedSettings.OnlinePolicyStoreUrl -f $orgName, $projectName, $repoName, $branch
-						Write-Host -ForegroundColor Green "Online policy URL set to: [$orgName::$projectName::$repoName]"
-					}
-					else 
-					{
-						Write-Host -ForegroundColor Yellow "Not using online policy. No project specified. (*TODO*: Change after adding explicit policyProject param?)"
-					}
+					$parsedSettings.OnlinePolicyStoreUrl = [AzSKSettings]::SetServerPolicyUrl($parsedSettings.OnlinePolicyStoreUrl, $parsedSettings.BranchId)	
 				}
 				
 				[bool] $_useOnlinePolicyStore = $parsedSettings.UseOnlinePolicyStore;
@@ -240,5 +221,31 @@ class AzSKSettings {
 	hidden [string] GetScanSource()
 	{
 		return $this.LASource
+	}
+
+	hidden static [string] SetServerPolicyUrl([string] $onlinePolicyStoreUrl, $branch)
+	{
+		$projectName = "";
+		$orgName = [AzSKSettings]::SubscriptionContext.SubscriptionName;
+		
+		if([AzSKSettings]::InvocationContext.BoundParameters["PolicyProject"]){
+			$projectName = [AzSKSettings]::InvocationContext.BoundParameters["PolicyProject"];
+		}
+		elseif([AzSKSettings]::InvocationContext.BoundParameters["ProjectNames"]){
+			$projectName = [AzSKSettings]::InvocationContext.BoundParameters["ProjectNames"].split(',')[0];
+		}
+		else
+		{
+			Write-Host -ForegroundColor Yellow "Not using online policy. No project specified."
+		}
+
+		# If $branch variable valus is null or empty, then set its default value as 'master' (production policy branch)
+		if(!$branch)
+		{
+			$branch = "master";
+		}
+		$repoName = [Constants]::OrgPolicyRepo + $projectName;
+		Write-Host -ForegroundColor Green "Online policy URL set to: [$orgName::$projectName::$repoName]"
+		return $onlinePolicyStoreUrl -f $orgName, $projectName, $repoName, $branch
 	}
 }
