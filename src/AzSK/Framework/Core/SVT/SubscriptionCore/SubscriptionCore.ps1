@@ -2232,14 +2232,9 @@ class SubscriptionCore: AzSVTBase
 								$appOwners = $null
 								$appDetailsOid = $appDetails.ObjectId
 								$ApplicationOwnerAPI = $GraphApiURI + "$($tenantId)/applications/$($appDetailsOid)/owners?api-version=1.6"
-								try
-								{
-									$response = [WebRequestHelper]::InvokeGetWebRequest($ApplicationOwnerAPI);
-								}
-								catch
-								{
-									#return failure status if api throws exception.
-								}
+								
+								$response = [WebRequestHelper]::InvokeGetWebRequest($ApplicationOwnerAPI);
+								
 								if ([Helpers]::CheckMember($response,"displayName")-and ([Helpers]::CheckMember($response,"objectId")))
 								{
 									$appOwners = $response.objectId
@@ -2277,11 +2272,15 @@ class SubscriptionCore: AzSVTBase
 				}
 
 			}
-	}
-	catch
-	{
-		#todo
-	}
+			else 
+			{
+				$controlResult.AddMessage([VerificationResult]::Passed, [MessageData]::new("No privileged application(s) found without owner."));
+			}
+		}
+		catch
+		{
+			throw [System.ArgumentException] ("Unable to fetch details of privileged applications without owner");
+		}
 		
 		return $controlResult
 	}
@@ -2389,7 +2388,7 @@ class SubscriptionCore: AzSVTBase
 	}
 	catch 
 	{
-		#todo
+		throw [System.ArgumentException] ("Unable to fetch details of owners of privileged application.");
 	}
 		
 		return $controlResult
@@ -2405,7 +2404,8 @@ class SubscriptionCore: AzSVTBase
         {
 			$inactiveIdenties = $null
             [int] $retryCount = 5
-            $wapiResponse = [WebRequestHelper]::InvokeGetWebRequest($workspaceAPI);
+			$wapiResponse = [WebRequestHelper]::InvokeGetWebRequest($workspaceAPI);
+			$activeIdentitiesQuery = "{'query': 'AzureActivity\r\n| where TimeGenerated > ago(90d) and  Type == \'AzureActivity\' and SubscriptionId == \'$($this.SubscriptionContext.SubscriptionId)\'\r\n| summarize arg_max(TimeGenerated, *) by Caller \r\n| project Caller, TimeGenerated\r\n'}" | ConvertFrom-Json
             
 			$wapiResponse | foreach-object {
 				if($retryCount -gt 0)
@@ -2415,7 +2415,7 @@ class SubscriptionCore: AzSVTBase
 					if(($workspaceId | Measure-Object).Count -gt 0 )
 					{
 						$workspaceAPI = "https://api.loganalytics.io/v1/workspaces/$WorkSpaceID/query"
-						$activeIdentitiesQuery = "{'query': 'AzureActivity\r\n| where TimeGenerated > ago(90d) and  Type == \'AzureActivity\' and SubscriptionId == \'$($SubscriptionID)\'\r\n| summarize arg_max(TimeGenerated, *) by Caller \r\n| project Caller, TimeGenerated\r\n'}" | ConvertFrom-Json
+						
 						$apiResponse = [WebRequestHelper]::InvokeWebRequest([Microsoft.PowerShell.Commands.WebRequestMethod]::Post, $workspaceAPI, $activeIdentitiesQuery);
 					
 						$activeIdentitiesDetails = $apiResponse
