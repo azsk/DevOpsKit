@@ -375,7 +375,10 @@ class ARMCheckerStatus: EventBase
 			}	
 		}
 		
-		$csvResults| Export-Csv $csvFilePath -NoTypeInformation -Force
+		if($csvResults.Count -gt 0)
+		{
+		    $csvResults| Export-Csv $csvFilePath -NoTypeInformation -Force
+        }
 
 		if($excludedFiles.Count -ne 0)
 		{
