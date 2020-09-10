@@ -621,13 +621,13 @@
       "Rationale": "Security contact information will be used by Microsoft to contact you if the Microsoft Security Response Center (MSRC) discovers that your customer data has been accessed by an unlawful or unauthorized party."
     },
     {
-      "ControlID": "Azure_Subscription_Check_Deleted_Application_Objects",
-      "Description": "Ensure deleted application(s) do not have access to the subscription",
+      "ControlID": "Azure_Subscription_Cleanup_Deleted_Object_Access",
+      "Description": "Ensure deleted objects do not have access to the subscription",
       "Id": "SubscriptionCore360",
       "ControlSeverity": "Medium",
       "Automated": "Yes",
-      "MethodName": "CheckDeletedApplicationObjects",
-      "Recommendation": "To remove assignment of deleted application objects, run: 'Remove-AzRoleAssignment -ObjectId '{objectId}' -Scope '{scope}' -RoleDefinitionName {RoleDefinitionName}'.",
+      "MethodName": "CheckAccessOfDeletedObjects",
+      "Recommendation": "To remove access of deleted objects, run: 'Remove-AzRoleAssignment -ObjectId '{objectId}' -Scope '{scope}' -RoleDefinitionName {RoleDefinitionName}'.",
       "Tags": [
         "SDL",
         "Automated",
@@ -636,16 +636,16 @@
         "SubscriptionCore"
             ],
       "Enabled": true,
-      "Rationale": "When we remove a user from the subscription RBAC (e.g., remove from Owner or Contributor) there are chances that user may still own or possess credential of an SPN that has privileged access to the subscription. By identifying and cleaning up such inadvertent vectors of access, the risks from accidental or malicious misuse via this attack vector can be reduced."
+      "Rationale": "Access of deleted objects to subscription should be removed, while it does not have direct implication to security but it is a good security hygiene to follow."
      },
      {
-      "ControlID": "Azure_Subscription_Check_Application_Objects_Without_Owners",
-      "Description": "Ensure application without owner do not have access on subscription",
+      "ControlID": "Azure_Subscription_Remove_Access_For_Orphaned_Applications",
+      "Description": "Ensure applications without owners do not have access on subscription",
       "Id": "SubscriptionCore370",
       "ControlSeverity": "High",
       "Automated": "Yes",
-      "MethodName": "CheckApplicationObjectsWithoutOwners",
-      "Recommendation": "To remove assignment of application objects without owner, run: 'Remove-AzRoleAssignment -ObjectId '{objectId}' -Scope '{scope}' -RoleDefinitionName {RoleDefinitionName}'",
+      "MethodName": "CheckApplicationsWithoutOwners",
+      "Recommendation": "To remove access of applications without owners, run: 'Remove-AzRoleAssignment -ObjectId '{objectId}' -Scope '{scope}' -RoleDefinitionName {RoleDefinitionName}'",
       "Tags": [
         "SDL",
         "Automated",
@@ -654,16 +654,16 @@
         "SubscriptionCore"
             ],
       "Enabled": true,
-      "Rationale": "Access of application with no owners should be removed, in order to reduce the risks from accidental or malicious misuse."
+      "Rationale": "Access of applications without any owners should be removed, as you would not know who is accountable for any accidental or malicious activity that happens using these applications."
      },
      {
-      "ControlID": "Azure_Subscription_Check_Application_Objects_Without_Owners_Access_On_Sub",
-      "Description": "Ensure no application have privileged roles on subscription whose owner does not have role in subscription",
+      "ControlID": "Azure_Subscription_Check_Indirect_Access_Via_Applications",
+      "Description": "Ensure that users do not have additional access to the subscription via apps owned by them",
       "Id": "SubscriptionCore380",
       "ControlSeverity": "High",
       "Automated": "Yes",
-      "MethodName": "CheckSPNwithoutOwnersAccessOnSub",
-      "Recommendation": "To remove assignment of application objects whose owner do not have access on subscription, run: 'Remove-AzRoleAssignment -ObjectId '{SPNobjectId}' -Scope '{SPNscope}' -RoleDefinitionName {SPNRole}'",
+      "MethodName": "CheckIndirectAccess",
+      "Recommendation": "To remove access of such applications whose owners do not have access to subscription, run: 'Remove-AzRoleAssignment -ObjectId '{SPNobjectId}' -Scope '{SPNscope}' -RoleDefinitionName {SPNRole}'",
       "Tags": [
         "SDL",
         "Automated",
@@ -675,13 +675,13 @@
       "Rationale": "When we remove a user from the subscription RBAC (e.g., remove from Owner or Contributor) there are chances that user may still own or possess credential of an SPN that has privileged access to the subscription. By identifying and cleaning up such inadvertent vectors of access, the risks from accidental or malicious misuse via this attack vector can be reduced."
      },
      {
-      "ControlID": "Azure_Subscription_Check_Inactive_Identities",
-      "Description": "Verify access of users and applications having no control plane activity",
+      "ControlID": "Azure_Subscription_Review_Inactive_Identities",
+      "Description": "Consider revoking access for applications/users who are not actively using the subscription",
       "Id": "SubscriptionCore390",
       "ControlSeverity": "Medium",
       "Automated": "Yes",
       "MethodName": "CheckInactiveIdentities",
-      "Recommendation": "To remove inactive identities, run: 'Remove-AzRoleAssignment -ObjectId '{objectId}' -Scope '{scope}' -RoleDefinitionName {RoleDefinitionName}'",
+      "Recommendation": "To remove access of inactive identities, run: 'Remove-AzRoleAssignment -ObjectId '{objectId}' -Scope '{scope}' -RoleDefinitionName {RoleDefinitionName}'",
       "Tags": [
         "SDL",
         "Automated",
@@ -690,7 +690,7 @@
         "SubscriptionCore"
             ],
       "Enabled": true,
-      "Rationale": "Review access of users and applications with no activity on subscription since a long duration. Cleaning up such inadvertent vectors of access reduces the risks of accidental or malicious misuse via these attack vectors."
+      "Rationale": "As a good security hygiene consider revoking access for applications/users who are not actively using the subscription, in order to reduce risk of any mallicious activity."
      }
   ]
 }
