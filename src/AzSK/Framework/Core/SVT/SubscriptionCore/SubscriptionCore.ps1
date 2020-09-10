@@ -2164,7 +2164,6 @@ class SubscriptionCore: AzSVTBase
 
 		# Unknown identities at all scopes
 		$unknownRAsAllScope = $allRAs | Where-Object {$_.ObjectType -eq 'Unknown'}
-		#$deletedApplications = ($unknownRAsAllScope | Measure-Object).Count
 		
 		if(($unknownRAsAllScope | Measure-Object).Count -gt 0)
 		{
@@ -2207,7 +2206,6 @@ class SubscriptionCore: AzSVTBase
 			$allPrivSPNRAs = $allPrivRAs | Where-Object {$_.ObjectType -eq 'ServicePrincipal'}
 		}
 		
-		$allPrivSPNOwners = @()
         $spnWithoutOwners = @()
         $spnWithoutApps =  @()
 		$spnOwner = $null
@@ -2341,8 +2339,10 @@ class SubscriptionCore: AzSVTBase
 					$allPrivSPNOwners = $allPrivSPNOwners | Sort-Object SPNOwnerObjectId -Unique
 				}
 
-				#Get all users that have access to subscription
+				#list of users that have privileged access to subscription
 				#$allPrivUserRAs = $allPrivRAs | Where-Object {$_.ObjectType -eq 'User'}
+
+				#Get all users that have access to subscription
 				if($null -ne $allValidRAs)
 				{
 					$allValidUserRAs = $allValidRAs | Where-Object {$_.ObjectType -eq 'User'}
@@ -2351,13 +2351,15 @@ class SubscriptionCore: AzSVTBase
 				#Sort unique, this is list of end users with privileged roles
 				#$allPrivUserRAs = $allPrivUserRAs | Sort-Object ObjectId -Unique
 				#$allPrivUsersOids = $allPrivUserRAs.ObjectId
+
+				#Sort unique, this is list of end users with access to subscription
 				if($null -ne $allValidUserRAs)
 				{
 					$allValidUserRAs = $allValidUserRAs | Sort-Object ObjectId -Unique
 					$allValidUserRAssOids = $allValidUserRAs.ObjectId
 				}
 
-				#Get all SPNs whose owners are themselves *not* in privileged roles in the sub.
+				#Get all SPNs whose owners themselves don't have access to the sub.
 				if(($null -ne $allValidUserRAssOids) -and ($null -ne  $allPrivSPNOwners))
 				{
 					$lsasUsers = $allPrivSPNOwners | Where-Object { $allValidUserRAssOids -notcontains $_.SPNOwnerObjectId}
