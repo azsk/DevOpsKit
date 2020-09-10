@@ -401,6 +401,7 @@ class ActiveDirectoryHelper {
 			}
 	
 		}
+		
 		static [PSObject] NewSelfSignedCertificate($AppName,$CertStartDate,$CertEndDate,$Provider)
 		{
 				$newCertificate = New-SelfSignedCertificate -DnsName $AppName `
