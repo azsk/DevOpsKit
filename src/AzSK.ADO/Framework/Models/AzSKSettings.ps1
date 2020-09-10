@@ -157,7 +157,7 @@ class AzSKSettings {
 			{
 				if([AzSKSettings]::InvocationContext)
 				{
-					$parsedSettings.OnlinePolicyStoreUrl = [AzSKSettings]::SetPolicy($parsedSettings.OnlinePolicyStoreUrl, $parsedSettings.BranchId)	
+					$parsedSettings.OnlinePolicyStoreUrl = [AzSKSettings]::SetServerPolicyUrl($parsedSettings.OnlinePolicyStoreUrl, $parsedSettings.BranchId)	
 				}
 				
 				[bool] $_useOnlinePolicyStore = $parsedSettings.UseOnlinePolicyStore;
@@ -214,60 +214,21 @@ class AzSKSettings {
 		return $this.LASource
 	}
 
-	hidden static [string] SetPolicy([string] $onlinePolicyStoreUrl, $branch)
+	hidden static [string] SetServerPolicyUrl([string] $onlinePolicyStoreUrl, $branch)
 	{
 		$projectName = "";
 		$orgName = [AzSKSettings]::SubscriptionContext.SubscriptionName;
 		$repoName = "";
-		$isPolicyProjectFound = $false;
 		
 		if([AzSKSettings]::InvocationContext.BoundParameters["PolicyProject"]){
 			$projectName = [AzSKSettings]::InvocationContext.BoundParameters["PolicyProject"];
-            try { 
-				$rmContext = [ContextHelper]::GetCurrentContext();
-		        $user = "";
-		        $base64AuthInfo = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(("{0}:{1}" -f $user, $rmContext.AccessToken)))
-		
-			    $prjUri = "https://dev.azure.com/{0}/_apis/projects/{1}?api-version=6.0" -f [AzSKSettings]::SubscriptionContext.SubscriptionName, $projectName;
-				$prjObj = Invoke-RestMethod -Uri $prjUri -Method Get -ContentType "application/json" -Headers @{Authorization = ("Basic {0}" -f $base64AuthInfo) }
-				
-				$repository = [Constants]::OrgPolicyRepo + $projectName
-				try {
-					$repoUri = "https://dev.azure.com/{0}/{1}/_apis/git/repositories/{2}?api-version=4.1" -f [AzSKSettings]::SubscriptionContext.SubscriptionName, $projectName, $repository;
-					$repoObj = Invoke-RestMethod -Uri $repoUri -Method Get -ContentType "application/json" -Headers @{Authorization = ("Basic {0}" -f $base64AuthInfo) }
-
-					#policy project found and policy repo found inside project
-					$isPolicyProjectFound = $true;
-					$repoName = [Constants]::OrgPolicyRepo + $projectName;
-					Write-Host -ForegroundColor Green "Using policy from: [$orgName::$projectName::$repoName]"
-				}
-				catch {
-					Write-Host "[$($repository)] repository is not found in the policy project." -ForegroundColor Yellow
-				}
-            }
-            catch {
-				Write-Host 'Policy project not found: Incorrect project name or you do not have neccessary permission to access the project.' -ForegroundColor Yellow
-            }
 		}
-		if(([AzSKSettings]::InvocationContext.BoundParameters["ProjectNames"]) -and !$isPolicyProjectFound){
+		elseif([AzSKSettings]::InvocationContext.BoundParameters["ProjectNames"]){
 			$projectName = [AzSKSettings]::InvocationContext.BoundParameters["ProjectNames"].split(',')[0];
-			$repoName = [Constants]::OrgPolicyRepo + $projectName;
-			try {
-				$rmContext = [ContextHelper]::GetCurrentContext();
-		        $user = "";
-		        $base64AuthInfo = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(("{0}:{1}" -f $user, $rmContext.AccessToken)))
-		
-				$repoUri = "https://dev.azure.com/{0}/{1}/_apis/git/repositories/{2}?api-version=4.1" -f [AzSKSettings]::SubscriptionContext.SubscriptionName, $projectName, $repoName;
-				$repoObj = Invoke-RestMethod -Uri $repoUri -Method Get -ContentType "application/json" -Headers @{Authorization = ("Basic {0}" -f $base64AuthInfo)}
-				Write-Host -ForegroundColor Green "Using policy from: [$orgName::$projectName::$repoName]"
-			}
-			catch {
-				#Write-Host "[$($repoName)] repository is not found in the project." -ForegroundColor Yellow
-			}
 		}
-		elseif (!$isPolicyProjectFound)
+		else
 		{
-			Write-Host -ForegroundColor Yellow "Not using online policy. No project specified. (*TODO*: Use explicit policyProject param?)"
+			Write-Host -ForegroundColor Yellow "Not using online policy. No project specified."
 		}
 
 		# If $branch variable valus is null or empty, then set its default value as 'master' (production policy branch)
@@ -275,7 +236,7 @@ class AzSKSettings {
 		{
 			$branch = "master";
 		}
-		
+		Write-Host -ForegroundColor Green "Online policy URL set to: [$orgName::$projectName::$repoName]"
 		return $onlinePolicyStoreUrl -f $orgName, $projectName, $repoName, $branch
 	}
 }
