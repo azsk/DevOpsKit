@@ -4093,7 +4093,15 @@ class CCAutomation: AzCommandBase
 		}
 		catch
 		{
-			throw "Unable to access AzSK scan details from storage account, The user does not seem to have the required permission. Please re-run the command after elevating owner/contributor permission."
+            $resultStatus = "Failed"
+            $failMsg = "Unable to access AzSK scan details from storage account, The user does not seem to have the required permission."
+			$resolvemsg = "Please re-run the command after elevating owner/contributor permission."
+		    $newMsg = [MessageData]::new("Status:   $resultStatus. $failMsg",[MessageType]::Error)
+		    $returnMsg += $newMsg
+		    $this.PublishCustomMessage($returnMsg);
+            $this.PublishCustomMessage([MessageData]::new("$resolvemsg", [MessageType]::Warning))
+            $this.PublishCustomMessage([MessageData]::new([Constants]::SingleDashLine));
+			return $null
 		}
 		return $recentCAScanDataBlobObject
 	}
