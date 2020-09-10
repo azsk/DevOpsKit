@@ -177,7 +177,8 @@ class ContextHelper {
                     };
         $responseObj = Invoke-RestMethod -Method Get -Uri $apiURL -Headers $headers -UseBasicParsing
 
-        #If the token is valid, we get: "descriptor"="Microsoft.IdentityModel.Claims.ClaimsIdentity;72f988bf-86f1-41af-91ab-2d7cd011db47\mprabhu@microsoft.com"
+        #If the token is valid, we get: "descriptor"="Microsoft.IdentityModel.Claims.ClaimsIdentity;72f988bf-86f1-41af-91ab-2d7cd011db47\xyz@microsoft.com"
+        #Note that even for guest users, we get the host tenant (and not their native tenantId). E.g., "descriptor...;72f...47\pqr@live.com"
         #If the token is invalid, we get a diff object: "descriptor":"System:PublicAccess;aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
         $authNUserInfo = @(($responseObj.authenticatedUser.descriptor -split ';') -split '\\')
     
