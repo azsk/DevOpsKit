@@ -300,7 +300,7 @@ class ConfigurationHelper {
 		$base64AuthInfo = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(("{0}:{1}" -f $user, $rmContext.AccessToken)))
 		try {
 			$FileName = $policyFileName;
-			$ResponseHeaders = $null
+			#$ResponseHeaders = $null #The '-ResponseHeadersVariable' param is supported in PS core, we should enable after moving to PS core. Will allow us to check response content-type etc.
 			$uri = $global:ExecutionContext.InvokeCommand.ExpandString($onlineStoreUri)
 			$webRequestResult = Invoke-RestMethod -Uri $uri -Method Get -ContentType "application/json" -Headers @{Authorization = ("Basic {0}" -f $base64AuthInfo) } #-ResponseHeadersVariable 'ResponseHeaders'
 			return $webRequestResult;
