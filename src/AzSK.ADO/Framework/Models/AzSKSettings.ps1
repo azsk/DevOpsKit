@@ -53,7 +53,7 @@ class AzSKSettings {
 
     AzSKSettings([SubscriptionContext] $subscriptionContext, [InvocationInfo] $invocationContext)
 	{
-		Write-Host -ForegroundColor Yellow "Investigate!"
+		#Write-Host -ForegroundColor Yellow "Investigate!"
 		[AzSKSettings]::SubscriptionContext = $subscriptionContext;
 		[AzSKSettings]::InvocationContext = $invocationContext;		
 	}
@@ -180,11 +180,11 @@ class AzSKSettings {
 							$branch = $parsedSettings.BranchId;
 						}
 						$parsedSettings.OnlinePolicyStoreUrl = $parsedSettings.OnlinePolicyStoreUrl -f $orgName, $projectName, $repoName, $branch
-						Write-Host -ForegroundColor Green "Using policy from: [$orgName::$projectName::$repoName]"
+						Write-Host -ForegroundColor Green "Online policy URL set to: [$orgName::$projectName::$repoName]"
 					}
 					else 
 					{
-						Write-Host -ForegroundColor Yellow "Not using online policy. No project specified. (*TODO*: Use explicit policyProject param?)"
+						Write-Host -ForegroundColor Yellow "Not using online policy. No project specified. (*TODO*: Change after adding explicit policyProject param?)"
 					}
 				}
 				
