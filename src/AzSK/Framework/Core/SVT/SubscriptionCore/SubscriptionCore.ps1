@@ -1209,41 +1209,64 @@ class SubscriptionCore: AzSVTBase
 	{
 		$ascTierContentDetails = $this.SecurityCenterInstance.ASCTier;
 		$this.ResourceTier = $this.ASCTierDetails;
-		[string[]] $standard = @();
+		[string[]] $AzSKSupportedResourceTypes = @();
 		[string[]] $MisconfiguredASCTier = @(); #This will store information of all the misconfigured ASC pricing tier for individual resource types.
 
 		if(-not [string]::IsNullOrWhiteSpace($ascTierContentDetails))		
 		{
-			[bool] $bool = $true;
+			[bool] $RequiredASCTier = $true;
 			$ascTier = "Standard"
 			if([Helpers]::CheckMember($this.ControlSettings,"SubscriptionCore.ASCTier"))
 			{
-				$bool = $bool -and ($this.ControlSettings.SubscriptionCore.ASCTier -contains $ascTierContentDetails)
+				$RequiredASCTier = $RequiredASCTier -and ($this.ControlSettings.SubscriptionCore.ASCTier -contains $ascTierContentDetails)
 			}
 			else
 			{
-				$bool = $bool -and ($ascTier -eq $ascTierContentDetails)
+				$RequiredASCTier = $RequiredASCTier -and ($ascTier -eq $ascTierContentDetails)
 			}
-			if( -not $bool)
+			if( -not $RequiredASCTier)
 			{
 				$MisconfiguredASCTier += ("Free pricing tier is configured for the subscription.")
 			}
-			$standard= $this.ControlSettings.SubscriptionCore.Standard
-			$this.ResourceTier.GetEnumerator() | Where-Object {$_.Value -eq "Free"} | ForEach-Object { #this fetches the list of all resources for which free tier is enabled on portal and checks if that resource should have standard tier enforced.
-				foreach($std in $standard)
-					{
-						if($std -eq $_.Key) 
-						{
-							$bool = $false -and $bool
-							$MisconfiguredASCTier += ("Standard pricing tier is not configured for [$($_.Key)].")	
-						}
-						else{
-							$bool = $true -and $bool
-						}
-					}
-			}
+			$AzSKSupportedResourceTypes= $this.ControlSettings.SubscriptionCore.Standard
+            $FreeTierResourceTypesArray=$this.ResourceTier.GetEnumerator() |  Where-Object {$_.Value -eq "Free"}
+
+            if( -not ([string]::IsNullOrWhiteSpace($FreeTierResourceTypesArray)) )
+            {
+               $FreeTierResourceTypes=$FreeTierResourceTypesArray.Name
+               if($AzSKSupportedResourceTypes -eq '*')
+                {    
+                       $RequiredASCTier = $false -and $RequiredASCTier 
+                      foreach($rsc in $FreeTierResourceTypes)
+					    { 
+							    $MisconfiguredASCTier += ("Standard pricing tier is not configured for [$($rsc)].")						    
+					    }		      
+                }
+                else
+                {
+                    $FreeResourceType = $AzSKSupportedResourceTypes | Where-Object { $FreeTierResourceTypes -contains $_ }
+                    if($FreeResourceType.count -gt 0)
+                    {
+                        $RequiredASCTier = $false -and $RequiredASCTier
+                        foreach($rsc in $FreeResourceType)
+					    {						    
+							    
+							    $MisconfiguredASCTier += ("Standard pricing tier is not configured for [$($rsc)].")						    
+					    }
+                    }
+                    else
+                    {
+                        $RequiredASCTier=$true
+                    }
+
+                }
+            }
+            else
+            {
+                $RequiredASCTier = $true
+            }
 			$this.SubscriptionContext.SubscriptionMetadata.Add("MisconfiguredASCTier",$MisconfiguredASCTier); #Adding misconfigured ASC tier in the metadata.
-			if($bool)			
+			if($RequiredASCTier)			
 			{
 				$controlResult.AddMessage([VerificationResult]::Passed, "Expected pricing tier is configured for ASC." )
 			}

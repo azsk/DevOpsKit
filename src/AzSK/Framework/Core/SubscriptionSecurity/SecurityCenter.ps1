@@ -91,9 +91,11 @@ class SecurityCenter: AzSKRoot
 		$this.PolicyObject = [ConfigurationManager]::LoadServerConfigFile("SecurityCenter.json");
 	}
 
-	[MessageData[]] SetPolicies([bool] $updateProvisioningSettings, [bool] $updatePolicies, [bool] $updateSecurityContacts, [bool] $setOptionalPolicy)
-    {				
+	[MessageData[]] SetPolicies([bool] $updateProvisioningSettings, [bool] $updatePolicies, [bool] $updateSecurityContacts, [bool] $setOptionalPolicy, [bool] $SetASCTierToStandard)
+    {
+        			
 		[MessageData[]] $messages = @();
+        	
 		$this.PublishCustomMessage("Updating SecurityCenter policies...`n" + [Constants]::SingleDashLine, [MessageType]::Warning);
 
 		$this.PublishCustomMessage("Updating Security Center version...", [MessageType]::Warning);
@@ -124,9 +126,71 @@ class SecurityCenter: AzSKRoot
 			$this.SetSecurityContactSettings();	
 			$this.PublishCustomMessage("Completed updating SecurityContact settings.", [MessageType]::Update);					
 		}
+        if($SetASCTierToStandard)
+		{		
+        $this.PublishCustomMessage("Updating ASC pricing tier to Standard...", [MessageType]::Warning);
+        $this.SetASCTiers();	
+		$this.PublishCustomMessage("Completed updating ASC pricing tier to Standard.", [MessageType]::Update);
+        }	
+
 		$this.PublishCustomMessage([Constants]::SingleDashLine + "`nCompleted configuring SecurityCenter.", [MessageType]::Update);
 		return $messages;
     }
+
+    [MessageData[]] SetASCTiers()
+	{
+		[MessageData[]] $messages = @();
+        $AzSKSupportedResourceTypes=@()
+        $ResourceTypesUpdateToStandard=@()
+
+        #Loading ControlSettings.json file
+        $ControlSettings = [ConfigurationManager]::LoadServerConfigFile("ControlSettings.json");
+        
+        if([Helpers]::CheckMember($ControlSettings,"SubscriptionCore.ASCTier") -and ($ControlSettings.SubscriptionCore.ASCTier -eq 'Standard')  -and [Helpers]::CheckMember($ControlSettings,"SubscriptionCore.Standard") )
+			{
+                # Taking AzSK Supported resource types 
+                $AzSKSupportedResourceTypes = $ControlSettings.SubscriptionCore.Standard
+			}     
+			
+            $ResourceTierDetails = $this.CheckASCTierSettings()
+            $FreeTierResourceTypesArray = ($ResourceTierDetails.GetEnumerator() |  Where-Object {$_.Value -eq "Free"})
+
+            if( -not ([string]::IsNullOrWhiteSpace($FreeTierResourceTypesArray) ) )
+            {
+                $FreeTierResourceTypes=$FreeTierResourceTypesArray.Name
+                if($AzSKSupportedResourceTypes -eq '*')
+                {
+                $ResourceTypesUpdateToStandard = $FreeTierResourceTypes
+                }
+                else
+                {
+                $ResourceTypesUpdateToStandard = $AzSKSupportedResourceTypes | Where-Object { $FreeTierResourceTypes -contains $_ }
+                }
+
+                $ResourceAppIdURI = [WebRequestHelper]::GetResourceManagerUrl()	
+
+                foreach($rsc in $ResourceTypesUpdateToStandard)            
+                {
+                    $PricingtierUri = $ResourceAppIdURI + "subscriptions/$($this.SubscriptionContext.SubscriptionId)/providers/$([SecurityCenterHelper]::ProviderNamespace)/pricings/$($rsc)?api-version=2018-06-01";			
+			        $body = '{"properties":{"pricingTier":"Standard"}}'   | ConvertFrom-Json;
+			        try
+			        {
+				        [WebRequestHelper]::InvokeWebRequest([Microsoft.PowerShell.Commands.WebRequestMethod]::Put, $PricingtierUri, $body);
+			        }
+			        catch
+			        {
+				    throw [System.ArgumentException] ("Error occurred while configuring Pricing Tier.");
+			        }
+                }	
+            }
+            else
+            {
+            $this.PublishCustomMessage("All Resource types already have Standard Pricing Tier.", [MessageType]::Update);
+            }
+					
+		
+		return $messages;
+	}
 
 	[MessageData[]] SetSecurityCenterVersion()
 	{
