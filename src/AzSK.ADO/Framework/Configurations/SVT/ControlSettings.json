@@ -274,7 +274,8 @@
     "ResolvedBugLogBehaviour": "ReactiveOldBug",
     "MaxKeyWordsToQueryForBugClose": 30,
     "AutoCloseProjectBug": true,
-    "AutoCloseOrgBug": true
+    "AutoCloseOrgBug": true,
+    "BugAssigneeAndPathCustomFlow": true
   },
   "GenerateSecurityEvaluationJsonFile" : false
 }

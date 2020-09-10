@@ -245,7 +245,10 @@ class AzSKSettings {
 			$branch = "master";
 		}
 		$repoName = [Constants]::OrgPolicyRepo + $projectName;
-		Write-Host -ForegroundColor Green "Online policy URL set to: [$orgName::$projectName::$repoName]"
+		if($projectName)
+		{
+			Write-Host -ForegroundColor Green "Online policy URL set to: [$orgName::$projectName::$repoName]"
+		}
 		return $onlinePolicyStoreUrl -f $orgName, $projectName, $repoName, $branch
 	}
 }

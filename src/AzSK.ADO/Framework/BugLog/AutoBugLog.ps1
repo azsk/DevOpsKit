@@ -23,9 +23,11 @@ class AutoBugLog {
             $ProjectName = $this.GetProjectForBugLog($ControlResults[0])
 
             #check if the area and iteration path are valid
-            if ([BugLogPathManager]::CheckIfPathIsValid($this.SubscriptionContext.SubscriptionName,$ProjectName,$this.InvocationContext,  $this.ControlSettings.BugLogging.BugLogAreaPath, $this.ControlSettings.BugLogging.BugLogIterationPath)) {
+            
+            $isBugLogCustomFlow = [Helpers]::CheckMember($this.ControlSettings.BugLogging, "BugAssigneeAndPathCustomFlow");
+            if ([BugLogPathManager]::CheckIfPathIsValid($this.SubscriptionContext.SubscriptionName,$ProjectName,$this.InvocationContext,  $this.ControlSettings.BugLogging.BugLogAreaPath, $this.ControlSettings.BugLogging.BugLogIterationPath, $isBugLogCustomFlow)) {
                 #Obtain the assignee for the current resource, will be same for all the control failures for this particular resource
-                $AssignedTo = $this.GetAssignee($ControlResults[0])
+                $AssignedTo = $this.GetAssignee($ControlResults[0], $isBugLogCustomFlow)
                 #Obtain area and iteration paths
                 $AreaPath = [BugLogPathManager]::GetAreaPath()
                 $IterationPath = [BugLogPathManager]::GetIterationPath()       
@@ -90,11 +92,10 @@ class AutoBugLog {
                             }				
                             $Description = $Description.Replace("`"", "'")
                             $Severity = $this.GetSeverity($control.ControlItem.ControlSeverity)		
-					
-				
+                    
                             #function to attempt bug logging
                             $this.AddWorkItem($Title, $Description, $AssignedTo, $AreaPath, $IterationPath, $Severity, $ProjectName, $control, $hash)
-
+                    
                         }
                     }
                 }
@@ -247,89 +248,10 @@ class AutoBugLog {
     }
     
     #function to retrieve the person to whom the bug will be assigned
-    hidden [string] GetAssignee([SVTEventContext[]] $ControlResult) {
-
-        $Assignee = "";
-        $ResourceType = $ControlResult.ResourceContext.ResourceTypeName
-        $ResourceName = $ControlResult.ResourceContext.ResourceName
-        switch -regex ($ResourceType) {
-            #assign to the creator of service connection
-            'ServiceConnection' {
-                $Assignee = $ControlResult.ResourceContext.ResourceDetails.createdBy.uniqueName
-            }
-            #assign to the creator of agent pool
-            'AgentPool' {
-                $apiurl = "https://dev.azure.com/{0}/_apis/distributedtask/pools?poolName={1}&api-version=5.1" -f $($this.SubscriptionContext.SubscriptionName), $ResourceName
-                try {
-                    $response = [WebRequestHelper]::InvokeGetWebRequest($apiurl)
-                    $Assignee = $response.createdBy.uniqueName
-	
-                }
-                catch {
-                    $Assignee = "";
-                }
-
-            }
-            #assign to the person who recently triggered the build pipeline, or if the pipeline is empty assign it to the creator
-            'Build' {
-                $definitionId = ($ControlResult.ResourceContext.ResourceDetails.ResourceLink -split "=")[1]
-
-                try {
-                    $apiurl = "https://dev.azure.com/{0}/{1}/_apis/build/builds?definitions={2}&api-version=5.1" -f $($this.SubscriptionContext.SubscriptionName), $ControlResult.ResourceContext.ResourceGroupName , $definitionId;
-				
-                    $response = [WebRequestHelper]::InvokeGetWebRequest($apiurl)
-                    #check for recent trigger
-                    if ([Helpers]::CheckMember($response, "requestedBy")) {
-                        $Assignee = $response[0].requestedBy.uniqueName
-                    }
-                    #if no triggers found assign to the creator
-                    else {
-                        $apiurl = "https://dev.azure.com/{0}/{1}/_apis/build/definitions/{2}?api-version=5.1" -f $($this.SubscriptionContext.SubscriptionName), $ControlResult.ResourceContext.ResourceGroupName , $definitionId;
-                        $response = [WebRequestHelper]::InvokeGetWebRequest($apiurl)
-                        $Assignee = $response.authoredBy.uniqueName
-                    }
-                }
-                catch {
-                    $Assignee = "";
-                }	
-				
-            }
-            #assign to the person who recently triggered the release pipeline, or if the pipeline is empty assign it to the creator
-            'Release' {
-                $definitionId = ($ControlResult.ResourceContext.ResourceId -split "definitions/")[1]
-                try {
-                    $apiurl = "https://vsrm.dev.azure.com/{0}/{1}/_apis/release/releases?definitionId={2}&api-version=5.1" -f $($this.SubscriptionContext.SubscriptionName), $ControlResult.ResourceContext.ResourceGroupName , $definitionId;
-                    $response = [WebRequestHelper]::InvokeGetWebRequest($apiurl)
-                    #check for recent trigger
-                    if ([Helpers]::CheckMember($response, "modifiedBy")) {
-                        $Assignee = $response[0].modifiedBy.uniqueName
-                    }
-                    #if no triggers found assign to the creator
-                    else {
-                        $apiurl = "https://vsrm.dev.azure.com/{0}/{1}/_apis/release/definitions/{2}?&api-version=5.1" -f $($this.SubscriptionContext.SubscriptionName), $ControlResult.ResourceContext.ResourceGroupName , $definitionId;
-                        $response = [WebRequestHelper]::InvokeGetWebRequest($apiurl)
-                        $Assignee = $response.createdBy.uniqueName
-                    }
-                }
-                catch {
-                    $Assignee = "";
-                }
-				
-
-
-            }
-            #assign to the person running the scan, as to reach at this point of code, it is ensured the user is PCA/PA and only they or other PCA
-            #PA members can fix the control
-            'Organization' {
-                $Assignee = [ContextHelper]::GetCurrentSessionUser();
-            }
-            'Project' {
-                $Assignee = [ContextHelper]::GetCurrentSessionUser();
-
-            }
-        }
-        return $Assignee;
-
+    hidden [string] GetAssignee([SVTEventContext[]] $ControlResult, [bool] $isBugLogCustomFlow) 
+    {
+        $metaProviderObj = [BugMetaInfoProvider]::new();        
+        return $metaProviderObj.GetAssignee($ControlResult, $isBugLogCustomFlow, $this.InvocationContext);   
     }
 
     #function to map severity of the control item
@@ -534,6 +456,9 @@ class AutoBugLog {
             #handle the case wherein due to global search area/ iteration paths from different projects passed the checkvalidpath function
             elseif ($_.ErrorDetails.Message -like '*Invalid Area/Iteration id*') {
                 Write-Host "Please verify the area and iteration path. They should belong under the same project area." -ForegroundColor Red
+            }
+            elseif ($_.ErrorDetails.Message -like '*The current user does not have permissions to save work items under the specified area path*') {
+                Write-Host "Could not log the bug. You don not have permissions to save work items under this [$($AreaPath)] area path." -ForegroundColor Red
             }
             else {
                 Write-Host "Could not log the bug" -ForegroundColor Red
