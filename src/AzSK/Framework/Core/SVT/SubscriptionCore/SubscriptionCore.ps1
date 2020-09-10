@@ -31,11 +31,13 @@ class SubscriptionCore: AzSVTBase
 	hidden $SubscriptionExtId;
 	hidden [boolean] $IsSubAssignmentFetched = $false;
 	hidden [boolean] $IsRGAssignmentFetched = $false;
+	hidden [PSObject] $allRAsSubScope;
+
 
 	SubscriptionCore([string] $subscriptionId):
         Base($subscriptionId)
     {
-		$this.GetResourceObject();		
+		$this.GetResourceObject();	
     }
 
 	hidden [void] GetResourceObject()
@@ -2160,10 +2162,13 @@ class SubscriptionCore: AzSVTBase
 	hidden [ControlResult] CheckAccessOfDeletedObjects([ControlResult] $controlResult)
 	{
 		# Get all role assignments
-        $allRAs = Get-AzRoleAssignment -Scope "/subscriptions/$($this.SubscriptionContext.SubscriptionId)"
+        if ($this.allRAsSubScope -eq $null)
+		{
+			$this.allRAsSubScope = Get-AzRoleAssignment -Scope "/subscriptions/$($this.SubscriptionContext.SubscriptionId)"	
+		}
 
 		# Unknown identities at all scopes
-		$unknownRAsAllScope = $allRAs | Where-Object {$_.ObjectType -eq 'Unknown'}
+		$unknownRAsAllScope = $this.allRAsSubScope | Where-Object {$_.ObjectType -eq 'Unknown'}
 		
 		if(($unknownRAsAllScope | Measure-Object).Count -gt 0)
 		{
@@ -2191,9 +2196,13 @@ class SubscriptionCore: AzSVTBase
 		$allPrivRAs = $null
 		$allPrivSPNRAs = $null
 		
-        $allRAsSubScope = Get-AzRoleAssignment -Scope "/subscriptions/$($this.SubscriptionContext.SubscriptionId)"
-
-        $allValidRAs = $allRAsSubScope | Where-Object {$_.ObjectType -ne 'Unknown'}
+		# Get all role assignments
+		if ($this.allRAsSubScope -eq $null)
+		{
+			$this.allRAsSubScope = Get-AzRoleAssignment -Scope "/subscriptions/$($this.SubscriptionContext.SubscriptionId)"	
+		}
+        
+        $allValidRAs = $this.allRAsSubScope | Where-Object {$_.ObjectType -ne 'Unknown'}
 
         $privilegedRoles = @('Owner','Contributor','User Access Administrator')
 
@@ -2257,7 +2266,7 @@ class SubscriptionCore: AzSVTBase
 					if(-not([string]::IsNullOrEmpty($this.InvocationContext.BoundParameters['ControlIds'])) -or  -not( [string]::IsNullOrEmpty($this.InvocationContext.BoundParameters['ControlsToAttest'])))
 					{
 						$controlResult.AddMessage([VerificationResult]::Failed, [MessageData]::new("Found " +($spnWithoutOwners | Measure-Object).Count+ " applications(s) without owner that have access to subscription`n",($spnWithoutOwners | select ObjectId, DisplayName, RoleDefinitionName, Scope)));
-						$controlResult.SetStateData("Applications(s) without owner that have access to subscription", $spnWithoutOwners);
+						$controlResult.SetStateData("Applications(s) without owner that have access to subscription", ($spnWithoutOwners | select ObjectId, DisplayName, RoleDefinitionName, Scope));
 					}
 					else 
 					{
@@ -2295,9 +2304,13 @@ class SubscriptionCore: AzSVTBase
 		$lsasUsers = $null
 		$allPrivSPNOwners = $null
 		
-        $allRAsSubScope = Get-AzRoleAssignment -Scope "/subscriptions/$($this.SubscriptionContext.SubscriptionId)"
+		# Get all role assignments
+        if ($this.allRAsSubScope -eq $null)
+		{
+			$this.allRAsSubScope = Get-AzRoleAssignment -Scope "/subscriptions/$($this.SubscriptionContext.SubscriptionId)"	
+		}
 
-        $allValidRAs = $allRAsSubScope | Where-Object {$_.ObjectType -ne 'Unknown'}
+        $allValidRAs = $this.allRAsSubScope | Where-Object {$_.ObjectType -ne 'Unknown'}
 		$this.GetPIMRoles();
 		$pimroles = $this.PIMAssignments #list of Eligible Pim assignments
 		$allValidRAs += $pimroles
@@ -2398,7 +2411,12 @@ class SubscriptionCore: AzSVTBase
 	
 	hidden [ControlResult] CheckInactiveIdentities([ControlResult] $controlResult)
 	{
-		$allRAs = Get-AzRoleAssignment -Scope "/subscriptions/$($this.SubscriptionContext.SubscriptionId)"
+		# Get all role assignments
+		if ($this.allRAsSubScope -eq $null)
+		{
+			$this.allRAsSubScope = Get-AzRoleAssignment -Scope "/subscriptions/$($this.SubscriptionContext.SubscriptionId)"	
+		}
+
 		$AzuremanagementUri = [WebRequestHelper]::GetResourceManagerUrl()
 		$workspaceName = @();
 		$workspaceAPI = $AzuremanagementUri + "subscriptions/$($this.SubscriptionContext.SubscriptionId)/providers/Microsoft.OperationalInsights/workspaces?api-version=2020-08-01"
@@ -2438,7 +2456,7 @@ class SubscriptionCore: AzSVTBase
 							}
 
 							# Skip management group assignments + groups + MS-PIM 
-							$activeAssignments =  $allRAs | where {$_.Scope -notmatch "/providers/Microsoft.Management" -and $_.ObjectType -ne 'Unknown' -and $_.ObjectType -ne "Group" -and $_.DisplayName -notmatch "MS-PIM"} | Select-Object SignInName, ObjectId, ObjectType -Unique
+							$activeAssignments =  $this.allRAsSubScope | where {$_.Scope -notmatch "/providers/Microsoft.Management" -and $_.ObjectType -ne 'Unknown' -and $_.ObjectType -ne "Group" -and $_.DisplayName -notmatch "MS-PIM"} | Select-Object SignInName, ObjectId, ObjectType -Unique
 							$inactiveIdenties = @()
 							$activeAssignments | ForEach-Object {
 							$identity = $_
@@ -2468,7 +2486,7 @@ class SubscriptionCore: AzSVTBase
 								if(($inactiveIdenties | Measure-Object).Count -gt 0)
 								{
 									$inactiveIdenties = $inactiveIdenties | Select-Object -Unique
-									$inactiveIdentityAssignments = $allRAs | Where-Object { $_.ObjectId -in $inactiveIdenties} | Select-Object DisplayName, ObjectId, ObjectType, @{label="RoleDefinitionName";expression={if($_.RoleDefinitionName.Length -gt 20) { $_.RoleDefinitionName.Substring(0,17) + "..." } else {$_.RoleDefinitionName }}}, Scope
+									$inactiveIdentityAssignments = $this.allRAsSubScope | Where-Object { $_.ObjectId -in $inactiveIdenties} | Select-Object DisplayName, ObjectId, ObjectType, @{label="RoleDefinitionName";expression={if($_.RoleDefinitionName.Length -gt 20) { $_.RoleDefinitionName.Substring(0,17) + "..." } else {$_.RoleDefinitionName }}}, Scope
 									if(-not([string]::IsNullOrEmpty($this.InvocationContext.BoundParameters['ControlIds'])) -or  -not( [string]::IsNullOrEmpty($this.InvocationContext.BoundParameters['ControlsToAttest'])))
 									{
 										$controlResult.AddMessage([VerificationResult]::Failed, [MessageData]::new("Found following " +($inactiveIdenties | Measure-Object).Count+ " inactive identitiy(s) :`n", $inactiveIdentityAssignments));
