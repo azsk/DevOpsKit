@@ -193,9 +193,12 @@ class ActiveDirectoryHelper {
 				})
 
                 # Filtering out the Older Certificates associated with CA SPN
-                [System.Collections.ArrayList]$OldCerts = @($AllCerts | Where-Object { $latestCert -notcontains $_ })
+				[System.Collections.ArrayList]$OldCerts = @($AllCerts | Where-Object { $latestCert -notcontains $_ })
+				
+				if($OldCerts.count -gt 0)
+				{
                 Write-host "We found the following older credentials associated with [$($ADApplication.displayname)]:" -ForegroundColor Yellow
-                
+								
                 # Displaying older Certificates in form of table               
                 $display= $OldCerts|Format-Table -Property  @{name="Index";expression={$OldCerts.IndexOf($_)}},@{name="Thumbprint";expression={$_.customKeyIdentifier}},@{name="EndDate(MM/dd/yyyy)";expression={([datetime] $_.endDate).ToString("MM/dd/yyyy")}} | Out-String
                 Write-Host $display
@@ -306,6 +309,7 @@ class ActiveDirectoryHelper {
                                     { 
                                          
                                          $ADApplication.keyCredentials	= $AllCerts | Where-Object { $CertificatesToRemove -notcontains $_ }
+                                         $ADApplication.keyCredentials=[System.Collections.ArrayList]@($ADApplication.keyCredentials)
                                          Write-Host "Selected Certificates are deleted." -ForegroundColor Yellow
                                     }
                                     else
@@ -341,7 +345,11 @@ class ActiveDirectoryHelper {
                                 Write-Host "You have entered incorrect choice. Please enter valid choice." -ForegroundColor Yellow
                              }
                 }
-                 
+			}
+			else {
+				Write-Host "There are no old credentials associated with [$($ADApplication.displayname)]" -ForegroundColor Yellow
+				Write-Host "Skipping the process for deleting old certificates." -ForegroundColor Yellow
+			}  
                 
 
             }
