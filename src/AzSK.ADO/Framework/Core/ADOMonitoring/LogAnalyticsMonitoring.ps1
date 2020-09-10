@@ -58,7 +58,9 @@ class LogAnalyticsMonitoring #: CommandBase
 			}
 			$genericViewTemplateFilepath = "";
 			if ($isWorkbook) {
-				$genericViewTemplateFilepath = [ConfigurationHelper]::LoadOfflineConfigFile([Constants]::LogAnalyticsGenericViewWorkbook); 				
+				$genericViewTemplateFilepath = [ConfigurationHelper]::LoadOfflineConfigFile([Constants]::LogAnalyticsGenericViewWorkbook);
+				$worbookSerializedData = [ConfigurationHelper]::LoadOfflineConfigFile([Constants]::WorkbookData) | ConvertTo-Json -Depth 10;
+				$genericViewTemplateFilepath.resources[0].properties.serializedData = $worbookSerializedData;
 				$this.LAWSGenericTemplateFilepath = Join-Path $LAWSLogPath ([Constants]::LogAnalyticsGenericViewWorkbook); 				
 			}
 			else {
