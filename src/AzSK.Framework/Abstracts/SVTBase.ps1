@@ -1216,11 +1216,35 @@ class SVTBase: AzSKRoot
 						-and $this.ControlSettings.AttestationExpiryPeriodInDays.Default -gt 0)
 				{
 					$defaultAttestationExpiryInDays = $this.ControlSettings.AttestationExpiryPeriodInDays.Default
-				}	
-				#If control has Owner Access tag and is a baseline control, assign expiry days as per value defined in control settings i.e. 180 days.
-				if(($eventcontext.ControlItem.Tags -contains "OwnerAccess") -and ($eventcontext.ControlItem.IsBaselineControl) -and ([Helpers]::CheckMember($this.ControlSettings, "OwnerControlsCustomExpiryPeriod")))
+				}
+
+				#Below code is commented for future reference, if we want to make changes for  customizing expiry duration for individual controls
+				#if ([Helpers]::CheckMember($this.ControlSettings, "ControlsWithCustomExpiryPeriod"))
+				#{
+					#$CustomExpiryControl = $this.ControlSettings.ControlsWithCustomExpiryPeriod| Where-Object{
+					#$controlState.ControlId -eq $_.ControlId } 
+				#}
+
+				#if ($null -ne $CustomExpiryControl)
+				#{
+					#$expiryInDays = $CustomExpiryControl.ExpiryPeriod
+				#}
+				#Json reference for above code, to be maintained in ControlSettings.json
+				#"ControlsWithCustomExpiryPeriod":[
+				#	{
+					#	"ControlId" : "Azure_AppService_AuthN_Use_AAD_for_Client_AuthN",
+					#"ExpiryPeriod" : 180
+					#},
+					#{
+					#"ControlId" : "Azure_Storage_AuthN_Dont_Allow_Anonymous",
+					#"ExpiryPeriod" : 150
+					#}
+				#]
+
+				#if control has ExtendedExpiry tag, set expiry duration to 180 for such controls. (Value of expiry days is taken from control settings)
+				if(($eventcontext.ControlItem.Tags -contains "ExtendedExpiry") -and ([Helpers]::CheckMember($this.ControlSettings, "ExtendedAttestationExpiry")))
 				{
-					$expiryInDays = $this.ControlSettings.OwnerControlsCustomExpiryPeriod
+					$expiryInDays = $this.ControlSettings.ExtendedAttestationExpiry
 				}	
 				#Expiry in the case of WillFixLater or StateConfirmed/Recurring Attestation state will be based on Control Severity.
 				elseif ($controlState.AttestationStatus -eq [AttestationStatus]::NotAnIssue -or $controlState.AttestationStatus -eq [AttestationStatus]::NotApplicable)

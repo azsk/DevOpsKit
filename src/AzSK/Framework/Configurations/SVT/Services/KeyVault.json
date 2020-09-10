@@ -38,7 +38,8 @@
                 "AuthN",
                 "KeyVault",
                 "OwnerAccess",
-                "GraphRead"
+                "GraphRead",
+                "ExtendedExpiry"
             ],
             "Enabled": true,
             "IsAttestationDriftExpected": true,

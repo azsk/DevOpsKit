@@ -556,7 +556,7 @@
   "PublicIpAddress": {
     "EnablePublicIpResource": false
    },
-  "OwnerControlsCustomExpiryPeriod" : 180,
+  "ExtendedAttestationExpiry" : 180,
   "SeverityForSecContactAlerts": ["Medium","Low"],
   "MaxResourceInventoryObjectsCount": 20000,
   "AlernateAccountRegularExpressionForOrg": "",

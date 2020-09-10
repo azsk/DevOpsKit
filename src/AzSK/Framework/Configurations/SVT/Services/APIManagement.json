@@ -254,7 +254,8 @@
                 "BasicSku",
                 "StandardSku",
                 "PremiumSku",
-                "APIManagement"
+                "APIManagement",
+                "ExtendedExpiry"
             ],
             "Enabled": true
         },
@@ -456,7 +457,8 @@
                 "BasicSku",
                 "StandardSku",
                 "PremiumSku",
-                "APIManagement"
+                "APIManagement",
+                "ExtendedExpiry"
             ],
             "Enabled": true
         },
