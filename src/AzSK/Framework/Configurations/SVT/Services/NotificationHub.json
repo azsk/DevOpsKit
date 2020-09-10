@@ -90,7 +90,8 @@
         "TCP",
         "Automated",
         "AuthZ",
-        "NotificationHub"
+        "NotificationHub",
+        "ExtendedExpiry"
       ],
       "Enabled": true,
       "PolicyDefinitionGuid": "NotificationHub160"
