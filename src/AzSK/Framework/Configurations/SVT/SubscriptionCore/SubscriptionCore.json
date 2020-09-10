@@ -631,7 +631,7 @@
       "Tags": [
         "SDL",
         "Automated",
-        "Access",
+        "TCP",
         "AuthZ",
         "SubscriptionCore"
             ],
@@ -649,7 +649,7 @@
       "Tags": [
         "SDL",
         "Automated",
-        "Access",
+        "TCP",
         "AuthZ",
         "SubscriptionCore"
             ],
@@ -667,7 +667,7 @@
       "Tags": [
         "SDL",
         "Automated",
-        "Access",
+        "TCP",
         "AuthZ",
         "SubscriptionCore"
             ],
@@ -685,7 +685,7 @@
       "Tags": [
         "SDL",
         "Automated",
-        "Access",
+        "TCP",
         "AuthZ",
         "SubscriptionCore"
             ],
