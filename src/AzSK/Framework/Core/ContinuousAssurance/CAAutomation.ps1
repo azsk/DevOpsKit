@@ -1262,10 +1262,6 @@ class CCAutomation: AzCommandBase
 		{
 			$returnMsg += $detailedMsg
 		}
-		if($resultStatus -eq "Failed" -and $null -ne $detailedMsg)
-		{
-            $this.PublishCustomMessage([MessageData]::new("$detailedMsg",  [MessageType]::Warning))
-        }
 		$this.PublishCustomMessage([MessageData]::new([Constants]::SingleDashLine));
 		$returnMsg += [MessageData]::new([Constants]::SingleDashLine);
 		if($summaryTable.Count -gt 0)
@@ -1715,10 +1711,9 @@ class CCAutomation: AzCommandBase
 		catch 
 		{
 			$resultStatus = "Failed"
-            $failMsg = "Unable to access AzSK scan details from storage account, The user does not seem to have the required permission."
+			$failMsg = "Unable to access AzSK scan details from storage account, The user does not seem to have the required permission."
 			$resolvemsg = "Please re-run the command after elevating owner/contributor permission."
-			$resultMsg = "$failMsg`r"
-			$detailedMsg += "$resolvemsg"
+			$resultMsg = "$failMsg`r`n$resolvemsg"
 			$shouldReturn = $true
 			$messages += ($this.FormatGetCACheckMessage($stepCount,$checkDescription,$resultStatus,$resultMsg,$detailedMsg,$caOverallSummary))	
 			return $messages	
@@ -4076,32 +4071,17 @@ class CCAutomation: AzCommandBase
 		# Get AzSK storage of the current master sub
 		$recentCAScanDataBlobObject = $null
 		$reportsStorageAccount = [UserSubscriptionDataHelper]::GetUserSubscriptionStorage()
-		try
-		{
-			if($null -ne $reportsStorageAccount -and ($reportsStorageAccount | Measure-Object).Count -eq 1){
-				$recentLogLimitInDays = 3
-				$dayCounter = 0
-				$keys = Get-AzStorageAccountKey -ResourceGroupName $reportsStorageAccount.ResourceGroupName -Name $reportsStorageAccount.Name
-				$currentContext = New-AzStorageContext -StorageAccountName $reportsStorageAccount.Name -StorageAccountKey $keys[0].Value -Protocol Https
-				while($dayCounter -le $recentLogLimitInDays -and $recentCAScanDataBlobObject -eq $null){
-					$date = [DateTime]::UtcNow.AddDays(-$dayCounter).ToString("yyyyMMdd")
-					$recentLogsPath = $scanLogsPrefixPattern + "AutomationLogs_" + $date
-					$recentCAScanDataBlobObject = Get-AzStorageBlob -Container $containerName -Prefix $recentLogsPath -Context $currentContext -ErrorAction SilentlyContinue
-					$dayCounter += 1
-				}
+		if($null -ne $reportsStorageAccount -and ($reportsStorageAccount | Measure-Object).Count -eq 1){
+			$recentLogLimitInDays = 3
+			$dayCounter = 0
+			$keys = Get-AzStorageAccountKey -ResourceGroupName $reportsStorageAccount.ResourceGroupName -Name $reportsStorageAccount.Name
+			$currentContext = New-AzStorageContext -StorageAccountName $reportsStorageAccount.Name -StorageAccountKey $keys[0].Value -Protocol Https
+			while($dayCounter -le $recentLogLimitInDays -and $recentCAScanDataBlobObject -eq $null){
+				$date = [DateTime]::UtcNow.AddDays(-$dayCounter).ToString("yyyyMMdd")
+				$recentLogsPath = $scanLogsPrefixPattern + "AutomationLogs_" + $date
+				$recentCAScanDataBlobObject = Get-AzStorageBlob -Container $containerName -Prefix $recentLogsPath -Context $currentContext -ErrorAction SilentlyContinue
+				$dayCounter += 1
 			}
-		}
-		catch
-		{
-            $resultStatus = "Failed"
-            $failMsg = "Unable to access AzSK scan details from storage account, The user does not seem to have the required permission."
-			$resolvemsg = "Please re-run the command after elevating owner/contributor permission."
-		    $newMsg = [MessageData]::new("Status:   $resultStatus. $failMsg",[MessageType]::Error)
-		    $returnMsg += $newMsg
-		    $this.PublishCustomMessage($returnMsg);
-            $this.PublishCustomMessage([MessageData]::new("$resolvemsg", [MessageType]::Warning))
-            $this.PublishCustomMessage([MessageData]::new([Constants]::SingleDashLine));
-			return $null
 		}
 		return $recentCAScanDataBlobObject
 	}
