@@ -36,6 +36,7 @@ class AIOrgTelemetry: ListenerBase {
 			$currentInstance = [AIOrgTelemetry]::GetInstance();
 			try
 			{
+				if(![RemoteReportHelper]::IsAIOrgTelemetryEnabled()) { return; };
 				$invocationContext = [System.Management.Automation.InvocationInfo] $currentInstance.InvocationContext
 				$SVTEventContexts = [SVTEventContext[]] $Event.SourceArgs
 				$featureGroup = [RemoteReportHelper]::GetFeatureGroup($SVTEventContexts)
@@ -56,6 +57,7 @@ class AIOrgTelemetry: ListenerBase {
             $currentInstance = [AIOrgTelemetry]::GetInstance();
             try
             {
+				if(![RemoteReportHelper]::IsAIOrgTelemetryEnabled()) { return; };
 				[System.Management.Automation.ErrorRecord] $er = ($Event.SourceArgs | Select-Object -First 1)
 				[AIOrgTelemetryHelper]::TrackException($er, $currentInstance.InvocationContext)
             }
@@ -70,6 +72,7 @@ class AIOrgTelemetry: ListenerBase {
             $currentInstance = [AIOrgTelemetry]::GetInstance();
             try
             {
+				if(![RemoteReportHelper]::IsAIOrgTelemetryEnabled()) { return; };
 				[System.Management.Automation.ErrorRecord] $er = $Event.SourceArgs.ExceptionMessage
 				[AIOrgTelemetryHelper]::TrackException($er, $currentInstance.InvocationContext)
             }
@@ -84,6 +87,7 @@ class AIOrgTelemetry: ListenerBase {
             $currentInstance = [AIOrgTelemetry]::GetInstance();
             try
             {
+				if(![RemoteReportHelper]::IsAIOrgTelemetryEnabled()) { return; };
 				[System.Management.Automation.ErrorRecord] $er = $Event.SourceArgs.ExceptionMessage
 				[AIOrgTelemetryHelper]::TrackException($er, $currentInstance.InvocationContext)
             }
@@ -98,6 +102,7 @@ class AIOrgTelemetry: ListenerBase {
             $currentInstance = [AIOrgTelemetry]::GetInstance();
             try
             {
+				if(![RemoteReportHelper]::IsAIOrgTelemetryEnabled()) { return; };
 				[System.Management.Automation.ErrorRecord] $er = $Event.SourceArgs.ExceptionMessage
 				[AIOrgTelemetryHelper]::TrackException($er, $currentInstance.InvocationContext)
             }
@@ -112,6 +117,7 @@ class AIOrgTelemetry: ListenerBase {
             $currentInstance = [AIOrgTelemetry]::GetInstance();
             try
             {
+				if(![RemoteReportHelper]::IsAIOrgTelemetryEnabled()) { return; };
 				[System.Management.Automation.ErrorRecord] $er = $Event.SourceArgs.ExceptionMessage
 				[AIOrgTelemetryHelper]::TrackException($er, $currentInstance.InvocationContext)
             }

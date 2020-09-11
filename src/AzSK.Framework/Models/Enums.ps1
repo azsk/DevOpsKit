@@ -162,3 +162,10 @@ enum DashboardType
 	View
 	Workbook
 }
+
+enum AIOrgTelemetryStatus
+{
+	Undefined
+	Enabled
+	Disabled
+}
