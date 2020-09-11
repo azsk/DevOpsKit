@@ -22,6 +22,7 @@ class BugMetaInfoProvider {
 
     hidden [string] GetAssignee([SVTEventContext[]] $ControlResult, [InvocationInfo] $InvocationContext, $controlSettingsBugLog) {
         $this.ControlSettingsBugLog = $controlSettingsBugLog;
+        #flag to check if pluggable bug logging interface (service tree)
         $isBugLogCustomFlow = $false;
         if ([Helpers]::CheckMember($this.ControlSettings.BugLogging, "BugAssigneeAndPathCustomFlow", $null)) {
             $isBugLogCustomFlow = $this.ControlSettings.BugLogging.BugAssigneeAndPathCustomFlow;
