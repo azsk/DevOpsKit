@@ -8,6 +8,8 @@ class RemoteReportHelper
 	hidden static [int] $MaxServiceParamCount = [RemoteReportHelper]::IgnoreScanParamList.Count + [RemoteReportHelper]::AllowedServiceScanParamList.Count;
 	hidden static [int] $MaxSubscriptionParamCount = [RemoteReportHelper]::IgnoreScanParamList.Count + [RemoteReportHelper]::AllowedSubscriptionScanParamList.Count;
 	hidden static [System.Security.Cryptography.SHA256Managed] $sha256AlgForMasking = [System.Security.Cryptography.SHA256Managed]::new();
+	hidden static [AIOrgTelemetryStatus] $AIOrgTelemetryState = [AIOrgTelemetryStatus]::Undefined;
+	hidden static [string] $TelemetryKey = "";
 
 	static [FeatureGroup] GetFeatureGroup([SVTEventContext[]] $SVTEventContexts)
 	{
@@ -189,28 +191,62 @@ class RemoteReportHelper
 
 	static [string] GetAIOrgTelemetryKey()
 	{
-		$azskConfig = [ConfigurationManager]::GetAzSKConfigData();
-		$telemetryKey = $azskConfig.ControlTelemetryKey
-		[guid]$key =  [guid]::Empty
-		if([guid]::TryParse($telemetryKey, [ref] $key) -and ![guid]::Empty.Equals($key))
+		if(-not [string]::IsNullOrEmpty([RemoteReportHelper]::TelemetryKey))
 		{
-			return $telemetryKey;
+			return [RemoteReportHelper]::TelemetryKey
 		}
-		return [ConfigurationManager]::GetAzSKSettings().LocalControlTelemetryKey;
+		$settings = [ConfigurationManager]::GetAzSKConfigData();
+		[RemoteReportHelper]::TelemetryKey = $settings.ControlTelemetryKey
+		[guid]$key = [guid]::Empty
+		# Trying to parse [RemoteReportHelper]::TelemetryKey into  $key and then checking that it is not empty
+		if([guid]::TryParse([RemoteReportHelper]::TelemetryKey, [ref] $key) -and ![guid]::Empty.Equals($key))
+		{
+			return [RemoteReportHelper]::TelemetryKey;
+		}
+		[RemoteReportHelper]::TelemetryKey = [ConfigurationManager]::GetAzSKSettings().LocalControlTelemetryKey
+		return [RemoteReportHelper]::TelemetryKey;
 	}
 
 	static [bool] IsAIOrgTelemetryEnabled()
 	{
-		$azskConfig = [ConfigurationManager]::GetAzSKConfigData();
-		$telemetryKey = $azskConfig.ControlTelemetryKey
-		[guid]$key =  [guid]::Empty
-		if([guid]::TryParse($telemetryKey, [ref] $key) -and ![guid]::Empty.Equals($key))
+		if([RemoteReportHelper]::AIOrgTelemetryState -eq [AIOrgTelemetryStatus]::Enabled)
 		{
-			return $azskConfig.EnableControlTelemetry;
+			return $true
 		}
-		return [ConfigurationManager]::GetAzSKSettings().LocalEnableControlTelemetry;
+		elseif([RemoteReportHelper]::AIOrgTelemetryState -eq [AIOrgTelemetryStatus]::Disabled)
+		{
+			return $false
+		}
+		#If AIOrgTelemetryState is Undefined then evaluate
+		$settings = [ConfigurationManager]::GetAzSKConfigData();
+		$orgTelemetryKey = $settings.ControlTelemetryKey
+		[guid]$key = [guid]::Empty
+		# Trying to parse [RemoteReportHelper]::TelemetryKey into  $key and then checking that it is not empty
+		if([guid]::TryParse($orgTelemetryKey, [ref] $key) -and ![guid]::Empty.Equals($key))
+		{
+			if($settings.EnableControlTelemetry)
+			{
+				[RemoteReportHelper]::AIOrgTelemetryState = [AIOrgTelemetryStatus]::Enabled
+				return $true
+			}
+			else 
+			{
+				[RemoteReportHelper]::AIOrgTelemetryState = [AIOrgTelemetryStatus]::Disabled
+				return $false
+			}
+		}
+		if([ConfigurationManager]::GetAzSKSettings().LocalEnableControlTelemetry)
+		{
+			[RemoteReportHelper]::AIOrgTelemetryState = [AIOrgTelemetryStatus]::Enabled
+			return $true
+		}
+		else 
+		{
+			[RemoteReportHelper]::AIOrgTelemetryState = [AIOrgTelemetryStatus]::Disabled
+			return $false
+		}
 	}
-
+	
 	static [string] Mask([psobject] $toMask)
 	{
 		$maskBytes = [System.Text.Encoding]::UTF8.GetBytes($toMask.ToString().ToLower())
