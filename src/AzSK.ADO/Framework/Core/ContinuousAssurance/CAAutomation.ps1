@@ -17,12 +17,16 @@ class CAAutomation : ADOSVTCommandBase
     hidden [datetime] $ScanTriggerTimeUTC
     hidden [datetime] $ScanTriggerLocalTime
     hidden [string] $SecretName = "PATForADOScan"
+    hidden [string] $LASecretName = "LAKeyForADOScan"
+    hidden [string] $AltLASecretName = "AltLAKeyForADOScan"
     hidden [string] $StorageKind = "StorageV2"
     hidden [string] $StorageType = "Standard_LRS"
     hidden [string] $LAWSName = "ADOScannerLAWS"
     hidden [bool] $CreateLAWS 
     hidden [string] $ProjectNames 
 	hidden [string] $ExtendedCommand 
+	hidden [string] $CRONExp 
+	hidden [bool] $ClearExtCmd 
 	
 	#UCA params for dev-test support
 	hidden [string] $RsrcTimeStamp = $null  #We will apply UCA to FunctionApp with this timestamp, e.g., "200830092449"
@@ -37,8 +41,11 @@ class CAAutomation : ADOSVTCommandBase
 	hidden [string] $RGName
     hidden [string] $LAWSId
 	hidden [string] $LAWSSharedKey
+	hidden [string] $AltLAWSId
+	hidden [string] $AltLAWSSharedKey
 	hidden [bool] $SetupComplete
 	hidden [string] $messages
+	hidden [string] $ScheduleMessage
 	[PSObject] $ControlSettings;
 	
 	CAAutomation(
@@ -49,8 +56,11 @@ class CAAutomation : ADOSVTCommandBase
 		[string] $ResourceGroupName, `
 		[string] $LAWorkspaceId, `
 		[string] $LAWorkspaceKey, `
+		[string] $AltLAWorkspaceId, `
+		[string] $AltLAWorkspaceKey, `
 		[string] $Proj, `
 		[string] $ExtCmd, `
+		[int] $ScanIntervalInHours,
 		[InvocationInfo] $invocationContext, `
 		[bool] $CreateLAWS) : Base($OrgName, $invocationContext)
     {
@@ -69,6 +79,17 @@ class CAAutomation : ADOSVTCommandBase
 		$this.ScanTriggerLocalTime = $(Get-Date).AddMinutes(20)
 		$this.ControlSettings = [ConfigurationManager]::LoadServerConfigFile("ControlSettings.json");
 		$this.CreateLAWS = $CreateLAWS
+
+		if ($null -ne $ScanIntervalInHours)
+		{
+			$this.CRONExp = "0 */$($ScanIntervalInHours) * * *"
+			$this.ScheduleMessage = "Scan will trigger every $($ScanIntervalInHours) hours from 00:00 hours"
+		}
+		else
+		{
+			$this.CRONExp = "0 $($this.ScanTriggerTimeUTC.Minute) $($this.ScanTriggerTimeUTC.Hour) * * *";
+			$this.ScheduleMessage = "Scan will begin at $($this.ScanTriggerLocalTime)"
+		}
 
 		if (($null -ne $this.ControlSettings) -and [Helpers]::CheckMember($this.ControlSettings, "DockerImage.ImageName")) 
 		{
@@ -107,6 +128,27 @@ class CAAutomation : ADOSVTCommandBase
 			$this.LAWSId = $LAWorkspaceId
 			$this.LAWSSharedKey = $LAWorkspaceKey
 		}
+		if ([string]::IsNullOrWhiteSpace($AltLAWorkspaceId) -or [string]::IsNullOrWhiteSpace($AltLAWorkspaceKey) ) 
+		{
+			$this.AltLAWSId = $AltLAWorkspaceId
+			$this.AltLAWSSharedKey = $AltLAWorkspaceKey
+		}
+
+		$ModuleName = $this.invocationContext.MyCommand.Module.Name 
+		if(-not [string]::IsNullOrWhiteSpace($ModuleName))
+		{
+			switch($ModuleName.ToLower())
+			{
+				"azskpreview.ado" {
+					$this.ModuleEnv = "preview";
+					break;
+				} 
+				"azskstaging.ado" {
+					$this.ModuleEnv = "staging"
+					break;
+				}
+			}
+		}
 	}
 
 	CAAutomation(
@@ -116,6 +158,8 @@ class CAAutomation : ADOSVTCommandBase
 		[string] $ResourceGroupName, `
 		[string] $LAWorkspaceId, `
 		[string] $LAWorkspaceKey, `
+		[string] $AltLAWorkspaceId, `
+		[string] $AltLAWorkspaceKey, `
 		[string] $Proj, `
 		[string] $ExtCmd, `
 		[string] $RsrcTimeStamp, `
@@ -123,6 +167,8 @@ class CAAutomation : ADOSVTCommandBase
 		[string] $ModuleEnv, `
 		[bool] $UseDevTestImage, `
 		[int] $TriggerNextScanInMin, `
+		[int] $ScanIntervalInHours, `
+		[bool] $ClearExtendedCommand, `
 		[InvocationInfo] $invocationContext) : Base($OrgName, $invocationContext)
 		{
 			$this.SubscriptionId = $SubId
@@ -133,6 +179,9 @@ class CAAutomation : ADOSVTCommandBase
 			$this.SetupComplete = $false
 			$this.LAWSId = $LAWorkspaceId
 			$this.LAWSSharedKey = $LAWorkspaceKey
+			$this.AltLAWSId = $AltLAWorkspaceId
+			$this.AltLAWSSharedKey = $AltLAWorkspaceKey
+			$this.ClearExtCmd = $ClearExtendedCommand
 
 			#Some stuff for dev-test support
 			$this.NewImageName = $ContainerImageName
@@ -156,6 +205,12 @@ class CAAutomation : ADOSVTCommandBase
 			}
 			else{
 				$this.RGName = $ResourceGroupName
+			}
+
+			if ($null -ne $ScanIntervalInHours)
+			{
+				$this.CRONExp = "0 */$($ScanIntervalInHours) * * *"
+				$this.ScheduleMessage = "Scan will trigger every $($ScanIntervalInHours) hours from 00:00 hours"
 			}
 		}
 
@@ -307,7 +362,7 @@ class CAAutomation : ADOSVTCommandBase
 					{
 						$this.LAWSId = $LAWorkspace.CustomerId.Guid.ToString()
 						$SharedKeys = Get-AzOperationalInsightsWorkspaceSharedKey -Name $this.LAWSName -ResourceGroupName $this.RGname -WarningAction silentlycontinue
-						$this.LAWSSHaredKey = $SharedKeys.PrimarySharedKey
+						$this.LAWSSharedKey = $SharedKeys.PrimarySharedKey
 						$this.PublishCustomMessage("Log Analytics Workspace '$($this.LAWSName)' created", [MessageType]::Update);
 						$this.CreatedResources += $LAWorkspace.ResourceId
 					}
@@ -317,28 +372,59 @@ class CAAutomation : ADOSVTCommandBase
 				$KeyVault = New-AzKeyVault -Name $this.KeyVaultName -ResourceGroupName $this.RGname -Location $this.Location
 				if($null -eq $KeyVault) 
 				{
-					$this.PublishCustomMessage("KeyVault '$($this.KeyVaultName)' creation failed", [MessageType]::Error);
+					$this.PublishCustomMessage("Azure key vault '$($this.KeyVaultName)' creation failed", [MessageType]::Error);
 				}
 				else
 				{
-					$this.PublishCustomMessage("KeyVault '$($this.KeyVaultName)' created", [MessageType]::Update);
+					$this.PublishCustomMessage("Azure key vault '$($this.KeyVaultName)' created", [MessageType]::Update);
 					$this.CreatedResources += $KeyVault.resourceid
 				}
 		
 		
-				#Step 8: Add PAT token secret to KeyVault
+				#Step 8a: Add PAT token secret to KeyVault
 				#$Secret = ConvertTo-SecureString -String $this.PATToken -AsPlainText -Force
 				$CreatedSecret = Set-AzKeyVaultSecret -VaultName $this.KeyVaultName -Name $this.SecretName -SecretValue $this.PATToken
 				if($null -eq $CreatedSecret) 
 				{
-					$this.PublishCustomMessage("PAT Secret creation in KeyVault failed", [MessageType]::Error);
+					$this.PublishCustomMessage("PAT Secret creation in Azure key vault failed", [MessageType]::Error);
 				}
 				else
 				{
-					$this.PublishCustomMessage("PAT Secret created in KeyVault", [MessageType]::Update);
+					$this.PublishCustomMessage("PAT Secret created in Azure key vault", [MessageType]::Update);
 				}
-		
-		
+
+				#Step 8b: Add LA Shared Key secret to KeyVault
+				$CreatedLASecret = $null
+				if (-not [string]::IsNullOrEmpty($this.LAWSSharedKey))
+				{
+					$secureStringKey = ConvertTo-SecureString $this.LAWSSharedKey -AsPlainText -Force
+					$CreatedLASecret = Set-AzKeyVaultSecret -VaultName $this.KeyVaultName -Name $this.LASecretName -SecretValue $secureStringKey 
+					if($null -eq $CreatedLASecret) 
+					{
+						$this.PublishCustomMessage("LA shared key secret creation in Azure key vault failed", [MessageType]::Error);
+					}
+					else
+					{
+						$this.PublishCustomMessage("LA shared key secret created in Azure key vault", [MessageType]::Update);
+					}
+				}
+
+				#Step 8c: Add alternate LA Shared Key secret to KeyVault
+				$CreatedAltLASecret = $null
+				if (-not [string]::IsNullOrEmpty($this.AltLAWSSharedKey))
+				{
+					$secureStringAltKey = ConvertTo-SecureString $this.AltLAWSSharedKey -AsPlainText -Force
+					$CreatedAltLASecret = Set-AzKeyVaultSecret -VaultName $this.KeyVaultName -Name $this.AltLASecretName -SecretValue $secureStringAltKey
+					if($null -eq $CreatedAltLASecret) 
+					{
+						$this.PublishCustomMessage("Alternate LA shared key secret creation in Azure key vault failed", [MessageType]::Error);
+					}
+					else
+					{
+						$this.PublishCustomMessage("Alternate LA shared key secret created in Azure key vault", [MessageType]::Update);
+					}
+				}
+
 				#Step 9: Get Identity details of function app to provide access on keyvault and storage
 				$FuncApp = Get-AzWebApp -Name $this.FuncAppName -ResourceGroupName $this.RGname		
 				$FuncAppIdentity= $FuncApp.Identity.PrincipalId 						
@@ -346,11 +432,11 @@ class CAAutomation : ADOSVTCommandBase
 				$IsMSIAccess = $MSIAccessToKV.AccessPolicies | ForEach-Object { if ($_.ObjectId -match $FuncAppIdentity ) {return $true }}
 				if($IsMSIAccess -eq $true) 
 				{
-					$this.PublishCustomMessage("MSI access to KeyVault provided", [MessageType]::Update);
+					$this.PublishCustomMessage("MSI access to Azure key vault provided", [MessageType]::Update);
 				}
 				else
 				{
-					$this.PublishCustomMessage("MSI access to KeyVault failed", [MessageType]::Error);
+					$this.PublishCustomMessage("MSI access to Azure key vault failed", [MessageType]::Error);
 				}
 		
 				$MSIAccessToSA = New-AzRoleAssignment -ObjectId $FuncAppIdentity  -RoleDefinitionName "Contributor" -ResourceName $this.StorageName -ResourceGroupName $this.RGname -ResourceType Microsoft.Storage/storageAccounts
@@ -367,7 +453,23 @@ class CAAutomation : ADOSVTCommandBase
 				#Step 10: Configure required env variables in function app for scan
 				$uri = $CreatedSecret.Id
 				$uri = $uri.Substring(0,$uri.LastIndexOf('/'))
-		
+
+				$sharedKeyUri = ""
+				if (-not [string]::IsNullOrEmpty($CreatedLASecret))
+				{
+					$sharedKeyUri = $CreatedLASecret.Id
+					$sharedKeyUri = $sharedKeyUri.Substring(0,$sharedKeyUri.LastIndexOf('/'))
+					$sharedKeyUri = "@Microsoft.KeyVault(SecretUri=$sharedKeyUri)"
+				}
+
+				$altSharedKeyUri = ""
+				if (-not [string]::IsNullOrEmpty($CreatedAltLASecret))
+				{
+					$altSharedKeyUri = $CreatedAltLASecret.Id
+					$altSharedKeyUri = $altSharedKeyUri.Substring(0,$altSharedKeyUri.LastIndexOf('/'))
+					$altSharedKeyUri = "@Microsoft.KeyVault(SecretUri=$altSharedKeyUri)"
+				}
+				
 				#Turn on "Always ON" for function app and also fetch existing app settings and append the required ones. This has to be done as appsettings get overwritten
 				$WebApp = Get-AzWebApp -Name $this.FuncAppName -ResourceGroupName $this.RGname #-AlwaysOn $true
 				$ExistingAppSettings = $WebApp.SiteConfig.AppSettings 
@@ -380,16 +482,20 @@ class CAAutomation : ADOSVTCommandBase
 				}
 		
 				$NewAppSettings = @{
-								"ScheduleTriggerTime" = "0 $($this.ScanTriggerTimeUTC.Minute) $($this.ScanTriggerTimeUTC.Hour) * * *";
+								"ScheduleTriggerTime" = $this.CRONExp;
 								"SubscriptionId" = $this.SubscriptionId;
 								"LAWSId" = $this.LAWSId;
-								"LAWSSharedKey" = $this.LAWSSharedKey;
+								"LAWSSharedKey" = $sharedKeyUri;
+								"AltLAWSId" = $this.AltLAWSId;
+								"AltLAWSSharedKey" = $altSharedKeyUri;
 								"OrgName" = $this.OrganizationToScan;
 								"PATToken" = "@Microsoft.KeyVault(SecretUri=$uri)";
 								"StorageRG" = $this.RGname;
 								"ProjectNames" = $this.ProjectNames;
 								"ExtendedCommand" = $this.ExtendedCommand;
 								"StorageName" = $this.StorageName;
+								"AzSKADOModuleEnv" = $this.ModuleEnv;
+								"AzSKADOVersion" = "";
 							}
 				$AppSettings = $NewAppSettings + $AppSettingsHT 
 		
@@ -406,7 +512,7 @@ class CAAutomation : ADOSVTCommandBase
 				$this.PublishCustomMessage("`r`nSetup Complete!", [MessageType]::Update);
 				Restart-AzFunctionApp -name $this.FuncAppName -ResourceGroupName $this.RGname -SubscriptionId $this.SubscriptionId -Force
 		
-				$this.PublishCustomMessage("Scan will begin at $($this.ScanTriggerLocalTime)", [MessageType]::Update);
+				$this.PublishCustomMessage($this.ScheduleMessage, [MessageType]::Update);
 				$this.SetupComplete = $true
 				$this.DoNotOpenOutputFolder = $true
 				$messageData += [MessageData]::new("The following resources were created in resource group $($this.RGName) as part of AzSK.ADO Continuous Assurance", ($this.CreatedResources| Out-String))
@@ -447,7 +553,10 @@ class CAAutomation : ADOSVTCommandBase
     {
 		[MessageData[]] $messageData = @();
 		$updateAppSettings = $false
-		$updatePATToken = $false
+		$updateSecret = $false
+		$CreatedSecret = $null
+		$CreatedLASecret = $null
+		$CreatedAltLASecret = $null
 
 		$this.messages += ([Constants]::DoubleDashLine + "`r`nStarted updating Continuous Assurance (CA)`r`n"+[Constants]::DoubleDashLine);
 		$this.PublishCustomMessage($this.messages, [MessageType]::Info);
@@ -465,13 +574,17 @@ class CAAutomation : ADOSVTCommandBase
 				#Step 1: Validate if app settings update is required based on input paramaeters. 
 				$this.invocationContext.BoundParameters.GetEnumerator() | foreach-object {
 					# If input param is other than below 3 then app settings update will be required
-					if($_.Key -ne "SubscriptionId" -and $_.Key -ne "ResourceGroupName" -and $_.Key -ne "PATToken")
+					if($_.Key -ne "SubscriptionId" -and $_.Key -ne "ResourceGroupName" -and $_.Key -ne "PATToken" )
 					{
 						$updateAppSettings = $true
 					}
-					if($_.Key -eq "PATToken")
+					if($_.Key -eq "PATToken" -or $_.Key -eq "AltLAWSSharedKey" -or $_.Key -eq "LAWSSharedKey")
 					{
-						$updatePATToken = $true
+						$updateSecret = $true
+					}
+					if($_.Key -eq "ClearExtendedCommand")
+					{
+						$updateAppSettings = $true
 					}
 				}
 
@@ -488,13 +601,13 @@ class CAAutomation : ADOSVTCommandBase
 				}
 				
 				#Step 3: If only subid and/or RG name params are used then display below message
-				if ($updateAppSettings -eq $false -and $updatePATToken -eq $false)
+				if ($updateAppSettings -eq $false -and $updateSecret -eq $false)
 				{
 					$this.PublishCustomMessage("Please use additonal parameters to perform update on LAWSId, LAWSSharedKey, OrganizationName, PATToken, ProjectNames, ExtendedCommand", [MessageType]::Info);
 				}
 
 				#Step 4: Update PATToken in KV (if applicable)
-				if ($updatePATToken -eq $true)
+				if ($updateSecret -eq $true)
 				{
 
 					$kvToUpdate = $this.KVDefaultName + $this.RsrcTimeStamp
@@ -510,14 +623,46 @@ class CAAutomation : ADOSVTCommandBase
 						$this.PublishCustomMessage("More than one ADOScanner KeyVault is available in resource group '$($this.RGname)'. Update Failed!`r`nConsider using the '-RsrcTimeStamp' param.", [MessageType]::Error);
 					}
 					else {
-						$CreatedSecret = Set-AzKeyVaultSecret -VaultName $keyVaultResource[0] -Name $this.SecretName -SecretValue $this.PATToken
-						if($null -eq $CreatedSecret) 
+						if (-not [string]::IsNullOrEmpty($this.PATToken))
 						{
-							$this.PublishCustomMessage("Unable to update PATToken. Please validate your permissions in access policy of the KeyVault '$($keyVaultResource[0])'", [MessageType]::Error);
+							$CreatedSecret = Set-AzKeyVaultSecret -VaultName $keyVaultResource[0] -Name $this.SecretName -SecretValue $this.PATToken
+							if($null -eq $CreatedSecret) 
+							{
+								$this.PublishCustomMessage("Unable to update PATToken. Please validate your permissions in access policy of the Azure key vault '$($keyVaultResource[0])'", [MessageType]::Error);
+							}
+							else
+							{
+								$this.PublishCustomMessage("PAT secret updated in '$($keyVaultResource[0])' Azure key vault", [MessageType]::Update);
+								$updateAppSettings -eq $true # So that app settings can also be updated with KeyVault URI
+							}
 						}
-						else
+						if (-not [string]::IsNullOrEmpty($this.LAWSSharedKey))
 						{
-							$this.PublishCustomMessage("Secret updated in '$($keyVaultResource[0])' KeyVault", [MessageType]::Update);
+							$secureStringKey = ConvertTo-SecureString $this.LAWSSharedKey -AsPlainText -Force
+							$CreatedLASecret = Set-AzKeyVaultSecret -VaultName $keyVaultResource[0] -Name $this.LASecretName -SecretValue $secureStringKey
+							if($null -eq $CreatedLASecret) 
+							{
+								$this.PublishCustomMessage("Unable to update LA shared key. Please validate your permissions in access policy of the Azure key vault '$($keyVaultResource[0])'", [MessageType]::Error);
+							}
+							else
+							{
+								$this.PublishCustomMessage("LA shared key secret updated in '$($keyVaultResource[0])' Azure key vault", [MessageType]::Update);
+								$updateAppSettings -eq $true
+							}
+						}
+						if (-not [string]::IsNullOrEmpty($this.AltLAWSSharedKey))
+						{
+							$secureStringAltKey = ConvertTo-SecureString $this.AltLAWSSharedKey -AsPlainText -Force
+							$CreatedAltLASecret = Set-AzKeyVaultSecret -VaultName $keyVaultResource[0] -Name $this.AltLASecretName -SecretValue $secureStringAltKey
+							if($null -eq $CreatedAltLASecret) 
+							{
+								$this.PublishCustomMessage("Unable to update alternate LA shared key. Please validate your permissions in access policy of the Azure key vault '$($keyVaultResource[0])'", [MessageType]::Error);
+							}
+							else
+							{
+								$this.PublishCustomMessage("Alternate LA shared key secret updated in '$($keyVaultResource[0])' Azure key vault", [MessageType]::Update);
+								$updateAppSettings -eq $true
+							}
 						}
 					}
 				}
@@ -551,10 +696,31 @@ class CAAutomation : ADOSVTCommandBase
 						{
 							$AppSettingsHT["OrgName"] = $this.OrganizationToScan
 						}
-						if(-not [string]::IsNullOrEmpty($this.LAWSId) -and -not [string]::IsNullOrEmpty($this.LAWSSharedKey))
+						if((-not [string]::IsNullOrEmpty($this.PATToken)) -and (-not [string]::IsNullOrEmpty($CreatedSecret)))
+						{
+							$patUri = $CreatedSecret.Id
+							$patUri = $patUri.Substring(0,$patUri.LastIndexOf('/'))
+							$AppSettingsHT["PATToken"] = "@Microsoft.KeyVault(SecretUri=$patUri)";
+						}
+						if(-not [string]::IsNullOrEmpty($this.LAWSId))
 						{
 							$AppSettingsHT["LAWSId"] = $this.LAWSId
-							$AppSettingsHT["LAWSSharedKey"] = $this.LAWSSharedKey
+						}
+						if((-not [string]::IsNullOrEmpty($this.LAWSSharedKey)) -and (-not [string]::IsNullOrEmpty($CreatedLASecret)))
+						{
+							$sharedKeyUri = $CreatedLASecret.Id
+							$sharedKeyUri = $sharedKeyUri.Substring(0,$sharedKeyUri.LastIndexOf('/'))
+							$AppSettingsHT["LAWSSharedKey"] = "@Microsoft.KeyVault(SecretUri=$sharedKeyUri)";
+						}
+						if(-not [string]::IsNullOrEmpty($this.AltLAWSId))
+						{
+							$AppSettingsHT["LAWSId"] = $this.AltLAWSId
+						}
+						if((-not [string]::IsNullOrEmpty($this.AltLAWSSharedKey)) -and (-not [string]::IsNullOrEmpty($CreatedAltLASecret)))
+						{
+							$altSharedKeyUri = $CreatedAltLASecret.Id
+							$altSharedKeyUri = $altSharedKeyUri.Substring(0,$altSharedKeyUri.LastIndexOf('/'))
+							$AppSettingsHT["AltLAWSSharedKey"] = "@Microsoft.KeyVault(SecretUri=$altSharedKeyUri)";
 						}
 						if(-not [string]::IsNullOrEmpty( $this.ExtendedCommand ))
 						{
@@ -564,6 +730,15 @@ class CAAutomation : ADOSVTCommandBase
 						{
 							$AppSettingsHT["ProjectNames"] = $this.ProjectNames
 						}
+						if(-not [string]::IsNullOrEmpty( $this.CRONExp ))
+						{
+							$AppSettingsHT["ScheduleTriggerTime"] = $this.CRONExp
+						}
+						if($this.ClearExtCmd -eq $true)
+						{
+							$AppSettingsHT["ExtendedCommand"] = ""
+						}
+
 						#------------- Begin: DEV-TEST support stuff ---------------
 						if(-not [string]::IsNullOrEmpty( $this.NewImageName ))
 						{
@@ -571,7 +746,7 @@ class CAAutomation : ADOSVTCommandBase
 						}
 						if(-not [string]::IsNullOrEmpty( $this.ModuleEnv ))
 						{
-							$AppSettingsHT["ModuleEnv"] = $this.ModuleEnv
+							$AppSettingsHT["AzSKADOModuleEnv"] = $this.ModuleEnv
 						}
 						if(-not [string]::IsNullOrEmpty( $this.UseDevTestImage ))
 						{
