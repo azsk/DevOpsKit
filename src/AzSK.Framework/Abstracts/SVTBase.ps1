@@ -34,6 +34,7 @@ class SVTBase: AzSKRoot
 	[string] $PartialScanIdentifier = [string]::Empty
 	[ComplianceStateTableEntity[]] $ComplianceStateData = @();
 	[PSObject[]] $ChildSvtObjects = @();
+	[System.Diagnostics.Stopwatch] $StopWatch
 	#EndRegion
 
 	SVTBase([string] $subscriptionId):
@@ -567,11 +568,17 @@ class SVTBase: AzSKRoot
 
     hidden [SVTEventContext[]] GetAutomatedSecurityStatus()
     {
-        [SVTEventContext[]] $automatedControlsResult = @();
+		[SVTEventContext[]] $automatedControlsResult = @();
+
+		if ($this.invocationContext.MyCommand.ModuleName -match "staging")
+		{
+			$this.StopWatch = [System.Diagnostics.Stopwatch]::StartNew();
+		}
+		
 		$this.DirtyResourceStates = @();
         try
         {
-            $this.GetApplicableControls() | Where-Object { $_.Automated -ne "No" -and (-not [string]::IsNullOrEmpty($_.MethodName)) } |
+			$this.GetApplicableControls() | Where-Object { $_.Automated -ne "No" -and (-not [string]::IsNullOrEmpty($_.MethodName)) } |
             ForEach-Object {
 				$eventContext = $this.RunControl($_);
 				if($null -ne $eventContext -and $eventcontext.ControlResults.Length -gt 0)
@@ -633,7 +640,20 @@ class SVTBase: AzSKRoot
             {
                 $methodName = $controlItem.MethodName;
 				#$this.CurrentControlItem = $controlItem;
-				$singleControlResult.ControlResults += $this.$methodName($azskScanResult);
+
+				#Getting scan time for each control in Staging environment
+				if ($this.invocationContext.MyCommand.ModuleName -match "staging")
+				{
+					$this.StopWatch.Restart()
+					$scanResult = $this.$methodName($azskScanResult);
+					$this.StopWatch.Stop()
+					$scanResult.ScanTimeInMilliSec = $this.StopWatch.Elapsed.Milliseconds
+					$singleControlResult.ControlResults += $scanResult	
+				}	
+				else
+				{
+					$singleControlResult.ControlResults += $this.$methodName($azskScanResult);
+				}		
             }
             catch
             {
