@@ -110,7 +110,7 @@ class LogAnalyticsMonitoring #: CommandBase
         if ($ErrorMessages)
         {
 			if ($ErrorMessages -like "*A Workbook with the same name already exists within this subscription*") {
-			     Write-Host "Could not deploye workbook. A Workbook with the same name already exists within this subscription" -BackgroundColor red;
+			     Write-Host "Could not deploy the workbook. A Workbook with the same name already exists within this subscription" -BackgroundColor red;
 			}
 			else {
 			"", ("{0} returned the following errors:" -f ("Template deployment", "Validation")[[bool]$_validateOnly]), @($ErrorMessages) | ForEach-Object { $this.PublishCustomMessage([MessageData]::new($_));}

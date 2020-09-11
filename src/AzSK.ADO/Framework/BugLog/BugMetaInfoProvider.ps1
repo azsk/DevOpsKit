@@ -6,18 +6,18 @@ class BugMetaInfoProvider {
     hidden static [PSObject] $ServiceDetails;
     hidden [InvocationInfo] $InvocationContext
     hidden [PSObject] $ControlSettingsBugLog
-    hidden static [bool] $BuildSTFileAvailableOnServer = $true;
-    hidden static [bool] $ReleaseSTFileAvailableOnServer = $true;
-    hidden static [bool] $ServiceTreeFileAvailableOnServer = $true;
+    hidden static [bool] $CheckBuildSTFileOnServer = $true;
+    hidden static [bool] $CheckReleaseSTFileOnServer = $true;
+    hidden static [bool] $CheckServiceTreeFileOnServer = $true;
 
     BugMetaInfoProvider() {
     }
 
     hidden static Initialize()
 	{
-        [BugMetaInfoProvider]::BuildSTFileAvailableOnServer = $true;		
-        [BugMetaInfoProvider]::ReleaseSTFileAvailableOnServer = $true;		
-        [BugMetaInfoProvider]::ServiceTreeFileAvailableOnServer = $true;		
+        [BugMetaInfoProvider]::CheckBuildSTFileOnServer = $true;		
+        [BugMetaInfoProvider]::CheckReleaseSTFileOnServer = $true;		
+        [BugMetaInfoProvider]::CheckServiceTreeFileOnServer = $true;		
 	}
 
     hidden [string] GetAssignee([SVTEventContext[]] $ControlResult, [InvocationInfo] $InvocationContext, $controlSettingsBugLog) {
@@ -133,28 +133,32 @@ class BugMetaInfoProvider {
     hidden [string] CalculateAssigneeBuild([SVTEventContext[]] $ControlResult, $buildId) {
         $buildSTDataFileName ="BuildSTData.json";
         try {
+            #If file is not cached then load from server
             if (![BugMetaInfoProvider]::BuildSTDetails) {
                 
                 if([Helpers]::CheckMember($this.ControlSettingsBugLog, "BuildSTData"))
                 {
                     $buildSTDataFileName = $this.ControlSettingsBugLog.BuildSTData;
                 }
-                if ([BugMetaInfoProvider]::BuildSTFileAvailableOnServer) {
+                if ([BugMetaInfoProvider]::CheckBuildSTFileOnServer) {
                     [BugMetaInfoProvider]::BuildSTDetails = [ConfigurationManager]::LoadServerConfigFile($buildSTDataFileName);
                 }
             }
-            $buildSTDeatils = [BugMetaInfoProvider]::BuildSTDetails.Data | Where-Object { $_.buildDefinitionID -eq $buildId }; 
-            if ($buildSTDeatils) {
-                $assignee = $this.GetDataFromServiceTree($buildSTDeatils.serviceID);
-                if ($assignee) {
-                    return $assignee;
+            if([BugMetaInfoProvider]::BuildSTDetails -and [Helpers]::CheckMember([BugMetaInfoProvider]::BuildSTDetails, "Data"))
+            {
+                $buildSTDeatils = [BugMetaInfoProvider]::BuildSTDetails.Data | Where-Object { $_.buildDefinitionID -eq $buildId }; 
+                if ($buildSTDeatils) {
+                    $assignee = $this.GetDataFromServiceTree($buildSTDeatils.serviceID);
+                    if ($assignee) {
+                        return $assignee;
+                    }
+                    else {
+                        return $this.GetAssigneeFallback($ControlResult)
+                    }
                 }
                 else {
                     return $this.GetAssigneeFallback($ControlResult)
                 }
-            }
-            else {
-                return $this.GetAssigneeFallback($ControlResult)
             }
             #if no triggers found assign to the creator
             else {
@@ -163,10 +167,10 @@ class BugMetaInfoProvider {
         }
         catch {
             if ($_.Exception.Message -like "Unable to find the specified file*") {
-                [BugMetaInfoProvider]::BuildSTFileAvailableOnServer = $false;
+                [BugMetaInfoProvider]::CheckBuildSTFileOnServer = $false;
                 Write-Host "Could not find build service tree data file [$($buildSTDataFileName)]." -ForegroundColor Yellow
             }
-            return "";
+            return $this.GetAssigneeFallback($ControlResult);
         }	
     }
 
@@ -179,24 +183,28 @@ class BugMetaInfoProvider {
                 {
                     $releaseSTDataFileName = $this.ControlSettingsBugLog.ReleaseSTData;
                 }
-                if ([BugMetaInfoProvider]::ReleaseSTFileAvailableOnServer) {
+                if ([BugMetaInfoProvider]::CheckReleaseSTFileOnServer) {
                     [BugMetaInfoProvider]::ReleaseSTDetails = [ConfigurationManager]::LoadServerConfigFile($releaseSTDataFileName);   
                 }
                 [BugMetaInfoProvider]::ReleaseSTDetails = [ConfigurationManager]::LoadServerConfigFile($releaseSTDataFileName)
             }
-            $releaseSTDeatils = [BugMetaInfoProvider]::ReleaseSTDetails.Data | Where-Object { $_.releaseDefinitionID -eq $relDefId }; 
-                
-            if ($releaseSTDeatils) {
-                $assignee = $this.GetDataFromServiceTree($releaseSTDeatils.serviceID);
-                if ($assignee) {
-                    return $assignee;
+
+            if([BugMetaInfoProvider]::ReleaseSTDetails -and [Helpers]::CheckMember([BugMetaInfoProvider]::ReleaseSTDetails, "Data"))
+            {
+                $releaseSTDeatils = [BugMetaInfoProvider]::ReleaseSTDetails.Data | Where-Object { $_.releaseDefinitionID -eq $relDefId }; 
+                    
+                if ($releaseSTDeatils) {
+                    $assignee = $this.GetDataFromServiceTree($releaseSTDeatils.serviceID);
+                    if ($assignee) {
+                        return $assignee;
+                    }
+                    else {
+                        return $this.GetAssigneeFallback($ControlResult)
+                    }
                 }
                 else {
                     return $this.GetAssigneeFallback($ControlResult)
                 }
-            }
-            else {
-                return $this.GetAssigneeFallback($ControlResult)
             }                            
             #if no triggers found then fallback option
             else {
@@ -205,10 +213,10 @@ class BugMetaInfoProvider {
         }
         catch {
             if ($_.Exception.Message -like "Unable to find the specified file*") {
-                [BugMetaInfoProvider]::ReleaseSTFileAvailableOnServer = $false;
+                [BugMetaInfoProvider]::CheckReleaseSTFileOnServer = $false;
                 Write-Host "Could not find release service tree data file [$($releaseSTDataFileName)]." -ForegroundColor Yellow
             }
-            return "";
+            return $this.GetAssigneeFallback($ControlResult)
         }	
     }
 
@@ -300,28 +308,32 @@ class BugMetaInfoProvider {
                 {
                     $serviceDataFileName = $this.ControlSettingsBugLog.ServiceTreeData;
                 }
-                if ([BugMetaInfoProvider]::ServiceTreeFileAvailableOnServer) {
+                if ([BugMetaInfoProvider]::CheckServiceTreeFileOnServer) {
                     [BugMetaInfoProvider]::ServiceDetails = [ConfigurationManager]::LoadServerConfigFile($serviceDataFileName);
                 }
             }
-            $serviceTree = [BugMetaInfoProvider]::ServiceDetails.Data | Where-Object { $_.serviceID -eq $serviceId };
-            if ($serviceTree) {
-                [BugLogPathManager]::AreaPath = $serviceTree.areaPath.Replace("\", "\\");
-                $domainNameForAssignee = "microsoft.com"
-                if([Helpers]::CheckMember($this.ControlSettingsBugLog, "DomainName"))
-                {
-                    $domainNameForAssignee = $this.ControlSettingsBugLog.DomainName;
+            if ([BugMetaInfoProvider]::ServiceDetails -and [Helpers]::CheckMember([BugMetaInfoProvider]::ServiceDetails, "Data")) {
+                $serviceTree = [BugMetaInfoProvider]::ServiceDetails.Data | Where-Object { $_.serviceID -eq $serviceId };
+                if ($serviceTree) {
+                    [BugLogPathManager]::AreaPath = $serviceTree.areaPath.Replace("\", "\\");
+                    $domainNameForAssignee = "microsoft.com"
+                    if([Helpers]::CheckMember($this.ControlSettingsBugLog, "DomainName"))
+                    {
+                        $domainNameForAssignee = $this.ControlSettingsBugLog.DomainName;
+                    }
+                    return $serviceTree.devOwner.Split(";")[0] + "@"+ $domainNameForAssignee
                 }
-                return $serviceTree.devOwner.Split(";")[0] + "@"+ $domainNameForAssignee
+                else {
+                    return "";
+                }
             }
             else {
                 return "";
             }
-           
         }
         catch {
             if ($_.Exception.Message -like "Unable to find the specified file*") {
-                [BugMetaInfoProvider]::ServiceTreeFileAvailableOnServer = $false;
+                [BugMetaInfoProvider]::CheckServiceTreeFileOnServer = $false;
                 Write-Host "Could not find service tree data file [$($serviceDataFileName)]." -ForegroundColor Yellow
             }
             return "";
