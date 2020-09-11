@@ -275,7 +275,7 @@
     "MaxKeyWordsToQueryForBugClose": 30,
     "AutoCloseProjectBug": true,
     "AutoCloseOrgBug": true,
-    "BugAssigneeAndPathCustomFlow": true,
+    "BugAssigneeAndPathCustomFlow": false,
     "BuildSTData": "BuildSTData",
     "ReleaseSTData": "ReleaseSTData",
     "ServiceTreeData": "ServiceTreeData"
