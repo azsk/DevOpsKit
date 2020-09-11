@@ -278,7 +278,8 @@
     "BugAssigneeAndPathCustomFlow": false,
     "BuildSTData": "BuildSTData.json",
     "ReleaseSTData": "ReleaseSTData.json",
-    "ServiceTreeData": "ServiceTreeData.json"
+    "ServiceTreeData": "ServiceTreeData.json",
+    "DomainName": "microsoft.com"
   },
   "GenerateSecurityEvaluationJsonFile" : false
 }
