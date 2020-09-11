@@ -98,7 +98,10 @@ class ADOSVTCommandBase: SVTCommandBase {
 
     [void] InitializeControlState() {
       if (-not $this.ControlStateExt) {
-          $settings = [AzSKSettings]::new($this.SubscriptionContext, $this.InvocationContext);
+          #ADOTODO: Do we still need this? 
+          #ADOTODO: The InvocationContext will change for each cmdlet run in a session. 
+          #So what benefit is there from caching the first one with AzSKSettings? (Need to investigate)
+          [AzSKSettings]::InitContexts($this.SubscriptionContext, $this.InvocationContext);
           $this.ControlStateExt = [ControlStateExtension]::new($this.SubscriptionContext, $this.InvocationContext);
           $this.ControlStateExt.UniqueRunId = $this.AttestationUniqueRunId
           $this.ControlStateExt.Initialize($false);

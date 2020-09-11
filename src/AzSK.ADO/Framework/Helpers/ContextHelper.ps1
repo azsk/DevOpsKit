@@ -164,6 +164,30 @@ class ContextHelper {
         #$contextObj.AccessToken = $patToken
         #$contextObj.AccessToken =  ConvertTo-SecureString -String $context.AccessToken -asplaintext -Force
         [ContextHelper]::currentContext = $contextObj
+
+
+        $apiURL = "https://dev.azure.com/{0}/_apis/connectionData" -f [ContextHelper]::orgName
+        #Note: cannot use this WRH method below due to ordering constraints during load in Framework.ps1
+        #$header = [WebRequestHelper]::GetAuthHeaderFromUri($apiURL);
+        $user = ""
+        $base64AuthInfo = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(("{0}:{1}" -f $user, $contextObj.AccessToken)))
+        $headers = @{
+                        "Authorization"= ("Basic " + $base64AuthInfo); 
+                        "Content-Type"="application/json"
+                    };
+        $responseObj = Invoke-RestMethod -Method Get -Uri $apiURL -Headers $headers -UseBasicParsing
+
+        #If the token is valid, we get: "descriptor"="Microsoft.IdentityModel.Claims.ClaimsIdentity;72f988bf-86f1-41af-91ab-2d7cd011db47\xyz@microsoft.com"
+        #Note that even for guest users, we get the host tenant (and not their native tenantId). E.g., "descriptor...;72f...47\pqr@live.com"
+        #If the token is invalid, we get a diff object: "descriptor":"System:PublicAccess;aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
+        $authNUserInfo = @(($responseObj.authenticatedUser.descriptor -split ';') -split '\\')
+    
+        #Check if the above split resulted in 3 elements (valid token case)
+        if ($authNUserInfo.Count -eq 3)
+        {
+            $contextObj.Tenant.Id = $authNUserInfo[1]
+            $contextObj.Account.Id = $authNUserInfo[2]
+        }
     }
 
     static [string] GetCurrentSessionUser() {

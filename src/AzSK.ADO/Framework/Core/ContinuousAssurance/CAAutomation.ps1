@@ -5,7 +5,7 @@ class CAAutomation : ADOSVTCommandBase
     hidden [string] $Location
     hidden [string] $OrganizationToScan
     hidden [System.Security.SecureString] $PATToken
-    hidden [string] $TimeStamp
+    hidden [string] $TimeStamp #Use for new CA creation only.
     hidden [string] $StorageName
 	hidden [string] $AppServicePlanName = "ADOScannerFAPlan"
 	hidden [string] $FuncAppDefaultName = "ADOScannerFA"
@@ -22,7 +22,15 @@ class CAAutomation : ADOSVTCommandBase
     hidden [string] $LAWSName = "ADOScannerLAWS"
     hidden [bool] $CreateLAWS 
     hidden [string] $ProjectNames 
-    hidden [string] $ExtendedCommand 
+	hidden [string] $ExtendedCommand 
+	
+	#UCA params for dev-test support
+	hidden [string] $RsrcTimeStamp = $null  #We will apply UCA to FunctionApp with this timestamp, e.g., "200830092449"
+	hidden [string] $NewImageName = $null	#Container image will be changed to this one. 
+	hidden [string] $ModuleEnv = "Prod"		#Tell CA to use 'Staging' or 'Prod' or 'Preview' module
+	hidden [bool] $UseDevTestImage = $false	#Tell CA to use dev-test (Staging) image packaged inside module
+	hidden [int] $TriggerNextScanInMin = 0	#Scan trigger time will be updated to "Now + N" min
+
     hidden [string] $LAWSsku = "Standard"
 	hidden [string[]] $CreatedResources = @();
 	hidden [string[]] $updatedAppSettings = @();
@@ -110,6 +118,11 @@ class CAAutomation : ADOSVTCommandBase
 		[string] $LAWorkspaceKey, `
 		[string] $Proj, `
 		[string] $ExtCmd, `
+		[string] $RsrcTimeStamp, `
+		[string] $ContainerImageName, `
+		[string] $ModuleEnv, `
+		[bool] $UseDevTestImage, `
+		[int] $TriggerNextScanInMin, `
 		[InvocationInfo] $invocationContext) : Base($OrgName, $invocationContext)
 		{
 			$this.SubscriptionId = $SubId
@@ -120,6 +133,13 @@ class CAAutomation : ADOSVTCommandBase
 			$this.SetupComplete = $false
 			$this.LAWSId = $LAWorkspaceId
 			$this.LAWSSharedKey = $LAWorkspaceKey
+
+			#Some stuff for dev-test support
+			$this.NewImageName = $ContainerImageName
+			$this.RsrcTimeStamp = $RsrcTimeStamp   
+			$this.ModuleEnv	= $ModuleEnv 
+			$this.UseDevTestImage = $UseDevTestImage 
+			$this.TriggerNextScanInMin = $TriggerNextScanInMin
 
 			<#
 			$this.ControlSettings = [ConfigurationManager]::LoadServerConfigFile("ControlSettings.json");
@@ -370,7 +390,7 @@ class CAAutomation : ADOSVTCommandBase
 								"ProjectNames" = $this.ProjectNames;
 								"ExtendedCommand" = $this.ExtendedCommand;
 								"StorageName" = $this.StorageName;
-								}
+							}
 				$AppSettings = $NewAppSettings + $AppSettingsHT 
 		
 				$updatedWebApp = Update-AzFunctionAppSetting -Name $this.FuncAppName -ResourceGroupName $this.RGname -AppSetting $AppSettings -Force
@@ -476,15 +496,18 @@ class CAAutomation : ADOSVTCommandBase
 				#Step 4: Update PATToken in KV (if applicable)
 				if ($updatePATToken -eq $true)
 				{
+
+					$kvToUpdate = $this.KVDefaultName + $this.RsrcTimeStamp
+
 					#Get KeyVault resource from RG
-					$keyVaultResource = @((Get-AzResource -ResourceGroupName $this.RGname -ResourceType "Microsoft.KeyVault/vaults").Name | where {$_ -match $this.KVDefaultName})
+					$keyVaultResource = @((Get-AzResource -ResourceGroupName $this.RGname -ResourceType "Microsoft.KeyVault/vaults").Name | where {$_ -match $kvToUpdate})
 					if($keyVaultResource.Count -eq 0)
 					{
 						$this.PublishCustomMessage("ADOScanner KeyVault is not available in resource group '$($this.RGname)'. Update Failed!", [MessageType]::Error);
 					}
 					elseif ($keyVaultResource.Count -gt 1)
 					{
-						$this.PublishCustomMessage("More than one ADOScanner KeyVault is available in resource group '$($this.RGname)'. Update Failed!", [MessageType]::Error);
+						$this.PublishCustomMessage("More than one ADOScanner KeyVault is available in resource group '$($this.RGname)'. Update Failed!`r`nConsider using the '-RsrcTimeStamp' param.", [MessageType]::Error);
 					}
 					else {
 						$CreatedSecret = Set-AzKeyVaultSecret -VaultName $keyVaultResource[0] -Name $this.SecretName -SecretValue $this.PATToken
@@ -502,15 +525,16 @@ class CAAutomation : ADOSVTCommandBase
 				#Step 5: Update Function app settings (if applicable)
 				if ($updateAppSettings -eq $true)
 				{
+					$funcAppToUpdate = $this.FuncAppDefaultName + $this.RsrcTimeStamp
 					#Get function app resource from RG to get existing app settings details
-					$appServResource = @((Get-AzResource -ResourceGroupName $this.RGname -ResourceType "Microsoft.Web/Sites").Name | where {$_ -match $this.FuncAppDefaultName})
+					$appServResource = @((Get-AzResource -ResourceGroupName $this.RGname -ResourceType "Microsoft.Web/Sites").Name | where {$_ -match $funcAppToUpdate})
 					if($appServResource.Count -eq 0)
 					{
 						$this.PublishCustomMessage("ADOScanner FunctionApp is not available in resource group '$($this.RGname)'. Update Failed!", [MessageType]::Error);
 					}
 					elseif ($appServResource.Count -gt 1)
 					{
-						$this.PublishCustomMessage("More than one ADOScanner app service is available in resource group '$($this.RGname)'. Update Failed!", [MessageType]::Error);
+						$this.PublishCustomMessage("More than one ADOScanner app service is available in resource group '$($this.RGname).'. Update Failed!`r`nConsider using the '-RsrcTimeStamp' param.", [MessageType]::Error);
 					}
 					else {
 						$WebApp = Get-AzWebApp -Name $appServResource[0] -ResourceGroupName $this.RGname
@@ -540,6 +564,25 @@ class CAAutomation : ADOSVTCommandBase
 						{
 							$AppSettingsHT["ProjectNames"] = $this.ProjectNames
 						}
+						#------------- Begin: DEV-TEST support stuff ---------------
+						if(-not [string]::IsNullOrEmpty( $this.NewImageName ))
+						{
+							Set-AzWebApp -Name $appServResource[0] -ResourceGroupName $this.RGname -ContainerImageName $this.NewImageName
+						}
+						if(-not [string]::IsNullOrEmpty( $this.ModuleEnv ))
+						{
+							$AppSettingsHT["ModuleEnv"] = $this.ModuleEnv
+						}
+						if(-not [string]::IsNullOrEmpty( $this.UseDevTestImage ))
+						{
+							$AppSettingsHT["UseDevTestImage"] = $this.UseDevTestImage
+						}
+						if($this.TriggerNextScanInMin -ne 0)
+						{					 
+							$startScanUTC = [System.DateTime]::UtcNow.AddMinutes($this.TriggerNextScanInMin)
+							$AppSettingsHT["ScheduleTriggerTime"] =  "0 $($startScanUTC.Minute) $($startScanUTC.Hour) * * *" #TODO: for dev-test, can we limit daily repetition?
+						}
+						#------------- End: DEV-TEST support stuff ---------------
 
 						$updatedWebApp = Update-AzFunctionAppSetting -Name $appServResource[0] -ResourceGroupName $this.RGname -AppSetting $AppSettingsHT -Force
 						if($null -eq $updatedWebApp) 
