@@ -193,6 +193,23 @@
         "SI"
       ],
       "Enabled": true
+    },
+    {
+      "ControlID": "ADO_Release_SI_Disable_Variable_Group_Edit_Permission",
+      "Description": "Do not include loosely permissioned variable groups in your pipeline.",
+      "Id": "Release210",
+      "ControlSeverity": "High",
+      "Automated": "Yes",
+      "MethodName": "CheckVariableGroupEditPermission",
+      "Rationale": "If a broad pool of users (e.g., Contributors) have edit permissions on a variable group, then integrity of your pipeline can be compromised by a malicious user who edits the variable group.",
+      "Recommendation": "1. Navigate to the release pipeline. 2. Click on Variables. 3. Click on each variable groups used in the pipeline. 4. Select 'Security' for the variable group. 5. Ensure Contributors have only reader access to the variable group.",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Automated",
+        "SI"
+      ],
+      "Enabled": true
     }
   ]
 }

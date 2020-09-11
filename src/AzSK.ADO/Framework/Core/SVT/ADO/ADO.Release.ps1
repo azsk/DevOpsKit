@@ -536,7 +536,7 @@ class Release: ADOSVTBase
         #filter task groups in each such env.
         $releaseEnv | ForEach-Object {
             #Task groups have type 'metaTask' whereas individual tasks have type 'task'
-            if($_.deployPhases[0].workflowTasks.definitiontype -eq 'metaTask')
+            if(([Helpers]::CheckMember($_.deployPhases[0].workflowTasks,"definitiontype")) -and ($_.deployPhases[0].workflowTasks.definitiontype -eq 'metaTask'))
             {
                 $taskGroups += $_.deployPhases[0].workflowTasks
             }
@@ -653,5 +653,74 @@ class Release: ADOSVTBase
             $controlResult.AddMessage([VerificationResult]::Passed,"No task groups found in release definition.");
         }
         return $controlResult;
+    }
+
+    hidden [ControlResult] CheckVariableGroupEditPermission([ControlResult] $controlResult)
+    {
+        
+        $varGrps = @();
+        $projectName = $this.ResourceContext.ResourceGroupName
+        $editableVarGrps = @();
+
+        #add var groups scoped at release scope.
+        if((($this.ReleaseObj[0].variableGroups) | Measure-Object).Count -gt 0)
+        {
+            $varGrps += $this.ReleaseObj[0].variableGroups
+        }
+
+        # Each release pipeline has atleast 1 env.
+        $envCount = ($this.ReleaseObj[0].environments).Count
+
+        for($i=0; $i -lt $envCount; $i++)
+        {
+            if((($this.ReleaseObj[0].environments[$i].variableGroups) | Measure-Object).Count -gt 0)
+            {
+                $varGrps += $this.ReleaseObj[0].environments[$i].variableGroups
+            }
+        }
+        
+        if(($varGrps | Measure-Object).Count -gt 0)
+        {
+            try
+            {   
+                $varGrps | ForEach-Object{
+                    $url = 'https://{0}.visualstudio.com/_apis/securityroles/scopes/distributedtask.variablegroup/roleassignments/resources/{1}%24{2}?api-version=6.1-preview.1' -f $($this.SubscriptionContext.SubscriptionName), $($this.ProjectId), $($_);
+                    $responseObj = [WebRequestHelper]::InvokeGetWebRequest($url);
+                    if(($responseObj | Measure-Object).Count -gt 0)
+                    {
+                        $contributorsObj = $responseObj | Where-Object {$_.identity.uniqueName -eq "[$projectName]\Contributors"}
+                        if($contributorsObj.role.name -ne 'Reader'){
+                            
+                            #Release object doesn't capture variable group name. We need to explicitly look up for its name via a separate web request.
+                            $varGrpURL = ("https://{0}.visualstudio.com/{1}/_apis/distributedtask/variablegroups/{2}") -f $($this.SubscriptionContext.SubscriptionName), $($this.ProjectId), $($_);
+                            $varGrpObj = [WebRequestHelper]::InvokeGetWebRequest($varGrpURL);
+                            
+                            $editableVarGrps += $varGrpObj[0].name
+                        } 
+                    }
+                }
+
+                if(($editableVarGrps | Measure-Object).Count -gt 0)
+                {
+                    $controlResult.AddMessage([VerificationResult]::Failed,"Contributors have edit permissions on the below variable groups used in release definition: ", $editableVarGrps);
+                    $controlResult.SetStateData("List of variable groups used in release definition that contributors can edit: ", $editableVarGrps); 
+                }
+                else 
+                {
+                    $controlResult.AddMessage([VerificationResult]::Passed,"Contributors do not have edit permissions on any variable groups used in release definition.");    
+                }
+            }
+            catch
+            {
+                $controlResult.AddMessage([VerificationResult]::Error,"Could not fetch the RBAC details of variable groups used in the pipeline.");
+            }
+             
+        }
+        else 
+        {
+            $controlResult.AddMessage([VerificationResult]::Passed,"No variable groups found in release definition.");
+        }
+
+        return $controlResult
     }
 }

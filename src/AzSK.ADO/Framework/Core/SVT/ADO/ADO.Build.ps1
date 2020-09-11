@@ -526,4 +526,50 @@ class Build: ADOSVTBase
         }
         return $controlResult;
     }
+    
+    hidden [ControlResult] CheckVariableGroupEditPermission([ControlResult] $controlResult)
+    {
+        if([Helpers]::CheckMember($this.BuildObj[0],"variableGroups"))
+        {
+            $varGrps = $this.BuildObj[0].variableGroups
+            $projectId = $this.BuildObj.project.id
+            $projectName = $this.BuildObj.project.name
+            $editableVarGrps = @();
+            try
+            {   
+                $varGrps | ForEach-Object{
+                    $url = 'https://{0}.visualstudio.com/_apis/securityroles/scopes/distributedtask.variablegroup/roleassignments/resources/{1}%24{2}?api-version=6.1-preview.1' -f $($this.SubscriptionContext.SubscriptionName), $($projectId), $($_.Id);
+                    $responseObj = [WebRequestHelper]::InvokeGetWebRequest($url);
+                    if(($responseObj | Measure-Object).Count -gt 0)
+                    {
+                        $contributorsObj = $responseObj | Where-Object {$_.identity.uniqueName -eq "[$projectName]\Contributors"}
+                        if($contributorsObj.role.name -ne 'Reader'){
+                            $editableVarGrps += $_.name
+                        } 
+                    }
+                }
+
+                if(($editableVarGrps | Measure-Object).Count -gt 0)
+                {
+                    $controlResult.AddMessage([VerificationResult]::Failed,"Contributors have edit permissions on the below variable groups used in build definition: ", $editableVarGrps);
+                    $controlResult.SetStateData("List of variable groups used in build definition that contributors can edit: ", $editableVarGrps); 
+                }
+                else 
+                {
+                    $controlResult.AddMessage([VerificationResult]::Passed,"Contributors do not have edit permissions on any variable groups used in build definition.");    
+                }
+            }
+            catch
+            {
+                $controlResult.AddMessage([VerificationResult]::Error,"Could not fetch the RBAC details of variable groups used in the pipeline.");
+            }
+             
+        }
+        else 
+        {
+            $controlResult.AddMessage([VerificationResult]::Passed,"No variable groups found in build definition.");
+        }
+
+        return $controlResult
+    }
 }
