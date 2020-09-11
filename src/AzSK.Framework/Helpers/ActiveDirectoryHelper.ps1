@@ -286,7 +286,7 @@ class ActiveDirectoryHelper {
                             		# flag used for validating the indexes entered by user.
                             		$validIndexFlag=$true
                             		$invalidindexes=""
-                            		$indexs=Read-Host "Enter comma separated index(s) from the above table:"
+                            		$indexs=Read-Host "Enter comma separated index(s) from the above table"
                             		$indexs = $indexs.Trim();
                             		if([string]::IsNullOrWhiteSpace($indexs) -or $indexs -eq ',')
                             		{

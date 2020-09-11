@@ -4366,9 +4366,9 @@ class CCAutomation: AzCommandBase
     [void] DeleteExistingCertificateForSPN()
     {
 		try{
-				$this.PublishCustomMessage("Starting Old Certificates Clean Up process...")
+				$this.PublishCustomMessage("Starting Old Certificate(s) clean up process...")
 				[ActiveDirectoryHelper]::UpdateADAppCredential($this.CAAADApplicationID,$null,$this.CertStartDate,$this.CertEndDate,"DeleteSelected")
-				$this.PublishCustomMessage("Old Certificates clean up process completed.")
+				$this.PublishCustomMessage("Old Certificate(s) clean up process completed.")
 			}
 		catch
 		{
