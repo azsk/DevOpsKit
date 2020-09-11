@@ -233,7 +233,7 @@ class ActiveDirectoryHelper {
                 	$display= $OldCerts|Format-Table -Property  @{name="Index";expression={$OldCerts.IndexOf($_)}},@{name="Thumbprint";expression={$_.customKeyIdentifier}},@{name="EndDate(MM/dd/yyyy)";expression={([datetime] $_.endDate).ToString("MM/dd/yyyy")}} | Out-String
                 	Write-Host $display
 
-                	Write-host "Before deleting make sure that these certificates are not used anywhere else!!!" -ForegroundColor Yellow
+                	Write-host "Before deleting make sure that these certificates are not used anywhere else!" -ForegroundColor Yellow
                 	Write-Host "Please select an action from below: `n[A]: Delete all`n[N]: Delete none`n[S]: Delete selected" -ForegroundColor Cyan         
                 
                 	# Initializing an empty array list to add certificates for deletion
