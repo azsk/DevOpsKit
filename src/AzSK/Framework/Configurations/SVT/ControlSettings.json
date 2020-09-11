@@ -556,9 +556,9 @@
   "PublicIpAddress": {
     "EnablePublicIpResource": false
    },
-   "PrivilegedRolesForSub" : ["Owner" , "Contributor" , "User Access Administrator"],
   "SeverityForSecContactAlerts": ["Medium","Low"],
   "MaxResourceInventoryObjectsCount": 20000,
   "AlernateAccountRegularExpressionForOrg": "",
+  "PrivilegedRolesForSub" : ["Owner" , "Contributor" , "User Access Administrator"],
   "GenerateSecurityEvaluationJsonFile": false
 }
