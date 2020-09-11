@@ -45,6 +45,9 @@ class CCAutomation: AzCommandBase
 	[bool] $AltLAWSVariablesExist = $false;
 	[bool] $OMSVariablesExist = $false;
 	[bool] $AltOMSVariablesExist = $false;
+    [bool] $SkipDeletionFlag = $false;
+    hidden [System.DateTime]$CertStartDate 
+    hidden [System.DateTime]$CertEndDate 
 	
 	CCAutomation(
 	[string] $subscriptionId, `
@@ -513,7 +516,7 @@ class CCAutomation: AzCommandBase
 		return $messages;
 	}	
 
-	[MessageData[]] UpdateAzSKContinuousAssurance($FixRuntimeAccount,$NewRuntimeAccount,$RenewCertificate,$FixModules)
+	[MessageData[]] UpdateAzSKContinuousAssurance($FixRuntimeAccount,$NewRuntimeAccount,$RenewCertificate,$FixModules,$SkipCertificateCleanup)
 	{
 		[MessageData[]] $messages = @();
 		try
@@ -534,6 +537,12 @@ class CCAutomation: AzCommandBase
             {
                 $FixRuntimeAccount = $true
             }
+
+            if($SkipCertificateCleanup)
+            {
+                $this.SkipDeletionFlag = $true
+            }
+
 			#region :Check if automation account is compatible for update
 			$existingAccount = $this.GetCABasicResourceInstance()
 			$automationTags = @()
@@ -590,7 +599,7 @@ class CCAutomation: AzCommandBase
 			else
 			{
 				if($RenewCertificate)
-				{
+				{                    
 					$runAsConnection = $this.GetRunAsConnection();
 					#create new certificate if certificate is deleted or expired 
 					if($runAsConnection)
@@ -600,6 +609,11 @@ class CCAutomation: AzCommandBase
 						{
                             $this.UpdateCCAzureRunAsAccount()
 							$this.PublishCustomMessage("Successfully renewed certificate (new expiry date: $((Get-Date).AddMonths(6).AddDays(1).ToString("yyyy-MM-dd"))) in the CA Automation Account.")
+                            
+                            if(-not $this.SkipDeletionFlag)
+                            {
+                            	$this.DeleteExistingCertificateForSPN()
+                            }
 							$this.isExistingADApp = $true
 						}
 						catch
@@ -3221,7 +3235,8 @@ class CCAutomation: AzCommandBase
 		
 			$appID = $connection.FieldDefinitionValues.ApplicationId
 			$azskADAppName = (Get-AzADApplication -ApplicationId $connection.FieldDefinitionValues.ApplicationId -ErrorAction stop).DisplayName
-		
+		    
+            
 			$this.CAAADApplicationID = $appID;
 		
 			$this.SetCAAzureRunAsAccount($azskADAppName,$appID)
@@ -3362,7 +3377,8 @@ class CCAutomation: AzCommandBase
                 [array]::Clear($bytes, 0, $bytes.Length)
             }
 		    $publicCert = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2(,$x509Certificate2.GetRawCertData())
-			
+			$this.CertStartDate = $certificate.CredStartDate
+            $this.CertEndDate = $certificate.CredEndDate
             try
             {
                 #Authenticating AAD App service principal with newly created certificate credential  
@@ -4359,6 +4375,19 @@ class CCAutomation: AzCommandBase
 		}	  
 	}
 	#endregion
+
+    [void] DeleteExistingCertificateForSPN()
+    {
+		try{
+				$this.PublishCustomMessage("Starting Old Certificate(s) clean up process...")
+				[ActiveDirectoryHelper]::UpdateADAppCredential($this.CAAADApplicationID,$null,$this.CertStartDate,$this.CertEndDate,"DeleteSelected")
+				$this.PublishCustomMessage("Old Certificate(s) clean up process completed.")
+			}
+		catch
+		{
+			$this.PublishCustomMessage("There was an error while deleting Certificate.")
+		}
+	}
 }
 
 
