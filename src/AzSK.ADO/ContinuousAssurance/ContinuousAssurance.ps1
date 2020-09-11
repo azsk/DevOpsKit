@@ -197,7 +197,7 @@ function Update-AzSKADOContinuousAssurance
 		[string]
 		$OrganizationName,
 
-		[Parameter(Mandatory = $true, ParameterSetName = "Default", HelpMessage = "Project to be scanned within the organization.")]
+		[Parameter(Mandatory = $false, ParameterSetName = "Default", HelpMessage = "Project to be scanned within the organization.")]
 		[Alias("pns", "ProjectNames", "pn")]
 		[string]
 		$ProjectName,
