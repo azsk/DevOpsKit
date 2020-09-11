@@ -316,7 +316,7 @@ class BugMetaInfoProvider {
                 $serviceTree = [BugMetaInfoProvider]::ServiceDetails.Data | Where-Object { $_.serviceID -eq $serviceId };
                 if ($serviceTree) {
                     [BugLogPathManager]::AreaPath = $serviceTree.areaPath.Replace("\", "\\");
-                    $domainNameForAssignee = "microsoft.com"
+                    $domainNameForAssignee = ""
                     if([Helpers]::CheckMember($this.ControlSettingsBugLog, "DomainName"))
                     {
                         $domainNameForAssignee = $this.ControlSettingsBugLog.DomainName;
