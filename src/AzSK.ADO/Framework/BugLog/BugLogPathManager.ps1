@@ -9,11 +9,11 @@ class BugLogPathManager {
     
     
     #function to find if the area and iteration path are valid
-    static hidden [bool] CheckIfPathIsValid([string] $OrgName,[string] $ProjectName, [InvocationInfo] $InvocationContext,[string] $ControlSettingsBugLogAreaPath, [string] $ControlSettingsBugLogIterationPath) {
+    static hidden [bool] CheckIfPathIsValid([string] $OrgName,[string] $ProjectName, [InvocationInfo] $InvocationContext,[string] $ControlSettingsBugLogAreaPath, [string] $ControlSettingsBugLogIterationPath, [bool] $isBugLogCustomFlow) {
         
         #to check if we have checked path validity before
-        if ([BugLogPathManager]::checkValidPathFlag) {
-            
+        if ([BugLogPathManager]::checkValidPathFlag -or $isBugLogCustomFlow) {
+            [BugLogPathManager]::AreaPath = $null
             #checking path validity for the first time
             $pathurl = "https://dev.azure.com/{0}/{1}/_apis/wit/wiql?api-version=5.1" -f $($OrgName), $ProjectName
             [BugLogPathManager]::AreaPath = $InvocationContext.BoundParameters['AreaPath'];

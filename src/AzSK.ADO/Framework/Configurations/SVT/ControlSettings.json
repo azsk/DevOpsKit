@@ -286,7 +286,12 @@
     "ResolvedBugLogBehaviour": "ReactiveOldBug",
     "MaxKeyWordsToQueryForBugClose": 30,
     "AutoCloseProjectBug": true,
-    "AutoCloseOrgBug": true
+    "AutoCloseOrgBug": true,
+    "BugAssigneeAndPathCustomFlow": false,
+    "BuildSTData": "BuildSTData.json",
+    "ReleaseSTData": "ReleaseSTData.json",
+    "ServiceTreeData": "ServiceTreeData.json",
+    "DomainName": "microsoft.com"
   },
   "GenerateSecurityEvaluationJsonFile" : false
 }

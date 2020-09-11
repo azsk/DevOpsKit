@@ -58,7 +58,9 @@ class LogAnalyticsMonitoring #: CommandBase
 			}
 			$genericViewTemplateFilepath = "";
 			if ($isWorkbook) {
-				$genericViewTemplateFilepath = [ConfigurationHelper]::LoadOfflineConfigFile([Constants]::LogAnalyticsGenericViewWorkbook); 				
+				$genericViewTemplateFilepath = [ConfigurationHelper]::LoadOfflineConfigFile([Constants]::LogAnalyticsGenericViewWorkbook);
+				$workbookSerializedData = [ConfigurationHelper]::LoadOfflineConfigFile([Constants]::WorkbookData) | ConvertTo-Json -Depth 10;
+				$genericViewTemplateFilepath.resources[0].properties.serializedData = $workbookSerializedData;
 				$this.LAWSGenericTemplateFilepath = Join-Path $LAWSLogPath ([Constants]::LogAnalyticsGenericViewWorkbook); 				
 			}
 			else {
@@ -104,10 +106,15 @@ class LogAnalyticsMonitoring #: CommandBase
             $SubErrorMessages = $SubErrorMessages | ForEach-Object { $_.Exception.Message.TrimEnd("`r`n") }
             $ErrorMessages += $SubErrorMessages
            
-        }
+		}
         if ($ErrorMessages)
         {
-            "", ("{0} returned the following errors:" -f ("Template deployment", "Validation")[[bool]$_validateOnly]), @($ErrorMessages) | ForEach-Object { $this.PublishCustomMessage([MessageData]::new($_));}
+			if ($ErrorMessages -like "*A Workbook with the same name already exists within this subscription*") {
+			     Write-Host "Could not deploy the workbook. A Workbook with the same name already exists within this subscription" -BackgroundColor red;
+			}
+			else {
+			"", ("{0} returned the following errors:" -f ("Template deployment", "Validation")[[bool]$_validateOnly]), @($ErrorMessages) | ForEach-Object { $this.PublishCustomMessage([MessageData]::new($_));}
+			}
         }
 		else
 		{

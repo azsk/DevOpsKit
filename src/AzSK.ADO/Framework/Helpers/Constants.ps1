@@ -210,4 +210,5 @@ class Constants
 	# LogAnalytics view file name
 	static [string] $LogAnalyticsGenericView = "AZSK.AM.LogAnalytics.GenericView.V6.lawsview"
 	static [string] $LogAnalyticsGenericViewWorkbook = "ADOScannerLAWorkbook.json"
+	static [string] $WorkbookData = "WorkbookSerializedData.json"
 }
