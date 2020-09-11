@@ -623,7 +623,7 @@
     {
       "ControlID": "Azure_Subscription_Cleanup_Deleted_Object_Access",
       "Description": "Ensure deleted objects do not have access to the subscription",
-      "Id": "SubscriptionCore360",
+      "Id": "SubscriptionCore400",
       "ControlSeverity": "Medium",
       "Automated": "Yes",
       "MethodName": "CheckAccessOfDeletedObjects",
