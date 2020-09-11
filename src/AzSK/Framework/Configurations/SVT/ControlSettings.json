@@ -557,6 +557,7 @@
     "EnablePublicIpResource": false
    },
    "PrivilegedRolesForSub" : ["Owner" , "Contributor" , "User Access Administrator"],
+   "ExtendedAttestationExpiry" : 180,
   "SeverityForSecContactAlerts": ["Medium","Low"],
   "MaxResourceInventoryObjectsCount": 20000,
   "AlernateAccountRegularExpressionForOrg": "",
