@@ -568,5 +568,6 @@
   "SeverityForSecContactAlerts": ["Medium","Low"],
   "MaxResourceInventoryObjectsCount": 20000,
   "AlernateAccountRegularExpressionForOrg": "",
+  "PrivilegedRolesForSub" : ["Owner" , "Contributor" , "User Access Administrator"],
   "GenerateSecurityEvaluationJsonFile": false
 }
