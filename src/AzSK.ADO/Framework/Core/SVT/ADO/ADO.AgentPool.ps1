@@ -27,7 +27,7 @@ class AgentPool: ADOSVTBase
         return $controlResult
     }
 
-    hidden [ControlResult] CheckInheritPermissions([ControlResult] $controlResult)
+    hidden [ControlResult] CheckInheritedPermissions([ControlResult] $controlResult)
     {
         if(($this.AgentObj | Measure-Object).Count -gt 0)
         {

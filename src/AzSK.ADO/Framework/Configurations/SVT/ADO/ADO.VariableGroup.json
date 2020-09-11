@@ -1,0 +1,95 @@
+{
+    "FeatureName": "VariableGroup",
+    "Reference": "aka.ms/azsktcp/VariableGroup",
+    "IsMaintenanceMode": false,
+    "Controls": [
+          {
+            "ControlID": "ADO_VariableGroup_AuthZ_Grant_Min_RBAC_Access",
+            "Description": "All teams/groups must be granted minimum required permissions on variable group.",
+            "Id": "VariableGroup110",
+            "ControlSeverity": "High",
+            "Automated": "Yes",
+            "MethodName": "CheckRBACAccess",
+            "Rationale": "Granting minimum access by leveraging RBAC feature ensures that users are granted just enough permissions to perform their tasks. This minimizes exposure of the resources in case of user/service account compromise.",
+            "Recommendation": "Refer: https://docs.microsoft.com/en-us/azure/devops/pipelines/library/?view=azure-devops#security",
+            "Tags": [
+              "SDL",
+              "TCP",
+              "Automated",
+              "AuthZ",
+              "RBAC"
+            ],
+            "Enabled": true
+          },
+          {
+            "ControlID": "ADO_VariableGroup_AuthZ_Dont_Grant_All_Pipelines_Access",
+            "Description": "Do not allow variable groups accessible to all pipelines.",
+            "Id": "VariableGroup120",
+            "ControlSeverity": "High",
+            "Automated": "Yes",
+            "MethodName": "CheckPipelineAccess",
+            "Rationale": "To support security of the pipeline operations, variable groups must not be granted access to all pipelines. This is in keeping with the principle of least privilege because a vulnerability in components used by one pipeline can be leveraged by an attacker to attack other pipelines having access to critical resources.",
+            "Recommendation": "To remediate this, navigate to the service connections settings page for your project -> select your service connection from the list -> click Edit -> uncheck 'Grant access permission to all pipelines'.",
+            "Tags": [
+              "SDL",
+              "TCP",
+              "Automated",
+              "AuthZ",
+              "RBAC"
+            ],
+            "Enabled": true
+          },
+          {
+            "ControlID": "ADO_VariableGroup_AuthZ_Disable_Inherited_Permissions",
+            "Description": "Do not allow inherited permissions on variable groups.",
+            "Id": "VariableGroup130",
+            "ControlSeverity": "High",
+            "Automated": "Yes",
+            "MethodName": "CheckInheritedPermissions",
+            "Rationale": "Disabling inherited permissions lets you finely control access to various operations at the variable group level for different stakeholders. This ensures that you follow the principle of least privilege and provide access only to the persons that require it.",
+            "Recommendation": "To disable inheritance follow the steps given here: 1.Navigate to the variable group. 2. Select Security. 3. Turn off Inheritance. As best practice, all teams/groups must be granted minimum required permissions on variable group.",
+            "Tags": [
+              "SDL",
+              "TCP",
+              "Automated",
+              "AuthZ",
+              "RBAC"
+            ],
+            "Enabled": true
+          },
+          {
+            "ControlID": "ADO_VariableGroup_DP_No_PlainText_Secrets_In_Variables",
+            "Description": "Secrets and keys must not be stored as plain text in variable group variables.",
+            "Id": "VariableGroup140",
+            "ControlSeverity": "High",
+            "Automated": "Yes",
+            "MethodName": "CheckCredInVarGrp",
+            "Rationale": "Keeping secrets such as connection strings, passwords, keys, etc. in plain text can expose the credentials to a wider audience and can lead to credential theft. Marking them as secret protects them from unitended disclosure and/or misuse.",
+            "Recommendation": "Refer: https://docs.microsoft.com/en-us/azure/devops/pipelines/process/variables?view=vsts&tabs=yaml%2Cbatch#secret-variables",
+            "Tags": [
+              "SDL",
+              "TCP",
+              "Automated",
+              "DP"
+            ],
+            "Enabled": true
+          },
+          {
+            "ControlID": "ADO_VariableGroup_DP_Store_Secrets_In_KeyVault",
+            "Description": "Consider using a linked Azure key vault for secret variables of the variable group.",
+            "Id": "VariableGroup140",
+            "ControlSeverity": "Low",
+            "Automated": "No",
+            "MethodName": "",
+            "Rationale": "Storing secrets in a custom variable group is less secure than storing them in Azure key vault and selectively mapping it to the variable group as Key Vault offers an extra layer of security (identity & management, network access and monitoring).",
+            "Recommendation": "Refer: https://docs.microsoft.com/en-us/azure/devops/pipelines/library/variable-groups?view=azure-devops&tabs=yaml#link-secrets-from-an-azure-key-vault",
+            "Tags": [
+              "SDL",
+              "TCP",
+              "Manual",
+              "DP"
+            ],
+            "Enabled": true
+          }
+    ]
+}

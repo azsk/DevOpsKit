@@ -5,7 +5,7 @@
   "Controls": [
     {
       "ControlID": "ADO_Release_AuthZ_Grant_Min_RBAC_Access",
-      "Description": "All teams/groups must be granted minimum required permissions on release definition",
+      "Description": "All teams/groups must be granted minimum required permissions on release definition.",
       "Id": "Release110",
       "ControlSeverity": "High",
       "Automated": "Yes",
@@ -23,12 +23,12 @@
     },
     {
       "ControlID": "ADO_Release_DP_No_PlainText_Secrets_In_Definition",
-      "Description": "Secrets and keys must not be stored as plain text in release variables/task parameters",
+      "Description": "Secrets and keys must not be stored as plain text in release variables/task parameters.",
       "Id": "Release120",
       "ControlSeverity": "High",
       "Automated": "Yes",
-      "MethodName": "CheckCredInVariables",
-      "Rationale": "Keeping secrets such as connection strings, passwords, keys, etc. in clear text can lead to easy compromise. Making them secret type variables ensures that they are protected at rest.",
+      "MethodName": "CheckCredInReleaseVariables",
+      "Rationale": "Keeping secrets such as connection strings, passwords, keys, etc. in plain text can expose the credentials to a wider audience and can lead to credential theft. Marking them as secret protects them from unitended disclosure and/or misuse.",
       "Recommendation": "Refer: https://docs.microsoft.com/en-us/azure/devops/pipelines/process/variables?view=vsts&tabs=yaml%2Cbatch#secret-variables",
       "Tags": [
         "SDL",
@@ -39,19 +39,19 @@
       "Enabled": true
     },
     {
-      "ControlID": "ADO_Release_SI_Review_Inactive_Release",
+      "ControlID": "ADO_Release_DP_Review_Inactive_Release",
       "Description": "Inactive release pipelines must be removed if no more required.",
       "Id": "Release130",
-      "ControlSeverity": "Low",
+      "ControlSeverity": "Medium",
       "Automated": "Yes",
-      "MethodName": "CheckInActiveRelease",
-      "Rationale": "Each additional release having access at repositories increases the attack surface. To minimize this risk ensure that only active and legitimate release resources are present in Organization",
+      "MethodName": "CheckForInactiveReleases",
+      "Rationale": "Each additional release having access to repositories/other artifacts increases the attack surface. To minimize this risk ensure that only active and legitimate release pipelines are present in your environment.",
       "Recommendation": "To remove inactive release pipeline follow these steps: 1.Navigate to the release pipeline. 2. Select a release pipeline. 3. Select three dots (present in right top). 4. Click on Delete.",
       "Tags": [
         "SDL",
         "Best Practice",
         "Automated",
-        "SI"
+        "DP"
       ],
       "Enabled": true
     },
@@ -61,7 +61,7 @@
       "Id": "Release140",
       "ControlSeverity": "High",
       "Automated": "Yes",
-      "MethodName": "CheckInheritPermissions",
+      "MethodName": "CheckInheritedPermissions",
       "Rationale": "Disabling inherited permissions lets you finely control access to various operations at the release level for different stakeholders. This ensures that you follow the principle of least privilege and provide access only to the persons that require it.",
       "Recommendation": "To disable permission inheritance within a release pipeline follow these steps: 1.Navigate to the release pipeline. 2. Open up the Security dialog for the release. 3. Add the service lead & service owner as Users with Allow permissions for each permission line item. 4. Select Off under Inheritance. 5. Add users/groups to your release definition and provide only required access. As best practice, All teams/groups must be granted minimum required permissions on release definition.",
       "Tags": [
@@ -93,12 +93,12 @@
     },
     {
       "ControlID": "ADO_Release_AuthZ_Review_PreDeployment_Approvers",
-      "Description": "Only legitimate users should be added as approvers for a release pipeline",
+      "Description": "Only legitimate users should be added as approvers for releases.",
       "Id": "Release160",
       "ControlSeverity": "Medium",
       "Automated": "Yes",
       "MethodName": "CheckPreDeploymentApprovers",
-      "Rationale": "Periodic review of approvers list for production releases ensures that only appropriate people are members of such a critical role. As team composition/membership changes, this privilege may need to be revoked from members who have moved on.",
+      "Rationale": "Periodic review of approvers list for production releases ensures that only appropriate people are members of such a critical role. As team composition/membership changes, this privilege may need to be revoked from members who are no more in the team.",
       "Recommendation": "Refer detailed log file to review the list of approvers.",
       "Tags": [
         "SDL",
@@ -111,7 +111,7 @@
     },
     {
       "ControlID": "ADO_Release_SI_Use_Good_Branch_Hygiene",
-      "Description": "All releases to Production or pre-Production stages must be done from one and only one (main) branch.",
+      "Description": "All releases to production or pre-production stages must be done from one and only one (main) branch.",
       "Id": "Release170",
       "ControlSeverity": "Medium",
       "Automated": "No",
@@ -128,12 +128,12 @@
     },
     {
       "ControlID": "ADO_Release_SI_Review_External_Sources",
-      "Description": "Ensure that release pipelines consume artifacts from trustworthy repos.",
+      "Description": "Review external source code repositories before adding them to your pipeline.",
       "Id": "Release180",
       "ControlSeverity": "Medium",
       "Automated": "Yes",
-      "MethodName": "CheckMixingGitHubAndADOSources",
-      "Rationale": "Pipelines build code from untrusted external sources (e.g. GitHub) via Continuous Integration or Scheduled Builds, giving the public internet access to a Project/Project Collection Build Service token.",
+      "MethodName": "CheckExternalSources",
+      "Rationale": "Building code from untrusted external sources can allow an attacker to execute arbitrary code in your pipeline. Hence, all repositories added to the pipeline should be carefully reviewed.",
       "Recommendation": "Validate all the source repos in the release definition.",
       "Tags": [
         "SDL",
@@ -150,7 +150,7 @@
       "ControlSeverity": "High",
       "Automated": "Yes",
       "MethodName": "CheckSettableAtReleaseTime",
-      "Rationale": "Pipeline variables not marked settable at release time can only be changed by someone with elevated permissions. These variables (reasonably) can be used in ways that make code injection possible.",
+      "Rationale": "Pipeline variables that are marked settable at queue time can be changed by anyone who can create a release. Such variables can be misused for code injection/data theft attacks from pipelines.",
       "Recommendation": "1. Navigate to the release pipeline. 2. Click on Edit. 3. Select variables. 4. Uncheck 'settable at release time' for such variables. 5. Save the release pipeline.",
       "Tags": [
         "SDL",
@@ -167,8 +167,25 @@
       "ControlSeverity": "High",
       "Automated": "Yes",
       "MethodName": "CheckSettableAtReleaseTimeForURL",
-      "Rationale": "Pipeline variables not marked settable at release time can only be changed by someone with elevated permissions. If these variables contain a URL then someone can change the URL to a server that they control and can intercept any secret used to interact with the intended server by creating a release.",
+      "Rationale": "Pipeline variables that are marked settable at queue time can be changed by anyone who can create a release. If these variables contain a URL then someone can change the URL to a server that they control and can intercept any secret used to interact with the intended server by creating a release.",
       "Recommendation": "1. Navigate to the release pipeline. 2. Click on Edit. 3. Select variables. 4. Uncheck 'settable at release time' for such variables. 5. Save the release pipeline.",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Automated",
+        "SI"
+      ],
+      "Enabled": true
+    },
+    {
+      "ControlID": "ADO_Release_SI_Disable_Task_Group_Edit_Permission",
+      "Description": "Do not include loosely permissioned task groups in your pipeline.",
+      "Id": "Release200",
+      "ControlSeverity": "High",
+      "Automated": "Yes",
+      "MethodName": "CheckTaskGroupEditPermission",
+      "Rationale": "If a broad pool of users (e.g., Contributors) have edit permissions on a task group, then integrity of your pipeline can be compromised by a malicious user who edits the task group.",
+      "Recommendation": "1. Navigate to the release pipeline. 2. Click on Tasks. 3. Right click on each task group and select 'Manage task group'. 4. Select 'Security' for the task group. 5. Ensure 'Edit task group' permission of Contributor is not set to 'Allow'.",
       "Tags": [
         "SDL",
         "TCP",

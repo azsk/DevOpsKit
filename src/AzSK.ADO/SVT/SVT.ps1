@@ -73,6 +73,12 @@ function Get-AzSKADOSecurityStatus
 		[Alias("sc", "ServiceConnectionName", "scs")]
 		$ServiceConnectionNames,
 
+		[string]
+		[Parameter(HelpMessage="Variable group names for which the security evaluation has to be performed.")]
+		[ValidateNotNullOrEmpty()]
+		[Alias("vg", "VariableGroupName", "vgs")]
+		$VariableGroupNames,
+
 		[switch]
 		[Parameter(HelpMessage="Scan all supported artificats present under organization like build, release, projects etc.")]
 		[Alias("sa")]
@@ -220,7 +226,7 @@ function Get-AzSKADOSecurityStatus
 				}
 			
 			}
-			$resolver = [SVTResourceResolver]::new($OrganizationName,$ProjectNames,$BuildNames,$ReleaseNames,$AgentPoolNames, $ServiceConnectionNames, $MaxObj, $ScanAllArtifacts, $PATToken,$ResourceTypeName, $AllowLongRunningScan);
+			$resolver = [SVTResourceResolver]::new($OrganizationName,$ProjectNames,$BuildNames,$ReleaseNames,$AgentPoolNames, $ServiceConnectionNames, $VariableGroupNames, $MaxObj, $ScanAllArtifacts, $PATToken,$ResourceTypeName, $AllowLongRunningScan);
 			$secStatus = [ServicesSecurityStatus]::new($OrganizationName, $PSCmdlet.MyInvocation, $resolver);
 			if ($secStatus) 
 			{	

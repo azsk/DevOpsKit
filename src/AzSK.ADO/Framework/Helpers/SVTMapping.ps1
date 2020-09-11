@@ -70,6 +70,12 @@ class SVTMapping
 			ClassName = "AgentPool";
 			JsonFileName = "ADO.AgentPool.json";
 			ResourceTypeName = "AgentPool";
+		},
+		[ResourceTypeMapping]@{
+            ResourceType = "ADO.VariableGroup";
+			ClassName = "VariableGroup";
+			JsonFileName = "ADO.VariableGroup.json";
+			ResourceTypeName = "VariableGroup";
         }
 	)
 }

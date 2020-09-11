@@ -25,7 +25,7 @@ class Build: ADOSVTBase
         }
     }
 
-    hidden [ControlResult] CheckCredInVariables([ControlResult] $controlResult)
+    hidden [ControlResult] CheckCredInBuildVariables([ControlResult] $controlResult)
 	{
         if([Helpers]::CheckMember([ConfigurationManager]::GetAzSKSettings(),"ScanToolPath"))
         {
@@ -149,7 +149,7 @@ class Build: ADOSVTBase
      return $controlResult;
     }
 
-    hidden [ControlResult] CheckInActiveBuild([ControlResult] $controlResult)
+    hidden [ControlResult] CheckForInactiveBuilds([ControlResult] $controlResult)
     {
         if($this.BuildObj)
         {
@@ -195,7 +195,7 @@ class Build: ADOSVTBase
         return $controlResult
     }
 
-    hidden [ControlResult] CheckInheritPermissions([ControlResult] $controlResult)
+    hidden [ControlResult] CheckInheritedPermissions([ControlResult] $controlResult)
     {
         try
         {
@@ -208,7 +208,7 @@ class Build: ADOSVTBase
                 $responseObj = ($responseObj.SelectNodes("//script") | Where-Object { $_.class -eq "permissions-context" }).InnerXML | ConvertFrom-Json; 
                 if($responseObj -and [Helpers]::CheckMember($responseObj,"inheritPermissions") -and $responseObj.inheritPermissions -eq $true)
                 {
-                    $controlResult.AddMessage([VerificationResult]::Failed,"Inherited permissions are enabled on build pipeline.",$responseObj);
+                    $controlResult.AddMessage([VerificationResult]::Failed,"Inherited permissions are enabled on build pipeline.");
                 }
                 else 
                 {
@@ -387,7 +387,7 @@ class Build: ADOSVTBase
         return $controlResult;
     }
 
-    hidden [ControlResult] ExternalSourceSelfHostedBuild([ControlResult] $controlResult)
+    hidden [ControlResult] CheckExternalSources([ControlResult] $controlResult)
     {
         if(($this.BuildObj | Measure-Object).Count -gt 0)
         {
@@ -404,10 +404,124 @@ class Build: ADOSVTBase
                $sourceobj = $null;
            }
            else {
-            $controlResult.AddMessage([VerificationResult]::Verify,"Pipeline build code is built from external sources.");   
+                $controlResult.AddMessage([VerificationResult]::Verify,"Pipeline build code is built from external sources.");   
            }
         }
 
+        return $controlResult;
+    }
+
+    hidden [ControlResult] CheckTaskGroupEditPermission([ControlResult] $controlResult)
+    {
+        #Task groups have type 'metaTask' whereas individual tasks have type 'task'
+        $taskGroups = $this.BuildObj[0].process.phases[0].steps | Where-Object {$_.task.definitiontype -eq 'metaTask'}
+        $editableTaskGroups = @();
+        if(($taskGroups | Measure-Object).Count -gt 0)
+        {   
+            $apiURL = "https://{0}.visualstudio.com/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1" -f $($this.SubscriptionContext.SubscriptionName)
+            $projectId = $this.BuildObj.project.id
+            $projectName = $this.BuildObj.project.name
+            
+            try
+            {
+                $taskGroups | ForEach-Object {
+                    $taskGrpId = $_.task.id
+                    $taskGrpURL="https://{0}.visualstudio.com/{1}/_taskgroup/{2}" -f $($this.SubscriptionContext.SubscriptionName), $($projectName), $($taskGrpId)
+                    $permissionSetToken = "$projectId/$taskGrpId"
+                    
+                    #permissionSetId = 'f6a4de49-dbe2-4704-86dc-f8ec1a294436' is the std. namespaceID. Refer: https://docs.microsoft.com/en-us/azure/devops/organizations/security/manage-tokens-namespaces?view=azure-devops#namespaces-and-their-ids
+                    $inputbody = "{
+                        'contributionIds': [
+                            'ms.vss-admin-web.security-view-members-data-provider'
+                        ],
+                        'dataProviderContext': {
+                            'properties': {
+                                'permissionSetId': 'f6a4de49-dbe2-4704-86dc-f8ec1a294436',
+                                'permissionSetToken': '$permissionSetToken',
+                                'sourcePage': {
+                                    'url': '$taskGrpURL',
+                                    'routeId':'ms.vss-distributed-task.hub-task-group-edit-route',
+                                    'routeValues': {
+                                        'project': '$projectName',
+                                        'taskGroupId': '$taskGrpId',
+                                        'controller':'Apps',
+                                        'action':'ContributedHub',
+                                        'viewname':'task-groups-edit'
+                                    }
+                                }
+                            }
+                        }
+                    }" | ConvertFrom-Json
+
+                    # This web request is made to fetch all identities having access to task group - it will contain descriptor for each of them. 
+                    # We need contributor's descriptor to fetch its permissions on task group.
+                    $responseObj = [WebRequestHelper]::InvokePostWebRequest($apiURL,$inputbody);
+
+                    #Filtering out Contributors group.
+                    if([Helpers]::CheckMember($responseObj[0],"dataProviders") -and ($responseObj[0].dataProviders.'ms.vss-admin-web.security-view-members-data-provider') -and ([Helpers]::CheckMember($responseObj[0].dataProviders.'ms.vss-admin-web.security-view-members-data-provider',"identities")))
+                    {
+
+                        $contributorObj = $responseObj[0].dataProviders.'ms.vss-admin-web.security-view-members-data-provider'.identities | Where-Object {$_.subjectKind -eq 'group' -and $_.principalName -eq "[$projectName]\Contributors"}
+                        # $contributorObj would be null if none of its permissions are set i.e. all perms are 'Not Set'.
+                        if($contributorObj)
+                        {
+                            $contributorInputbody = "{
+                                'contributionIds': [
+                                    'ms.vss-admin-web.security-view-permissions-data-provider'
+                                ],
+                                'dataProviderContext': {
+                                    'properties': {
+                                        'subjectDescriptor': '$($contributorObj.descriptor)',
+                                        'permissionSetId': 'f6a4de49-dbe2-4704-86dc-f8ec1a294436',
+                                        'permissionSetToken': '$permissionSetToken',
+                                        'accountName': '$(($contributorObj.principalName).Replace('\','\\'))',
+                                        'sourcePage': {
+                                            'url': '$taskGrpURL',
+                                            'routeId':'ms.vss-distributed-task.hub-task-group-edit-route',
+                                            'routeValues': {
+                                                'project': '$projectName',
+                                                'taskGroupId': '$taskGrpId',
+                                                'controller':'Apps',
+                                                'action':'ContributedHub',
+                                                'viewname':'task-groups-edit'
+                                            }
+                                        }
+                                    }
+                                }
+                            }" | ConvertFrom-Json
+                        
+                            #Web request to fetch RBAC permissions of Contributors group on task group.
+                            $contributorResponseObj = [WebRequestHelper]::InvokePostWebRequest($apiURL,$contributorInputbody);
+                            $contributorRBACObj = $contributorResponseObj[0].dataProviders.'ms.vss-admin-web.security-view-permissions-data-provider'.subjectPermissions
+                            $editPerms = $contributorRBACObj | Where-Object {$_.displayName -eq 'Edit task group'}
+                            #effectivePermissionValue equals to 1 implies edit task group perms is set to 'Allow'. Its value is 3 if it is set to Allow (inherited). This param is not available if it is 'Not Set'.
+                            if([Helpers]::CheckMember($editPerms,"effectivePermissionValue") -and (($editPerms.effectivePermissionValue -eq 1) -or ($editPerms.effectivePermissionValue -eq 3)))
+                            {
+                                $editableTaskGroups += $_.displayName
+                            }
+                        }
+                    }
+                }
+                if(($editableTaskGroups | Measure-Object).Count -gt 0)
+                {
+                    $controlResult.AddMessage([VerificationResult]::Failed,"Contributors have edit permissions on the below task groups used in build definition: ", $editableTaskGroups);
+                    $controlResult.SetStateData("List of task groups used in build definition that contributors can edit: ", $editableTaskGroups); 
+                }
+                else 
+                {
+                    $controlResult.AddMessage([VerificationResult]::Passed,"Contributors do not have edit permissions on any task groups used in build definition.");    
+                }
+            }
+            catch
+            {
+                $controlResult.AddMessage([VerificationResult]::Error,"Could not fetch the RBAC details of task groups used in the pipeline.");
+            }
+
+        }
+        else 
+        {
+            $controlResult.AddMessage([VerificationResult]::Passed,"No task groups found in build definition.");
+        }
         return $controlResult;
     }
 }

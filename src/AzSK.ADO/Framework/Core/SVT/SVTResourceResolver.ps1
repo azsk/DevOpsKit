@@ -22,6 +22,7 @@ class SVTResourceResolver: AzSKRoot {
     hidden [string[]] $ReleaseNames = @();
     hidden [string[]] $AgentPools = @();
     hidden [string[]] $ServiceConnections = @();
+    hidden [string[]] $VariableGroups = @();
     hidden [PSObject] $ControlSettings; 
     #Local variable for longrunningscan for command parameter
     [bool] $allowLongRunningScan = $false
@@ -29,16 +30,16 @@ class SVTResourceResolver: AzSKRoot {
     [bool] $isAllowLongRunningScanInPolicy = $true
     [int] $longRunningScanCheckPoint = 1000;
     
-    SVTResourceResolver([string]$organizationName, $ProjectNames, $BuildNames, $ReleaseNames, $AgentPools, $ServiceConnectionNames,  $ScanAllArtifacts, $PATToken, $ResourceTypeName, $AllowLongRunningScan): Base($organizationName, $PATToken) {
-        $this.SetallTheParamValues($organizationName, $ProjectNames, $BuildNames, $ReleaseNames, $AgentPools, $ServiceConnectionNames, $ScanAllArtifacts, $PATToken, $ResourceTypeName, $AllowLongRunningScan);
+    SVTResourceResolver([string]$organizationName, $ProjectNames, $BuildNames, $ReleaseNames, $AgentPools, $ServiceConnectionNames, $VariableGroupNames, $ScanAllArtifacts, $PATToken, $ResourceTypeName, $AllowLongRunningScan): Base($organizationName, $PATToken) {
+        $this.SetallTheParamValues($organizationName, $ProjectNames, $BuildNames, $ReleaseNames, $AgentPools, $ServiceConnectionNames, $VariableGroupNames, $ScanAllArtifacts, $PATToken, $ResourceTypeName, $AllowLongRunningScan);
     }
 
-    SVTResourceResolver([string]$organizationName, $ProjectNames, $BuildNames, $ReleaseNames, $AgentPools, $ServiceConnectionNames, $MaxObj, $ScanAllArtifacts, $PATToken, $ResourceTypeName, $AllowLongRunningScan): Base($organizationName, $PATToken) {
+    SVTResourceResolver([string]$organizationName, $ProjectNames, $BuildNames, $ReleaseNames, $AgentPools, $ServiceConnectionNames, $VariableGroupNames, $MaxObj, $ScanAllArtifacts, $PATToken, $ResourceTypeName, $AllowLongRunningScan): Base($organizationName, $PATToken) {
         $this.MaxObjectsToScan = $MaxObj #default = 0 => scan all if "*" specified...
-        $this.SetallTheParamValues($organizationName, $ProjectNames, $BuildNames, $ReleaseNames, $AgentPools, $ServiceConnectionNames, $ScanAllArtifacts, $PATToken, $ResourceTypeName, $AllowLongRunningScan);            
+        $this.SetallTheParamValues($organizationName, $ProjectNames, $BuildNames, $ReleaseNames, $AgentPools, $ServiceConnectionNames, $VariableGroupNames, $ScanAllArtifacts, $PATToken, $ResourceTypeName, $AllowLongRunningScan);            
     }
 
-    [void] SetallTheParamValues([string]$organizationName, $ProjectNames, $BuildNames, $ReleaseNames, $AgentPools, $ServiceConnectionNames, $ScanAllArtifacts, $PATToken, $ResourceTypeName, $AllowLongRunningScan) { 
+    [void] SetallTheParamValues([string]$organizationName, $ProjectNames, $BuildNames, $ReleaseNames, $AgentPools, $ServiceConnectionNames, $VariableGroupNames, $ScanAllArtifacts, $PATToken, $ResourceTypeName, $AllowLongRunningScan) { 
         $this.organizationName = $organizationName
         $this.ResourceTypeName = $ResourceTypeName
         $this.allowLongRunningScan = $AllowLongRunningScan
@@ -95,6 +96,17 @@ class SVTResourceResolver: AzSKRoot {
             $this.AgentPools = "*"
         }
 
+        if (-not [string]::IsNullOrEmpty($VariableGroupNames)) {
+            $this.VariableGroups += $this.ConvertToStringArray($VariableGroupNames);
+
+            if ($this.VariableGroups.Count -eq 0) {
+                throw [SuppressedException] "The parameter 'VariableGroupNames' does not contain any string."
+            }
+        }	
+        elseif ($ResourceTypeName -eq [ResourceTypeName]::VariableGroup) {
+            $this.VariableGroups = "*"
+        }
+
         #User should always provide project name (comma separated list or '*') to scan builds in an org. Else no controls will be scanned if -rtn is 'Build'
         #if (-not [string]::IsNullOrEmpty($ResourceTypeName) -and $ResourceTypeName -ne "All" -and ([string]::IsNullOrEmpty($ProjectNames))) {
         #    $this.ProjectNames = "*"
@@ -109,10 +121,11 @@ class SVTResourceResolver: AzSKRoot {
             $this.ReleaseNames = "*"
             $this.AgentPools = "*"
             $this.ServiceConnections = "*"
+            $this.VariableGroups = "*"
         }  
 
-        if ($this.ProjectNames -eq "*" -or $this.BuildNames -eq "*" -or $this.ReleaseNames -eq "*" -or $this.ServiceConnections -eq "*" -or $this.AgentPools -eq "*") {            
-            $this.PublishCustomMessage("Using '*' can take a long time for the scan to complete in larger projects. `nYou may want to provide a comma-separated list of projects, builds, releases, service connections and agent pools. `n ", [MessageType]::Warning);
+        if ($this.ProjectNames -eq "*" -or $this.BuildNames -eq "*" -or $this.ReleaseNames -eq "*" -or $this.ServiceConnections -eq "*" -or $this.AgentPools -eq "*" -or $this.VariableGroups -eq "*") {            
+            $this.PublishCustomMessage("Using '*' can take a long time for the scan to complete in larger projects. `nYou may want to provide a comma-separated list of projects, builds, releases, service connections, agent pools and variable groups. `n ", [MessageType]::Warning);
             <# BUGBUG: [Aug-2020] Removing this until we can determine the right approach to init org-policy-url for ADO.
             if (!$this.ControlSettings) {
                 $this.ControlSettings = [ConfigurationManager]::LoadServerConfigFile("ControlSettings.json");
@@ -299,7 +312,7 @@ class SVTResourceResolver: AzSKRoot {
                                 
                                     $releaseDefnsObj = [WebRequestHelper]::InvokePostWebRequest($releaseDefnURL, $inputbody);
                                     if (([Helpers]::CheckMember($releaseDefnsObj, "dataProviders") -and $releaseDefnsObj.dataProviders."ms.vss-releaseManagement-web.search-definitions-data-provider") -and [Helpers]::CheckMember($releaseDefnsObj.dataProviders."ms.vss-releaseManagement-web.search-definitions-data-provider", "releaseDefinitions") ) {
-                                        $releaseDefinitions = $releaseDefnsObj.dataProviders."ms.vss-releaseManagement-web.search-definitions-data-provider".releaseDefinitions  
+                                        $releaseDefinitions = $releaseDefnsObj.dataProviders."ms.vss-releaseManagement-web.search-definitions-data-provider".releaseDefinitions  | Where-Object {$_.name -eq $releaseName };
                                         foreach ($relDef in $releaseDefinitions) {
                                             $link = "https://dev.azure.com/{0}/{1}/_release?_a=releases&view=mine&definitionId={2}" -f $this.SubscriptionContext.SubscriptionName, $projectName, $relDef.url.split('/')[-1];
                                             $this.AddSVTResource($relDef.name, $projectName, "ADO.Release", $relDef.url, $null, $link);
@@ -410,6 +423,41 @@ class SVTResourceResolver: AzSKRoot {
                     {
                         return;
                     }
+                    if ($this.VariableGroups.Count -gt 0 -and ($this.ResourceTypeName -in ([ResourceTypeName]::VariableGroup, [ResourceTypeName]::All)))
+                    {
+                        if ($this.ProjectNames -ne "*") {
+                            $this.PublishCustomMessage("Getting variable group configurations...");
+                        }
+                    
+                        # Here we are fetching all the var grps in the project and then filtering out. But in build & release we fetch them individually unless '*' is used for fetching all of them.
+                        $variableGroupURL = ("https://{0}.visualstudio.com/{1}/_apis/distributedtask/variablegroups?api-version=6.1-preview.2") -f $($this.organizationName), $projectId;
+                        $variableGroupObj = [WebRequestHelper]::InvokeGetWebRequest($variableGroupURL)
+                    
+                        if (([Helpers]::CheckMember($variableGroupObj, "count") -and $variableGroupObj[0].count -gt 0) -or (($variableGroupObj | Measure-Object).Count -gt 0 -and [Helpers]::CheckMember($variableGroupObj[0], "name"))) {
+                    
+                            $varGroups = $null;
+                            if ($this.VariableGroups -eq "*") {
+                                $varGroups = $variableGroupObj 
+                            }
+                            else {
+                                $varGroups = $variableGroupObj | Where-Object { $this.VariableGroups -eq $_.name }  
+                            }
+
+                            $nObj = $this.MaxObjectsToScan
+                            foreach ($group in $varGroups) {
+                                $resourceId = ("https://{0}.visualstudio.com/{1}/_apis/distributedtask/variablegroups/{2}") -f $($this.organizationName), $projectId, $($group.Id);
+                                $link = ("https://{0}.visualstudio.com/{1}/_library?itemType=VariableGroups&view=VariableGroupView&variableGroupId={2}") -f $($this.organizationName), $projectName, $($group.Id);; 
+                                $this.AddSVTResource($group.name, $projectName, "ADO.VariableGroup", $resourceId, $group, $link);
+                                
+                                if (--$nObj -eq 0) { break; }
+                            }
+                        }
+                    }
+                    #check if long running scan allowed or not.
+                    if(!$this.isAllowLongRunningScanCheck())
+                    {
+                        return;
+                    }                    
                     if (--$nProj -eq 0) { break; } #nProj is set to MaxObj before loop.
                     
                 }

@@ -5,7 +5,7 @@
   "Controls": [
     {
       "ControlID": "ADO_ServiceConnection_AuthN_Use_Cert_Auth_for_SPN",
-      "Description": "Azure Active Directory applications, which used in pipeline, must use certificate based authentication",
+      "Description": "Azure Active Directory applications, which used in pipeline, must use certificate based authentication.",
       "Id": "ServiceConnection110",
       "ControlSeverity": "High",
       "Automated": "Yes",
@@ -23,12 +23,12 @@
     },
     {
       "ControlID": "ADO_ServiceConnection_AuthZ_Dont_Grant_Subscription_Access",
-      "Description": "Service Connection should not be provided access at subscription level.",
+      "Description": "Azure service connection should not be provided access at subscription/management group scope.",
       "Id": "ServiceConnection120",
       "ControlSeverity": "High",
       "Automated": "Yes",
       "MethodName": "CheckServiceConnectionAccess",
-      "Rationale": "Just like AD-based service accounts, SPNs have a single credential and most scenarios that use them cannot support multi-factor authentication. As a result, adding SPNs to a subscription in 'Owners' or 'Contributors' roles is risky.",
+      "Rationale": "SPN-based logins do not have MFA protection. It is important to restrict the access granted to Azure service connections only to specific resource/resource group as needed. This can contain the extent of damage in case of compromise.",
       "Recommendation": "Make sure you add SPN at the specific permission scope and role required for your scenario. For example, sometimes 'Contributor' access at 'Resource Group' scope might work. Exact permission will vary based on your use case. If you want to remove the SPN, run command Remove-AzRoleAssignment -ObjectId '{objectId}' -Scope '{scope}' -RoleDefinitionName '{role definition name}'. Run 'Get-Help Remove-AzRoleAssignment -full' for more help.",
       "Tags": [
         "SDL",
@@ -91,11 +91,11 @@
     },
     {
       "ControlID": "ADO_ServiceConnection_AuthZ_Disable_Inherited_Permissions",
-      "Description": "Do not allow inherited permissions on service connections",
+      "Description": "Do not allow inherited permissions on service connections.",
       "Id": "ServiceConnection160",
       "ControlSeverity": "High",
       "Automated": "Yes",
-      "MethodName": "CheckRBACInheritPermissions",
+      "MethodName": "CheckInheritedPermissions",
       "Rationale": "Service connections represent credentials of various services/repositories accessed by your project's build/release process. You should exercise fine-grained control over who can access them. Removing inherited access ensures that individuals beyond your control do not get access.",
       "Recommendation": "To remediate this, navigate to the service connections settings page for your project -> select your service connection from the list -> click on three dots on top right -> select Security -> In user permissions go to Inheritance -> Turn OFF Inheritance",
       "Tags": [
@@ -109,7 +109,7 @@
     },
     {
       "ControlID": "ADO_ServiceConnection_AuthZ_Dont_Allow_Global_Groups",
-      "Description": "Do not grant global groups access to service connections",
+      "Description": "Do not grant global groups access to service connections.",
       "Id": "ServiceConnection170",
       "ControlSeverity": "High",
       "Automated": "Yes",
@@ -168,7 +168,7 @@
       "ControlSeverity": "High",
       "Automated": "Yes",
       "MethodName": "CheckServiceConnectionForPATOrAuth",
-      "Rationale": "Full scope PAT is equivalent to full account compromise. The OAuth flow creates a token that only allows source code and webhook read/write access on GitHub. The impact of losing control of a scoped OAuth token is far lower.",
+      "Rationale": "Full scope PAT exposes the environment to a full account compromise. The OAuth flow creates a token that only allows source code and webhook read/write access on GitHub. The impact of losing control of a scoped OAuth token is far lower.",
       "Recommendation": "Go to Project Settings --> Service Connections --> Select Service Connection --> Select Edit --> Verify connection authentication type.",
       "Tags": [
         "SDL",
@@ -196,13 +196,13 @@
       "Enabled": true
     },
     {
-      "ControlID": "ADO_ServiceConnection_SI_Dont_Allow_Project_Sharing",
+      "ControlID": "ADO_ServiceConnection_SI_Dont_Share_Across_Projects",
       "Description": "Service connections should not be shared across multiple projects.",
       "Id": "ServiceConnection220",
       "ControlSeverity": "High",
       "Automated": "Yes",
       "MethodName": "CheckCrossProjectSharing",
-      "Rationale": "If a service connection is shared across multiple multiple projects, then a vulnerability in components used by one project can be leveraged by an attacker to attack other projects. This is also in keeping with the principle of least privilege.",
+      "Rationale": "If a service connection is shared across multiple projects, then a vulnerability in components used by one project can be leveraged by an attacker to attack other projects. This is also in keeping with the principle of least privilege.",
       "Recommendation": "To remediate this, navigate to the service connections settings page for your project -> select your service connection from the list -> click Security -> Under 'Project Permissions', remove projects that service connection no more requires access to.",
       "Tags": [
         "SDL",
@@ -215,12 +215,12 @@
     },
     {
       "ControlID": "ADO_ServiceConnection_SI_Review_Pipeline_Sharing",
-      "Description": "Service connections should not be shared across multiple pieplines.",
+      "Description": "Ensure that service connection access is granted only to pipelines that require it.",
       "Id": "ServiceConnection230",
       "ControlSeverity": "High",
       "Automated": "Yes",
       "MethodName": "CheckCrossPipelineSharing",
-      "Rationale": "If a service connection is shared across multiple multiple pipelines, then a vulnerability in components used by one pipeline can be leveraged by an attacker to attack other pipelines having access to critical resources. This is also in keeping with the principle of least privilege.",
+      "Rationale": "If a service connection is shared across multiple pipelines, then a vulnerability in components used by one pipeline can be leveraged by an attacker to attack other pipelines having access to critical resources. This is also in keeping with the principle of least privilege.",
       "Recommendation": "To remediate this, navigate to the service connections settings page for your project -> select your service connection from the list -> click Security -> Under 'Pipeline Permissions', remove pipelines that service connection no more requires access to.",
       "Tags": [
         "SDL",
