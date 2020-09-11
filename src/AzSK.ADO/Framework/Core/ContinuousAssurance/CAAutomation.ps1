@@ -16,8 +16,8 @@ class CAAutomation : ADOSVTCommandBase
     hidden [string] $ImageName
     hidden [datetime] $ScanTriggerTimeUTC
     hidden [datetime] $ScanTriggerLocalTime
-	hidden [string] $SecretName = "PATForADOScan"
-	hidden [string] $LASecretName = "LAKeyForADOScan"
+    hidden [string] $SecretName = "PATForADOScan"
+    hidden [string] $LASecretName = "LAKeyForADOScan"
     hidden [string] $AltLASecretName = "AltLAKeyForADOScan"
     hidden [string] $StorageKind = "StorageV2"
     hidden [string] $StorageType = "Standard_LRS"
@@ -372,11 +372,11 @@ class CAAutomation : ADOSVTCommandBase
 				$KeyVault = New-AzKeyVault -Name $this.KeyVaultName -ResourceGroupName $this.RGname -Location $this.Location
 				if($null -eq $KeyVault) 
 				{
-					$this.PublishCustomMessage("KeyVault '$($this.KeyVaultName)' creation failed", [MessageType]::Error);
+					$this.PublishCustomMessage("Azure key vault '$($this.KeyVaultName)' creation failed", [MessageType]::Error);
 				}
 				else
 				{
-					$this.PublishCustomMessage("KeyVault '$($this.KeyVaultName)' created", [MessageType]::Update);
+					$this.PublishCustomMessage("Azure key vault '$($this.KeyVaultName)' created", [MessageType]::Update);
 					$this.CreatedResources += $KeyVault.resourceid
 				}
 		
@@ -386,11 +386,11 @@ class CAAutomation : ADOSVTCommandBase
 				$CreatedSecret = Set-AzKeyVaultSecret -VaultName $this.KeyVaultName -Name $this.SecretName -SecretValue $this.PATToken
 				if($null -eq $CreatedSecret) 
 				{
-					$this.PublishCustomMessage("PAT Secret creation in KeyVault failed", [MessageType]::Error);
+					$this.PublishCustomMessage("PAT Secret creation in Azure key vault failed", [MessageType]::Error);
 				}
 				else
 				{
-					$this.PublishCustomMessage("PAT Secret created in KeyVault", [MessageType]::Update);
+					$this.PublishCustomMessage("PAT Secret created in Azure key vault", [MessageType]::Update);
 				}
 
 				#Step 8b: Add LA Shared Key secret to KeyVault
@@ -401,11 +401,11 @@ class CAAutomation : ADOSVTCommandBase
 					$CreatedLASecret = Set-AzKeyVaultSecret -VaultName $this.KeyVaultName -Name $this.LASecretName -SecretValue $secureStringKey 
 					if($null -eq $CreatedLASecret) 
 					{
-						$this.PublishCustomMessage("LA shared key secret creation in KeyVault failed", [MessageType]::Error);
+						$this.PublishCustomMessage("LA shared key secret creation in Azure key vault failed", [MessageType]::Error);
 					}
 					else
 					{
-						$this.PublishCustomMessage("LA shared key secret created in KeyVault", [MessageType]::Update);
+						$this.PublishCustomMessage("LA shared key secret created in Azure key vault", [MessageType]::Update);
 					}
 				}
 
@@ -417,11 +417,11 @@ class CAAutomation : ADOSVTCommandBase
 					$CreatedAltLASecret = Set-AzKeyVaultSecret -VaultName $this.KeyVaultName -Name $this.AltLASecretName -SecretValue $secureStringAltKey
 					if($null -eq $CreatedAltLASecret) 
 					{
-						$this.PublishCustomMessage("Alternate LA shared key secret creation in KeyVault failed", [MessageType]::Error);
+						$this.PublishCustomMessage("Alternate LA shared key secret creation in Azure key vault failed", [MessageType]::Error);
 					}
 					else
 					{
-						$this.PublishCustomMessage("Alternate LA shared key secret created in KeyVault", [MessageType]::Update);
+						$this.PublishCustomMessage("Alternate LA shared key secret created in Azure key vault", [MessageType]::Update);
 					}
 				}
 
@@ -432,11 +432,11 @@ class CAAutomation : ADOSVTCommandBase
 				$IsMSIAccess = $MSIAccessToKV.AccessPolicies | ForEach-Object { if ($_.ObjectId -match $FuncAppIdentity ) {return $true }}
 				if($IsMSIAccess -eq $true) 
 				{
-					$this.PublishCustomMessage("MSI access to KeyVault provided", [MessageType]::Update);
+					$this.PublishCustomMessage("MSI access to Azure key vault provided", [MessageType]::Update);
 				}
 				else
 				{
-					$this.PublishCustomMessage("MSI access to KeyVault failed", [MessageType]::Error);
+					$this.PublishCustomMessage("MSI access to Azure key vault failed", [MessageType]::Error);
 				}
 		
 				$MSIAccessToSA = New-AzRoleAssignment -ObjectId $FuncAppIdentity  -RoleDefinitionName "Contributor" -ResourceName $this.StorageName -ResourceGroupName $this.RGname -ResourceType Microsoft.Storage/storageAccounts
@@ -628,11 +628,11 @@ class CAAutomation : ADOSVTCommandBase
 							$CreatedSecret = Set-AzKeyVaultSecret -VaultName $keyVaultResource[0] -Name $this.SecretName -SecretValue $this.PATToken
 							if($null -eq $CreatedSecret) 
 							{
-								$this.PublishCustomMessage("Unable to update PATToken. Please validate your permissions in access policy of the KeyVault '$($keyVaultResource[0])'", [MessageType]::Error);
+								$this.PublishCustomMessage("Unable to update PATToken. Please validate your permissions in access policy of the Azure key vault '$($keyVaultResource[0])'", [MessageType]::Error);
 							}
 							else
 							{
-								$this.PublishCustomMessage("PAT secret updated in '$($keyVaultResource[0])' KeyVault", [MessageType]::Update);
+								$this.PublishCustomMessage("PAT secret updated in '$($keyVaultResource[0])' Azure key vault", [MessageType]::Update);
 								$updateAppSettings -eq $true # So that app settings can also be updated with KeyVault URI
 							}
 						}
@@ -642,11 +642,11 @@ class CAAutomation : ADOSVTCommandBase
 							$CreatedLASecret = Set-AzKeyVaultSecret -VaultName $keyVaultResource[0] -Name $this.LASecretName -SecretValue $secureStringKey
 							if($null -eq $CreatedLASecret) 
 							{
-								$this.PublishCustomMessage("Unable to update LA shared key. Please validate your permissions in access policy of the KeyVault '$($keyVaultResource[0])'", [MessageType]::Error);
+								$this.PublishCustomMessage("Unable to update LA shared key. Please validate your permissions in access policy of the Azure key vault '$($keyVaultResource[0])'", [MessageType]::Error);
 							}
 							else
 							{
-								$this.PublishCustomMessage("LA shared key secret updated in '$($keyVaultResource[0])' KeyVault", [MessageType]::Update);
+								$this.PublishCustomMessage("LA shared key secret updated in '$($keyVaultResource[0])' Azure key vault", [MessageType]::Update);
 								$updateAppSettings -eq $true
 							}
 						}
@@ -656,11 +656,11 @@ class CAAutomation : ADOSVTCommandBase
 							$CreatedAltLASecret = Set-AzKeyVaultSecret -VaultName $keyVaultResource[0] -Name $this.AltLASecretName -SecretValue $secureStringAltKey
 							if($null -eq $CreatedAltLASecret) 
 							{
-								$this.PublishCustomMessage("Unable to update alternate LA shared key. Please validate your permissions in access policy of the KeyVault '$($keyVaultResource[0])'", [MessageType]::Error);
+								$this.PublishCustomMessage("Unable to update alternate LA shared key. Please validate your permissions in access policy of the Azure key vault '$($keyVaultResource[0])'", [MessageType]::Error);
 							}
 							else
 							{
-								$this.PublishCustomMessage("Alternate LA shared key secret updated in '$($keyVaultResource[0])' KeyVault", [MessageType]::Update);
+								$this.PublishCustomMessage("Alternate LA shared key secret updated in '$($keyVaultResource[0])' Azure key vault", [MessageType]::Update);
 								$updateAppSettings -eq $true
 							}
 						}
@@ -696,7 +696,7 @@ class CAAutomation : ADOSVTCommandBase
 						{
 							$AppSettingsHT["OrgName"] = $this.OrganizationToScan
 						}
-						if(-not [string]::IsNullOrEmpty($this.PATToken))
+						if((-not [string]::IsNullOrEmpty($this.PATToken)) -and (-not [string]::IsNullOrEmpty($CreatedSecret)))
 						{
 							$patUri = $CreatedSecret.Id
 							$patUri = $patUri.Substring(0,$patUri.LastIndexOf('/'))
