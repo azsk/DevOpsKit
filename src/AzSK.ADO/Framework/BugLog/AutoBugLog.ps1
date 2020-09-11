@@ -461,7 +461,7 @@ class AutoBugLog {
                 Write-Host "Please verify the area and iteration path. They should belong under the same project area." -ForegroundColor Red
             }
             elseif ($_.ErrorDetails.Message -like '*The current user does not have permissions to save work items under the specified area path*') {
-                Write-Host "Could not log the bug. You don not have permissions to save work items under the area path [$($AreaPath)]." -ForegroundColor Red
+                Write-Host "Could not log the bug. You do not have permissions to save work items under the area path [$($AreaPath)]." -ForegroundColor Red
             }
             else {
                 Write-Host "Could not log the bug" -ForegroundColor Red
