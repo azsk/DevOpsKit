@@ -86,7 +86,9 @@
   },
   "PartialScan": {
     "ResourceTrackerValidforDays": 3,
-    "StoreResourceTrackerLocally": "True"
+    "StoreResourceTrackerLocally": "True",
+    "LocalScanUpdateFrequency": "100",
+    "DurableScanUpdateFrequency": "200"
   },
   "DockerImage":{
     "ImageName" : "azskado/adosecurityscan"

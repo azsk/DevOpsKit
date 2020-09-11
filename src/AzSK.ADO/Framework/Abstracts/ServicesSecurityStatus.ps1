@@ -29,6 +29,8 @@ class ServicesSecurityStatus: ADOSVTCommandBase
 
 	hidden [SVTEventContext[]] RunForAllResources([string] $methodNameToCall, [bool] $runNonAutomated, [PSObject] $resourcesList)
 	{
+		$ControlSettings = [ConfigurationManager]::LoadServerConfigFile("ControlSettings.json");
+
 		if ([string]::IsNullOrWhiteSpace($methodNameToCall))
 		{
 			throw [System.ArgumentException] ("The argument 'methodNameToCall' is null. Pass the reference of method to call. e.g.: [YourClass]::new().YourMethod");
@@ -167,6 +169,19 @@ class ServicesSecurityStatus: ADOSVTCommandBase
 					$childResources += $svtObject.ChildSvtObjects;
 					$currentResourceResults += $svtObject.$methodNameToCall();
 					$result += $currentResourceResults;
+				}
+				if(($result | Measure-Object).Count -gt 0)
+				{
+					if($currentCount % $ControlSettings.PartialScan.LocalScanUpdateFrequency -eq 0 -or $currentCount -eq $totalResources)
+					{
+						# Update local resource tracker file
+						$this.UpdatePartialCommitFile($false)
+					}					
+					if($currentCount % $ControlSettings.PartialScan.DurableScanUpdateFrequency -eq 0 -or $currentCount -eq $totalResources)
+					{
+						# Update durable resource tracker file
+						$this.UpdatePartialCommitFile($true)
+					}					
 				}
 
 			}
@@ -352,6 +367,24 @@ class ServicesSecurityStatus: ADOSVTCommandBase
 		if ($this.UsePartialCommits)
 		{
 			$partialScanMngr.UpdateResourceScanRetryCount($_.ResourceId);
+		}
+	}
+
+
+	[void] UpdatePartialCommitFile($isDurableStorageUpdate)
+	{
+		$scanSource = [AzSKSettings]::GetInstance().GetScanSource();
+		[PartialScanManager] $partialScanMngr = [PartialScanManager]::GetInstance();
+		#If Scan source is in supported sources or UsePartialCommits switch is available
+		if ($this.UsePartialCommits)
+		{
+			if ($isDurableStorageUpdate)
+			{
+				$partialScanMngr.WriteToDurableStorage();
+			}
+			else {
+				$partialScanMngr.WriteToResourceTrackerFile();
+			}
 		}
 	}
 

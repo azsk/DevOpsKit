@@ -80,7 +80,7 @@ class Constants
 	static [string] $AzSKModuleName = "AzSK.ADO";
 	static [string] $AttestationDataContainerName = "attestation-data"
 	static [string] $CAMultiSubScanConfigContainerName = "ca-multisubscan-config"
-	static [string] $CAScanProgressSnapshotsContainerName = "ca-scan-checkpoints"
+	static [string] $CAScanProgressSnapshotsContainerName = "ado-checkpoint-logs"
 	static [string] $CAScanOutputLogsContainerName= "ca-scan-logs"
 	static [string] $ResourceScanTrackerBlobName = "ResourceScanTracker.json"
 	static [string] $ResourceScanTrackerCMBlobName = "ResourceScanTracker_CentralMode.json"
