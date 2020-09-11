@@ -276,9 +276,9 @@
     "AutoCloseProjectBug": true,
     "AutoCloseOrgBug": true,
     "BugAssigneeAndPathCustomFlow": false,
-    "BuildSTData": "BuildSTData",
-    "ReleaseSTData": "ReleaseSTData",
-    "ServiceTreeData": "ServiceTreeData"
+    "BuildSTData": "BuildSTData.json",
+    "ReleaseSTData": "ReleaseSTData.json",
+    "ServiceTreeData": "ServiceTreeData.json"
   },
   "GenerateSecurityEvaluationJsonFile" : false
 }

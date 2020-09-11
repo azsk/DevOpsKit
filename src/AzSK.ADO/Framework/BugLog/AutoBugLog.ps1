@@ -27,7 +27,7 @@ class AutoBugLog {
             $isBugLogCustomFlow = [Helpers]::CheckMember($this.ControlSettings.BugLogging, "BugAssigneeAndPathCustomFlow");
             if ([BugLogPathManager]::CheckIfPathIsValid($this.SubscriptionContext.SubscriptionName,$ProjectName,$this.InvocationContext,  $this.ControlSettings.BugLogging.BugLogAreaPath, $this.ControlSettings.BugLogging.BugLogIterationPath, $isBugLogCustomFlow)) {
                 #Obtain the assignee for the current resource, will be same for all the control failures for this particular resource
-                $AssignedTo = $this.GetAssignee($ControlResults[0], $isBugLogCustomFlow)
+                $AssignedTo = $this.GetAssignee($ControlResults[0])
                 #Obtain area and iteration paths
                 $AreaPath = [BugLogPathManager]::GetAreaPath()
                 $IterationPath = [BugLogPathManager]::GetIterationPath()       
@@ -248,10 +248,10 @@ class AutoBugLog {
     }
     
     #function to retrieve the person to whom the bug will be assigned
-    hidden [string] GetAssignee([SVTEventContext[]] $ControlResult, [bool] $isBugLogCustomFlow) 
+    hidden [string] GetAssignee([SVTEventContext[]] $ControlResult) 
     {
         $metaProviderObj = [BugMetaInfoProvider]::new();        
-        return $metaProviderObj.GetAssignee($ControlResult, $isBugLogCustomFlow, $this.InvocationContext);   
+        return $metaProviderObj.GetAssignee($ControlResult, $this.InvocationContext, $this.ControlSettings.BugLogging);   
     }
 
     #function to map severity of the control item

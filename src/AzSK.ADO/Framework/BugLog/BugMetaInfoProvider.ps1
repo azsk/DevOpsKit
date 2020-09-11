@@ -5,11 +5,14 @@ class BugMetaInfoProvider {
     hidden static [PSObject] $ReleaseSTDetails;
     hidden static [PSObject] $ServiceDetails;
     hidden [InvocationInfo] $InvocationContext
+    hidden [PSObject] $ControlSettingsBugLog
 
     BugMetaInfoProvider() {
     }
 
-    hidden [string] GetAssignee([SVTEventContext[]] $ControlResult, [bool] $isBugLogCustomFlow, [InvocationInfo] $InvocationContext) {
+    hidden [string] GetAssignee([SVTEventContext[]] $ControlResult, [InvocationInfo] $InvocationContext, $controlSettingsBugLog) {
+        $this.ControlSettingsBugLog = $controlSettingsBugLog;
+        $isBugLogCustomFlow = [Helpers]::CheckMember($this.ControlSettingsBugLog, "BugAssigneeAndPathCustomFlow");
         if ($isBugLogCustomFlow) {
             $ResourceType = $ControlResult.ResourceContext.ResourceTypeName
             $ResourceName = $ControlResult.ResourceContext.ResourceName
@@ -116,7 +119,12 @@ class BugMetaInfoProvider {
     hidden [string] CalculateAssigneeBuild([SVTEventContext[]] $ControlResult, $buildId) {
         try {
             if (![BugMetaInfoProvider]::BuildSTDetails) {
-                [BugMetaInfoProvider]::BuildSTDetails = [ConfigurationManager]::LoadServerConfigFile("BuildSTData.json")
+                $buildSTDataFileName ="BuildSTData.json";
+                if([Helpers]::CheckMember($this.ControlSettingsBugLog, "BuildSTData"))
+                {
+                    $buildSTDataFileName = $this.ControlSettingsBugLog.BuildSTData;
+                }
+                [BugMetaInfoProvider]::BuildSTDetails = [ConfigurationManager]::LoadServerConfigFile($buildSTDataFileName)
             }
             $buildSTDeatils = [BugMetaInfoProvider]::BuildSTDetails.Data | Where-Object { $_.buildDefinitionID -eq $buildId }; 
             if ($buildSTDeatils) {
@@ -144,7 +152,12 @@ class BugMetaInfoProvider {
     hidden [string] CalculateAssigneeRelease([SVTEventContext[]] $ControlResult, $relDefId) {
         try {
             if (![BugMetaInfoProvider]::ReleaseSTDetails) {
-                [BugMetaInfoProvider]::ReleaseSTDetails = [ConfigurationManager]::LoadServerConfigFile("ReleaseSTData.json")
+                $releaseSTDataFileName ="ReleaseSTData.json";
+                if([Helpers]::CheckMember($this.ControlSettingsBugLog, "ReleaseSTData"))
+                {
+                    $releaseSTDataFileName = $this.ControlSettingsBugLog.ReleaseSTData;
+                }
+                [BugMetaInfoProvider]::ReleaseSTDetails = [ConfigurationManager]::LoadServerConfigFile($releaseSTDataFileName)
             }
             $releaseSTDeatils = [BugMetaInfoProvider]::ReleaseSTDetails.Data | Where-Object { $_.releaseDefinitionID -eq $relDefId }; 
                 
@@ -250,7 +263,12 @@ class BugMetaInfoProvider {
 
     hidden [string] GetDataFromServiceTree($serviceId) {
         if (![BugMetaInfoProvider]::ServiceDetails) {
-            [BugMetaInfoProvider]::ServiceDetails = [ConfigurationManager]::LoadServerConfigFile("ServiceTreeData.json")
+            $serviceDataFileName ="ServiceTreeData.json";
+            if([Helpers]::CheckMember($this.ControlSettingsBugLog, "ServiceTreeData"))
+            {
+                $serviceDataFileName = $this.ControlSettingsBugLog.ServiceTreeData;
+            }
+            [BugMetaInfoProvider]::ServiceDetails = [ConfigurationManager]::LoadServerConfigFile($serviceDataFileName)
         }
         $serviceTree = [BugMetaInfoProvider]::ServiceDetails.Data | Where-Object { $_.serviceID -eq $serviceId };
         if ($serviceTree) {
