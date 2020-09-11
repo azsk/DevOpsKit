@@ -206,22 +206,22 @@
       AgentPoolcounter = 0;
 
       // Service Connection 
-      AzureDevOps_ServiceConnection_AuthN_Use_Cert_Auth_for_SPN = 0;
-      AzureDevOps_ServiceConnection_AuthZ_RG_Level = 0;
-      AzureDevOps_ServiceConnection_AuthZ_Dont_Use_Classic_Connections = 0;
-      AzureDevOps_ServiceConnection_AuthZ_Disable_InheritPermissions = 0;
+      ADO_ServiceConnection_AuthN_Use_Cert_Auth_for_SPN = 0;
+      ADO_ServiceConnection_AuthZ_Dont_Grant_Subscription_Access = 0;
+      ADO_ServiceConnection_AuthZ_Dont_Use_Classic_Connections = 0;
+      ADO_ServiceConnection_AuthZ_Disable_Inherited_Permissions = 0;
 
       // Build:
-      AzureDevOps_Build_AuthZ_Disable_Inherited_Permissions = 0;
-      AzureDevOps_Build_SI_Review_Inactive_Build = 0;
+      ADO_Build_AuthZ_Disable_Inherited_Permissions = 0;
+      ADO_Build_SI_Review_Inactive_Build = 0;
 
       // Release:
-      AzureDevOps_Release_SI_Review_Inactive_Release = 0;
-      AzureDevOps_Release_AuthZ_Disable_Inherited_Permissions = 0;
-      AzureDevOps_Release_AuthZ_Enable_PreDeployment_Approvals = 0;
+      ADO_Release_SI_Review_Inactive_Release = 0;
+      ADO_Release_AuthZ_Disable_Inherited_Permissions = 0;
+      ADO_Release_AuthZ_Enable_PreDeployment_Approvals = 0;
 
       //AgentPool
-      AzureDevOps_AgentPool_AuthZ_Project_Dont_Grant_All_Pipeline_Access = 0;
+      ADO_AgentPool_AuthZ_Project_Dont_Grant_All_Pipeline_Access = 0;
 
        const build = chartdata.filter(function (name) {
          return name.FeatureName == 'Build';
@@ -263,17 +263,17 @@
             Conndata.Failed = Conndata.Failed + 1;
             bulbClass = 'bubble-failed';
 
-            if (e.ControlID == "AzureDevOps_ServiceConnection_AuthN_Use_Cert_Auth_for_SPN") {
-              AzureDevOps_ServiceConnection_AuthN_Use_Cert_Auth_for_SPN = AzureDevOps_ServiceConnection_AuthN_Use_Cert_Auth_for_SPN + 1;
+            if (e.ControlID == "AzureDevOps_ServiceConnection_AuthN_Use_Cert_Auth_for_SPN" || e.ControlID == "ADO_ServiceConnection_AuthN_Use_Cert_Auth_for_SPN") {
+              ADO_ServiceConnection_AuthN_Use_Cert_Auth_for_SPN = ADO_ServiceConnection_AuthN_Use_Cert_Auth_for_SPN + 1;
             }
-            if (e.ControlID == "AzureDevOps_ServiceConnection_AuthZ_RG_Level") {
-              AzureDevOps_ServiceConnection_AuthZ_RG_Level = AzureDevOps_ServiceConnection_AuthZ_RG_Level + 1;
+            if (e.ControlID == "AzureDevOps_ServiceConnection_AuthZ_RG_Level" || e.ControlID == "ADO_ServiceConnection_AuthZ_Dont_Grant_Subscription_Access") {
+              ADO_ServiceConnection_AuthZ_Dont_Grant_Subscription_Access = ADO_ServiceConnection_AuthZ_Dont_Grant_Subscription_Access + 1;
             }
-            if (e.ControlID == "AzureDevOps_ServiceConnection_AuthZ_Dont_Use_Classic_Connections") {
-              AzureDevOps_ServiceConnection_AuthZ_Dont_Use_Classic_Connections = AzureDevOps_ServiceConnection_AuthZ_Dont_Use_Classic_Connections + 1;
+            if (e.ControlID == "AzureDevOps_ServiceConnection_AuthZ_Dont_Use_Classic_Connections" || e.ControlID == "ADO_ServiceConnection_AuthZ_Dont_Use_Classic_Connections") {
+              ADO_ServiceConnection_AuthZ_Dont_Use_Classic_Connections = ADO_ServiceConnection_AuthZ_Dont_Use_Classic_Connections + 1;
             }
-            if (e.ControlID == "AzureDevOps_ServiceConnection_AuthZ_Disable_InheritPermissions") {
-              AzureDevOps_ServiceConnection_AuthZ_Disable_InheritPermissions = AzureDevOps_ServiceConnection_AuthZ_Disable_InheritPermissions + 1;
+            if (e.ControlID == "AzureDevOps_ServiceConnection_AuthZ_Disable_InheritPermissions" || e.ControlID == "ADO_ServiceConnection_AuthZ_Disable_Inherited_Permissions") {
+              ADO_ServiceConnection_AuthZ_Disable_Inherited_Permissions = ADO_ServiceConnection_AuthZ_Disable_Inherited_Permissions + 1;
             }
           }
          
@@ -303,11 +303,11 @@
           else if (e.Status == "Failed") {
             arrdata.Failed = arrdata.Failed + 1;
             bulbClass = 'bubble-failed';
-            if (e.ControlID == "AzureDevOps_Build_AuthZ_Disable_Inherited_Permissions") {
-              AzureDevOps_Build_AuthZ_Disable_Inherited_Permissions = AzureDevOps_Build_AuthZ_Disable_Inherited_Permissions + 1;
+            if (e.ControlID == "AzureDevOps_Build_AuthZ_Disable_Inherited_Permissions" || e.ControlID == "ADO_Build_AuthZ_Disable_Inherited_Permissions") {
+              ADO_Build_AuthZ_Disable_Inherited_Permissions = ADO_Build_AuthZ_Disable_Inherited_Permissions + 1;
             }
-            if (e.ControlID == "AzureDevOps_Build_SI_Review_Inactive_Build") {
-              AzureDevOps_Build_SI_Review_Inactive_Build = AzureDevOps_Build_SI_Review_Inactive_Build + 1;
+            if (e.ControlID == "AzureDevOps_Build_SI_Review_Inactive_Build" || e.ControlID == "ADO_Build_SI_Review_Inactive_Build") {
+              ADO_Build_SI_Review_Inactive_Build = ADO_Build_SI_Review_Inactive_Build + 1;
             }
           }
 
@@ -338,14 +338,14 @@
             Releasedata.Failed = Releasedata.Failed + 1;
             bulbClass = 'bubble-failed';
 
-            if (e.ControlID == "AzureDevOps_Release_SI_Review_Inactive_Release") {
-              AzureDevOps_Release_SI_Review_Inactive_Release = AzureDevOps_Release_SI_Review_Inactive_Release + 1;
+            if (e.ControlID == "AzureDevOps_Release_SI_Review_Inactive_Release" || e.ControlID == "ADO_Release_SI_Review_Inactive_Release"){
+              ADO_Release_SI_Review_Inactive_Release = ADO_Release_SI_Review_Inactive_Release + 1;
             }
-            if (e.ControlID == "AzureDevOps_Release_AuthZ_Disable_Inherited_Permissions") {
-              AzureDevOps_Release_AuthZ_Disable_Inherited_Permissions = AzureDevOps_Release_AuthZ_Disable_Inherited_Permissions + 1;
+            if (e.ControlID == "AzureDevOps_Release_AuthZ_Disable_Inherited_Permissions" || e.ControlID == "ADO_Release_AuthZ_Disable_Inherited_Permissions") {
+              ADO_Release_AuthZ_Disable_Inherited_Permissions = ADO_Release_AuthZ_Disable_Inherited_Permissions + 1;
             }
-            if (e.ControlID == "AzureDevOps_Release_AuthZ_Enable_PreDeployment_Approvals") {
-              AzureDevOps_Release_AuthZ_Enable_PreDeployment_Approvals = AzureDevOps_Release_AuthZ_Enable_PreDeployment_Approvals + 1;
+            if (e.ControlID == "AzureDevOps_Release_AuthZ_Enable_PreDeployment_Approvals" || e.ControlID == "ADO_Release_AuthZ_Enable_PreDeployment_Approvals") {
+              ADO_Release_AuthZ_Enable_PreDeployment_Approvals = ADO_Release_AuthZ_Enable_PreDeployment_Approvals + 1;
             }
           }
           
@@ -373,8 +373,8 @@
          else if (e.Status == "Failed") {
             AgentPooldata.Failed = AgentPooldata.Failed + 1;
             bulbClass = 'bubble-failed';
-            if (e.ControlID == "AzureDevOps_AgentPool_AuthZ_Project_Dont_Grant_All_Pipeline_Access") {
-            AzureDevOps_AgentPool_AuthZ_Project_Dont_Grant_All_Pipeline_Access = AzureDevOps_AgentPool_AuthZ_Project_Dont_Grant_All_Pipeline_Access + 1;
+            if (e.ControlID == "AzureDevOps_AgentPool_AuthZ_Project_Dont_Grant_All_Pipeline_Access" || e.ControlID == "ADO_AgentPool_AuthZ_Project_Dont_Grant_All_Pipeline_Access") {
+            ADO_AgentPool_AuthZ_Project_Dont_Grant_All_Pipeline_Access = ADO_AgentPool_AuthZ_Project_Dont_Grant_All_Pipeline_Access + 1;
             }
           }
           $('#tblScanResultAgentPool').find('tbody')
@@ -395,22 +395,22 @@
 
       try {
         //Connections
-        document.getElementById("AzureDevOps_ServiceConnection_AuthN_Use_Cert_Auth_for_SPN").innerHTML = AzureDevOps_ServiceConnection_AuthN_Use_Cert_Auth_for_SPN;
-        document.getElementById("AzureDevOps_ServiceConnection_AuthZ_RG_Level").innerHTML = AzureDevOps_ServiceConnection_AuthZ_RG_Level;
-        document.getElementById("AzureDevOps_ServiceConnection_AuthZ_Dont_Use_Classic_Connections").innerHTML = AzureDevOps_ServiceConnection_AuthZ_Dont_Use_Classic_Connections;
-        document.getElementById("AzureDevOps_ServiceConnection_AuthZ_Disable_InheritPermissions").innerHTML = AzureDevOps_ServiceConnection_AuthZ_Disable_InheritPermissions;
+        document.getElementById("ADO_ServiceConnection_AuthN_Use_Cert_Auth_for_SPN").innerHTML = ADO_ServiceConnection_AuthN_Use_Cert_Auth_for_SPN;
+        document.getElementById("ADO_ServiceConnection_AuthZ_Dont_Grant_Subscription_Access").innerHTML = ADO_ServiceConnection_AuthZ_Dont_Grant_Subscription_Access;
+        document.getElementById("ADO_ServiceConnection_AuthZ_Dont_Use_Classic_Connections").innerHTML = ADO_ServiceConnection_AuthZ_Dont_Use_Classic_Connections;
+        document.getElementById("ADO_ServiceConnection_AuthZ_Disable_Inherited_Permissions").innerHTML = ADO_ServiceConnection_AuthZ_Disable_Inherited_Permissions;
 
         // build
-        document.getElementById("AzureDevOps_Build_AuthZ_Disable_Inherited_Permissions").innerHTML = AzureDevOps_Build_AuthZ_Disable_Inherited_Permissions;
-        document.getElementById("AzureDevOps_Build_SI_Review_Inactive_Build").innerHTML = AzureDevOps_Build_SI_Review_Inactive_Build;
+        document.getElementById("ADO_Build_AuthZ_Disable_Inherited_Permissions").innerHTML = ADO_Build_AuthZ_Disable_Inherited_Permissions;
+        document.getElementById("ADO_Build_SI_Review_Inactive_Build").innerHTML = ADO_Build_SI_Review_Inactive_Build;
 
         // release
-        document.getElementById("AzureDevOps_Release_SI_Review_Inactive_Release").innerHTML = AzureDevOps_Release_SI_Review_Inactive_Release;
-        document.getElementById("AzureDevOps_Release_AuthZ_Disable_Inherited_Permissions").innerHTML = AzureDevOps_Release_AuthZ_Disable_Inherited_Permissions;
-        document.getElementById("AzureDevOps_Release_AuthZ_Enable_PreDeployment_Approvals").innerHTML = AzureDevOps_Release_AuthZ_Enable_PreDeployment_Approvals;
+        document.getElementById("ADO_Release_SI_Review_Inactive_Release").innerHTML = ADO_Release_SI_Review_Inactive_Release;
+        document.getElementById("ADO_Release_AuthZ_Disable_Inherited_Permissions").innerHTML = ADO_Release_AuthZ_Disable_Inherited_Permissions;
+        document.getElementById("ADO_Release_AuthZ_Enable_PreDeployment_Approvals").innerHTML = ADO_Release_AuthZ_Enable_PreDeployment_Approvals;
 
         //Agent Pool
-        document.getElementById("AzureDevOps_AgentPool_AuthZ_Project_Dont_Grant_All_Pipeline_Access").innerHTML = AzureDevOps_AgentPool_AuthZ_Project_Dont_Grant_All_Pipeline_Access;
+        document.getElementById("ADO_AgentPool_AuthZ_Project_Dont_Grant_All_Pipeline_Access").innerHTML = ADO_AgentPool_AuthZ_Project_Dont_Grant_All_Pipeline_Access;
       }
       catch (ex) { console.log(ex); }
 
@@ -470,7 +470,7 @@
       $('#spnFailedControl').html(ControlID);
       var versionId = document.getElementById('resultVersion').value;
       getDataForChart(versionId).then(function (chartdata) {
-        //ControlID ="AzureDevOps_Build_DP_No_PlainText_Secrets_In_Definition"; scanType ="Build";
+        //ControlID ="ADO_Build_DP_No_PlainText_Secrets_In_Definition"; scanType ="Build";
         var locdata = chartdata.filter(function (data) {
           return (data.ControlID == ControlID && data.FeatureName == scanType && data.Status == "Failed");
         });
@@ -545,56 +545,56 @@
           <!-- <div class="card text-white" style="max-width:110px; max-height:120px;background-color:#ff4444">
                             <div class="card-body">
                               <span class="card-title">Cert Auth for SPN</span>
-                              <p class="card-text" id="AzureDevOps_ServiceConnection_AuthN_Use_Cert_Auth_for_SPN">0 </p>
+                              <p class="card-text" id="ADO_ServiceConnection_AuthN_Use_Cert_Auth_for_SPN">0 </p>
                             </div>
                           </div> -->
           <div class="boxcss"
-            onclick="openModel('AzureDevOps_ServiceConnection_AuthN_Use_Cert_Auth_for_SPN', 'ServiceConnection')"
+            onclick="openModel('ADO_ServiceConnection_AuthN_Use_Cert_Auth_for_SPN', 'ServiceConnection')"
             data-toggle="modal" data-target="#myModal">
             <font size="2">SPN with secret &nbsp;&nbsp;</font><br><br>
             <font size="12"> <span style="margin-top:-5px; cursor:pointer" class="text-primary"
-                id="AzureDevOps_ServiceConnection_AuthN_Use_Cert_Auth_for_SPN">- </span> </font>
+                id="ADO_ServiceConnection_AuthN_Use_Cert_Auth_for_SPN">- </span> </font>
           </div>
 
           <!-- <div class="card text-white" style="max-width:110px; max-height:120px;background-color:#ff4444">
                             <div class="card-body">
                               <span class="card-title">AuthZ RG Level</span>
-                              <div class="card-text" id="AzureDevOps_ServiceConnection_AuthZ_RG_Level">0</div>
+                              <div class="card-text" id="ADO_ServiceConnection_AuthZ_Dont_Grant_Subscription_Access">0</div>
                             </div>
                           </div> -->
-          <div class="boxcss" onclick="openModel('AzureDevOps_ServiceConnection_AuthZ_RG_Level', 'ServiceConnection')"
+          <div class="boxcss" onclick="openModel('ADO_ServiceConnection_AuthZ_Dont_Grant_Subscription_Access', 'ServiceConnection')"
             data-toggle="modal" data-target="#myModal">
             <font size="2">SPN with sub level access</font><br>
             <font size="12"> <span style="cursor:pointer" class="text-primary"
-                id="AzureDevOps_ServiceConnection_AuthZ_RG_Level">- </span> </font>
+                id="ADO_ServiceConnection_AuthZ_Dont_Grant_Subscription_Access">- </span> </font>
           </div>
 
           <!-- <div class="card text-white" style="max-width:110px; max-height:120px;background-color:#ff4444">
                             <div class="card-body">
                               <span class="card-title">Use Classic Conn</span>
-                              <p class="card-text" id="AzureDevOps_ServiceConnection_AuthZ_Dont_Use_Classic_Connections">0 </p>
+                              <p class="card-text" id="ADO_ServiceConnection_AuthZ_Dont_Use_Classic_Connections">0 </p>
                             </div>
                           </div> -->
           <div class="boxcss"
-            onclick="openModel('AzureDevOps_ServiceConnection_AuthZ_Dont_Use_Classic_Connections', 'ServiceConnection')"
+            onclick="openModel('ADO_ServiceConnection_AuthZ_Dont_Use_Classic_Connections', 'ServiceConnection')"
             data-toggle="modal" data-target="#myModal">
             <font size="2">Azure Classic Connections</font><br>
             <font size="12"> <span style="cursor:pointer" class="text-primary"
-                id="AzureDevOps_ServiceConnection_AuthZ_Dont_Use_Classic_Connections">- </span></font>
+                id="ADO_ServiceConnection_AuthZ_Dont_Use_Classic_Connections">- </span></font>
           </div>
 
           <!-- <div class="card text-white" style="max-width:110px; max-height:120px;background-color:#ff4444">
                             <div class="card-body">
                               <span class="card-title">Disable InheritPerm</span>
-                              <p class="card-text" id="AzureDevOps_ServiceConnection_AuthZ_Disable_InheritPermissions">0 </p>
+                              <p class="card-text" id="ADO_ServiceConnection_AuthZ_Disable_Inherited_Permissions">0 </p>
                             </div>
                           </div> -->
           <div class="boxcss"
-            onclick="openModel('AzureDevOps_ServiceConnection_AuthZ_Disable_InheritPermissions', 'ServiceConnection')"
+            onclick="openModel('ADO_ServiceConnection_AuthZ_Disable_Inherited_Permissions', 'ServiceConnection')"
             data-toggle="modal" data-target="#myModal">
             <font size="2">Inheritted Permis. allowed</font><br>
             <font size="12"> <span style="cursor:pointer" class="text-primary"
-                id="AzureDevOps_ServiceConnection_AuthZ_Disable_InheritPermissions">- </span> </font>
+                id="ADO_ServiceConnection_AuthZ_Disable_Inherited_Permissions">- </span> </font>
           </div>
 
         </div>
@@ -648,27 +648,27 @@
           <!-- <div class="card text-white" style="max-width:110px; max-height:120px;background-color:#ff4444">
                                      <div class="card-body">
                                        <span class="card-title">Disable InheritPerm</span>
-                                       <p class="card-text" id="AzureDevOps_Build_AuthZ_Disable_Inherited_Permissions">0 </p>
+                                       <p class="card-text" id="ADO_Build_AuthZ_Disable_Inherited_Permissions">0 </p>
                                      </div>
                                    </div> -->
-          <div class="boxcss" onclick="openModel('AzureDevOps_Build_AuthZ_Disable_Inherited_Permissions', 'Build')"
+          <div class="boxcss" onclick="openModel('ADO_Build_AuthZ_Disable_Inherited_Permissions', 'Build')"
             data-toggle="modal" data-target="#myModal">
             <font size="2">Inheritted Permis. allowed </font><br>
             <font size="12"> <span style="cursor:pointer" class="text-primary"
-                id="AzureDevOps_Build_AuthZ_Disable_Inherited_Permissions">- </span> </font>
+                id="ADO_Build_AuthZ_Disable_Inherited_Permissions">- </span> </font>
           </div>
 
           <!-- <div class="card text-white" style="max-width:110px; max-height:120px;background-color:#ff4444">
                                      <div class="card-body">
                                        <span class="card-title">InActive Build</span>
-                                       <div class="card-text" id="AzureDevOps_Build_SI_Review_Inactive_Build">0</div>
+                                       <div class="card-text" id="ADO_Build_SI_Review_Inactive_Build">0</div>
                                      </div>
                                    </div> -->
-          <div class="boxcss" onclick="openModel('AzureDevOps_Build_SI_Review_Inactive_Build', 'Build')"
+          <div class="boxcss" onclick="openModel('ADO_Build_SI_Review_Inactive_Build', 'Build')"
             data-toggle="modal" data-target="#myModal">
             <font size="2">InActive Build &nbsp;&nbsp; &nbsp;&nbsp;</font><br><br>
             <font size="12"> <span style="cursor:pointer" class="text-primary"
-                id="AzureDevOps_Build_SI_Review_Inactive_Build">- </span> </font>
+                id="ADO_Build_SI_Review_Inactive_Build">- </span> </font>
           </div>
 
         </div>
@@ -719,25 +719,25 @@
       <div class="col-sm-2">
         <div class="row">
 
-          <div class="boxcss" onclick="openModel('AzureDevOps_Release_SI_Review_Inactive_Release', 'Release')"
+          <div class="boxcss" onclick="openModel('ADO_Release_SI_Review_Inactive_Release', 'Release')"
             data-toggle="modal" data-target="#myModal">
             <font size="2">InActive Release &nbsp;&nbsp;</font><br><br>
             <font size="12"> <span style="cursor:pointer" class="text-primary"
-                id="AzureDevOps_Release_SI_Review_Inactive_Release">- </span> </font>
+                id="ADO_Release_SI_Review_Inactive_Release">- </span> </font>
           </div>
 
-          <div class="boxcss" onclick="openModel('AzureDevOps_Release_AuthZ_Disable_Inherited_Permissions', 'Release')"
+          <div class="boxcss" onclick="openModel('ADO_Release_AuthZ_Disable_Inherited_Permissions', 'Release')"
             data-toggle="modal" data-target="#myModal">
             <font size="2">Inheritted Permis. allowed </font><br>
             <font size="12"> <span style="cursor:pointer" class="text-primary"
-                id="AzureDevOps_Release_AuthZ_Disable_Inherited_Permissions">- </span> </font>
+                id="ADO_Release_AuthZ_Disable_Inherited_Permissions">- </span> </font>
           </div>
 
-          <div class="boxcss" onclick="openModel('AzureDevOps_Release_AuthZ_Enable_PreDeployment_Approvals', 'Release')"
+          <div class="boxcss" onclick="openModel('ADO_Release_AuthZ_Enable_PreDeployment_Approvals', 'Release')"
             data-toggle="modal" data-target="#myModal">
             <font size="2">Pre Depl App Req </font><br><br>
             <font size="12"> <span style="cursor:pointer" class="text-primary"
-                id="AzureDevOps_Release_AuthZ_Enable_PreDeployment_Approvals">- </span> </font>
+                id="ADO_Release_AuthZ_Enable_PreDeployment_Approvals">- </span> </font>
           </div>
 
         </div>
@@ -784,11 +784,11 @@
 
       <div class="col-sm-2">
         <div class="row">
-          <div class="boxcss" onclick="openModel('AzureDevOps_AgentPool_AuthZ_Project_Dont_Grant_All_Pipeline_Access', 'AgentPool')"
+          <div class="boxcss" onclick="openModel('ADO_AgentPool_AuthZ_Project_Dont_Grant_All_Pipeline_Access', 'AgentPool')"
             data-toggle="modal" data-target="#myModal">
             <font size="2">Don't Grant All PipeLine Access </font><br><br>
             <font size="12"> <span style="cursor:pointer" class="text-primary"
-                id="AzureDevOps_AgentPool_AuthZ_Project_Dont_Grant_All_Pipeline_Access">- </span> </font>
+                id="ADO_AgentPool_AuthZ_Project_Dont_Grant_All_Pipeline_Access">- </span> </font>
           </div>
 
         </div>
