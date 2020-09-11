@@ -633,6 +633,7 @@
         "Automated",
         "TCP",
         "AuthZ",
+        "OwnerAccess",
         "SubscriptionCore"
             ],
       "Enabled": true,
@@ -651,6 +652,7 @@
         "Automated",
         "TCP",
         "AuthZ",
+        "OwnerAccess",
         "SubscriptionCore"
             ],
       "Enabled": true,
@@ -669,6 +671,7 @@
         "Automated",
         "TCP",
         "AuthZ",
+        "OwnerAccess",
         "SubscriptionCore"
             ],
       "Enabled": true,
@@ -687,6 +690,7 @@
         "Automated",
         "TCP",
         "AuthZ",
+        "OwnerAccess",
         "SubscriptionCore"
             ],
       "Enabled": true,
