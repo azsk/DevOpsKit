@@ -327,6 +327,8 @@ function Update-AzSKContinuousAssurance
 			 Use this switch in case 'Az.Automation' module extraction fails in CA Automation Account. 
 	.PARAMETER DoNotOpenOutputFolder
 		Switch to specify whether to open output folder.
+    .PARAMETER SkipCertificateCleanup
+		Use this switch in case of skipping process for deleting old certificates configured with CA SPN.
 	.NOTES
 	
 
@@ -449,12 +451,17 @@ function Update-AzSKContinuousAssurance
 		[Alias("nra")]
 		$NewRuntimeAccount,
 
-
 		[Parameter(Mandatory = $false, ParameterSetName = "Default")]
 		[Parameter(Mandatory = $false, ParameterSetName = "CentralScanMode")]
         [switch]
 		[Alias("rc")]
 		$RenewCertificate,
+
+        [Parameter(Mandatory = $false, ParameterSetName = "Default")]
+		[Parameter(Mandatory = $false, ParameterSetName = "CentralScanMode")]
+        [switch]
+		[Alias("scc")]
+		$SkipCertificateCleanup,
 
 		[Parameter(Mandatory = $false, ParameterSetName = "Default")]
 		[Parameter(Mandatory = $false, ParameterSetName = "CentralScanMode")]
@@ -564,7 +571,7 @@ function Update-AzSKContinuousAssurance
 						$ccAccount.LoggingOption = $LoggingOption;
 					}
 				}
-				return $ccAccount.InvokeFunction($ccAccount.UpdateAzSKContinuousAssurance,@($FixRuntimeAccount,$NewRuntimeAccount,$RenewCertificate,$FixModules));
+				return $ccAccount.InvokeFunction($ccAccount.UpdateAzSKContinuousAssurance,@($FixRuntimeAccount,$NewRuntimeAccount,$RenewCertificate,$FixModules,$SkipCertificateCleanup));
 			}
 			}
 			}

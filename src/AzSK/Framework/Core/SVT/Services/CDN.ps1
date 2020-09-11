@@ -64,8 +64,8 @@ class CDN: AzSVTBase
 					$isRedirectRuleConfigured = $false
 					$currentEndpoint.DeliveryPolicy.Rules | Foreach-Object {
 						$currentRule = $_
-						$requiredHttpCondition = $currentRule.Conditions | Where-Object { $_.MatchVariable -eq "RequestScheme" -and $_.MatchValue -eq "HTTP"}
-						$requiredRedirectAction = $currentRule.Actions | Where-Object { $_.RedirectType -eq "Found" -and $_.DestinationProtocol -eq "HTTPS"}
+						$requiredHttpCondition = $currentRule.Conditions | Where-Object { $_.MatchVariable -eq "RequestScheme" -and $_.MatchValue -eq "HTTP" -and $_.NegateCondition -eq $false}
+						$requiredRedirectAction = $currentRule.Actions | Where-Object { [Helpers]::CheckMember($_, "RedirectType") -and [Helpers]::CheckMember($_, "DestinationProtocol") -and $_.DestinationProtocol -eq "HTTPS"}
 						if($null -ne $requiredHttpCondition -and $null -ne $requiredRedirectAction){
 							$isRedirectRuleConfigured = $true
 						}
