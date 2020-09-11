@@ -146,9 +146,9 @@ class BugMetaInfoProvider {
             }
             if([BugMetaInfoProvider]::BuildSTDetails -and [Helpers]::CheckMember([BugMetaInfoProvider]::BuildSTDetails, "Data"))
             {
-                $buildSTDeatils = [BugMetaInfoProvider]::BuildSTDetails.Data | Where-Object { $_.buildDefinitionID -eq $buildId }; 
-                if ($buildSTDeatils) {
-                    $assignee = $this.GetDataFromServiceTree($buildSTDeatils.serviceID);
+                $buildSTData = [BugMetaInfoProvider]::BuildSTDetails.Data | Where-Object { $_.buildDefinitionID -eq $buildId }; 
+                if ($buildSTData) {
+                    $assignee = $this.GetDataFromServiceTree($buildSTData.serviceID);
                     if ($assignee) {
                         return $assignee;
                     }
@@ -191,10 +191,10 @@ class BugMetaInfoProvider {
 
             if([BugMetaInfoProvider]::ReleaseSTDetails -and [Helpers]::CheckMember([BugMetaInfoProvider]::ReleaseSTDetails, "Data"))
             {
-                $releaseSTDeatils = [BugMetaInfoProvider]::ReleaseSTDetails.Data | Where-Object { $_.releaseDefinitionID -eq $relDefId }; 
+                $releaseSTData = [BugMetaInfoProvider]::ReleaseSTDetails.Data | Where-Object { $_.releaseDefinitionID -eq $relDefId }; 
                     
-                if ($releaseSTDeatils) {
-                    $assignee = $this.GetDataFromServiceTree($releaseSTDeatils.serviceID);
+                if ($releaseSTData) {
+                    $assignee = $this.GetDataFromServiceTree($releaseSTData.serviceID);
                     if ($assignee) {
                         return $assignee;
                     }

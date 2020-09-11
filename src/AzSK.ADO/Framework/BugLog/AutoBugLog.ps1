@@ -192,7 +192,7 @@ class AutoBugLog {
             }
             #user is not a member of PCA, invalidate the bug log
             else {
-                Write-Host "Error: Could not configure host project to log bugs for organization-specific control failures.`nThis may be because: `n  (a) You may not have correct privilege (requires 'Project Collection Administrator').`n  (b) You are logged in using PAT (which is not supported for this currently)." -ForegroundColor Red
+                Write-Host "Error: Could not configure host project to log bugs for organization-specific control failures.`nThis may be because you may not have correct privilege (requires 'Project Collection Administrator')." -ForegroundColor Red
                 return $null
             }
         }
@@ -200,7 +200,7 @@ class AutoBugLog {
         else {
             #check if the user is a member of PCA after validating that the host project name was not provided 
             if (!$this.ControlStateExt.GetControlStatePermission("Organization", "") ) {
-                Write-Host "Error: Auto bug logging denied.`nThis may be because: `n  (a) You are attempting to log bugs for areas you do not have RBAC permission to.`n  (b) You are logged in using PAT (currently not supported for organization and project control's bug logging)." -ForegroundColor Red
+                Write-Host "Error: Auto bug logging denied.`nThis may be because you are attempting to log bugs for areas you do not have RBAC permission to." -ForegroundColor Red
                 return $null
 					  
             }
