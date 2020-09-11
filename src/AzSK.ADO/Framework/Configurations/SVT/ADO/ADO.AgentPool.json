@@ -5,7 +5,7 @@
   "Controls": [
     {
       "ControlID": "ADO_AgentPool_AuthZ_Grant_Min_RBAC_Access",
-      "Description": "All teams/groups must be granted minimum required permissions on agent pool",
+      "Description": "All teams/groups must be granted minimum required permissions on agent pool.",
       "Id": "AgentPool110",
       "ControlSeverity": "High",
       "Automated": "Yes",
@@ -57,11 +57,11 @@
     },
     {
       "ControlID": "ADO_AgentPool_AuthZ_Disable_Inherited_Permissions",
-      "Description": "Do not allow inherited permission on agent pool",
+      "Description": "Do not allow inherited permission on agent pool.",
       "Id": "AgentPool140",
       "ControlSeverity": "High",
       "Automated": "Yes",
-      "MethodName": "CheckInheritPermissions",
+      "MethodName": "CheckInheritedPermissions",
       "Rationale": "Disabling inherit permissions lets you finely control access to various operations at the agent level for different stakeholders. This ensures that you follow the principle of least privilege and provide access only to the persons that require it.",
       "Recommendation": "To disable inheritance follow the steps given here: 1.Navigate to the agent pool. 2. Select Security. 3. Under User Permissions, add the service lead & service owner as users with allow permissions for each permission line item. 4. Select Off under Inheritance. 5. Add users/groups to agent and provide only required access. As best practice, all teams/groups must be granted minimum required permissions on agent pool.",
       "Tags": [
@@ -93,7 +93,7 @@
     },
     {
       "ControlID": "ADO_AgentPool_AuthZ_Project_Dont_Grant_All_Pipeline_Access",
-      "Description": "Do not make agent pool accesible to all pipelines in the project.",
+      "Description": "Do not make agent pool accessible to all pipelines in the project.",
       "Id": "AgentPool160",
       "ControlSeverity": "High",
       "Automated": "Yes",
@@ -111,7 +111,7 @@
     },
     {
       "ControlID": "ADO_AgentPool_SI_Review_Inactive_Pool",
-      "Description": "Inactive agent pool must be removed if no more required.",
+      "Description": "Inactive agent pools must be removed if no more required.",
       "Id": "AgentPool170",
       "ControlSeverity": "Medium",
       "Automated": "Yes",

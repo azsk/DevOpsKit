@@ -149,7 +149,7 @@ class ServiceConnection: ADOSVTBase
         return $controlResult;
     }
 
-    hidden [ControlResult] CheckRBACInheritPermissions ([ControlResult] $controlResult)
+    hidden [ControlResult] CheckInheritedPermissions ([ControlResult] $controlResult)
 	{
         $failMsg = $null
         try

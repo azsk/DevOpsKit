@@ -39,7 +39,7 @@
           "ADO_ServiceConnection_AuthZ_Dont_Grant_All_Pipelines_Access",
           "ADO_ServiceConnection_AuthZ_Dont_Allow_Global_Groups",
           "ADO_ServiceConnection_SI_Review_Inactive_Connection",
-          "ADO_ServiceConnection_SI_Dont_Allow_Project_Sharing",
+          "ADO_ServiceConnection_SI_Dont_Share_Across_Projects",
           "ADO_ServiceConnection_AuthZ_Dont_Grant_Subscription_Access"
         ]
       },
@@ -48,7 +48,8 @@
         "ControlIds": [
           "ADO_Build_AuthZ_Disable_Inherited_Permissions",
           "ADO_Build_DP_No_PlainText_Secrets_In_Definition",
-          "ADO_Build_SI_Review_URL_Variables_Settable_At_Queue_Time"
+          "ADO_Build_SI_Review_URL_Variables_Settable_At_Queue_Time",
+          "ADO_Build_SI_Disable_Task_Group_Edit_Permission"
         ]
       },
       {
@@ -57,7 +58,8 @@
           "ADO_Release_AuthZ_Disable_Inherited_Permissions",
           "ADO_Release_SI_Review_External_Sources",
           "ADO_Release_DP_No_PlainText_Secrets_In_Definition",
-          "ADO_Release_SI_Review_URL_Variables_Settable_At_Release_Time"
+          "ADO_Release_SI_Review_URL_Variables_Settable_At_Release_Time",
+          "ADO_Release_SI_Disable_Task_Group_Edit_Permission"
         ]
       },
       {
@@ -67,6 +69,14 @@
           "ADO_AgentPool_AuthZ_Project_Dont_Grant_All_Pipeline_Access",
           "ADO_AgentPool_AuthZ_Dont_Enable_Auto_Provisioning",
           "ADO_AgentPool_SI_Review_Inactive_Pool"
+        ]
+      },
+      {
+        "ResourceType": "VariableGroup",
+        "ControlIds": [
+          "ADO_VariableGroup_AuthZ_Dont_Grant_All_Pipelines_Access",
+          "ADO_VariableGroup_AuthZ_Disable_Inherited_Permissions",
+          "ADO_VariableGroup_DP_No_PlainText_Secrets_In_Variables"
         ]
       }
     ]

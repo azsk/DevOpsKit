@@ -5,7 +5,7 @@
   "Controls": [
     {
       "ControlID": "ADO_Build_AuthZ_Grant_Min_RBAC_Access",
-      "Description": "All teams/groups must be granted minimum required permissions on build definition",
+      "Description": "All teams/groups must be granted minimum required permissions on build definition.",
       "Id": "Build110",
       "ControlSeverity": "High",
       "Automated": "Yes",
@@ -23,12 +23,12 @@
     },
     {
       "ControlID": "ADO_Build_DP_No_PlainText_Secrets_In_Definition",
-      "Description": "Secrets and keys must not be stored as plain text in build variables/task parameters",
+      "Description": "Secrets and keys must not be stored as plain text in build variables/task parameters.",
       "Id": "Build120",
       "ControlSeverity": "High",
       "Automated": "Yes",
-      "MethodName": "CheckCredInVariables",
-      "Rationale": "Keeping secrets such as connection strings, passwords, keys, etc. in clear text can lead to easy compromise. Making them secret type variables ensures that they are protected at rest.",
+      "MethodName": "CheckCredInBuildVariables",
+      "Rationale": "Keeping secrets such as connection strings, passwords, keys, etc. in plain text can expose the credentials to a wider audience and can lead to credential theft. Marking them as secret protects them from unitended disclosure and/or misuse.",
       "Recommendation": "Refer: https://docs.microsoft.com/en-us/azure/devops/pipelines/process/variables?view=vsts&tabs=yaml%2Cbatch#secret-variables",
       "Tags": [
         "SDL",
@@ -45,7 +45,7 @@
       "ControlSeverity": "High",
       "Automated": "No",
       "MethodName": "",
-      "Rationale": "Static code analyzer ensure that the code is following all rules for security",
+      "Rationale": "Static code analyzers ensure that many kinds of security vulnerabilities are detected in early stages of software/service development.",
       "Recommendation": "Refer: https://docs.microsoft.com/en-us/azure/devops/articles/security-validation-cicd-pipeline?view=vsts#ci-continuous-integration",
       "Tags": [
         "SDL",
@@ -57,12 +57,12 @@
     },
     {
       "ControlID": "ADO_Build_DP_Store_SecretFiles_in_Secure_Library",
-      "Description": " Secure Files library must be used to store secret files such as signing certificates, Apple Provisioning Profiles, Android KeyStore files, and SSH keys",
+      "Description": "Secure Files library must be used to store secret files such as signing certificates, Apple Provisioning Profiles, Android KeyStore files, and SSH keys",
       "Id": "Build140",
       "ControlSeverity": "Medium",
       "Automated": "No",
       "MethodName": "",
-      "Rationale": "Keeping secret files such as signing certificates, Apple Provisioning Profiles, Android KeyStore files, SSH keys etc. in repository can lead to easy compromise at various avenues during an application's lifecycle. Storing them in a secure library ensures that they are protected at rest.",
+      "Rationale": "The contents of the secure files are encrypted and can only be used during the build or release pipeline by referencing them from a task.",
       "Recommendation": "Refer https://docs.microsoft.com/en-us/azure/devops/pipelines/library/secure-files?view=vsts",
       "Tags": [
         "SDL",
@@ -73,29 +73,29 @@
       "Enabled": true
     },
     {
-      "ControlID": "ADO_Build_SI_Review_Inactive_Build",
+      "ControlID": "ADO_Build_DP_Review_Inactive_Build",
       "Description": "Inactive build pipelines must be removed if no more required.",
       "Id": "Build150",
-      "ControlSeverity": "Low",
+      "ControlSeverity": "Medium",
       "Automated": "Yes",
-      "MethodName": "CheckInActiveBuild",
-      "Rationale": "Each additional build having access at repositories increases the attack surface. To minimize this risk ensure that only active and legitimate build resources are present in Organization",
+      "MethodName": "CheckForInactiveBuilds",
+      "Rationale": "Each additional build having access to repositories increases the attack surface. To minimize this risk ensure that only active and legitimate build pipelines are present in your environment.",
       "Recommendation": "To remove inactive build pipelines follow the steps given here: 1.Navigate to the build pipeline. 2. Select a build pipeline. 3. Select three dots (present at right top). 4. Click on Delete. (https://www.azuredevopslabs.com/labs/devopsserver/build/)",
       "Tags": [
         "SDL",
         "Best Practice",
         "Automated",
-        "SI"
+        "DP"
       ],
       "Enabled": true
     },
     {
       "ControlID": "ADO_Build_AuthZ_Disable_Inherited_Permissions",
-      "Description": "Do not allow inherited permission on build definitions",
+      "Description": "Do not allow inherited permission on build definitions.",
       "Id": "Build160",
       "ControlSeverity": "High",
       "Automated": "Yes",
-      "MethodName": "CheckInheritPermissions",
+      "MethodName": "CheckInheritedPermissions",
       "Rationale": "Disabling inherited permissions lets you finely control access to various operations at the build level for different stakeholders. This ensures that you follow the principle of least privilege and provide access only to the persons that require it.",
       "Recommendation": "To disable inheritance follow the steps given here: 1.Navigate to the build pipeline. 2. Select three dots (present at right top). 3. Click Manage Security 4. Add the service lead & service owner as Users with Allow permissions for each permission line item. 5. Disable Inheritance. 6. Add users/groups to your build definition and provide only required access. As best practice, All teams/groups must be granted minimum required permissions on build definition.",
       "Tags": [
@@ -114,7 +114,7 @@
       "ControlSeverity": "High",
       "Automated": "Yes",
       "MethodName": "CheckSettableAtQueueTime",
-      "Rationale": "Pipeline variables not marked settable at queue time can only be changed by someone with elevated permissions. These variables (reasonably) can be used in ways that make code injection possible.",
+      "Rationale": "Pipeline variables that are marked settable at queue time can be changed by anyone who can queue a build. Such variables can be misused for code injection/data theft attacks from pipelines.",
       "Recommendation": "1. Navigate to the build pipeline. 2. Click on Edit. 3. Select variables. 4. Uncheck 'settable at queue time' for such variables. 5. Save the build pipeline.",
       "Tags": [
         "SDL",
@@ -131,7 +131,7 @@
       "ControlSeverity": "High",
       "Automated": "Yes",
       "MethodName": "CheckSettableAtQueueTimeForURL",
-      "Rationale": "Pipeline variables not marked settable at queue time can only be changed by someone with elevated permissions. If these variables contain a URL then someone can change the URL to a server that they control and can intercept any secret used to interact with the intended server by queueing the build..",
+      "Rationale": "Pipeline variables that are marked settable at queue time can be changed by anyone who can queue a build. If these variables contain a URL then someone can change the URL to a server that they control and can intercept any secrets used to interact with the intended server by queueing a build.",
       "Recommendation": "1. Navigate to the build pipeline. 2. Click on Edit. 3. Select variables. 4. Uncheck 'settable at queue time' for such variables. 5. Save the build pipeline.",
       "Tags": [
         "SDL",
@@ -142,14 +142,31 @@
       "Enabled": true
     },
     {
-      "ControlID": "ADO_Build_SI_Check_External_Source_Self_Hosted_Build",
-      "Description": "Building code from untrusted external sources is effectively allowing external parties to execute arbitrary code on your computer.",
+      "ControlID": "ADO_Build_SI_Review_External_Sources",
+      "Description": "Review external source code repositories before adding them to your pipeline.",
       "Id": "Build180",
       "ControlSeverity": "High",
       "Automated": "Yes",
-      "MethodName": "ExternalSourceSelfHostedBuild",
-      "Rationale": "Builds execute attacker-controlled code by-design (e.g. solution files contain build command lines to invoke, unit tests compile into DLLs that are loaded and executed by a harness, etc). Building code from untrusted external sources is effectively allowing external parties to execute arbitrary code on your computer.",
+      "MethodName": "CheckExternalSources",
+      "Rationale": "Building code from untrusted external sources can allow an attacker to execute arbitrary code in your pipeline. Hence, all repositories added to the pipeline should be carefully reviewed.",
       "Recommendation": "Validate the external source repo and self-hosted agents for vulnerabilities.",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Automated",
+        "SI"
+      ],
+      "Enabled": true
+    },
+    {
+      "ControlID": "ADO_Build_SI_Disable_Task_Group_Edit_Permission",
+      "Description": "Do not include loosely permissioned task groups in your pipeline.",
+      "Id": "Build190",
+      "ControlSeverity": "High",
+      "Automated": "Yes",
+      "MethodName": "CheckTaskGroupEditPermission",
+      "Rationale": "If a broad pool of users (e.g., Contributors) have edit permissions on a task group, then integrity of your pipeline can be compromised by a malicious user who edits the task group.",
+      "Recommendation": "1. Navigate to the build pipeline. 2. Click on Tasks. 3. Right click on each task group and select 'Manage task group'. 4. Select 'Security' for the task group. 5. Ensure 'Edit task group' permission of Contributors is not set to 'Allow'.",
       "Tags": [
         "SDL",
         "TCP",
