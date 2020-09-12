@@ -230,7 +230,7 @@ class ActiveDirectoryHelper {
                 	Write-host "We found the following older credentials associated with [$($ADApplication.displayname)]:" -ForegroundColor Yellow
 								
                		# Displaying older Certificates in form of table               
-                	$display= $OldCerts|Format-Table -Property  @{name="Index";expression={$OldCerts.IndexOf($_)}},@{name="Thumbprint";expression={$_.customKeyIdentifier}},@{name="EndDate(MM/dd/yyyy)";expression={([datetime] $_.endDate).ToString("MM/dd/yyyy")}} | Out-String
+                	$display= $OldCerts|Format-Table -Property  @{name="Index";expression={$OldCerts.IndexOf($_)}},@{name="Thumbprint";expression={$_.customKeyIdentifier}},@{name="EndDate(MM-dd-yyyy)";expression={([datetime] $_.endDate).ToString("MM/dd/yyyy")}} | Out-String
                 	Write-Host $display
 
                 	Write-host "Before deleting make sure that these certificates are not used anywhere else!" -ForegroundColor Yellow
@@ -324,7 +324,7 @@ class ActiveDirectoryHelper {
                                                                  	 }
 
                                          	Write-Host "Certificates selected for deletion: " -ForegroundColor Cyan 
-                                         	$output=$CertificatesToRemove|Format-Table -Property @{name="Thumbprint";expression={$_.customKeyIdentifier}} | Out-String 
+                                         	$output=$CertificatesToRemove|Format-Table -Property @{name="Thumbprint(s)";expression={$_.customKeyIdentifier}} | Out-String 
                                          	Write-Host $output
                                     		while($confirmation.ToUpper() -ne 'Y' -and $confirmation.ToUpper() -ne 'N')
                                      		{
