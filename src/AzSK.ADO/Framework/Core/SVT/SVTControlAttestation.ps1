@@ -497,7 +497,7 @@ class SVTControlAttestation
 									$controlState.AttestationStatus = $controlResult.AttestationStatus
 									$controlState.EffectiveVerificationResult = $controlResult.VerificationResult
 
-									#This seems to be unused...also, we should look into if 'tolower()' should be done in general for rsrcIds.
+									#ADOTodo: This seems to be unused...also, we should look into if 'tolower()' should be done in general for rsrcIds.
 									$controlState.HashId = [ControlStateExtension]::ComputeHashX($resourceValueKey.ToLower());
 									$controlState.ResourceId = $resourceValueKey;
 									if($this.bulkAttestMode)
