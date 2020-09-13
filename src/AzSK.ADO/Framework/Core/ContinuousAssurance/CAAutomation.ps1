@@ -214,6 +214,39 @@ class CAAutomation : ADOSVTCommandBase
 			}
 		}
 
+		CAAutomation(
+		[string] $SubId, `
+		[string] $OrgName, `
+		[string] $ResourceGroupName, `
+		[string] $FunctionAppName, `
+		[InvocationInfo] $invocationContext) : Base($OrgName, $invocationContext)
+		{
+			$this.SubscriptionId = $SubId
+			$this.OrganizationToScan = $OrgName
+
+			if ([string]::IsNullOrWhiteSpace($ResourceGroupName)) 
+			{
+				$this.RGName = [Constants]::AzSKADORGName
+			}
+			else{
+				$this.RGName = $ResourceGroupName
+			}
+
+			if ([string]::IsNullOrWhiteSpace($FunctionAppName)) 
+			{
+				$this.FuncAppName = $this.FuncAppDefaultName
+			}
+			else{
+				$this.FuncAppName = $FunctionAppName
+			}
+
+			$this.ControlSettings = [ConfigurationManager]::LoadServerConfigFile("ControlSettings.json");
+			if (($null -ne $this.ControlSettings) -and [Helpers]::CheckMember($this.ControlSettings, "DockerImage.ImageName")) 
+			{
+				$this.ImageName = $this.ControlSettings.DockerImage.ImageName
+			}
+		}
+
 	[string] ValidateUserPermissions()
 	{
 		$output ='';
@@ -780,5 +813,178 @@ class CAAutomation : ADOSVTCommandBase
 			$messageData += [MessageData]::new($Error)
 		}
 		return $messageData
+	}
+
+	[MessageData[]] GetAzSKADOContinuousAssurance()
+    {
+		[MessageData[]] $messageData = @();
+		$this.messages += ([Constants]::DoubleDashLine + "`r`nStarted validating your AzSK.ADO Continuous Assurance (CA) setup for $($this.OrganizationToScan)`r`n"+[Constants]::DoubleDashLine);
+		$this.PublishCustomMessage($this.messages, [MessageType]::Info);
+		try
+		{
+			$output = $this.ValidateUserPermissions();
+			if($output -ne 'OK') # if there is issue while validating permissions output will contain exception
+			{
+				$this.PublishCustomMessage("Error validating permissions on the subscription", [MessageType]::Error);
+				$messageData += [MessageData]::new($output)
+			}
+			else 
+			{
+				#Step 1: Validate if RG exists.
+				if (-not [string]::IsNullOrEmpty($this.RGname))
+				{
+					$RG = Get-AzResourceGroup -Name $this.RGname -ErrorAction SilentlyContinue
+					if ($null -eq $RG)
+					{
+						$messageData += [MessageData]::new("Resource group '$($this.RGname)' not found. Please validate the resource group name." )
+						$this.PublishCustomMessage($messageData.Message, [MessageType]::Error);
+						return $messageData
+					}
+				}
+
+				#Step 2: Validate if ADOScanner function app exists in the RG 
+				$this.PublishCustomMessage("Check 01: Presence of Function app..", [MessageType]::Info);
+				$appServResource = @((Get-AzResource -ResourceGroupName $this.RGname -ResourceType "Microsoft.Web/Sites").Name | where {$_ -match $this.FuncAppName})
+				if($appServResource.Count -eq 0)
+				{
+					$this.PublishCustomMessage("Status:   ADOScanner FunctionApp is not available in resource group '$($this.RGname)'. Update Failed!", [MessageType]::Error);
+					return $messageData
+				}
+				elseif ($appServResource.Count -gt 1)
+				{
+					$this.PublishCustomMessage("Status:   More than one ADOScanner app service is available in resource group '$($this.RGname).'Consider using the '-FunctionAppName' param.", [MessageType]::Error);
+					return $messageData
+				}
+				else {
+					$this.FuncAppName = $appServResource[0]
+					$this.PublishCustomMessage("Status:   OK. Found the Function App: '$($this.FuncAppName).", [MessageType]::Update);
+					$this.TimeStamp = $this.FuncAppName.Replace($this.FuncAppDefaultName,"")
+				}
+				$this.PublishCustomMessage([Constants]::SingleDashLine, [MessageType]::Default);
+				 
+				#Step 3: Validate if ADOScanner function app is setup for the org provided in command
+				$this.PublishCustomMessage("Check 02: Validating organization name..", [MessageType]::Info);
+				$WebApp = Get-AzWebApp -Name $appServResource[0] -ResourceGroupName $this.RGname
+				$ExistingAppSettings = $WebApp.SiteConfig.AppSettings 
+				#convert existing app settings from list to hashtable
+				$AppSettingsHT = @{}
+
+				foreach ($Setting in $ExistingAppSettings) 
+				{
+					$AppSettingsHT["$($Setting.Name)"] = "$($Setting.value)"
+				}
+
+				if ($AppSettingsHT["OrgName"] -ne $this.OrganizationToScan)
+				{
+					$this.PublishCustomMessage("Status:   CA setup is configured for '$($AppSettingsHT["OrgName"])' organization and does not match with provided Organization '$($this.OrganizationToScan)'.", [MessageType]::Error);
+					return $messageData
+				}
+				else {
+					$this.PublishCustomMessage("Status:   OK. CA is setup for organization '$($this.OrganizationToScan).", [MessageType]::Update);
+				}
+				$this.PublishCustomMessage([Constants]::SingleDashLine, [MessageType]::Default);
+
+				#Step 4: Validate app settings for additional app settings
+				$this.PublishCustomMessage("Check 03: Validating other app settings..", [MessageType]::Info);
+				if ([string]::IsNullOrEmpty($AppSettingsHT["PATToken"]))
+				{
+					$this.PublishCustomMessage("Status:   PAT token is not configured in the CA setup.", [MessageType]::Error);
+				}
+				else {
+					$this.PublishCustomMessage("Status:   OK. PAT token is configured in the CA setup.", [MessageType]::Update);
+				}
+				if ([string]::IsNullOrEmpty($AppSettingsHT["ProjectNames"]))
+				{
+					$this.PublishCustomMessage("Status:   Project Name is not configured in the CA setup.", [MessageType]::Error);
+				}
+				else {
+					$this.PublishCustomMessage("Status:   OK. Project Name is configured in the CA setup.", [MessageType]::Update);
+				}
+				if ([string]::IsNullOrEmpty($AppSettingsHT["LAWSId"]) -or [string]::IsNullOrEmpty($AppSettingsHT["LAWSSharedKey"]))
+				{
+					$this.PublishCustomMessage("Status:   Log Analytics is not configured in the CA setup.", [MessageType]::Error);
+				}
+				else {
+					$this.PublishCustomMessage("Status:   OK. Log Analytics is configured in the CA setup.", [MessageType]::Update);
+				}
+				if ([string]::IsNullOrEmpty($AppSettingsHT["AltLAWSId"]) -or [string]::IsNullOrEmpty($AppSettingsHT["AltLAWSSharedKey"]))
+				{
+					$this.PublishCustomMessage("Status:   Alternate Log Analytics is not configured in the CA setup.", [MessageType]::Info);
+				}
+				else {
+					$this.PublishCustomMessage("Status:   OK. Alternate Log Analytics is configured in the CA setup.", [MessageType]::Update);
+				}
+				if ([string]::IsNullOrEmpty($AppSettingsHT["ExtendedCommand"]))
+				{
+					$this.PublishCustomMessage("Status:   Extended Command is not configured in the CA setup.", [MessageType]::Info);
+				}
+				else {
+					$this.PublishCustomMessage("Status:   OK. Extended Command is configured in the CA setup.", [MessageType]::Update);
+				}
+				$this.PublishCustomMessage([Constants]::SingleDashLine, [MessageType]::Default);
+
+				#Step 4: Validate if storage exists
+				$this.PublishCustomMessage("Check 03: Validating Storage Account..", [MessageType]::Info);
+				$this.StorageName = "adoscannersa"+$this.TimeStamp 
+				$storageAccKey = Get-AzStorageAccountKey -ResourceGroupName $this.RGName -Name $this.StorageName
+				if ($null -eq $storageAccKey)
+				{
+					$this.PublishCustomMessage("Status:   Storage Account is not configured in the CA setup.", [MessageType]::Error);
+				}
+				else {
+					$StorageContext = New-AzStorageContext -StorageAccountName $this.StorageName -StorageAccountKey $storageAccKey[0].Value -Protocol Https
+					$containerObject = Get-AzStorageContainer -Context $StorageContext -Name "ado-scan-logs" -ErrorAction SilentlyContinue
+					if($null -eq $containerObject)
+					{
+						$this.PublishCustomMessage("Status:   Scan logs not found.", [MessageType]::Error);
+					}	
+					else {
+						$CAScanDataBlobObject = $this.GetScanLogsFromStorageAccount("ado-scan-logs", "$($this.OrganizationToScan.ToLower())/", $StorageContext)
+						if ($null -eq $CAScanDataBlobObject)
+						{
+							$this.PublishCustomMessage("Status:   Scan logs not found for last 3 days.", [MessageType]::Error);
+						}
+						else {
+							$this.PublishCustomMessage("Status:   OK. Storage account contains scan logs for recent jobs as expected.", [MessageType]::Update);
+						}
+					}
+				}
+				$this.PublishCustomMessage([Constants]::SingleDashLine, [MessageType]::Default);
+
+				#Step 5: Validate image name
+				$this.PublishCustomMessage("Check 03: Validating Image..", [MessageType]::Info);
+				$image = "DOCKER|"+ $this.ImageName
+				if ( $WebApp.SiteConfig.LinuxFxVersion -eq $image)
+				{
+					$this.PublishCustomMessage("Status:   OK. Docker image is correctly configured.", [MessageType]::Update);
+				}
+				else {
+					$this.PublishCustomMessage("Status:   Docker image is not correctly configured.", [MessageType]::Error);
+				}
+				$this.PublishCustomMessage([Constants]::SingleDashLine, [MessageType]::Default);
+				$this.PublishCustomMessage([Constants]::SingleDashLine, [MessageType]::Default);
+				$this.PublishCustomMessage("Consider using 'Update-AzSKADOContinuousAssurance' command to modify any configuration setting.", [MessageType]::Update);
+			}
+		}
+		catch
+		{
+		}
+		return $messageData
+	}
+
+	#get scan logs from storage 
+	hidden [PSObject] GetScanLogsFromStorageAccount($containerName, $scanLogsPrefixPattern, $currentContext)
+	{
+		# Get AzSKADO storage of the current sub
+		$recentCAScanDataBlobObject = $null
+		$recentLogLimitInDays = 3
+		$dayCounter = 0
+		while($dayCounter -le $recentLogLimitInDays -and $recentCAScanDataBlobObject -eq $null){
+			$date = [DateTime]::UtcNow.AddDays(-$dayCounter).ToString("yyyyMMdd")
+			$recentLogsPath = $scanLogsPrefixPattern + "ADOCALogs_" + $date
+			$recentCAScanDataBlobObject = Get-AzStorageBlob -Container $containerName -Prefix $recentLogsPath -Context $currentContext -ErrorAction SilentlyContinue
+			$dayCounter += 1
+			}
+		return $recentCAScanDataBlobObject
 	}
 }

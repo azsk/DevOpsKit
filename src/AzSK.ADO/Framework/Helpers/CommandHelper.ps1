@@ -44,6 +44,12 @@ class CommandHelper
             Noun = "AzSKADOContinuousAssurance";
             ShortName = "uca";
 			IsLatestRequired = $false;
+        },
+		[CommandDetails]@{
+            Verb = "Get";
+            Noun = "AzSKADOContinuousAssurance";
+            ShortName = "gca";
+			IsLatestRequired = $false;
         }
     );
 

@@ -13,7 +13,7 @@ function Install-AzSKADOContinuousAssurance
 	.PARAMETER Location
 		Location in which all resources need to be setup. 
 	.PARAMETER ResourceGroupName
-		Resource group name where CA setup need to be done. (Default : ADOSCannerRG)
+		Resource group name where CA setup need to be done. (Default : ADOScannerRG)
 	.PARAMETER LAWSId
 		Workspace ID of Log Analytics workspace where security scan results will be sent
 	.PARAMETER LAWSSharedKey
@@ -207,7 +207,7 @@ function Update-AzSKADOContinuousAssurance
 		[System.Security.SecureString]
 		$PATToken,
 
-		[Parameter(Mandatory = $false, ParameterSetName = "Default", HelpMessage="Resource group name where CA setup is available. (Default : ADOSCannerRG)")]
+		[Parameter(Mandatory = $false, ParameterSetName = "Default", HelpMessage="Resource group name where CA setup is available. (Default : ADOScannerRG)")]
         [string]
 		[Alias("rgn")]
 		$ResourceGroupName,       
@@ -284,3 +284,65 @@ function Update-AzSKADOContinuousAssurance
 		[ListenerHelper]::UnregisterListeners();
 	}
 }
+function Get-AzSKADOContinuousAssurance 
+{
+	<#
+	.SYNOPSIS
+	This command would help in getting details of Continuous Assurance Setup
+		
+	.PARAMETER SubscriptionId
+		Subscription id in which CA setup is present.
+	.PARAMETER OrganizationName
+		Organization name for which CA is setup.
+	.PARAMETER ResourceGroupName
+		Resource group name where CA setup is available (Default : ADOScannerRG).
+	.PARAMETER FunctionAppName
+		Function app name if multiple CA are setup in same resource group.
+	#>
+	Param(
+		[Parameter(Mandatory = $true, ParameterSetName = "Default", HelpMessage="Subscription id in which CA setup is present.")]
+        [string]
+		[Alias("sid")]
+		$SubscriptionId ,
+		
+		[Parameter(Mandatory = $true, ParameterSetName = "Default", HelpMessage = "Orgnanization name for which scan will be performed.")]
+		[Alias("oz")]
+		[string]
+		$OrganizationName,
+
+		[Parameter(Mandatory = $false, ParameterSetName = "Default", HelpMessage="Resource group name where CA setup is available. (Default : ADOScannerRG)")]
+        [string]
+		[Alias("rg")]
+		$ResourceGroupName ,
+		
+		[Parameter(Mandatory = $false, ParameterSetName = "Default", HelpMessage="Function app name if multiple CA are setup in same resource group.")]
+        [string]
+		[Alias("rgn")]
+		$FunctionAppName    
+
+    )
+	Begin
+	{
+		[CommandHelper]::BeginCommand($PSCmdlet.MyInvocation);
+		[ListenerHelper]::RegisterListeners();
+	}
+	Process
+	{
+		try 
+		{
+			$resolver = [Resolver]::new($OrganizationName)
+			$caAccount = [CAAutomation]::new($SubscriptionId, $OrganizationName, $ResourceGroupName, $FunctionAppName, $PSCmdlet.MyInvocation);
+            
+			return $caAccount.InvokeFunction($caAccount.GetAzSKADOContinuousAssurance);
+		}
+		catch 
+		{
+			[EventBase]::PublishGenericException($_);
+		}  
+	}
+	End
+	{
+		[ListenerHelper]::UnregisterListeners();
+	}
+}
+
