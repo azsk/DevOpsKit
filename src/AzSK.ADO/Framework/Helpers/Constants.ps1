@@ -93,6 +93,11 @@ class Constants
 			[AttestationStatus]::StateConfirmed ="6";
 			
 	}
+	#This is the number of hex-chars used for attestation hash index entries (and file names).
+	static [int] $AttestationHashLen = 64;
+
+	#This is the length of tag for auto-logged bugs (used to search if a bug exists for a given (resourceId,controlId) pair)
+	static [int] $AutoBugLogTagLen = 12;
 
 	#Ext Storage
 	static [string] $StorageUri = "https://extmgmt.dev.azure.com/{0}/_apis/extensionmanagement/installedextensions/azsdktm/ADOSecurityScanner/Data/Scopes/Default/Current/Collections/{1}/Documents/{2}?api-version=5.1-preview.1" 

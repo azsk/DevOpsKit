@@ -167,8 +167,8 @@ class AutoCloseBugManager {
         $stringToHash = $stringToHash.Replace("{0}", $ResourceId)
         $stringToHash = $stringToHash.Replace("{1}", $ControlId)
         #return the bug tag
-        $hashedTag = [Helpers]::ComputeHash($stringToHash)
-        $hashedTag = "ADOScanID: " + $hashedTag.Substring(0, 12)
+
+        $hashedTag = "ADOScanID: " + [AutoBugLog]::ComputeHashX($stringToHash)
         return $hashedTag
     }
 

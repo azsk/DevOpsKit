@@ -36,6 +36,12 @@ class ControlStateExtension
 		$this.AttestationBody = [ConfigurationManager]::LoadServerConfigFile("ADOAttestation.json");
 	}
 
+	static [string] ComputeHashX([string] $dataToHash)
+	{
+		return [Helpers]::ComputeHashShort($dataToHash, [Constants]::AttestationHashLen)
+	}
+
+
 	hidden [void] Initialize([bool] $CreateResourcesIfNotExists)
 	{
 		if([string]::IsNullOrWhiteSpace($this.UniqueRunId))
@@ -64,6 +70,7 @@ class ControlStateExtension
 	      }
 	}
 
+
 	hidden [bool] ComputeControlStateIndexer()
 	{
 		try {
@@ -72,8 +79,7 @@ class ControlStateExtension
 			{
 				New-Item -ItemType Directory -Path $AzSKTemp -Force | Out-Null
 			}
-		$indexerObject = Get-ChildItem -Path (Join-Path $AzSKTemp $($this.IndexerBlobName)) -Force -ErrorAction Stop | Get-Content | ConvertFrom-Json
-		
+			$indexerObject = Get-ChildItem -Path (Join-Path $AzSKTemp $($this.IndexerBlobName)) -Force -ErrorAction Stop | Get-Content | ConvertFrom-Json
 		}
 		catch {
 			#Write-Host $_
@@ -104,7 +110,7 @@ class ControlStateExtension
 				  $this.IsExceptionCheckingControlStateIndexerPresent = $false
 				  $webRequestResult = $this.GetRepoFileContent( $this.IndexerBlobName );
 				  if($webRequestResult){
-				   $indexerObject = $webRequestResult 
+				   		$indexerObject = $webRequestResult 
 				  }
 				  else {
 					  if ($this.IsExceptionCheckingControlStateIndexerPresent -eq $false) {
@@ -195,7 +201,7 @@ class ControlStateExtension
 				else {
 				    $indexes += $this.ControlStateIndexer
 				}
-				$hashId = [Helpers]::ComputeHash($id)
+				$hashId = [ControlStateExtension]::ComputeHashX($id)
 				$selectedIndex = $indexes | Where-Object { $_.HashId -eq $hashId}
 				
 				if(($selectedIndex | Measure-Object).Count -gt 0)
@@ -269,7 +275,7 @@ class ControlStateExtension
 			Remove-Item -Path $(Join-Path $AzSKTemp "ControlState" | Join-Path -ChildPath '*' ) -Force -Recurse 
 		}
         
-		$hash = [Helpers]::ComputeHash($id) 
+		$hash = [ControlStateExtension]::ComputeHashX($id) 
 		$indexerPath = Join-Path $AzSKTemp "ControlState" | Join-Path -ChildPath $this.IndexerBlobName;
 		if(-not (Test-Path -Path (Join-Path $AzSKTemp "ControlState")))
 		{
@@ -449,6 +455,7 @@ class ControlStateExtension
 		    return $webRequestResult.Project
 		}
 		catch {
+			Write-Output -ForegroupColor Yellow "Could not get attestation-project-name from Extension storage!"
 			return $null;
 		}
 	}
@@ -580,7 +587,7 @@ class ControlStateExtension
 			Remove-Item -Path $(Join-Path $AzSKTemp "ControlState" | Join-Path -ChildPath '*') -Force -Recurse
 		}
 
-		$hash = [Helpers]::ComputeHash($id);
+		$hash = [ControlStateExtension]::ComputeHashX($id);
 		$indexerPath = Join-Path $AzSKTemp "ControlState" | Join-Path -ChildPath $this.IndexerBlobName ;
 		$fileName = Join-Path $AzSKTemp "ControlState" | Join-Path -ChildPath ("$hash.json");
 		
@@ -682,7 +689,7 @@ class ControlStateExtension
 
 		if($retVal)
 		{				
-			$tempHash = [Helpers]::ComputeHash($id);
+			$tempHash = [ControlStateExtension]::ComputeHashX($id);
 			#take the current indexer value
 			$filteredIndexerObject = $null;
 			$filteredIndexerObject2 = $null;

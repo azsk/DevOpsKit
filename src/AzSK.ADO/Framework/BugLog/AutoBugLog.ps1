@@ -15,6 +15,11 @@ class AutoBugLog {
         $this.ControlStateExt = $ControlStateExt               
     }  
 
+    static [string] ComputeHashX([string] $dataToHash)
+	{
+		return [Helpers]::ComputeHashShort($dataToHash, [Constants]::AutoBugLogTagLen)
+	}
+
     #main function where bug logging takes place 
     hidden [void] LogBugInADO([SVTEventContext[]] $ControlResults, [string] $BugLogParameterValue) {
         #check if user has permissions to log bug for the current resource
@@ -170,7 +175,7 @@ class AutoBugLog {
             }
             'User' {
                 #TODO: User controls dont have a project associated with them, can be rectified in future versions
-                Write-Host "`nAuto bug logging for user control failures is currently unavailable" -ForegroundColor Red
+                Write-Host "`nAuto bug logging for user control failures is currently not supported." -ForegroundColor Red
                 return $false
             }
         }
@@ -409,8 +414,7 @@ class AutoBugLog {
         $stringToHash = $stringToHash.Replace("{0}", $ResourceId)
         $stringToHash = $stringToHash.Replace("{1}", $ControlId)
         #return the bug tag
-        $hashedTag = [Helpers]::ComputeHash($stringToHash)
-        $hashedTag="ADOScanID: " + $hashedTag.Substring(0, 12)
+        $hashedTag="ADOScanID: " + [AutoBugLog]::ComputeHashX($stringToHash)
         return $hashedTag
     }
 

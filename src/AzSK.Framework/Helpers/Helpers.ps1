@@ -4,7 +4,8 @@ using namespace Microsoft.Azure.Commands.Common.Authentication
 using namespace Microsoft.Azure.Management.Storage.Models
 Set-StrictMode -Version Latest
 class Helpers {
-
+    static [PSObject] $SHA256Alg = [System.Security.Cryptography.HashAlgorithm]::Create('sha256');
+    
     hidden static [PSObject] LoadOfflineConfigFile([string] $fileName, [bool] $parseJson) {
 		$rootConfigPath = [Constants]::AzSKAppFolderPath ;
 		return [Helpers]::LoadOfflineConfigFile($fileName, $true,$rootConfigPath);
@@ -550,12 +551,26 @@ class Helpers {
         return $tagsString;
     }
 
-    static [string] ComputeHash([String] $data) {
-        $HashValue = [System.Text.StringBuilder]::new()
-        [System.Security.Cryptography.HashAlgorithm]::Create("SHA256").ComputeHash([System.Text.Encoding]::UTF8.GetBytes($data))| ForEach-Object {
-            [void]$HashValue.Append($_.ToString("x"))
+    static [string] ComputeHash([String] $data) 
+    {
+        #Call the other function but request the full 32-byte == 64 hex chars (SHA56 hash) as string
+        return [Helpers]::ComputeHashShort($data, 64)
+    }
+
+    static [string] ComputeHashShort([String] $data, [int] $len) 
+    {
+        $retHashSB = [System.Text.StringBuilder]::new();
+        $hashBytes = [Helpers]::SHA256Alg.ComputeHash([System.Text.Encoding]::UTF8.GetBytes($data));
+
+        $usedBytes = $len/2 #If N hex chars are needed, first N/2 bytes of the hash are used.
+        #Grab only as many bytes from hash to use for returned hashString.
+        #We use "x2" instead of just "x" to ensure that '4' becomes '04' in the returned string (applicable to anything <16)
+        #Overall, this ensures that the string conversion of a full SHA256 hash is *always* 64 chars long.
+        for ($i=0;$i -lt $usedBytes; $i++)
+        {
+            [void]$retHashSB.Append($hashBytes[$i].ToString("x2"))  
         }
-        return $HashValue.ToString()
+        return $retHashSB.ToString()
     }
 
     static [VerificationResult] EvaluateVerificationResult([VerificationResult] $verificationResult, [AttestationStatus] $attestationStatus) {
