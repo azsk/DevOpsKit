@@ -416,7 +416,11 @@ class Build: ADOSVTBase
     hidden [ControlResult] CheckTaskGroupEditPermission([ControlResult] $controlResult)
     {
         #Task groups have type 'metaTask' whereas individual tasks have type 'task'
-        $taskGroups = $this.BuildObj[0].process.phases[0].steps | Where-Object {$_.task.definitiontype -eq 'metaTask'}
+        $taskGroups = @();
+        if([Helpers]::CheckMember($this.BuildObj[0].process.phases[0],"steps"))
+        {
+            $taskGroups += $this.BuildObj[0].process.phases[0].steps | Where-Object {$_.task.definitiontype -eq 'metaTask'}
+        }
         $editableTaskGroups = @();
         if(($taskGroups | Measure-Object).Count -gt 0)
         {   
