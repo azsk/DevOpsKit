@@ -847,7 +847,7 @@ class CAAutomation : ADOSVTCommandBase
 				$appServResource = @((Get-AzResource -ResourceGroupName $this.RGname -ResourceType "Microsoft.Web/Sites").Name | where {$_ -match $this.FuncAppName})
 				if($appServResource.Count -eq 0)
 				{
-					$this.PublishCustomMessage("Status:   ADOScanner FunctionApp is not available in resource group '$($this.RGname)'. Update Failed!", [MessageType]::Error);
+					$this.PublishCustomMessage("Status:   ADOScanner function app is not available in resource group '$($this.RGname)'. Update Failed!", [MessageType]::Error);
 					return $messageData
 				}
 				elseif ($appServResource.Count -gt 1)
@@ -857,7 +857,7 @@ class CAAutomation : ADOSVTCommandBase
 				}
 				else {
 					$this.FuncAppName = $appServResource[0]
-					$this.PublishCustomMessage("Status:   OK. Found the Function App: '$($this.FuncAppName).", [MessageType]::Update);
+					$this.PublishCustomMessage("Status:   OK. Found the function app: '$($this.FuncAppName).", [MessageType]::Update);
 					$this.TimeStamp = $this.FuncAppName.Replace($this.FuncAppDefaultName,"")
 				}
 				$this.PublishCustomMessage([Constants]::SingleDashLine, [MessageType]::Default);
@@ -876,7 +876,7 @@ class CAAutomation : ADOSVTCommandBase
 
 				if ($AppSettingsHT["OrgName"] -ne $this.OrganizationToScan)
 				{
-					$this.PublishCustomMessage("Status:   CA setup is configured for '$($AppSettingsHT["OrgName"])' organization and does not match with provided Organization '$($this.OrganizationToScan)'.", [MessageType]::Error);
+					$this.PublishCustomMessage("Status:   CA setup is configured for '$($AppSettingsHT["OrgName"])' organization and does not match with provided organization '$($this.OrganizationToScan)'.", [MessageType]::Error);
 					return $messageData
 				}
 				else {
@@ -898,28 +898,28 @@ class CAAutomation : ADOSVTCommandBase
 					$this.PublishCustomMessage("Status:   Project Name is not configured in the CA setup.", [MessageType]::Error);
 				}
 				else {
-					$this.PublishCustomMessage("Status:   OK. Project Name is configured in the CA setup.", [MessageType]::Update);
+					$this.PublishCustomMessage("Status:   OK. Project name is configured in the CA setup.", [MessageType]::Update);
 				}
 				if ([string]::IsNullOrEmpty($AppSettingsHT["LAWSId"]) -or [string]::IsNullOrEmpty($AppSettingsHT["LAWSSharedKey"]))
 				{
-					$this.PublishCustomMessage("Status:   Log Analytics is not configured in the CA setup.", [MessageType]::Error);
+					$this.PublishCustomMessage("Status:   Log analytics is not configured in the CA setup.", [MessageType]::Info);
 				}
 				else {
-					$this.PublishCustomMessage("Status:   OK. Log Analytics is configured in the CA setup.", [MessageType]::Update);
+					$this.PublishCustomMessage("Status:   OK. Log analytics is configured in the CA setup.", [MessageType]::Update);
 				}
 				if ([string]::IsNullOrEmpty($AppSettingsHT["AltLAWSId"]) -or [string]::IsNullOrEmpty($AppSettingsHT["AltLAWSSharedKey"]))
 				{
-					$this.PublishCustomMessage("Status:   Alternate Log Analytics is not configured in the CA setup.", [MessageType]::Info);
+					$this.PublishCustomMessage("Status:   Alternate Log analytics is not configured in the CA setup.", [MessageType]::Info);
 				}
 				else {
-					$this.PublishCustomMessage("Status:   OK. Alternate Log Analytics is configured in the CA setup.", [MessageType]::Update);
+					$this.PublishCustomMessage("Status:   OK. Alternate Log analytics is configured in the CA setup.", [MessageType]::Update);
 				}
 				if ([string]::IsNullOrEmpty($AppSettingsHT["ExtendedCommand"]))
 				{
-					$this.PublishCustomMessage("Status:   Extended Command is not configured in the CA setup.", [MessageType]::Info);
+					$this.PublishCustomMessage("Status:   Extended command is not configured in the CA setup.", [MessageType]::Info);
 				}
 				else {
-					$this.PublishCustomMessage("Status:   OK. Extended Command is configured in the CA setup.", [MessageType]::Update);
+					$this.PublishCustomMessage("Status:   OK. Extended command is configured in the CA setup.", [MessageType]::Update);
 				}
 				$this.PublishCustomMessage([Constants]::SingleDashLine, [MessageType]::Default);
 
@@ -929,7 +929,7 @@ class CAAutomation : ADOSVTCommandBase
 				$storageAccKey = Get-AzStorageAccountKey -ResourceGroupName $this.RGName -Name $this.StorageName
 				if ($null -eq $storageAccKey)
 				{
-					$this.PublishCustomMessage("Status:   Storage Account is not configured in the CA setup.", [MessageType]::Error);
+					$this.PublishCustomMessage("Status:   Storage account is not configured in the CA setup.", [MessageType]::Error);
 				}
 				else {
 					$StorageContext = New-AzStorageContext -StorageAccountName $this.StorageName -StorageAccountKey $storageAccKey[0].Value -Protocol Https
