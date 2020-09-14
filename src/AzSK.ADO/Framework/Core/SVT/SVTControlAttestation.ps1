@@ -11,7 +11,7 @@ class SVTControlAttestation
 	[AttestationOptions] $attestOptions;
 	hidden [PSObject] $ControlSettings ; 
 	hidden [SubscriptionContext] $SubscriptionContext;
-    hidden [InvocationInfo] $InvocationContext;
+	hidden [InvocationInfo] $InvocationContext;
 
 	SVTControlAttestation([SVTEventContext[]] $ctrlResults, [AttestationOptions] $attestationOptions, [SubscriptionContext] $subscriptionContext, [InvocationInfo] $invocationContext)
 	{
@@ -496,7 +496,9 @@ class SVTControlAttestation
 						
 									$controlState.AttestationStatus = $controlResult.AttestationStatus
 									$controlState.EffectiveVerificationResult = $controlResult.VerificationResult
-									$controlState.HashId = [Helpers]::ComputeHash($resourceValueKey.ToLower());
+
+									#ADOTodo: This seems to be unused...also, we should look into if 'tolower()' should be done in general for rsrcIds.
+									$controlState.HashId = [ControlStateExtension]::ComputeHashX($resourceValueKey.ToLower());
 									$controlState.ResourceId = $resourceValueKey;
 									if($this.bulkAttestMode)
 									{

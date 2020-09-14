@@ -26,6 +26,7 @@ class SVTControlAttestation
 		$this.ControlSettings=$ControlSettingsJson = [ConfigurationManager]::LoadServerConfigFile("ControlSettings.json");
 	}
 
+
 	[AttestationStatus] GetAttestationValue([string] $AttestationCode)
 	{
 		switch($AttestationCode.ToUpper())
@@ -460,7 +461,7 @@ class SVTControlAttestation
 						
 									$controlState.AttestationStatus = $controlResult.AttestationStatus
 									$controlState.EffectiveVerificationResult = $controlResult.VerificationResult
-									$controlState.HashId = [Helpers]::ComputeHash($resourceValueKey.ToLower());
+									$controlState.HashId = [ControlStateExtension]::ComputeHashX($resourceValueKey.ToLower());
 									$controlState.ResourceId = $resourceValueKey;
 									if($this.bulkAttestMode)
 									{

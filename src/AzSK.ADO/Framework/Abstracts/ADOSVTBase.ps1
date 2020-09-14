@@ -429,12 +429,7 @@ class ADOSVTBase: SVTBase {
 		$this.PostEvaluationCompleted($resourceSecurityResult);
 	}
 
-	hidden [void] PostEvaluationCompleted([SVTEventContext[]] $ControlResults) {
-		# If ResourceType is Databricks, reverting security protocol 
-		if ([Helpers]::CheckMember($this.ResourceContext, "ResourceType") -and $this.ResourceContext.ResourceType -eq "Microsoft.Databricks/workspaces") {
-			[Net.ServicePointManager]::SecurityProtocol = $this.currentSecurityProtocol 
-		}
-		
+	hidden [void] PostEvaluationCompleted([SVTEventContext[]] $ControlResults) {		
 		$this.UpdateControlStates($ControlResults);
 
 		$BugLogParameterValue =$this.InvocationContext.BoundParameters["AutoBugLog"]

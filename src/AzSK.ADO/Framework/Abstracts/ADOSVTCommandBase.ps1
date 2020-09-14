@@ -26,22 +26,6 @@ class ADOSVTCommandBase: SVTCommandBase {
 
         #Force load of AzSK.json
         $cfg = [ConfigurationManager]::GetAzSKConfigData();
-        
-         #Create necessary resources to save compliance data in user's subscription
-         #<TODO Perf Issue - ComplianceReportHelper fetch RG/Storage. Then creates RG/Storage/table if not exists. Check permissions for write etc>
-        # if($this.IsLocalComplianceStoreEnabled)
-        # {
-        #   #if($null -eq $this.ComplianceReportHelper)
-        #   #{
-        #   #    #Reset cached compliance report helper instance for accessing first fetch
-        #   #    [ComplianceReportHelper]::Instance = $null
-        #   #    $this.ComplianceReportHelper = [ComplianceReportHelper]::GetInstance($this.SubscriptionContext, $this.GetCurrentModuleVersion());                  
-        #   #}
-        #    if(-not $this.ComplianceReportHelper.HaveRequiredPermissions())
-        #    {
-        #        $this.IsLocalComplianceStoreEnabled = $false;
-        #    }
-        # }
     }
     #EndRegion
 
@@ -58,28 +42,22 @@ class ADOSVTCommandBase: SVTCommandBase {
 
 	[void] PostCommandStartedAction()
 	{
-		#$isPolicyInitiativeEnabled = [FeatureFlightingManager]::GetFeatureStatus("EnableAzurePolicyBasedScan",$($this.SubscriptionContext.SubscriptionId))
-        #if($isPolicyInitiativeEnabled)
-        #{
-        #    $this.PostPolicyComplianceTelemetry()        
-        #}
+
 	}
     [void] PostPolicyComplianceTelemetry()
 	{
-	#	[CustomData] $customData = [CustomData]::new();
-	#	$customData.Name = "PolicyComplianceTelemetry";		
-	#	$customData.Value = $this.SubscriptionContext.SubscriptionId;
-	#	$this.PublishCustomData($customData);			
+			
     }
     
     [void] CommandErrorExt([System.Management.Automation.ErrorRecord] $exception) {
-        #$this.CheckAndEnableAzTelemetry()
+
     }
 
     [void] CommandCompletedExt([SVTEventContext[]] $arguments) {
-        #$this.CheckAndEnableAzTelemetry()
+
     }
 
+    #ADOCleanup - remove this ComplianceData stuff...leftover from AzSK.
     [ComplianceStateTableEntity[]] FetchComplianceStateData([string] $resourceId)
 	{
         [ComplianceStateTableEntity[]] $ComplianceStateData = @();
