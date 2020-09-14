@@ -84,7 +84,8 @@
         'Install-AzSKADOMonitoringSolution',
         'Set-AzSKADOPolicySettings',
         'Install-AzSKADOContinuousAssurance',
-        'Update-AzSKADOContinuousAssurance'
+        'Update-AzSKADOContinuousAssurance',
+        'Get-AzSKADOContinuousAssurance'
     )
 
     # Cmdlets to export from this module

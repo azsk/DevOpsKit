@@ -260,7 +260,7 @@ class PartialScanManager
 				}
 			}
 		}
-		elseif ($this.scanSource -eq "CA") {
+		elseif ($this.scanSource -eq "CA" -and $this.isDurableStorageFound) {
 			$controlStateBlob = Get-AzStorageBlob -Container $this.CAScanProgressSnapshotsContainerName -Context $this.storageContext -Blob "$($this.ResourceScanTrackerFileName)" -ErrorAction SilentlyContinue
 
 			if($null -ne $controlStateBlob)
