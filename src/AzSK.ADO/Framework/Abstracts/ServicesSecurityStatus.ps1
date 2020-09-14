@@ -424,8 +424,9 @@ class ServicesSecurityStatus: ADOSVTCommandBase
                     #This should fetch full list of resources to be scanned 
                     $nonScannedResourcesList = $partialScanMngr.GetNonScannedResources();
                 }
-                #Set unique partial scan indentifier 
-                $this.PartialScanIdentifier = [Helpers]::ComputeHash($partialScanMngr.ResourceScanTrackerObj.Id)
+				#Set unique partial scan identifier (used for correlating events in AI when partial scan resumes.)
+				#ADOTODO: Move '12' to Constants.ps1 later.
+                $this.PartialScanIdentifier = [Helpers]::ComputeHashShort($partialScanMngr.ResourceScanTrackerObj.Id,12)
                 
                 #Telemetry with addition for Subscription Id, PartialScanIdentifier and correction in count of resources
                 #Need optimization for calcuations done for total resources.
