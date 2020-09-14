@@ -79,12 +79,12 @@ class ADOSVTBase: SVTBase {
 
 				if($resourceType -ne "Organization" -or $this.ControlStateExt.GetProject())
 				{
-				$resourceStates = $this.ControlStateExt.GetControlState($this.ResourceId, $resourceType, $this.ResourceContext.ResourceName, $this.ResourceContext.ResourceGroupName, $isRescan)
-				if ($null -ne $resourceStates) {
-					$this.ResourceState += $resourceStates
+					$resourceStates = $this.ControlStateExt.GetControlState($this.ResourceId, $resourceType, $this.ResourceContext.ResourceName, $this.ResourceContext.ResourceGroupName, $isRescan)
+					if ($null -ne $resourceStates) {
+						$this.ResourceState += $resourceStates
 
+					}
 				}
-			}
 				else {
 					return $null;
 				}				
@@ -116,6 +116,11 @@ class ADOSVTBase: SVTBase {
 				}
 			}
 			elseif ($null -eq $resourceStates) {
+				$tempHasRequiredAccess = $false;
+			}
+			# If Project name is not configured in ext storage & policy project parameter is not used or attestation repo is not present in policy project, 
+			# then 'IsAttProjectNotFound' will be true so that HasRequiredAccess for org controls can be set as false
+			elseif ($eventContext.FeatureName -eq "Organization" -and [ControlStateExtension]::IsAttProjectNotFound -eq $true){
 				$tempHasRequiredAccess = $false;
 			}
 		}

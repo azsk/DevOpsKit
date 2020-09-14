@@ -24,6 +24,9 @@ class ControlStateExtension
 	hidden [PSObject] $AttestationBody;
 	[bool] $IsPersistedControlStates = $false;
 	[bool] $IsExceptionCheckingControlStateIndexerPresent = $false
+	hidden [bool] $CheckExtStgPolicyProjFound = $true; #Flag to check if policy proj is found in ext storage. This will be used to avoid redundant calls to print try,fetch messages.
+	hidden [bool] $CheckParamPolicyProjectFound = $true; #Flag to check if policy proj paramter is used. This will be used to avoid redundant calls to print try,fetch messages.
+	hidden static [bool] $IsAttProjectNotFound  = $true; # Flag to represent if Host proj(attestation repo) is avilable for org controls. TRUE => Project or Repo not found. 
 	
 
 
@@ -429,8 +432,43 @@ class ControlStateExtension
 		{
 			if($this.InvocationContext)
 			{
-			  $projectName = $this.GetProjectNameFromExtStorage();
-			}
+			#Get project name from ext storage to fetch org attestation 
+			$projectName = $this.GetProjectNameFromExtStorage();
+
+			#If not found then check if 'PolicyProject' parameter is provided in command 
+			if ([string]::IsNullOrEmpty($projectName))
+			{
+				$projectName = $this.InvocationContext.BoundParameters["PolicyProject"]
+				if ([string]::IsNullOrEmpty($projectName))
+				{
+					if ($this.CheckParamPolicyProjectFound -eq $true)
+					{
+						Write-Host -ForegroundColor Yellow "Could not fetch attestation-project-name. Please use '-PolicyProject' parameter to specify the host project containing attestation details of organization controls."
+						$this.CheckParamPolicyProjectFound = $false;
+					}
+				}
+				else {
+					if ([ControlStateExtension]::IsAttProjectNotFound -eq $true)
+					{
+						#Validate if Attestation repo is available in policy project
+						try 
+						{
+							$rmContext = [ContextHelper]::GetCurrentContext();
+							$user = "";
+							$base64AuthInfo = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(("{0}:{1}" -f $user,$rmContext.AccessToken)))
+						
+							$uri = "https://dev.azure.com/{0}/{1}/_apis/git/repositories/{2}/refs?api-version=5.0" -f $this.SubscriptionContext.subscriptionid, $projectName, [Constants]::AttestationRepo 
+							$webRequest = Invoke-RestMethod -Uri $uri -Method Get -ContentType "application/json" -Headers @{Authorization=("Basic {0}" -f $base64AuthInfo)}
+							[ControlStateExtension]::IsAttProjectNotFound = $false # Policy project and repo found
+						}
+						catch {
+							$projectName = "";
+							# eat exception. This means attestation repo was not found
+							# attestation repo is required to scan org controls and send hasrequiredaccess as true
+						}
+					}
+				}
+			}}
 		}
 		elseif($this.resourceType -eq "Project" )
 		{
@@ -451,11 +489,17 @@ class ControlStateExtension
 		    $base64AuthInfo = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(("{0}:{1}" -f $user,$rmContext.AccessToken)))
 		    
 		    $uri = [Constants]::StorageUri -f $this.SubscriptionContext.subscriptionid, $this.SubscriptionContext.subscriptionid, [Constants]::OrgAttPrjExtFile 
-		    $webRequestResult = Invoke-RestMethod -Uri $uri -Method Get -ContentType "application/json" -Headers @{Authorization=("Basic {0}" -f $base64AuthInfo)}
+			$webRequestResult = Invoke-RestMethod -Uri $uri -Method Get -ContentType "application/json" -Headers @{Authorization=("Basic {0}" -f $base64AuthInfo)}
+			[ControlStateExtension]::IsAttProjectNotFound = $false # Policy project found
 		    return $webRequestResult.Project
 		}
 		catch {
-			Write-Output -ForegroundColor Yellow "Could not get attestation-project-name from Extension storage!"
+			if ($this.CheckExtStgPolicyProjFound -eq $true)
+			{
+				Write-Host -ForegroundColor Yellow "Could not fetch attestation-project-name from extension storage!"
+				Write-Host -ForegroundColor Cyan "Trying to fetch host project containing attestation details of organization controls."
+				$this.CheckExtStgPolicyProjFound = $false;
+			}
 			return $null;
 		}
 	}
