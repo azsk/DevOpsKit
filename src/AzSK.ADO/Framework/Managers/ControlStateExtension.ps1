@@ -455,7 +455,7 @@ class ControlStateExtension
 		    return $webRequestResult.Project
 		}
 		catch {
-			Write-Output -ForegroupColor Yellow "Could not get attestation-project-name from Extension storage!"
+			Write-Output -ForegroundColor Yellow "Could not get attestation-project-name from Extension storage!"
 			return $null;
 		}
 	}
