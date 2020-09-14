@@ -1,5 +1,6 @@
 Set-StrictMode -Version Latest
 
+#ADOCleanup: Remove this...not needed for ADOScanner.
 class ComplianceStateTableEntity
 {
 	#partition key = resourceid/subscriptionid
