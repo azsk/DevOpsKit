@@ -119,8 +119,8 @@ class ADOSVTBase: SVTBase {
 				$tempHasRequiredAccess = $false;
 			}
 			# If Project name is not configured in ext storage & policy project parameter is not used or attestation repo is not present in policy project, 
-			# then 'IsAttProjectNotFound' will be true so that HasRequiredAccess for org controls can be set as false
-			elseif ($eventContext.FeatureName -eq "Organization" -and [ControlStateExtension]::IsAttProjectNotFound -eq $true){
+			# then 'IsOrgAttestationProjectFound' will be false so that HasRequiredAccess for org controls can be set as false
+			elseif ($eventContext.FeatureName -eq "Organization" -and [ControlStateExtension]::IsOrgAttestationProjectFound -eq $false){
 				$tempHasRequiredAccess = $false;
 			}
 		}

@@ -23,10 +23,11 @@ class ControlStateExtension
 	hidden [PSObject] $resourceGroupName;
 	hidden [PSObject] $AttestationBody;
 	[bool] $IsPersistedControlStates = $false;
-	[bool] $IsExceptionCheckingControlStateIndexerPresent = $false
-	hidden [bool] $CheckExtStgPolicyProjFound = $true; #Flag to check if policy proj is found in ext storage. This will be used to avoid redundant calls to print try,fetch messages.
-	hidden [bool] $CheckParamPolicyProjectFound = $true; #Flag to check if policy proj paramter is used. This will be used to avoid redundant calls to print try,fetch messages.
-	hidden static [bool] $IsAttProjectNotFound  = $true; # Flag to represent if Host proj(attestation repo) is avilable for org controls. TRUE => Project or Repo not found. 
+	[bool] $FailedDownloadForControlStateIndexer = $false
+	hidden [bool] $PrintExtStgPolicyProjErr = $true; 
+	hidden [bool] $PrintParamPolicyProjErr = $true; 
+	hidden [bool] $PrintAttestationRepoErr = $true; 
+	hidden static [bool] $IsOrgAttestationProjectFound  = $false; # Flag to represent if Host proj(attestation repo) is avilable for org controls. FALSE => Project or Repo not yet found. 
 	
 
 
@@ -108,15 +109,15 @@ class ControlStateExtension
 				$loopValue = $loopValue - 1;
 				try
 				{
-				  #IsExceptionCheckingControlStateIndexerPresent is used if file present in repo then variable is false, if file not present then it goes to exception so variable value is true.
+				  #FailedDownloadForControlStateIndexer is used if file present in repo then variable is false, if file not present then it goes to exception so variable value is true.
 				  #If file resent in repo with no content, there will be no exception in api call and respose body will be null
-				  $this.IsExceptionCheckingControlStateIndexerPresent = $false
+				  $this.FailedDownloadForControlStateIndexer = $false
 				  $webRequestResult = $this.GetRepoFileContent( $this.IndexerBlobName );
 				  if($webRequestResult){
 				   		$indexerObject = $webRequestResult 
 				  }
 				  else {
-					  if ($this.IsExceptionCheckingControlStateIndexerPresent -eq $false) {
+					  if ($this.FailedDownloadForControlStateIndexer -eq $false) {
 						  $this.IsControlStateIndexerPresent = $true
 					  }
 					  else {
@@ -171,7 +172,7 @@ class ControlStateExtension
 			{
 				return $null;
 			}
-
+			# We reset ControlStateIndexer to null whenever we move to a new project (project context switch)
 			if($this.resourceType -eq "Project" ){
 			    $this.ControlStateIndexer =  $null;
 			    $this.IsControlStateIndexerPresent = $true;
@@ -441,14 +442,14 @@ class ControlStateExtension
 				$projectName = $this.InvocationContext.BoundParameters["PolicyProject"]
 				if ([string]::IsNullOrEmpty($projectName))
 				{
-					if ($this.CheckParamPolicyProjectFound -eq $true)
+					if ($this.PrintParamPolicyProjErr -eq $true)
 					{
-						Write-Host -ForegroundColor Yellow "Could not fetch attestation-project-name. Please use '-PolicyProject' parameter to specify the host project containing attestation details of organization controls."
-						$this.CheckParamPolicyProjectFound = $false;
+						Write-Host -ForegroundColor Yellow "Could not fetch attestation-project-name. `r`n Please use '-PolicyProject' parameter to specify the host project containing attestation details of organization controls."
+						$this.PrintParamPolicyProjErr = $false;
 					}
 				}
 				else {
-					if ([ControlStateExtension]::IsAttProjectNotFound -eq $true)
+					if ([ControlStateExtension]::IsOrgAttestationProjectFound -eq $false)
 					{
 						#Validate if Attestation repo is available in policy project
 						try 
@@ -459,10 +460,16 @@ class ControlStateExtension
 						
 							$uri = "https://dev.azure.com/{0}/{1}/_apis/git/repositories/{2}/refs?api-version=5.0" -f $this.SubscriptionContext.subscriptionid, $projectName, [Constants]::AttestationRepo 
 							$webRequest = Invoke-RestMethod -Uri $uri -Method Get -ContentType "application/json" -Headers @{Authorization=("Basic {0}" -f $base64AuthInfo)}
-							[ControlStateExtension]::IsAttProjectNotFound = $false # Policy project and repo found
+							[ControlStateExtension]::IsOrgAttestationProjectFound = $true # Policy project and repo found
 						}
 						catch {
 							$projectName = "";
+							if ($this.PrintAttestationRepoErr -eq $true)
+							{
+								Write-Host -ForegroundColor Yellow "Could not find attestation repo [$([Constants]::AttestationRepo)] in the policy project."
+								$this.PrintAttestationRepoErr = $false;
+							}
+
 							# eat exception. This means attestation repo was not found
 							# attestation repo is required to scan org controls and send hasrequiredaccess as true
 						}
@@ -490,16 +497,17 @@ class ControlStateExtension
 		    
 		    $uri = [Constants]::StorageUri -f $this.SubscriptionContext.subscriptionid, $this.SubscriptionContext.subscriptionid, [Constants]::OrgAttPrjExtFile 
 			$webRequestResult = Invoke-RestMethod -Uri $uri -Method Get -ContentType "application/json" -Headers @{Authorization=("Basic {0}" -f $base64AuthInfo)}
-			[ControlStateExtension]::IsAttProjectNotFound = $false # Policy project found
-		    return $webRequestResult.Project
+			#If repo is not found, we will fall into the catch block from IRM call above
+			[ControlStateExtension]::IsOrgAttestationProjectFound = $true # Policy project found
+			return $webRequestResult.Project
 		}
 		catch {
-			if ($this.CheckExtStgPolicyProjFound -eq $true)
+			if ($this.PrintExtStgPolicyProjErr -eq $true)
 			{
 				Write-Host -ForegroundColor Yellow "Could not fetch attestation-project-name from extension storage!"
 				Write-Host -ForegroundColor Cyan "Trying to fetch host project containing attestation details of organization controls."
-				$this.CheckExtStgPolicyProjFound = $false;
-			}
+				$this.PrintExtStgPolicyProjErr = $false;
+			}			
 			return $null;
 		}
 	}
@@ -585,7 +593,7 @@ class ControlStateExtension
 		}
 		catch{
 			if ($fileName -eq  $this.IndexerBlobName) {
-				$this.IsExceptionCheckingControlStateIndexerPresent = $true
+				$this.FailedDownloadForControlStateIndexer = $true
 			}
 			return $null;
 		}
