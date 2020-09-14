@@ -94,7 +94,7 @@ class Constants
 			
 	}
 	#This is the number of hex-chars used for attestation hash index entries (and file names).
-	static [int] $AttestationHashLen = 64;
+	static [int] $AttestationHashLen = 12;
 
 	#This is the length of tag for auto-logged bugs (used to search if a bug exists for a given (resourceId,controlId) pair)
 	static [int] $AutoBugLogTagLen = 12;
