@@ -2378,6 +2378,7 @@ class SubscriptionCore: AzSVTBase
 			#Get all users that have access to subscription
 			$allValidUserRAs = $allValidRAs | Where-Object {$_.ObjectType -eq 'User'}
 
+			#Below code is commented for future reference, in case when we want to check access of applications whose owner do not have privileged access to subscription.
 			#Sort unique, this is list of end users with privileged roles
 			#$allPrivUserRAs = $allPrivUserRAs | Sort-Object ObjectId -Unique
 			#$allPrivUsersOids = $allPrivUserRAs.ObjectId
@@ -2438,7 +2439,6 @@ class SubscriptionCore: AzSVTBase
             [int] $retryCount = 5
 			$wapiResponse = [WebRequestHelper]::InvokeGetWebRequest($workspaceAPI);
 			$activeIdentitiesQuery = "{'query': 'AzureActivity\r\n| where TimeGenerated > ago(90d) and  Type == \'AzureActivity\' and SubscriptionId == \'$($this.SubscriptionContext.SubscriptionId)\'\r\n| summarize arg_max(TimeGenerated, *) by Caller \r\n| project Caller, TimeGenerated\r\n'}" | ConvertFrom-Json
-            
 			$wapiResponse | foreach-object {
 				if($retryCount -gt 0)
 				{

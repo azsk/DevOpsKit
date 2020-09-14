@@ -230,11 +230,11 @@ class ActiveDirectoryHelper {
                 	Write-host "We found the following older credentials associated with [$($ADApplication.displayname)]:" -ForegroundColor Yellow
 								
                		# Displaying older Certificates in form of table               
-                	$display= $OldCerts|Format-Table -Property  @{name="Index";expression={$OldCerts.IndexOf($_)}},@{name="Thumbprint";expression={$_.customKeyIdentifier}},@{name="EndDate(MM/dd/yyyy)";expression={([datetime] $_.endDate).ToString("MM/dd/yyyy")}} | Out-String
+                	$display= $OldCerts|Format-Table -Property  @{name="Index";expression={$OldCerts.IndexOf($_)}},@{name="Thumbprint";expression={$_.customKeyIdentifier}},@{name="EndDate(MM-dd-yyyy)";expression={([datetime] $_.endDate).ToString("MM/dd/yyyy")}} | Out-String
                 	Write-Host $display
 
-                	Write-host "Before Deleting make sure that the Certificates are not used anywhere else!!!" -ForegroundColor Yellow
-                	Write-Host "Please select an action from below: `n[A]: Delete All`n[N]: Delete None`n[S]: Delete Selected" -ForegroundColor Cyan         
+                	Write-host "Before deleting make sure that these certificates are not used anywhere else!" -ForegroundColor Yellow
+                	Write-Host "Please select an action from below: `n[A]: Delete all`n[N]: Delete none`n[S]: Delete selected" -ForegroundColor Cyan         
                 
                 	# Initializing an empty array list to add certificates for deletion
                 	[System.Collections.ArrayList] $CertificatesToRemove = @() 
@@ -242,7 +242,7 @@ class ActiveDirectoryHelper {
                 	$userChoice=""
                 	while($userChoice -ne 'A' -and $userChoice -ne 'N' -and $userChoice -ne 'S')
                 	{
-                 		$userChoice = Read-Host "User Choice"
+                 		$userChoice = Read-Host "User choice"
                     	if(-not [string]::IsNullOrWhiteSpace($userChoice))
 				    	{
 							$userChoice = $userChoice.Trim();
@@ -258,7 +258,7 @@ class ActiveDirectoryHelper {
 			       	 	{	
                       		while($confirmation.ToUpper() -ne 'Y' -and $confirmation.ToUpper() -ne 'N')
                       		{
-                      			$confirmation = Read-Host "Do you want to delete all Certificates ? (Y/N)"
+                      			$confirmation = Read-Host "Do you want to delete all certificates ? (Y/N)"
                        			if(-not [string]::IsNullOrWhiteSpace($confirmation))
 				         		{
 					        		$confirmation = $confirmation.Trim();
@@ -266,18 +266,18 @@ class ActiveDirectoryHelper {
                       		} 
                       		if($confirmation.ToUpper() -eq 'Y')
                       		{ 
-                      			Write-Host "Deleting All certificates. This may take few min..." -ForegroundColor Yellow			
+                      			Write-Host "Deleting all certificates. This may take few min..." -ForegroundColor Yellow			
 			          			$ADApplication.keyCredentials = $latestCert
                       		}
                       		else
                       		{
-                      			Write-Host "No Certificates are deleted." -ForegroundColor Yellow
+                      			Write-Host "No certificates were deleted." -ForegroundColor Yellow
                       		}
                        		break  				
 			        	}
 			        	"N" #None
 			        	{
-                        	Write-Host "No Certificates are deleted." -ForegroundColor Yellow                   
+                        	Write-Host "No certificates were deleted." -ForegroundColor Yellow                   
 			            	break
 			        	}
 			        	"S" #Select
@@ -286,7 +286,7 @@ class ActiveDirectoryHelper {
                             		# flag used for validating the indexes entered by user.
                             		$validIndexFlag=$true
                             		$invalidindexes=""
-                            		$indexs=Read-Host "Enter comma separated index(s) from the above table"
+                            		$indexs=Read-Host "Enter comma separated index(es) from the above table"
                             		$indexs = $indexs.Trim();
                             		if([string]::IsNullOrWhiteSpace($indexs) -or $indexs -eq ',')
                             		{
@@ -324,11 +324,11 @@ class ActiveDirectoryHelper {
                                                                  	 }
 
                                          	Write-Host "Certificates selected for deletion: " -ForegroundColor Cyan 
-                                         	$output=$CertificatesToRemove|Format-Table -Property @{name="Thumbprint";expression={$_.customKeyIdentifier}} | Out-String 
+                                         	$output=$CertificatesToRemove|Format-Table -Property @{name="Thumbprint(s)";expression={$_.customKeyIdentifier}} | Out-String 
                                          	Write-Host $output
                                     		while($confirmation.ToUpper() -ne 'Y' -and $confirmation.ToUpper() -ne 'N')
                                      		{
-                                      			$confirmation = Read-Host "Do you want to delete the selected Certificates ? (Y/N)"
+                                      			$confirmation = Read-Host "Do you want to delete the selected certificates ? (Y/N)"
                                       			if(-not [string]::IsNullOrWhiteSpace($confirmation))
 				                         		{
 					                       			$confirmation = $confirmation.Trim();
@@ -338,17 +338,17 @@ class ActiveDirectoryHelper {
                                     		{                                          
                                          		$ADApplication.keyCredentials	= $AllCerts | Where-Object { $CertificatesToRemove -notcontains $_ }
                                          		$ADApplication.keyCredentials=[System.Collections.ArrayList]@($ADApplication.keyCredentials)
-                                         		Write-Host "Deleting selected Certificates." -ForegroundColor Yellow
+                                         		Write-Host "Deleting selected certificates." -ForegroundColor Yellow
                                     		}
                                     		else
                                     		{
-                                        		Write-Host "No Certificates are deleted." -ForegroundColor Yellow
+                                        		Write-Host "No certificates were deleted." -ForegroundColor Yellow
                                     		}                               
                              			}
                              			else
                              			{
                                 			# All/ Any index is/are invalid
-                                			Write-Host "Please provide valid index(s) from above table." -ForegroundColor Yellow
+                                			Write-Host "Please provide valid index(es) from above table." -ForegroundColor Yellow
 
                                 			#Checking the count of invalid indexes so that valid message ( for 1 or many invalid indexes) can be displayed.
                                 			if($invalidindexes.Split(',',[System.StringSplitOptions]::RemoveEmptyEntries).count -eq 1)
@@ -361,7 +361,7 @@ class ActiveDirectoryHelper {
                                    				# Printing invalidindexes string without last comma => 1,2, => 1,2
                                    				Write-Host " $(-join$invalidindexes[0..($invalidindexes.Length-2)]) are not valid indexes. "
                                 			}
-                                			Write-Host "No Certificates are deleted !!!" -ForegroundColor Yellow
+                                			Write-Host "No certificates were deleted." -ForegroundColor Yellow
                              			} 
                          			} 
                         	  }while(-not($validIndexFlag))
