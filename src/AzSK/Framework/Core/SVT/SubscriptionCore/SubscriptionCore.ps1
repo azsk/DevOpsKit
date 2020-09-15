@@ -2332,7 +2332,11 @@ class SubscriptionCore: AzSVTBase
         $allValidRAs = $this.RoleAssignmentsAtSubScope | Where-Object {$_.ObjectType -ne 'Unknown'}
 		$this.GetPIMRoles();
 		$pimroles = $this.PIMAssignments #list of Eligible Pim assignments
-		$allValidRAs += $pimroles
+
+		if($null -ne $pimroles)
+        	{
+			$allValidRAs += $pimroles
+		}
 
 		if ([Helpers]::CheckMember($this.ControlSettings,"PrivilegedRolesForSub"))
 		{
