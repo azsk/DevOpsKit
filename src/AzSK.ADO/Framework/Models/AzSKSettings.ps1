@@ -233,6 +233,9 @@ class AzSKSettings {
 		}
 		elseif([AzSKSettings]::InvocationContext.BoundParameters["ProjectNames"]){
 			$projectName = [AzSKSettings]::InvocationContext.BoundParameters["ProjectNames"].split(',')[0];
+		} #ADOToDo: by Oct-2020, fix this duality of ProjectNames/ProjectName (or at least read from InvocationContext at only one place!)
+		elseif([AzSKSettings]::InvocationContext.BoundParameters["ProjectName"]){
+			$projectName = [AzSKSettings]::InvocationContext.BoundParameters["ProjectName"].split(',')[0];
 		}
 		else
 		{
