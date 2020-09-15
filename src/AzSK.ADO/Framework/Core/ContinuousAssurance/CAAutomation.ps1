@@ -649,11 +649,12 @@ class CAAutomation : ADOSVTCommandBase
 					$keyVaultResource = @((Get-AzResource -ResourceGroupName $this.RGname -ResourceType "Microsoft.KeyVault/vaults").Name | where {$_ -match $kvToUpdate})
 					if($keyVaultResource.Count -eq 0)
 					{
-						$this.PublishCustomMessage("ADOScanner KeyVault is not available in resource group '$($this.RGname)'. Update Failed!", [MessageType]::Error);
+						$this.PublishCustomMessage("ADOScanner KeyVault is not found in resource group '$($this.RGname)'. Update Failed!", [MessageType]::Error);
 					}
 					elseif ($keyVaultResource.Count -gt 1)
 					{
-						$this.PublishCustomMessage("More than one ADOScanner KeyVault is available in resource group '$($this.RGname)'. Update Failed!`r`nConsider using the '-RsrcTimeStamp' param.", [MessageType]::Error);
+						$this.PublishCustomMessage("More than one ADOScanner KeyVault is available in resource group '$($this.RGname)'. Update failed!", [MessageType]::Error);
+						$this.PublishCustomMessage("Consider using the '-RsrcTimeStamp' param. (E.g., to update values corresponding to 'ADOScannerFA200915172817' use '-RsrcTimeStamp 200915172817'.", [MessageType]::Warning);											
 					}
 					else {
 						if (-not [string]::IsNullOrEmpty($this.PATToken))
@@ -708,11 +709,12 @@ class CAAutomation : ADOSVTCommandBase
 					$appServResource = @((Get-AzResource -ResourceGroupName $this.RGname -ResourceType "Microsoft.Web/Sites").Name | where {$_ -match $funcAppToUpdate})
 					if($appServResource.Count -eq 0)
 					{
-						$this.PublishCustomMessage("ADOScanner FunctionApp is not available in resource group '$($this.RGname)'. Update Failed!", [MessageType]::Error);
+						$this.PublishCustomMessage("ADOScanner FunctionApp is not found in resource group '$($this.RGname)'. Update Failed!", [MessageType]::Error);
 					}
 					elseif ($appServResource.Count -gt 1)
 					{
-						$this.PublishCustomMessage("More than one ADOScanner app service is available in resource group '$($this.RGname).'. Update Failed!`r`nConsider using the '-RsrcTimeStamp' param.", [MessageType]::Error);
+						$this.PublishCustomMessage("More than one ADOScanner app service is available in resource group '$($this.RGname).'. Update failed!)", [MessageType]::Error);
+						$this.PublishCustomMessage("Consider using the '-RsrcTimeStamp' param. (E.g., to update values corresponding to 'ADOScannerFA200915172817' use '-RsrcTimeStamp 200915172817'.", [MessageType]::Warning);						
 					}
 					else {
 						$WebApp = Get-AzWebApp -Name $appServResource[0] -ResourceGroupName $this.RGname
@@ -758,6 +760,7 @@ class CAAutomation : ADOSVTCommandBase
 						if(-not [string]::IsNullOrEmpty( $this.ExtendedCommand ))
 						{
 							$AppSettingsHT["ExtendedCommand"] = $this.ExtendedCommand
+							$this.PublishCustomMessage("Updating ExtendedCommand overrides the default -ScanAllArtifacts behavior of CA.`r`nIf you need that, please specify '-saa' switch in your update CA '-ExtendedCommand'", [MessageType]::Update);
 						}
 						if(-not [string]::IsNullOrEmpty( $this.ProjectNames ))
 						{
@@ -847,17 +850,18 @@ class CAAutomation : ADOSVTCommandBase
 				$appServResource = @((Get-AzResource -ResourceGroupName $this.RGname -ResourceType "Microsoft.Web/Sites").Name | where {$_ -match $this.FuncAppName})
 				if($appServResource.Count -eq 0)
 				{
-					$this.PublishCustomMessage("Status:   ADOScanner function app is not available in resource group '$($this.RGname)'. Update Failed!", [MessageType]::Error);
+					$this.PublishCustomMessage("Status:   ADOScanner function app is not found in resource group '$($this.RGname)'. Update Failed!", [MessageType]::Error);
 					return $messageData
 				}
 				elseif ($appServResource.Count -gt 1)
 				{
-					$this.PublishCustomMessage("Status:   More than one ADOScanner app service is available in resource group '$($this.RGname).'Consider using the '-FunctionAppName' param.", [MessageType]::Error);
+					$this.PublishCustomMessage("Status:   More than one ADOScanner app service found in resource group '$($this.RGname).", [MessageType]::Error);
+					$this.PublishCustomMessage("Consider using the '-FunctionAppName' param. (E.g., '-FunctionAppName ADOScannerFA200915172817'.", [MessageType]::Warning);
 					return $messageData
 				}
 				else {
 					$this.FuncAppName = $appServResource[0]
-					$this.PublishCustomMessage("Status:   OK. Found the function app: '$($this.FuncAppName).", [MessageType]::Update);
+					$this.PublishCustomMessage("Status:   OK. Found the function app: '$($this.FuncAppName)'.", [MessageType]::Update);
 					$this.TimeStamp = $this.FuncAppName.Replace($this.FuncAppDefaultName,"")
 				}
 				$this.PublishCustomMessage([Constants]::SingleDashLine, [MessageType]::Default);
@@ -880,7 +884,7 @@ class CAAutomation : ADOSVTCommandBase
 					return $messageData
 				}
 				else {
-					$this.PublishCustomMessage("Status:   OK. CA is setup for organization '$($this.OrganizationToScan).", [MessageType]::Update);
+					$this.PublishCustomMessage("Status:   OK. CA is setup for organization '$($this.OrganizationToScan)'.", [MessageType]::Update);
 				}
 				$this.PublishCustomMessage([Constants]::SingleDashLine, [MessageType]::Default);
 
@@ -902,21 +906,21 @@ class CAAutomation : ADOSVTCommandBase
 				}
 				if ([string]::IsNullOrEmpty($AppSettingsHT["LAWSId"]) -or [string]::IsNullOrEmpty($AppSettingsHT["LAWSSharedKey"]))
 				{
-					$this.PublishCustomMessage("Status:   Log analytics is not configured in the CA setup.", [MessageType]::Info);
+					$this.PublishCustomMessage("Status:   Log Analytics WS is not configured in the CA setup.", [MessageType]::Info);
 				}
 				else {
 					$this.PublishCustomMessage("Status:   OK. Log analytics is configured in the CA setup.", [MessageType]::Update);
 				}
 				if ([string]::IsNullOrEmpty($AppSettingsHT["AltLAWSId"]) -or [string]::IsNullOrEmpty($AppSettingsHT["AltLAWSSharedKey"]))
 				{
-					$this.PublishCustomMessage("Status:   Alternate Log analytics is not configured in the CA setup.", [MessageType]::Info);
+					$this.PublishCustomMessage("Status:   (Info) Alternate Log Analytics WS is not configured in the CA setup.", [MessageType]::Info);
 				}
 				else {
-					$this.PublishCustomMessage("Status:   OK. Alternate Log analytics is configured in the CA setup.", [MessageType]::Update);
+					$this.PublishCustomMessage("Status:   OK. Alternate Log Analytics WS is configured in the CA setup.", [MessageType]::Update);
 				}
 				if ([string]::IsNullOrEmpty($AppSettingsHT["ExtendedCommand"]))
 				{
-					$this.PublishCustomMessage("Status:   Extended command is not configured in the CA setup.", [MessageType]::Info);
+					$this.PublishCustomMessage("Status:   (Info) Extended command is not configured in the CA setup.", [MessageType]::Info);
 				}
 				else {
 					$this.PublishCustomMessage("Status:   OK. Extended command is configured in the CA setup.", [MessageType]::Update);
@@ -929,20 +933,20 @@ class CAAutomation : ADOSVTCommandBase
 				$storageAccKey = Get-AzStorageAccountKey -ResourceGroupName $this.RGName -Name $this.StorageName
 				if ($null -eq $storageAccKey)
 				{
-					$this.PublishCustomMessage("Status:   Storage account is not configured in the CA setup.", [MessageType]::Error);
+					$this.PublishCustomMessage("Status:   Storage account not found in the CA setup.", [MessageType]::Error);
 				}
 				else {
 					$StorageContext = New-AzStorageContext -StorageAccountName $this.StorageName -StorageAccountKey $storageAccKey[0].Value -Protocol Https
 					$containerObject = Get-AzStorageContainer -Context $StorageContext -Name "ado-scan-logs" -ErrorAction SilentlyContinue
 					if($null -eq $containerObject)
 					{
-						$this.PublishCustomMessage("Status:   Scan logs not found.", [MessageType]::Error);
+						$this.PublishCustomMessage("Status:   Scan logs not found in storage. (This is expected if you just setup CA as first scan may not have run yet.)", [MessageType]::Warning);
 					}	
 					else {
 						$CAScanDataBlobObject = $this.GetScanLogsFromStorageAccount("ado-scan-logs", "$($this.OrganizationToScan.ToLower())/", $StorageContext)
 						if ($null -eq $CAScanDataBlobObject)
 						{
-							$this.PublishCustomMessage("Status:   Scan logs not found for last 3 days.", [MessageType]::Error);
+							$this.PublishCustomMessage("Status:   Scan logs not found in storage for last 3 days.", [MessageType]::Error);
 						}
 						else {
 							$this.PublishCustomMessage("Status:   OK. Storage account contains scan logs for recent jobs as expected.", [MessageType]::Update);
@@ -963,7 +967,7 @@ class CAAutomation : ADOSVTCommandBase
 				}
 				$this.PublishCustomMessage([Constants]::SingleDashLine, [MessageType]::Default);
 				$this.PublishCustomMessage([Constants]::SingleDashLine, [MessageType]::Default);
-				$this.PublishCustomMessage("Consider using 'Update-AzSKADOContinuousAssurance' command to modify any configuration setting.", [MessageType]::Update);
+				$this.PublishCustomMessage("You can use 'Update-AzSKADOContinuousAssurance' (UCA) command to modify AzSK ADO CA configurations/settings.", [MessageType]::Update);
 			}
 		}
 		catch
