@@ -80,7 +80,7 @@ class CAAutomation : ADOSVTCommandBase
 		$this.ControlSettings = [ConfigurationManager]::LoadServerConfigFile("ControlSettings.json");
 		$this.CreateLAWS = $CreateLAWS
 
-		if ($null -ne $ScanIntervalInHours -and $ScanIntervalInHours -ne 0)
+		if ($null -ne $ScanIntervalInHours -and $ScanIntervalInHours -gt 0)
 		{
 			$this.CRONExp = "0 */$($ScanIntervalInHours) * * *"
 			$this.ScheduleMessage = "Scan will trigger every $($ScanIntervalInHours) hours from 00:00 hours"
@@ -207,7 +207,7 @@ class CAAutomation : ADOSVTCommandBase
 				$this.RGName = $ResourceGroupName
 			}
 
-			if ($null -ne $ScanIntervalInHours -and $ScanIntervalInHours -ne 0)
+			if ($null -ne $ScanIntervalInHours -and $ScanIntervalInHours -gt 0)
 			{
 				$this.CRONExp = "0 */$($ScanIntervalInHours) * * *"
 				$this.ScheduleMessage = "Scan will trigger every $($ScanIntervalInHours) hours from 00:00 hours"
