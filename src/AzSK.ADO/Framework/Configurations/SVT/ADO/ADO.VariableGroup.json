@@ -29,7 +29,7 @@
             "Automated": "Yes",
             "MethodName": "CheckPipelineAccess",
             "Rationale": "To support security of the pipeline operations, variable groups must not be granted access to all pipelines. This is in keeping with the principle of least privilege because a vulnerability in components used by one pipeline can be leveraged by an attacker to attack other pipelines having access to critical resources.",
-            "Recommendation": "To remediate this, navigate to the service connections settings page for your project -> select your service connection from the list -> click Edit -> uncheck 'Grant access permission to all pipelines'.",
+            "Recommendation": "To remediate this, 1.Navigate to the variable group. 2. Disable 'Allow access to all pipelines'.",
             "Tags": [
               "SDL",
               "TCP",
