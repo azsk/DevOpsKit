@@ -150,8 +150,6 @@ class PartialScanManager
 		
 		elseif ($this.scanSource -eq "CICD") # use extension storage in case of CICD partial scan
 		{
-            if($null -eq $this.ScanPendingForResources)
-		    {
 				if(![string]::isnullorwhitespace($this.subId))
 				{
 					$rmContext = [ContextHelper]::GetCurrentContext();
@@ -179,7 +177,6 @@ class PartialScanManager
                         $this.isRTFAlreadyAvailable = $false;
 					}	
 			    }
-			}
 		}
         
     }
@@ -368,7 +365,7 @@ class PartialScanManager
 
 	[void] WriteToDurableStorage()
 	{
-		If ($this.scanSource -eq "CICD" -and $this.isDurableStorageFound)
+		If ($this.scanSource -eq "CICD")
 		{
             if($null -ne $this.ResourceScanTrackerObj)
 		    {
