@@ -128,9 +128,9 @@ function Get-AzSKADOSecurityStatus
 		$PATToken,
 
 		[switch]
-		[Parameter(HelpMessage = "Switch to run scan using personal access token (PAT).")]
-		[Alias("upat")]
-		$UsePAT,
+		[Parameter(HelpMessage = "Switch to provide personal access token (PAT) using UI.")]
+		[Alias("pfp")]
+		$PromptForPAT,
 
 		[ResourceTypeName]
 		[Alias("rtn")]
@@ -217,11 +217,11 @@ function Get-AzSKADOSecurityStatus
 	{
 		try 
 		{
-			if($UsePAT -eq $true)
+			if($PromptForPAT -eq $true)
 			{
 				if($null -ne $PATToken)
 				{	
-					Write-Host "Parameters '-UsePAT' and '-PATToken' can not be used simultaneously in the scan command." -ForegroundColor Red
+					Write-Host "Parameters '-PromptForPAT' and '-PATToken' can not be used simultaneously in the scan command." -ForegroundColor Red
 					return;
 				}
 				else 

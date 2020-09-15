@@ -294,7 +294,7 @@
     },
     {
       "ControlID": "ADO_Organization_AuthZ_Verify_Enterprise_Access_To_Projects",
-      "Description": "Enterprise access to projects should be verified.",
+      "Description": "Consider disabling enterprise access to projects in the organization.",
       "Id": "Organization290",
       "ControlSeverity": "Medium",
       "Automated": "Yes",
