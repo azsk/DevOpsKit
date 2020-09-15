@@ -52,11 +52,6 @@ class SVTControlAttestation
 		if(-not $controlResult.CurrentSessionContext.Permissions.HasRequiredAccess)
 		{
 			Write-Host "Skipping attestation process for this control. You do not have required permissions to evaluate this control. `nNote: If your permissions were elevated recently, please run the 'Disconnect-AzAccount' command to clear the Azure cache and try again." -ForegroundColor Yellow
-			if($controlItem.ControlItem.Tags.Contains("KeySecretPermissions"))
-			{
-				Write-Host "(Please note that you must have access permissions to the keys & secrets in the key vault for successful attestation of this control)" -ForegroundColor Yellow
-			}
-			Write-Host ([Constants]::CoAdminElevatePermissionMsg) -ForegroundColor Yellow
 			return $controlState;
 		}
 		if(-not $this.isControlAttestable($controlItem, $controlResult))
@@ -267,11 +262,6 @@ class SVTControlAttestation
 		if(-not $controlResult.CurrentSessionContext.Permissions.HasRequiredAccess)
 		{
 			Write-Host "Skipping attestation process for this control. You do not have required permissions to evaluate this control. `nNote: If your permissions were elevated recently, please run the 'Disconnect-AzAccount' command to clear the Azure cache and try again." -ForegroundColor Yellow
-			if($controlItem.ControlItem.Tags.Contains("KeySecretPermissions"))
-			{
-				Write-Host "(Please note that you must have access permissions to the keys & secrets in the key vault for successful attestation of this control)" -ForegroundColor Yellow
-			}
-			Write-Host ([Constants]::CoAdminElevatePermissionMsg) -ForegroundColor Yellow
 			return $controlState;
 		}
 		$userChoice = ""

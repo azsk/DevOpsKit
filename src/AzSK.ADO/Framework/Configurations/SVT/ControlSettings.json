@@ -101,7 +101,8 @@
     "Build",
     "Release",
     "ServiceConnection",
-    "AgentPool"
+    "AgentPool",
+    "VariableGroup"
   ],
   "AttestationExpiryPeriodInDays": {
     "Default": 90,
