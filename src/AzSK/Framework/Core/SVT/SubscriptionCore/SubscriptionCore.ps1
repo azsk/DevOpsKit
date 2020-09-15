@@ -2316,7 +2316,7 @@ class SubscriptionCore: AzSVTBase
 		$pimroles = $this.PIMAssignments #list of Eligible Pim assignments
 
 		if($null -ne $pimroles)
-        {
+        	{
 			$allValidRAs += $pimroles
 		}
 
