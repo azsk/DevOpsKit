@@ -747,7 +747,7 @@ class CAAutomation : ADOSVTCommandBase
 						}
 						if(-not [string]::IsNullOrEmpty($this.AltLAWSId))
 						{
-							$AppSettingsHT["LAWSId"] = $this.AltLAWSId
+							$AppSettingsHT["AltLAWSId"] = $this.AltLAWSId
 						}
 						if((-not [string]::IsNullOrEmpty($this.AltLAWSSharedKey)) -and (-not [string]::IsNullOrEmpty($CreatedAltLASecret)))
 						{
