@@ -29,7 +29,7 @@ class CAAutomation : ADOSVTCommandBase
 	hidden [bool] $ClearExtCmd 
 	
 	#UCA params for dev-test support
-	hidden [string] $RsrcTimeStamp = $null  #We will apply UCA to FunctionApp with this timestamp, e.g., "200830092449"
+	hidden [string] $RsrcTimeStamp = $null  #We will apply UCA to function app with this timestamp, e.g., "200830092449"
 	hidden [string] $NewImageName = $null	#Container image will be changed to this one. 
 	hidden [string] $ModuleEnv = "Prod"		#Tell CA to use 'Staging' or 'Prod' or 'Preview' module
 	hidden [bool] $UseDevTestImage = $false	#Tell CA to use dev-test (Staging) image packaged inside module
@@ -414,7 +414,7 @@ class CAAutomation : ADOSVTCommandBase
 				}
 		
 		
-				#Step 8a: Add PAT token secret to KeyVault
+				#Step 8a: Add PAT token secret to key vault
 				#$Secret = ConvertTo-SecureString -String $this.PATToken -AsPlainText -Force
 				$CreatedSecret = Set-AzKeyVaultSecret -VaultName $this.KeyVaultName -Name $this.SecretName -SecretValue $this.PATToken
 				if($null -eq $CreatedSecret) 
@@ -426,7 +426,7 @@ class CAAutomation : ADOSVTCommandBase
 					$this.PublishCustomMessage("PAT Secret created in Azure key vault", [MessageType]::Update);
 				}
 
-				#Step 8b: Add LA Shared Key secret to KeyVault
+				#Step 8b: Add LA Shared Key secret to key vault
 				$CreatedLASecret = $null
 				if (-not [string]::IsNullOrEmpty($this.LAWSSharedKey))
 				{
@@ -442,7 +442,7 @@ class CAAutomation : ADOSVTCommandBase
 					}
 				}
 
-				#Step 8c: Add alternate LA Shared Key secret to KeyVault
+				#Step 8c: Add alternate LA Shared Key secret to key vault
 				$CreatedAltLASecret = $null
 				if (-not [string]::IsNullOrEmpty($this.AltLAWSSharedKey))
 				{
@@ -645,15 +645,15 @@ class CAAutomation : ADOSVTCommandBase
 
 					$kvToUpdate = $this.KVDefaultName + $this.RsrcTimeStamp
 
-					#Get KeyVault resource from RG
+					#Get key vault resource from RG
 					$keyVaultResource = @((Get-AzResource -ResourceGroupName $this.RGname -ResourceType "Microsoft.KeyVault/vaults").Name | where {$_ -match $kvToUpdate})
 					if($keyVaultResource.Count -eq 0)
 					{
-						$this.PublishCustomMessage("ADOScanner KeyVault not found in resource group '$($this.RGname)'. Update failed!", [MessageType]::Error);
+						$this.PublishCustomMessage("ADOScanner key vault not found in resource group '$($this.RGname)'. Update failed!", [MessageType]::Error);
 					}
 					elseif ($keyVaultResource.Count -gt 1)
 					{
-						$this.PublishCustomMessage("More than one ADOScanner KeyVault found in resource group '$($this.RGname)'. Update failed!", [MessageType]::Error);
+						$this.PublishCustomMessage("More than one ADOScanner key vault found in resource group '$($this.RGname)'. Update failed!", [MessageType]::Error);
 						$this.PublishCustomMessage("Consider using the '-RsrcTimeStamp' param. (E.g., to update values corresponding to 'ADOScannerFA200915172817' use '-RsrcTimeStamp 200915172817'.)", [MessageType]::Warning);											
 					}
 					else {
@@ -667,7 +667,7 @@ class CAAutomation : ADOSVTCommandBase
 							else
 							{
 								$this.PublishCustomMessage("PAT secret updated in '$($keyVaultResource[0])' Azure key vault", [MessageType]::Update);
-								$updateAppSettings -eq $true # So that app settings can also be updated with KeyVault URI
+								$updateAppSettings -eq $true # So that app settings can also be updated with key vault URI
 							}
 						}
 						if (-not [string]::IsNullOrEmpty($this.LAWSSharedKey))
@@ -709,7 +709,7 @@ class CAAutomation : ADOSVTCommandBase
 					$appServResource = @((Get-AzResource -ResourceGroupName $this.RGname -ResourceType "Microsoft.Web/Sites").Name | where {$_ -match $funcAppToUpdate})
 					if($appServResource.Count -eq 0)
 					{
-						$this.PublishCustomMessage("ADOScanner FunctionApp not found in resource group '$($this.RGname)'. Update failed!", [MessageType]::Error);
+						$this.PublishCustomMessage("ADOScanner function app not found in resource group '$($this.RGname)'. Update failed!", [MessageType]::Error);
 					}
 					elseif ($appServResource.Count -gt 1)
 					{
