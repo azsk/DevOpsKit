@@ -1147,7 +1147,7 @@ class Organization: ADOSVTBase
         
         try
         {
-            $url ="https://{0}.auditservice.visualstudio.com/_apis/audit/streams?api-version=5.0-preview.1" -f $($this.SubscriptionContext.SubscriptionName);
+            $url ="https://auditservice.dev.azure.com/{0}/_apis/audit/streams?api-version=5.0-preview.1" -f $($this.SubscriptionContext.SubscriptionName);
             $responseObj = [WebRequestHelper]::InvokeGetWebRequest($url);  
             
             # If no audit streams are configured, 'count' property is available for $responseObj[0] and its value is 0. 
