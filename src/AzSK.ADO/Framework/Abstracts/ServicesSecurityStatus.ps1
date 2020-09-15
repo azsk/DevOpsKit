@@ -31,6 +31,12 @@ class ServicesSecurityStatus: ADOSVTCommandBase
 	{
 		$ControlSettings = [ConfigurationManager]::LoadServerConfigFile("ControlSettings.json");
 
+		if ($Env:AzSKADOUPCSimulate -eq $true)
+		{
+			$ControlSettings.PartialScan.LocalScanUpdateFrequency = $Env:AzSKADOLocalScanUpdateFrequency
+			$ControlSettings.PartialScan.DurableScanUpdateFrequency = $Env:AzSKADODurableScanUpdateFrequency
+		}
+
 		if ([string]::IsNullOrWhiteSpace($methodNameToCall))
 		{
 			throw [System.ArgumentException] ("The argument 'methodNameToCall' is null. Pass the reference of method to call. e.g.: [YourClass]::new().YourMethod");

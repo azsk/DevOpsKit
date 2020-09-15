@@ -135,9 +135,14 @@ class PartialScanManager
 					{
 						$this.isDurableStorageFound = $true
 					}
+					else 
+					{
+						$this.PublishCustomMessage("Could not find/create partial scan container in storage.", [MessageType]::Warning);
+					}
 				}
 			}
 			catch {
+				$this.PublishCustomMessage("Exception when trying to find/create partial scan container: $_.", [MessageType]::Warning);
 				#Eat exception
 			}
 
