@@ -916,7 +916,7 @@ class CAAutomation : ADOSVTCommandBase
 					$this.PublishCustomMessage("Status:   (Info) Alternate Log Analytics workspace is not configured in the CA setup.", [MessageType]::Info);
 				}
 				else {
-					$this.PublishCustomMessage("Status:   OK. Alternate Log Analytics WS is configured in the CA setup.", [MessageType]::Update);
+					$this.PublishCustomMessage("Status:   OK. Alternate Log Analytics workspace is configured in the CA setup.", [MessageType]::Update);
 				}
 				if ([string]::IsNullOrEmpty($AppSettingsHT["ExtendedCommand"]))
 				{
