@@ -8,5 +8,5 @@
     "AutoUpdateCommand": "Install-Module AzSK.ADO -AllowClobber -Scope CurrentUser -Force",
     "BranchId": "master",
     "EnableOrgControlAttestation": false,
-    "PolicyProject":""
+    "PolicyProject": ""
 }
