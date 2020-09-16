@@ -89,6 +89,11 @@ function Set-AzSKADOPolicySettings {
     #>
     [Alias("Set-AzSKPolicySettings")]
     Param(
+
+        [Parameter(Mandatory = $false, HelpMessage = "Project that hosts ADO organization-specific policy")]
+		[Alias("pp")]
+        $PolicyProject,
+
         [Parameter(Mandatory = $false, HelpMessage = "Provide org install URL")]
         [string]
 		[Alias("auc")]
@@ -99,15 +104,20 @@ function Set-AzSKADOPolicySettings {
 		[Alias("au")]
         $AutoUpdate,
 
+        [Parameter(Mandatory = $false, HelpMessage = "Turn org/admin control attestation on/off")]
+        [bool]
+		[Alias("oca")]
+        $EnableOrgControlAttestation,
+
         [Parameter(Mandatory = $false, HelpMessage = "Provide scanner tool path")]
         [string]
 		[Alias("stp")]
-        $ScannerToolPath,
+        $SecretsScanToolFolder,
 
         [Parameter(Mandatory = $false, HelpMessage = "Provide scanner tool name")]
         [string]
 		[Alias("stn")]
-        $ScannerToolName
+        $SecretsScanToolName
     )
     Begin {
         [CommandHelper]::BeginCommand($PSCmdlet.MyInvocation);
@@ -122,15 +132,30 @@ function Set-AzSKADOPolicySettings {
             {
                 $azskSettings.AutoUpdateCommand = $AutoUpdateCommand;
             }
+            
             if ($AutoUpdate) 
             {
                 $azskSettings.AutoUpdateSwitch = $AutoUpdate
             }
-
-            if($ScannerToolPath -and $ScannerToolName)
+            
+            if (-not [string]::IsNullOrWhiteSpace($PolicyProject)) 
             {
-                $azskSettings.ScanToolPath = $ScannerToolPath
-                $azskSettings.ScanToolName = $ScannerToolName
+                $azskSettings.PolicyProject = $PolicyProject;
+            }
+            
+            if ($EnableOrgControlAttestation) 
+            {
+                $azskSettings.EnableOrgControlAttestation = $true
+            }
+            else
+            {
+                $azskSettings.EnableOrgControlAttestation = $false
+            }
+
+            if($SecretsScanToolFolder -and $SecretsSecretsScanToolName)
+            {
+                $azskSettings.SecretsScanToolFolder = $SecretsScanToolFolder
+                $azskSettings.SecretsScanToolName = $SecretsScanToolName
             }
             
             [ConfigurationManager]::UpdateAzSKSettings($azskSettings);

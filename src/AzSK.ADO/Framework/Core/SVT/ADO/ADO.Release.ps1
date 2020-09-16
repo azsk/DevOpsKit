@@ -33,57 +33,57 @@ class Release: ADOSVTBase
 
     hidden [ControlResult] CheckCredInReleaseVariables([ControlResult] $controlResult)
 	{
-        if([Helpers]::CheckMember([ConfigurationManager]::GetAzSKSettings(),"ScanToolPath"))
+        if([Helpers]::CheckMember([ConfigurationManager]::GetAzSKSettings(),"SecretsScanToolFolder"))
         {
-            $ToolFolderPath =  [ConfigurationManager]::GetAzSKSettings().ScanToolPath
-        $ScanToolName = [ConfigurationManager]::GetAzSKSettings().ScanToolName
-        if((-not [string]::IsNullOrEmpty($ToolFolderPath)) -and (Test-Path $ToolFolderPath) -and (-not [string]::IsNullOrEmpty($ScanToolName)))
-        {
-            $ToolPath = Get-ChildItem -Path $ToolFolderPath -File -Filter $ScanToolName -Recurse 
-            if($ToolPath)
-            { 
-                if($this.ReleaseObj)
-                {
-                    try
+            $ToolFolderPath =  [ConfigurationManager]::GetAzSKSettings().SecretsScanToolFolder
+            $SecretsScanToolName = [ConfigurationManager]::GetAzSKSettings().SecretsScanToolName
+            if((-not [string]::IsNullOrEmpty($ToolFolderPath)) -and (Test-Path $ToolFolderPath) -and (-not [string]::IsNullOrEmpty($SecretsScanToolName)))
+            {
+                $ToolPath = Get-ChildItem -Path $ToolFolderPath -File -Filter $SecretsScanToolName -Recurse 
+                if($ToolPath)
+                { 
+                    if($this.ReleaseObj)
                     {
-                        $releaseDefFileName = $($this.ResourceContext.ResourceName).Replace(" ","")
-                        $releaseDefPath = [Constants]::AzSKTempFolderPath + "\Releases\"+ $releaseDefFileName + "\";
-                        if(-not (Test-Path -Path $releaseDefPath))
+                        try
                         {
-                            New-Item -ItemType Directory -Path $releaseDefPath -Force | Out-Null
-                        }
-
-                        $this.ReleaseObj | ConvertTo-Json -Depth 5 | Out-File "$releaseDefPath\$releaseDefFileName.json"
-                        $searcherPath = Get-ChildItem -Path $($ToolPath.Directory.FullName) -Include "buildsearchers.xml" -Recurse
-                        ."$($Toolpath.FullName)" -I $releaseDefPath -S "$($searcherPath.FullName)" -f csv -Ve 1 -O "$releaseDefPath\Scan"    
-                        
-                        $scanResultPath = Get-ChildItem -Path $releaseDefPath -File -Include "*.csv"
-                        
-                        if($scanResultPath -and (Test-Path $scanResultPath.FullName))
-                        {
-                            $credList = Get-Content -Path $scanResultPath.FullName | ConvertFrom-Csv 
-                            if(($credList | Measure-Object).Count -gt 0)
+                            $releaseDefFileName = $($this.ResourceContext.ResourceName).Replace(" ","")
+                            $releaseDefPath = [Constants]::AzSKTempFolderPath + "\Releases\"+ $releaseDefFileName + "\";
+                            if(-not (Test-Path -Path $releaseDefPath))
                             {
-                                $controlResult.AddMessage("No. of credentials found:" + ($credList | Measure-Object).Count )
-                                $controlResult.AddMessage([VerificationResult]::Failed,"Found credentials in variables")
+                                New-Item -ItemType Directory -Path $releaseDefPath -Force | Out-Null
                             }
-                            else {
-                                $controlResult.AddMessage([VerificationResult]::Passed,"No credentials found in variables")
+
+                            $this.ReleaseObj | ConvertTo-Json -Depth 5 | Out-File "$releaseDefPath\$releaseDefFileName.json"
+                            $searcherPath = Get-ChildItem -Path $($ToolPath.Directory.FullName) -Include "buildsearchers.xml" -Recurse
+                            ."$($Toolpath.FullName)" -I $releaseDefPath -S "$($searcherPath.FullName)" -f csv -Ve 1 -O "$releaseDefPath\Scan"    
+                            
+                            $scanResultPath = Get-ChildItem -Path $releaseDefPath -File -Include "*.csv"
+                            
+                            if($scanResultPath -and (Test-Path $scanResultPath.FullName))
+                            {
+                                $credList = Get-Content -Path $scanResultPath.FullName | ConvertFrom-Csv 
+                                if(($credList | Measure-Object).Count -gt 0)
+                                {
+                                    $controlResult.AddMessage("No. of credentials found:" + ($credList | Measure-Object).Count )
+                                    $controlResult.AddMessage([VerificationResult]::Failed,"Found credentials in variables")
+                                }
+                                else {
+                                    $controlResult.AddMessage([VerificationResult]::Passed,"No credentials found in variables")
+                                }
                             }
                         }
-                    }
-                    catch {
-                        #Publish Exception
-                        $this.PublishException($_);
-                    }
-                    finally
-                    {
-                        #Clean temp folders 
-                        Remove-ITem -Path $releaseDefPath -Recurse
+                        catch {
+                            #Publish Exception
+                            $this.PublishException($_);
+                        }
+                        finally
+                        {
+                            #Clean temp folders 
+                            Remove-ITem -Path $releaseDefPath -Recurse
+                        }
                     }
                 }
             }
-        }
 
         }
        else

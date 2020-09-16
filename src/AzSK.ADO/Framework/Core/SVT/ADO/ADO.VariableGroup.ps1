@@ -106,13 +106,13 @@ class VariableGroup: ADOSVTBase
     }
     hidden [ControlResult] CheckCredInVarGrp([ControlResult] $controlResult)
 	{
-        if([Helpers]::CheckMember([ConfigurationManager]::GetAzSKSettings(),"ScanToolPath"))
+        if([Helpers]::CheckMember([ConfigurationManager]::GetAzSKSettings(),"SecretsScanToolFolder"))
         {
-            $ToolFolderPath = [ConfigurationManager]::GetAzSKSettings().ScanToolPath
-            $ScanToolName = [ConfigurationManager]::GetAzSKSettings().ScanToolName
-            if((-not [string]::IsNullOrEmpty($ToolFolderPath)) -and (Test-Path $ToolFolderPath) -and (-not [string]::IsNullOrEmpty($ScanToolName)))
+            $ToolFolderPath = [ConfigurationManager]::GetAzSKSettings().SecretsScanToolFolder
+            $SecretsScanToolName = [ConfigurationManager]::GetAzSKSettings().SecretsScanToolName
+            if((-not [string]::IsNullOrEmpty($ToolFolderPath)) -and (Test-Path $ToolFolderPath) -and (-not [string]::IsNullOrEmpty($SecretsScanToolName)))
             {
-                $ToolPath = Get-ChildItem -Path $ToolFolderPath -File -Filter $ScanToolName -Recurse 
+                $ToolPath = Get-ChildItem -Path $ToolFolderPath -File -Filter $SecretsScanToolName -Recurse 
                 if($ToolPath)
                 { 
                     if($this.VarGrp)
