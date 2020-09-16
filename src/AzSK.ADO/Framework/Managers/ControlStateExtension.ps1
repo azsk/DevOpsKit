@@ -448,7 +448,7 @@ class ControlStateExtension
 					}
 					$projectName = $this.AzSKSettings.PolicyProject	
 					$enableOrgControlAttestation = $this.AzSKSettings.EnableOrgControlAttestation
-					
+
 					if([string]::IsNullOrEmpty($projectName))
 					{
 						if ($this.PrintParamPolicyProjErr -eq $true -and $enableOrgControlAttestation -eq $true)
@@ -458,7 +458,10 @@ class ControlStateExtension
 						}   
 					}
 				}
-				else {
+
+				#If $projectName was set in the above if clause - we need to next validate whether this project has an attestattion repo as shown below.
+				if(-not [string]::IsNullOrEmpty($projectName)) 
+				{
 					if ([ControlStateExtension]::IsOrgAttestationProjectFound -eq $false)
 					{
 						#Validate if Attestation repo is available in policy project
