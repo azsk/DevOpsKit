@@ -6,5 +6,7 @@
     "LocalControlTelemetryKey":  "00000000-0000-0000-0000-000000000000",
     "LocalEnableControlTelemetry":  false,
     "AutoUpdateCommand": "Install-Module AzSK.ADO -AllowClobber -Scope CurrentUser -Force",
-    "BranchId": "master"
+    "BranchId": "master",
+    "EnableOrgControlAttestation": false,
+    "PolicyProject":""
 }
