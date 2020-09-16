@@ -1,6 +1,7 @@
 class ADOSVTBase: SVTBase {
 
 	hidden [ControlStateExtension] $ControlStateExt;
+	hidden [AzSKSettings] $AzSKSettings;
 	ADOSVTBase() {
 
 	}
@@ -84,10 +85,7 @@ class ADOSVTBase: SVTBase {
 						$this.ResourceState += $resourceStates
 
 					}
-				}
-				else {
-					return $null;
-				}				
+				}		
 			}
 		}
 
@@ -99,7 +97,13 @@ class ADOSVTBase: SVTBase {
 		$controlState = @();
 		$controlStateValue = @();
 		try {
-			$resourceStates = $this.GetResourceState($false)			
+			$resourceStates = $this.GetResourceState($false)
+			if (!$this.AzSKSettings) 
+			{
+				$this.AzSKSettings = [ConfigurationManager]::GetAzSKSettings();	
+			}		
+			$enableOrgControlAttestation = $this.AzSKSettings.EnableOrgControlAttestation
+
 			if (($resourceStates | Measure-Object).Count -ne 0) {
 				$controlStateValue += $resourceStates | Where-Object { $_.InternalId -eq $eventContext.ControlItem.Id };
 				$controlStateValue | ForEach-Object {
@@ -115,12 +119,12 @@ class ADOSVTBase: SVTBase {
 					}
 				}
 			}
-			elseif ($null -eq $resourceStates) {
-				$tempHasRequiredAccess = $false;
-			}
 			# If Project name is not configured in ext storage & policy project parameter is not used or attestation repo is not present in policy project, 
 			# then 'IsOrgAttestationProjectFound' will be false so that HasRequiredAccess for org controls can be set as false
-			elseif ($eventContext.FeatureName -eq "Organization" -and [ControlStateExtension]::IsOrgAttestationProjectFound -eq $false){
+			elseif (($eventContext.FeatureName -eq "Organization" -and [ControlStateExtension]::IsOrgAttestationProjectFound -eq $false) -and ($enableOrgControlAttestation -eq $true)){
+				$tempHasRequiredAccess = $false;
+			}
+			elseif ($null -eq $resourceStates) {
 				$tempHasRequiredAccess = $false;
 			}
 		}

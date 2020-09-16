@@ -40,7 +40,9 @@ class AzSKSettings {
 	static [SubscriptionContext] $SubscriptionContext
 	static [InvocationInfo] $InvocationContext
 	[string] $BranchId;
-
+	[bool] $EnableOrgControlAttestation = $false;
+	[string] $PolicyProject = $null;
+	
 	AzSKSettings()
 	{	
 	}
@@ -166,7 +168,7 @@ class AzSKSettings {
 			{
 				if([AzSKSettings]::InvocationContext)
 				{
-					$parsedSettings.OnlinePolicyStoreUrl = [AzSKSettings]::SetServerPolicyUrl($parsedSettings.OnlinePolicyStoreUrl, $parsedSettings.BranchId)	
+					$parsedSettings.OnlinePolicyStoreUrl = [AzSKSettings]::SetServerPolicyUrl($parsedSettings.OnlinePolicyStoreUrl, $parsedSettings.BranchId, $parsedSettings.PolicyProject)	
 				}
 				
 				[bool] $_useOnlinePolicyStore = $parsedSettings.UseOnlinePolicyStore;
@@ -223,7 +225,7 @@ class AzSKSettings {
 		return $this.LASource
 	}
 
-	hidden static [string] SetServerPolicyUrl([string] $onlinePolicyStoreUrl, $branch)
+	hidden static [string] SetServerPolicyUrl([string] $onlinePolicyStoreUrl, $branch, $policyProject)
 	{
 		$projectName = "";
 		$orgName = [AzSKSettings]::SubscriptionContext.SubscriptionName;
@@ -231,16 +233,19 @@ class AzSKSettings {
 		if([AzSKSettings]::InvocationContext.BoundParameters["PolicyProject"]){
 			$projectName = [AzSKSettings]::InvocationContext.BoundParameters["PolicyProject"];
 		}
+		elseif (-not [string]::IsNullOrEmpty($policyProject)) {
+			$projectName = $policyProject;
+		}
 		elseif([AzSKSettings]::InvocationContext.BoundParameters["ProjectNames"]){
 			$projectName = [AzSKSettings]::InvocationContext.BoundParameters["ProjectNames"].split(',')[0];
 		} #ADOToDo: by Oct-2020, fix this duality of ProjectNames/ProjectName (or at least read from InvocationContext at only one place!)
 		elseif([AzSKSettings]::InvocationContext.BoundParameters["ProjectName"]){
 			$projectName = [AzSKSettings]::InvocationContext.BoundParameters["ProjectName"].split(',')[0];
 		}
-		else
-		{
-			Write-Host -ForegroundColor Yellow "Not using online policy. No project specified."
-		}
+		#else
+		#{
+		#	Write-Host -ForegroundColor Yellow "Not using online policy. No project specified."
+		#}
 
 		# If $branch variable valus is null or empty, then set its default value as 'master' (production policy branch)
 		if(!$branch)

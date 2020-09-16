@@ -50,7 +50,7 @@ class Constants
 					"   Control(s) with specific controlId(s) : Get-AzSKADOInfo -InfoType ControlInfo -ResourceTypeName AppService -ControlIds 'Azure_AppService_AuthZ_Grant_Min_RBAC_Access, Azure_AppService_DP_Use_CNAME_With_SSL'  `r`n" +
 					"   Get information on PS console         : Use any of above command with additional -Verbose argument`r`n";
 
-    static [string] $OfflineModeWarning = "Running in offline policy mode. Commands will run against local JSON files!"
+    static [string] $OfflineModeWarning = "Running in offline policy mode. Commands will run using local policy files..."
 	#Constants for AzSKConfig
 	static [string] $AzSKADORGName = "ADOScannerRG"
 	static [string] $AzSKADORGLocation = "eastus2"

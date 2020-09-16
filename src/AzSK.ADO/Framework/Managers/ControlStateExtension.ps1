@@ -24,11 +24,11 @@ class ControlStateExtension
 	hidden [PSObject] $AttestationBody;
 	[bool] $IsPersistedControlStates = $false;
 	[bool] $FailedDownloadForControlStateIndexer = $false
-	hidden [bool] $PrintExtStgPolicyProjErr = $true; 
+	#hidden [bool] $PrintExtStgPolicyProjErr = $true; 
 	hidden [bool] $PrintParamPolicyProjErr = $true; 
 	hidden [bool] $PrintAttestationRepoErr = $true; 
 	hidden static [bool] $IsOrgAttestationProjectFound  = $false; # Flag to represent if Host proj(attestation repo) is avilable for org controls. FALSE => Project or Repo not yet found. 
-	
+	hidden [AzSKSettings] $AzSKSettings;
 
 
 	ControlStateExtension([SubscriptionContext] $subscriptionContext, [InvocationInfo] $invocationContext)
@@ -435,17 +435,27 @@ class ControlStateExtension
 			{
 			#Get project name from ext storage to fetch org attestation 
 			$projectName = $this.GetProjectNameFromExtStorage();
-
 			#If not found then check if 'PolicyProject' parameter is provided in command 
 			if ([string]::IsNullOrEmpty($projectName))
 			{
 				$projectName = $this.InvocationContext.BoundParameters["PolicyProject"]
 				if ([string]::IsNullOrEmpty($projectName))
 				{
-					if ($this.PrintParamPolicyProjErr -eq $true)
+
+					if (!$this.AzSKSettings) 
+					{	
+						$this.AzSKSettings = [ConfigurationManager]::GetAzSKSettings();				
+					}
+					$projectName = $this.AzSKSettings.PolicyProject	
+					$enableOrgControlAttestation = $this.AzSKSettings.EnableOrgControlAttestation
+					
+					if([string]::IsNullOrEmpty($projectName))
 					{
-						Write-Host -ForegroundColor Yellow "Could not fetch attestation-project-name. `r`n Please use '-PolicyProject' parameter to specify the host project containing attestation details of organization controls."
-						$this.PrintParamPolicyProjErr = $false;
+						if ($this.PrintParamPolicyProjErr -eq $true -and $enableOrgControlAttestation -eq $true)
+						{
+							Write-Host -ForegroundColor Yellow "Could not fetch attestation-project-name. `nYou can: `n`r(a) Run Set-AzSKADOMonitoringSetting -PolicyProject '<PolicyProjectName>' or `n`r(b) Use '-PolicyProject' parameter to specify the host project containing attestation details of organization controls."
+							$this.PrintParamPolicyProjErr = $false;
+						}   
 					}
 				}
 				else {
@@ -502,12 +512,13 @@ class ControlStateExtension
 			return $webRequestResult.Project
 		}
 		catch {
-			if ($this.PrintExtStgPolicyProjErr -eq $true)
-			{
-				Write-Host -ForegroundColor Yellow "Could not fetch attestation-project-name from extension storage!"
-				Write-Host -ForegroundColor Cyan "Trying to fetch host project containing attestation details of organization controls."
-				$this.PrintExtStgPolicyProjErr = $false;
-			}			
+			#TODO: remove commented code
+			#if ($this.PrintExtStgPolicyProjErr -eq $true)
+			#{
+			#	Write-Host -ForegroundColor Yellow "Could not fetch attestation-project-name from extension storage!"
+			#	Write-Host -ForegroundColor Cyan "Trying to fetch host project containing attestation details of organization controls."
+			#	$this.PrintExtStgPolicyProjErr = $false;
+			#}			
 			return $null;
 		}
 	}
