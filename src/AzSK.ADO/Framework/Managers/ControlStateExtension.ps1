@@ -450,7 +450,7 @@ class ControlStateExtension
 					{
 						if ($this.PrintParamPolicyProjErr -eq $true -and $enableOrgControlAttestation -eq $true)
 						{
-							Write-Host -ForegroundColor Yellow "Could not fetch attestation-project-name. `r`n You can `r`n(a) Run Set-AzSKADOMonitoringSetting -PolicyProject '<PolicyProjectName>' or `r`n(b) Use '-PolicyProject' parameter to specify the host project containing attestation details of organization controls."
+							Write-Host -ForegroundColor Yellow "Could not fetch attestation-project-name. `nYou can: `n`r(a) Run Set-AzSKADOMonitoringSetting -PolicyProject '<PolicyProjectName>' or `n`r(b) Use '-PolicyProject' parameter to specify the host project containing attestation details of organization controls."
 							$this.PrintParamPolicyProjErr = $false;
 						}   
 					}
