@@ -170,7 +170,7 @@ class ConfigurationHelper {
 			#ADOTOD: Perhaps we should query for repo being present when the OnlinePolicyURL is formed (or first used)
 			if ($bFetchingSCMD -and -not [Helpers]::CheckMember($fileContent, "OnlinePolicyList"))
 			{
-				[EventBase]::PublishGenericCustomMessage(("Org policy URL may be incorrect or policy-repo does not exist!`r`nReverting to local policy."), [MessageType]::Warning);
+				[EventBase]::PublishGenericCustomMessage([Constants]::OfflineModeWarning, [MessageType]::Warning);
 				$fileContent = [ConfigurationHelper]::LoadOfflineConfigFile($policyFileName)
 			}
 
