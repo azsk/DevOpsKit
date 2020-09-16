@@ -1,7 +1,6 @@
 class ADOSVTBase: SVTBase {
 
 	hidden [ControlStateExtension] $ControlStateExt;
-	hidden [AzSKSettings] $AzskSettings;
 	ADOSVTBase() {
 
 	}
@@ -98,10 +97,7 @@ class ADOSVTBase: SVTBase {
 		$controlStateValue = @();
 		try {
 			$resourceStates = $this.GetResourceState($false)
-			if (!$this.AzskSettings) {
-				$this.AzskSettings = [ConfigurationManager]::GetLocalAzSKSettings();
-			}	
-			$enableOrgControlAttestation = $this.AzskSettings.EnableOrgControlAttestation
+			$enableOrgControlAttestation = [AzSKSettings]::Instance.EnableOrgControlAttestation
 
 			if (($resourceStates | Measure-Object).Count -ne 0) {
 				$controlStateValue += $resourceStates | Where-Object { $_.InternalId -eq $eventContext.ControlItem.Id };
