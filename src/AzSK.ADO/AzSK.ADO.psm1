@@ -152,7 +152,7 @@ function Set-AzSKADOPolicySettings {
                 $azskSettings.EnableOrgControlAttestation = $false
             }
 
-            if($SecretsScanToolFolder -and $SecretsSecretsScanToolName)
+            if($SecretsScanToolFolder -and $SecretsScanToolName)
             {
                 $azskSettings.SecretsScanToolFolder = $SecretsScanToolFolder
                 $azskSettings.SecretsScanToolName = $SecretsScanToolName
