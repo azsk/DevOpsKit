@@ -91,32 +91,32 @@ function Set-AzSKADOPolicySettings {
     Param(
 
         [Parameter(Mandatory = $false, HelpMessage = "Project that hosts ADO organization-specific policy")]
-		[Alias("pp")]
+        [Alias("pp")]
         $PolicyProject,
 
         [Parameter(Mandatory = $false, HelpMessage = "Provide org install URL")]
         [string]
-		[Alias("auc")]
+        [Alias("auc")]
         $AutoUpdateCommand,
 
         [Parameter(Mandatory = $false, ParameterSetName = "AutoUpdatePolicy", HelpMessage = "Toggle the auto-update feature")]
         [ValidateSet("On", "Off", "NotSet")]
-		[Alias("au")]
+        [Alias("au")]
         $AutoUpdate,
 
         [Parameter(Mandatory = $false, HelpMessage = "Turn org/admin control attestation on/off")]
         [bool]
-		[Alias("oca")]
+        [Alias("oca")]
         $EnableOrgControlAttestation,
 
         [Parameter(Mandatory = $false, HelpMessage = "Provide scanner tool path")]
         [string]
-		[Alias("stp")]
+        [Alias("stp")]
         $SecretsScanToolFolder,
 
         [Parameter(Mandatory = $false, HelpMessage = "Provide scanner tool name")]
         [string]
-		[Alias("stn")]
+        [Alias("stn")]
         $SecretsScanToolName
     )
     Begin {
