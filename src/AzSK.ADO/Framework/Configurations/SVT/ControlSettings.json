@@ -38,7 +38,7 @@
           "ADO_ServiceConnection_AuthZ_Disable_Inherited_Permissions",
           "ADO_ServiceConnection_AuthZ_Dont_Grant_All_Pipelines_Access",
           "ADO_ServiceConnection_AuthZ_Dont_Allow_Global_Groups",
-          "ADO_ServiceConnection_SI_Review_Inactive_Connection",
+          "ADO_ServiceConnection_DP_Review_Inactive_Connection",
           "ADO_ServiceConnection_SI_Dont_Share_Across_Projects",
           "ADO_ServiceConnection_AuthZ_Dont_Grant_Subscription_Access"
         ]
@@ -70,7 +70,7 @@
           "ADO_AgentPool_AuthZ_Disable_Inherited_Permissions",
           "ADO_AgentPool_AuthZ_Project_Dont_Grant_All_Pipeline_Access",
           "ADO_AgentPool_AuthZ_Dont_Enable_Auto_Provisioning",
-          "ADO_AgentPool_SI_Review_Inactive_Pool"
+          "ADO_AgentPool_DP_Review_Inactive_Pool"
         ]
       },
       {

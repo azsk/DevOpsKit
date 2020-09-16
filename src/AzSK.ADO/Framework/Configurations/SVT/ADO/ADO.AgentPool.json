@@ -110,7 +110,7 @@
       "Enabled": true
     },
     {
-      "ControlID": "ADO_AgentPool_SI_Review_Inactive_Pool",
+      "ControlID": "ADO_AgentPool_DP_Review_Inactive_Pool",
       "Description": "Inactive agent pools must be removed if no more required.",
       "Id": "AgentPool170",
       "ControlSeverity": "Medium",
@@ -122,7 +122,7 @@
         "SDL",
         "TCP",
         "Manual",
-        "SI"
+        "DP"
       ],
       "Enabled": true
     }
