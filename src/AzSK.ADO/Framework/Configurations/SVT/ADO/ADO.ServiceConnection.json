@@ -179,7 +179,7 @@
       "Enabled": true
     },
     {
-      "ControlID": "ADO_ServiceConnection_SI_Review_Inactive_Connection",
+      "ControlID": "ADO_ServiceConnection_DP_Review_Inactive_Connection",
       "Description": "Inactive service connection must be removed if no more required.",
       "Id": "ServiceConnection210",
       "ControlSeverity": "High",
@@ -191,7 +191,7 @@
         "SDL",
         "Best Practice",
         "Automated",
-        "SI"
+        "DP"
       ],
       "Enabled": true
     },
