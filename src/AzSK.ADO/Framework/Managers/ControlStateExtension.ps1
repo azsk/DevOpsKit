@@ -28,7 +28,7 @@ class ControlStateExtension
 	hidden [bool] $PrintParamPolicyProjErr = $true; 
 	hidden [bool] $PrintAttestationRepoErr = $true; 
 	hidden static [bool] $IsOrgAttestationProjectFound  = $false; # Flag to represent if Host proj(attestation repo) is avilable for org controls. FALSE => Project or Repo not yet found. 
-
+	hidden [AzSKSettings] $AzSKSettings;
 
 
 	ControlStateExtension([SubscriptionContext] $subscriptionContext, [InvocationInfo] $invocationContext)
@@ -442,8 +442,13 @@ class ControlStateExtension
 				if ([string]::IsNullOrEmpty($projectName))
 				{
 
-					$projectName = [AzSKSettings]::Instance.PolicyProject
-					$enableOrgControlAttestation = [AzSKSettings]::Instance.EnableOrgControlAttestation
+					if (!$this.AzSKSettings) 
+					{	
+						$this.AzSKSettings = [ConfigurationManager]::GetAzSKSettings();				
+					}
+					$projectName = $this.AzSKSettings.PolicyProject	
+					$enableOrgControlAttestation = $this.AzSKSettings.EnableOrgControlAttestation
+					
 					if([string]::IsNullOrEmpty($projectName))
 					{
 						if ($this.PrintParamPolicyProjErr -eq $true -and $enableOrgControlAttestation -eq $true)
