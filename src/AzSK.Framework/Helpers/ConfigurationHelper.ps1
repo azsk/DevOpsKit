@@ -314,7 +314,7 @@ class ConfigurationHelper {
 	#Need to rethink on this function logic
 	hidden static [PSObject] LoadModuleJsonFile([string] $fileName) {
 	 $basePath = [ConfigurationHelper]::GetBaseFrameworkPath()
-	 $rootConfigPath = Join-Path $basePath | Join-Path -ChildPath "Configurations";
+	 $rootConfigPath = Join-Path $basePath -ChildPath "Configurations";
 		$filePath = (Get-ChildItem $rootConfigPath -Name -Recurse -Include $fileName) | Select-Object -First 1 
 	 if ($filePath) {
 			$fileContent = (Get-Content -Raw -Path (Join-Path $rootConfigPath $filePath)) | ConvertFrom-Json
