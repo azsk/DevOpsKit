@@ -110,8 +110,10 @@ class PartialScanManager
 				#If checkpoint container is found then get ResourceTracker.json (if exists)
 				if($null -ne $containerObject)
 				{
-					$controlStateBlob = Get-AzStorageBlob -Container $this.CAScanProgressSnapshotsContainerName -Context $this.StorageContext -Blob "$($this.ResourceScanTrackerFileName)" -ErrorAction SilentlyContinue
+					$controlStateBlob = Get-AzStorageBlob -Container $this.CAScanProgressSnapshotsContainerName -Context $this.StorageContext -Blob (Join-Path $this.subId.ToLower() $this.ResourceScanTrackerFileName) -ErrorAction SilentlyContinue
 
+					#If controlStateBlob is null then it will get created when we first write the resource tracker file to storage
+					#If its not null this means Resource tracker file has been found in storage and will be used to continue pending scan
 					if ($null -ne $controlStateBlob)
 					{
 						if ($null -ne $this.masterFilePath)
@@ -263,12 +265,13 @@ class PartialScanManager
 			}
 		}
 		elseif ($this.scanSource -eq "CA" -and $this.isDurableStorageFound) {
-			$controlStateBlob = Get-AzStorageBlob -Container $this.CAScanProgressSnapshotsContainerName -Context $this.storageContext -Blob "$($this.ResourceScanTrackerFileName)" -ErrorAction SilentlyContinue
+			$controlStateBlob = Get-AzStorageBlob -Container $this.CAScanProgressSnapshotsContainerName -Context $this.storageContext -Blob (Join-Path $this.subId.ToLower() $this.ResourceScanTrackerFileName) -ErrorAction SilentlyContinue
 
+			#Move resource tracker file to archive folder
 			if($null -ne $controlStateBlob)
 			{
 				$archiveName = "Checkpoint_" +(Get-Date).ToUniversalTime().ToString("yyyyMMddHHmmss") + ".json";
-				Set-AzStorageBlobContent -File $this.masterFilePath -Container $this.CAScanProgressSnapshotsContainerName -Blob (Join-Path "Archive" $archiveName) -BlobType Block -Context $this.storageContext -Force
+				Set-AzStorageBlobContent -File $this.masterFilePath -Container $this.CAScanProgressSnapshotsContainerName -Blob (Join-Path $this.subId.ToLower() (Join-Path "Archive" $archiveName)) -BlobType Block -Context $this.storageContext -Force
 				Remove-AzStorageBlob -CloudBlob $controlStateBlob.ICloudBlob -Force -Context $this.StorageContext 
 			}	
 		}
@@ -413,7 +416,7 @@ class PartialScanManager
 		}
         elseif ($this.scanSource -eq "CA" -and $this.isDurableStorageFound) 
         {
-			Set-AzStorageBlobContent -File $this.masterFilePath -Container $this.CAScanProgressSnapshotsContainerName -Blob "$($this.ResourceScanTrackerFileName)" -BlobType Block -Context $this.StorageContext -Force
+			Set-AzStorageBlobContent -File $this.masterFilePath -Container $this.CAScanProgressSnapshotsContainerName -Blob (Join-Path $this.subId.ToLower() $this.ResourceScanTrackerFileName) -BlobType Block -Context $this.StorageContext -Force
         }
 	}
 

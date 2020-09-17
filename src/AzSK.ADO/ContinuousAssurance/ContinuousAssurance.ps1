@@ -296,8 +296,8 @@ function Get-AzSKADOContinuousAssurance
 		Organization name for which CA is setup.
 	.PARAMETER ResourceGroupName
 		Resource group name where CA setup is available (Default : ADOScannerRG).
-	.PARAMETER FunctionAppName
-		Function app name if multiple CA are setup in same resource group.
+	.PARAMETER RsrcTimeStamp
+		Timestamp of function app if multiple CA are setup in same resource group.
 	#>
 	Param(
 		[Parameter(Mandatory = $true, ParameterSetName = "Default", HelpMessage="Subscription id in which CA setup is present.")]
@@ -315,10 +315,10 @@ function Get-AzSKADOContinuousAssurance
 		[Alias("rg")]
 		$ResourceGroupName ,
 		
-		[Parameter(Mandatory = $false, ParameterSetName = "Default", HelpMessage="Function app name if multiple CA are setup in same resource group.")]
+		[Parameter(Mandatory = $false, ParameterSetName = "Default", HelpMessage="Timestamp of function app if multiple CA are setup in same resource group.")]
         [string]
 		[Alias("rgn")]
-		$FunctionAppName    
+		$RsrcTimeStamp    
 
     )
 	Begin
@@ -331,7 +331,7 @@ function Get-AzSKADOContinuousAssurance
 		try 
 		{
 			$resolver = [Resolver]::new($OrganizationName)
-			$caAccount = [CAAutomation]::new($SubscriptionId, $OrganizationName, $ResourceGroupName, $FunctionAppName, $PSCmdlet.MyInvocation);
+			$caAccount = [CAAutomation]::new($SubscriptionId, $OrganizationName, $ResourceGroupName, $RsrcTimeStamp, $PSCmdlet.MyInvocation);
             
 			return $caAccount.InvokeFunction($caAccount.GetAzSKADOContinuousAssurance);
 		}

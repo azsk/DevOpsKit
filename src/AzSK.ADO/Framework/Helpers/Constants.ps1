@@ -81,6 +81,7 @@ class Constants
 	static [string] $AttestationDataContainerName = "attestation-data"
 	static [string] $CAMultiSubScanConfigContainerName = "ca-multisubscan-config"
 	static [string] $CAScanProgressSnapshotsContainerName = "ado-scan-checkpoints"
+	static [string] $CAScanLogsContainerName = "ado-scan-logs"
 	static [string] $ResourceScanTrackerBlobName = "ResourceScanTracker.json"
 	static [string] $ResourceScanTrackerCMBlobName = "ResourceScanTracker_CentralMode.json"
 	static [hashtable] $AttestationStatusHashMap = @{
