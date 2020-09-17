@@ -477,7 +477,7 @@ class ControlStateExtension
 						}
 						catch {
 							$projectName = "";
-							[ControlStateExtension]::IsOrgAttestationProjectFound = $false # Policy project and repo found
+							#2010 ToDO: [ControlStateExtension]::IsOrgAttestationProjectFound = $false # Policy project and repo found
 							if ($this.PrintAttestationRepoErr -eq $true)
 							{
 								Write-Host -ForegroundColor Yellow "Could not find attestation repo [$([Constants]::AttestationRepo)] in the policy project."
@@ -516,7 +516,7 @@ class ControlStateExtension
 			return $webRequestResult.Project
 		}
 		catch {
-			[ControlStateExtension]::IsOrgAttestationProjectFound = $false # Policy project not found
+			#2010 ToDo: [ControlStateExtension]::IsOrgAttestationProjectFound = $false # Policy project not found
 			return $null;
 		}
 	}
