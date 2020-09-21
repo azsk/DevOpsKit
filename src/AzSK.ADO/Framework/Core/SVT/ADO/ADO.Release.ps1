@@ -705,7 +705,7 @@ class Release: ADOSVTBase
                     if(($responseObj | Measure-Object).Count -gt 0)
                     {
                         $contributorsObj = $responseObj | Where-Object {$_.identity.uniqueName -eq "[$projectName]\Contributors"}
-                        if($contributorsObj.role.name -ne 'Reader'){
+                        if((-not [string]::IsNullOrEmpty($contributorsObj)) -and ($contributorsObj.role.name -ne 'Reader')){
                             
                             #Release object doesn't capture variable group name. We need to explicitly look up for its name via a separate web request.
                             $varGrpURL = ("https://{0}.visualstudio.com/{1}/_apis/distributedtask/variablegroups/{2}") -f $($this.SubscriptionContext.SubscriptionName), $($this.ProjectId), $($_);
