@@ -317,7 +317,7 @@ function Get-AzSKADOContinuousAssurance
 		
 		[Parameter(Mandatory = $false, ParameterSetName = "Default", HelpMessage="Timestamp of function app if multiple CA are setup in same resource group.")]
         [string]
-		[Alias("rgn")]
+		[Alias("rts")]
 		$RsrcTimeStamp    
 
     )
