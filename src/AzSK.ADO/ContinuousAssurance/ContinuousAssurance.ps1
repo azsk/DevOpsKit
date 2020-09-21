@@ -296,7 +296,7 @@ function Get-AzSKADOContinuousAssurance
 		Organization name for which CA is setup.
 	.PARAMETER ResourceGroupName
 		Resource group name where CA setup is available (Default : ADOScannerRG).
-	.PARAMETER FunctionAppName
+	.PARAMETER RsrcTimeStamp
 		Timestamp of function app if multiple CA are setup in same resource group.
 	#>
 	Param(
