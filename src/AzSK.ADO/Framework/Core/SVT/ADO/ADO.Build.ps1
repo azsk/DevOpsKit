@@ -554,7 +554,7 @@ class Build: ADOSVTBase
                     if(($responseObj | Measure-Object).Count -gt 0)
                     {
                         $contributorsObj = $responseObj | Where-Object {$_.identity.uniqueName -eq "[$projectName]\Contributors"}
-                        if($contributorsObj.role.name -ne 'Reader'){
+                        if((-not [string]::IsNullOrEmpty($contributorsObj)) -and ($contributorsObj.role.name -ne 'Reader')){
                             $editableVarGrps += $_.name
                         } 
                     }
