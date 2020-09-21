@@ -23,6 +23,9 @@ function Get-AzSKADOSecurityStatus
 	.PARAMETER AgentPoolNames
 	   Agent name for which the security evaluation has to be performed.	
 
+	.PARAMETER DetailedScan
+		Print detailed scan logs for controls.
+
 	.NOTES
 	This command helps the application team to verify whether their Azure resources are compliant with the security guidance or not 
 
@@ -204,7 +207,12 @@ function Get-AzSKADOSecurityStatus
 		[Parameter(Mandatory = $false, HelpMessage="Name of the project hosting organization policy with which the scan should run.")]
 		[ValidateNotNullOrEmpty()]
 		[Alias("pp")]
-		$PolicyProject
+		$PolicyProject,
+
+		[switch]
+		[Parameter(HelpMessage="Print detailed scan logs for controls.")]
+		[Alias("ds")]
+		$DetailedScan
 
 	)
 	Begin

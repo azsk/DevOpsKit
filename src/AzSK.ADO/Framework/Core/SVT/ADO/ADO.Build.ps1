@@ -232,55 +232,71 @@ class Build: ADOSVTBase
         $failMsg = $null
         try
         {
+            # Step 1: Fetch list of all groups/users with access to this build
             # Here 'permissionSet' = security namespace identifier, 'token' = project id and 'tokenDisplayVal' = build name
             $buildDefinitionPath = $this.BuildObj.Path.Trim("\").Replace(" ","+").Replace("\","%2F")
             $apiURL = "https://{0}.visualstudio.com/{1}/_api/_security/ReadExplicitIdentitiesJson?__v=5&permissionSetId={2}&permissionSetToken={3}%2F{4}%2F{5}" -f $($this.SubscriptionContext.SubscriptionName), $($this.BuildObj.project.id), $([Build]::SecurityNamespaceId), $($this.BuildObj.project.id), $($buildDefinitionPath), $($this.BuildObj.id);
             $responseObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
             $accessList = @()
             $exemptedUserIdentities = @()
-            # release owner
-            $exemptedUserIdentities += $this.BuildObj.authoredBy.id
-            if(($responseObj.identities|Measure-Object).Count -gt 0)
-            {
-                $exemptedUserIdentities += $responseObj.identities | Where-Object { $_.IdentityType -eq "user" }| ForEach-Object {
-                    $identity = $_
-                    $exemptedIdentity = $this.ControlSettings.Build.ExemptedUserIdentities | Where-Object { $_.Domain -eq $identity.Domain -and $_.DisplayName -eq $identity.DisplayName }
-                    if(($exemptedIdentity | Measure-Object).Count -gt 0)
-                    {
-                        return $identity.TeamFoundationId
-                    }
-                }
 
-                $accessList += $responseObj.identities | Where-Object { $_.IdentityType -eq "user" } | ForEach-Object {
-                    $identity = $_ 
-                    if($exemptedUserIdentities -notcontains $identity.TeamFoundationId)
-                    {
+            # Step2: Fetch detailed permissions of each of group/user from above api call
+            # To be evaluated only when -DetailedScan flag is used in GADS command along with control ids  or when controls are to be attested
+            if((-not([string]::IsNullOrEmpty($this.InvocationContext.BoundParameters['ControlIds'])) -and -not([string]::IsNullOrEmpty($this.InvocationContext.BoundParameters['DetailedScan']))) -or  -not( [string]::IsNullOrEmpty($this.InvocationContext.BoundParameters['ControlsToAttest']))  )
+            {
+                # release owner
+                $exemptedUserIdentities += $this.BuildObj.authoredBy.id
+                if(($responseObj.identities|Measure-Object).Count -gt 0)
+                {
+                    $exemptedUserIdentities += $responseObj.identities | Where-Object { $_.IdentityType -eq "user" }| ForEach-Object {
+                        $identity = $_
+                        $exemptedIdentity = $this.ControlSettings.Build.ExemptedUserIdentities | Where-Object { $_.Domain -eq $identity.Domain -and $_.DisplayName -eq $identity.DisplayName }
+                        if(($exemptedIdentity | Measure-Object).Count -gt 0)
+                        {
+                            return $identity.TeamFoundationId
+                        }
+                    }
+
+                    $accessList += $responseObj.identities | Where-Object { $_.IdentityType -eq "user" } | ForEach-Object {
+                        $identity = $_ 
+                        if($exemptedUserIdentities -notcontains $identity.TeamFoundationId)
+                        {
+                            $apiURL = "https://{0}.visualstudio.com/{1}/_api/_security/DisplayPermissions?__v=5&tfid={2}&permissionSetId={3}&permissionSetToken={4}%2F{5}%2F{6}" -f $($this.SubscriptionContext.SubscriptionName), $($this.BuildObj.project.id), $($identity.TeamFoundationId) ,$([Build]::SecurityNamespaceId),$($this.BuildObj.project.id), $($buildDefinitionPath), $($this.BuildObj.id);
+                            $identityPermissions = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
+                            $configuredPermissions = $identityPermissions.Permissions | Where-Object {$_.permissionDisplayString -ne 'Not set'}
+                            return @{ IdentityName = $identity.DisplayName; IdentityType = $identity.IdentityType; Permissions = ($configuredPermissions | Select-Object @{Name="Name"; Expression = {$_.displayName}},@{Name="Permission"; Expression = {$_.permissionDisplayString}}) }
+                        }
+                    }
+
+                    $accessList += $responseObj.identities | Where-Object { $_.IdentityType -eq "group" } | ForEach-Object {
+                        $identity = $_ 
                         $apiURL = "https://{0}.visualstudio.com/{1}/_api/_security/DisplayPermissions?__v=5&tfid={2}&permissionSetId={3}&permissionSetToken={4}%2F{5}%2F{6}" -f $($this.SubscriptionContext.SubscriptionName), $($this.BuildObj.project.id), $($identity.TeamFoundationId) ,$([Build]::SecurityNamespaceId),$($this.BuildObj.project.id), $($buildDefinitionPath), $($this.BuildObj.id);
                         $identityPermissions = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
                         $configuredPermissions = $identityPermissions.Permissions | Where-Object {$_.permissionDisplayString -ne 'Not set'}
-                        return @{ IdentityName = $identity.DisplayName; IdentityType = $identity.IdentityType; Permissions = ($configuredPermissions | Select-Object @{Name="Name"; Expression = {$_.displayName}},@{Name="Permission"; Expression = {$_.permissionDisplayString}}) }
+                        return @{ IdentityName = $identity.DisplayName; IdentityType = $identity.IdentityType; IsAadGroup = $identity.IsAadGroup ;Permissions = ($configuredPermissions | Select-Object @{Name="Name"; Expression = {$_.displayName}},@{Name="Permission"; Expression = {$_.permissionDisplayString}}) }
                     }
                 }
-
-                $accessList += $responseObj.identities | Where-Object { $_.IdentityType -eq "group" } | ForEach-Object {
-                    $identity = $_ 
-                    $apiURL = "https://{0}.visualstudio.com/{1}/_api/_security/DisplayPermissions?__v=5&tfid={2}&permissionSetId={3}&permissionSetToken={4}%2F{5}%2F{6}" -f $($this.SubscriptionContext.SubscriptionName), $($this.BuildObj.project.id), $($identity.TeamFoundationId) ,$([Build]::SecurityNamespaceId),$($this.BuildObj.project.id), $($buildDefinitionPath), $($this.BuildObj.id);
-                    $identityPermissions = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
-                    $configuredPermissions = $identityPermissions.Permissions | Where-Object {$_.permissionDisplayString -ne 'Not set'}
-                    return @{ IdentityName = $identity.DisplayName; IdentityType = $identity.IdentityType; IsAadGroup = $identity.IsAadGroup ;Permissions = ($configuredPermissions | Select-Object @{Name="Name"; Expression = {$_.displayName}},@{Name="Permission"; Expression = {$_.permissionDisplayString}}) }
+                if(($accessList | Measure-Object).Count -ne 0)
+                {
+                    $accessList= $accessList | Select-Object -Property @{Name="IdentityName"; Expression = {$_.IdentityName}},@{Name="IdentityType"; Expression = {$_.IdentityType}},@{Name="Permissions"; Expression = {$_.Permissions}}
+                    $controlResult.AddMessage([VerificationResult]::Verify,"Validate that the following identities have been provided with minimum RBAC access to [$($this.ResourceContext.ResourceName)] pipeline.", $accessList);
+                    $controlResult.SetStateData("Build pipeline access list: ", ($responseObj.identities | Select-Object -Property @{Name="IdentityName"; Expression = {$_.FriendlyDisplayName}},@{Name="IdentityType"; Expression = {$_.IdentityType}},@{Name="Scope"; Expression = {$_.Scope}})); 
+                }
+                else
+                {
+                    $controlResult.AddMessage([VerificationResult]::Passed,"No identities have been explicitly provided with RBAC access to [$($this.ResourceContext.ResourceName)] other than build pipeline owner and default groups");
+                    $controlResult.AddMessage("List of exempted user identities:",$exemptedUserIdentities)
+                } 
+            }
+            else{
+                if(($responseObj.identities|Measure-Object).Count -gt 0)
+                {
+                    $accessList= $responseObj.identities | Select-Object -Property @{Name="Name"; Expression = {$_.FriendlyDisplayName}},@{Name="IdentityType"; Expression = {$_.IdentityType}},@{Name="Scope"; Expression = {$_.Scope}}
+                    $controlResult.AddMessage([VerificationResult]::Verify,"Validate that the following identities have been provided with minimum RBAC access to [$($this.ResourceContext.ResourceName)] pipeline.", $accessList);
+                    $controlResult.SetStateData("Build pipeline access list: ", $accessList);
                 }
             }
-            if(($accessList | Measure-Object).Count -ne 0)
-            {
-                $accessList= $accessList | Select-Object -Property @{Name="IdentityName"; Expression = {$_.IdentityName}},@{Name="IdentityType"; Expression = {$_.IdentityType}},@{Name="Permissions"; Expression = {$_.Permissions}}
-                $controlResult.AddMessage([VerificationResult]::Verify,"Validate that the following identities have been provided with minimum RBAC access to [$($this.ResourceContext.ResourceName)] pipeline.", $accessList);
-                $controlResult.SetStateData("Build pipeline access list: ", $accessList);
-            }
-            else
-            {
-                $controlResult.AddMessage([VerificationResult]::Passed,"No identities have been explicitly provided with RBAC access to [$($this.ResourceContext.ResourceName)] other than build pipeline owner and default groups");
-                $controlResult.AddMessage("List of exempted user identities:",$exemptedUserIdentities)
-            } 
+            
            # $accessList = $null;
             $responseObj = $null;
         }
