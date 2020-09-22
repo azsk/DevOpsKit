@@ -165,6 +165,16 @@
       "ResourceDetailsKeys": {
         "WorkspaceId": "Reporting workspace customer id",
         "WorkspaceResourceId": "Reporting workspace azure id"
+      },
+      "ASCAssessmentsForIrrelevantRecommendation" :  {
+        "EndpointProtectionAssessmentKey" : {
+          "AssessmentName" : "83f577bd-a1b6-b7e1-0891-12ca19d1e6df",
+          "AllowedCauses" : ["SecurityApplianceNonRelevantRecommendation", "SecurityApplianceIrrelevantRecommendation"]
+        },
+        "VulnerabilitySolutionAssessmentKey":{
+          "AssessmentName" : "ffff0522-1e88-47fc-8382-2a80ba848f5d",
+          "AllowedCauses" : ["SecurityApplianceNonRelevantRecommendation","SecurityApplianceIrrelevantRecommendation"]
+        }
       }
     },
     "ControlExclusionsByService" : 
@@ -414,8 +424,6 @@
       "microsoftAccountClientId"
     ],
     "AllowedAuthenticationProviders": [
-    ],
-    "AllowedExternalRedirectURLs": [
     ]
   },
   "DataBricksFilters":{
@@ -556,8 +564,10 @@
   "PublicIpAddress": {
     "EnablePublicIpResource": false
    },
+  "ExtendedAttestationExpiry" : 180,
   "SeverityForSecContactAlerts": ["Medium","Low"],
   "MaxResourceInventoryObjectsCount": 20000,
   "AlernateAccountRegularExpressionForOrg": "",
+  "PrivilegedRolesForSub" : ["Owner" , "Contributor" , "User Access Administrator"],
   "GenerateSecurityEvaluationJsonFile": false
 }

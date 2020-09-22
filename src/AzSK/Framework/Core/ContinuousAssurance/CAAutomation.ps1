@@ -1272,13 +1272,12 @@ class CCAutomation: AzCommandBase
 		$newMsg = [MessageData]::new("Status:   $resultStatus. $resultMsg",$messageType)
 		$returnMsg += $newMsg
 		$this.PublishCustomMessage($newMsg);
-
-		$this.PublishCustomMessage([MessageData]::new([Constants]::SingleDashLine));
-		$returnMsg += [MessageData]::new([Constants]::SingleDashLine);
 		if($null -ne $detailedMsg)
 		{
 			$returnMsg += $detailedMsg
 		}
+		$this.PublishCustomMessage([MessageData]::new([Constants]::SingleDashLine));
+		$returnMsg += [MessageData]::new([Constants]::SingleDashLine);
 		if($summaryTable.Count -gt 0)
 		{
 			$summaryTable | ForEach-Object{
@@ -1679,47 +1678,61 @@ class CCAutomation: AzCommandBase
 
 		$caSubs = @();
 		[CAScanModel[]] $scanobjects = @();
-		if(($reportsStorageAccount | Measure-Object).Count -eq 1)
+		try 
 		{
-			$filename = Join-Path $($this.AzSKCATempFolderPath) $($this.CATargetSubsBlobName)
-
-			if(-not (Split-Path -Parent $filename | Test-Path))
+			if(($reportsStorageAccount | Measure-Object).Count -eq 1)
 			{
-				New-Item -ItemType Directory -Path $(Split-Path -Parent $filename) -Force
-			}
-			$keys = Get-AzStorageAccountKey -ResourceGroupName $this.AutomationAccount.CoreResourceGroup -Name $reportsStorageAccount.Name
-			$currentContext = New-AzStorageContext -StorageAccountName $reportsStorageAccount.Name -StorageAccountKey $keys[0].Value -Protocol Https
-			$CAScanDataBlobObject = Get-AzStorageBlob -Container $this.CAMultiSubScanConfigContainerName -Blob $this.CATargetSubsBlobName -Context $currentContext -ErrorAction SilentlyContinue 
-			if($null -ne $CAScanDataBlobObject)
-			{
-				$this.IsCentralScanModeOn = $true;
-				$CAScanDataBlobContentObject = [AzHelper]::GetStorageBlobContent($($this.AzSKCATempFolderPath), $this.CATargetSubsBlobName ,$this.CATargetSubsBlobName , $this.CAMultiSubScanConfigContainerName ,$currentContext)
-				$CAScanDataBlobContentObject = Get-AzStorageBlobContent -Container $this.CAMultiSubScanConfigContainerName -Blob $this.CATargetSubsBlobName -Context $currentContext -Destination $($this.AzSKCATempFolderPath) -Force
-				$CAScanDataBlobContent = Get-ChildItem -Path (Join-Path $($this.AzSKCATempFolderPath) $($this.CATargetSubsBlobName)) -Force | Get-Content | ConvertFrom-Json
-
-				#create the active snapshot from the ca scan objects					
-				$this.TargetSubscriptionIds = ""
-				if(($CAScanDataBlobContent | Measure-Object).Count -gt 0)
+				$filename = Join-Path $($this.AzSKCATempFolderPath) $($this.CATargetSubsBlobName)
+	
+				if(-not (Split-Path -Parent $filename | Test-Path))
 				{
-
-					$CAScanDataBlobContent | ForEach-Object {
-						$CAScanDataInstance = $_;
-						$scanobject = [CAScanModel]::new($CAScanDataInstance.SubscriptionId, $CAScanDataInstance.LoggingOption);
-						$scanobjects += $scanobject;
-						$caSubs += $CAScanDataInstance.SubscriptionId 
-						$this.TargetSubscriptionIds = $this.TargetSubscriptionIds + "," + $CAScanDataInstance.SubscriptionId 							
+					New-Item -ItemType Directory -Path $(Split-Path -Parent $filename) -Force
+				}
+				$keys = Get-AzStorageAccountKey -ResourceGroupName $this.AutomationAccount.CoreResourceGroup -Name $reportsStorageAccount.Name
+				$currentContext = New-AzStorageContext -StorageAccountName $reportsStorageAccount.Name -StorageAccountKey $keys[0].Value -Protocol Https
+				$CAScanDataBlobObject = Get-AzStorageBlob -Container $this.CAMultiSubScanConfigContainerName -Blob $this.CATargetSubsBlobName -Context $currentContext -ErrorAction SilentlyContinue 
+				if($null -ne $CAScanDataBlobObject)
+				{
+					$this.IsCentralScanModeOn = $true;
+					$CAScanDataBlobContentObject = [AzHelper]::GetStorageBlobContent($($this.AzSKCATempFolderPath), $this.CATargetSubsBlobName ,$this.CATargetSubsBlobName , $this.CAMultiSubScanConfigContainerName ,$currentContext)
+					$CAScanDataBlobContentObject = Get-AzStorageBlobContent -Container $this.CAMultiSubScanConfigContainerName -Blob $this.CATargetSubsBlobName -Context $currentContext -Destination $($this.AzSKCATempFolderPath) -Force
+					$CAScanDataBlobContent = Get-ChildItem -Path (Join-Path $($this.AzSKCATempFolderPath) $($this.CATargetSubsBlobName)) -Force | Get-Content | ConvertFrom-Json
+	
+					#create the active snapshot from the ca scan objects					
+					$this.TargetSubscriptionIds = ""
+					if(($CAScanDataBlobContent | Measure-Object).Count -gt 0)
+					{
+	
+						$CAScanDataBlobContent | ForEach-Object {
+							$CAScanDataInstance = $_;
+							$scanobject = [CAScanModel]::new($CAScanDataInstance.SubscriptionId, $CAScanDataInstance.LoggingOption);
+							$scanobjects += $scanobject;
+							$caSubs += $CAScanDataInstance.SubscriptionId 
+							$this.TargetSubscriptionIds = $this.TargetSubscriptionIds + "," + $CAScanDataInstance.SubscriptionId 							
+						}
+						$this.TargetSubscriptionIds = $this.TargetSubscriptionIds.SubString(1)
 					}
-					$this.TargetSubscriptionIds = $this.TargetSubscriptionIds.SubString(1)
+				}
+				#add the central sub if it is not being added as part of the scanobjects in the above step
+				if(-not $caSubs.Contains($this.SubscriptionContext.SubscriptionId))
+				{
+					$caSubs += $this.SubscriptionContext.SubscriptionId;
+					$scanobject = [CAScanModel]::new($this.SubscriptionContext.SubscriptionId, $this.LoggingOption);
+					$scanobjects += $scanobject;
 				}
 			}
-			#add the central sub if it is not being added as part of the scanobjects in the above step
-			if(-not $caSubs.Contains($this.SubscriptionContext.SubscriptionId))
-			{
-				$caSubs += $this.SubscriptionContext.SubscriptionId;
-				$scanobject = [CAScanModel]::new($this.SubscriptionContext.SubscriptionId, $this.LoggingOption);
-				$scanobjects += $scanobject;
-			}
 		}
+		catch 
+		{
+			$resultStatus = "Failed"
+			$failMsg = "Unable to access AzSK scan details from storage account, the user does not seem to have the required permission."
+			$resolvemsg = "Please re-run the command after elevating owner/contributor permission."
+			$resultMsg = "$failMsg`r`n$resolvemsg"
+			$shouldReturn = $true
+			$messages += ($this.FormatGetCACheckMessage($stepCount,$checkDescription,$resultStatus,$resultMsg,$detailedMsg,$caOverallSummary))	
+			return $messages	
+		}
+
 
 		#endregion
 
@@ -4084,7 +4097,7 @@ class CCAutomation: AzCommandBase
 				$recentLogsPath = $scanLogsPrefixPattern + "AutomationLogs_" + $date
 				$recentCAScanDataBlobObject = Get-AzStorageBlob -Container $containerName -Prefix $recentLogsPath -Context $currentContext -ErrorAction SilentlyContinue
 				$dayCounter += 1
-			 }
+			}
 		}
 		return $recentCAScanDataBlobObject
 	}

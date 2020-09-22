@@ -72,7 +72,8 @@
         "TCP",
         "Automated",
         "DP",
-        "Automation"
+        "Automation",
+        "ExtendedExpiry"
       ],
       "Enabled": true,
       "DataObjectProperties": [

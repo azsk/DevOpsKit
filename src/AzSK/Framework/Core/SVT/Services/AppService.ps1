@@ -139,7 +139,6 @@ class AppService: AzSVTBase
 		else
 		{
 			$IsAllowedAuthenticationProvidersConfigured = $false;
-			$IsConfiguredExtRedirectURLsAllowed = $false;
 			$ConfiguredAuthenticationProvidersSettings = New-Object PSObject
 			$ConfiguredExternalRedirectURLs= @()
 			if([FeatureFlightingManager]::GetFeatureStatus("EnableAppServiceCustomAuth",$($this.SubscriptionContext.SubscriptionId)) -eq $true)
@@ -150,11 +149,19 @@ class AppService: AzSVTBase
 			{
 				$IsAppServiceCustomAuthAllowed = $false
 			}
+			if([FeatureFlightingManager]::GetFeatureStatus("FunctionAppKindMatch",$($this.SubscriptionContext.SubscriptionId)) -eq $true)
+			{
+				$IsFunctionAppKindMatchEnabled = $true
+			}
+			else
+			{
+				$IsFunctionAppKindMatchEnabled = $false
+			}
 			#Checks if functions app present
 			$isFunctionApp = $false;
 			if([Helpers]::CheckMember($this.ResourceObject, "Kind"))
 			{
-				if([FeatureFlightingManager]::GetFeatureStatus("FunctionAppKindMatch",$($this.SubscriptionContext.SubscriptionId)) -eq $true  )
+				if($IsFunctionAppKindMatchEnabled)
 				{
 					$isFunctionApp = $this.ResourceObject.Kind -like "*functionapp*"
 				}
@@ -166,48 +173,60 @@ class AppService: AzSVTBase
 
 			if($isFunctionApp)
 			{
-				$ResourceAppIdURI = [WebRequestHelper]::GetServiceManagementUrl()
-				$accessToken = [ContextHelper]::GetAccessToken($ResourceAppIdURI)
-				$authorisationToken = "Bearer " + $accessToken
-				$headers = @{"Authorization"=$authorisationToken;"Content-Type"="application/json"}
-
-				if([Helpers]::CheckMember($this.WebAppDetails,"EnabledHostNames"))
-				{
-					if((($this.WebAppDetails.EnabledHostNames | where-object { $_.Contains('scm') }) | Measure-Object).Count -eq 1)
+				try
+				{	
+					if(-not $IsFunctionAppKindMatchEnabled)
 					{
-						$scmURL = $this.WebAppDetails.EnabledHostNames | where-object { $_.Contains('scm') }
-						$apiFunctionsUrl = [string]::Format("https://{0}/api/functions",$scmURL)
+						$ResourceAppIdURI = [WebRequestHelper]::GetServiceManagementUrl()
+						$accessToken = [ContextHelper]::GetAccessToken($ResourceAppIdURI)
+						$authorisationToken = "Bearer " + $accessToken
+						$headers = @{"Authorization"=$authorisationToken;"Content-Type"="application/json"}
+		
+						if([Helpers]::CheckMember($this.WebAppDetails,"EnabledHostNames"))
+						{
+							if((($this.WebAppDetails.EnabledHostNames | where-object { $_.Contains('scm') }) | Measure-Object).Count -eq 1)
+							{
+								$scmURL = $this.WebAppDetails.EnabledHostNames | where-object { $_.Contains('scm') }
+								$apiFunctionsUrl = [string]::Format("https://{0}/api/functions",$scmURL)
+							}
+							else
+							{
+								$temp = @($this.WebAppDetails.EnabledHostNames | where-object { $_.Contains('.azurewebsites.') })
+								$AppURL = $this.FormatURL($temp[0])
+								$apiFunctionsUrl = [string]::Format("https://{0}.scm.{1}/api/functions",$this.ResourceContext.ResourceName,$AppURL)
+							}
+						}
+						else
+						{
+							$temp = @($this.ResourceObject.Properties.HostNames | where-object { $_.Contains('.azurewebsites.') })
+							$AppURL = $this.FormatURL($temp[0])
+							$apiFunctionsUrl = [string]::Format("https://{0}.scm.{1}/api/functions",$this.ResourceContext.ResourceName,$AppURL)
+						}
+					
+						$functionDetail = [WebRequestHelper]::InvokeGetWebRequest($apiFunctionsUrl, $headers)
 					}
 					else
 					{
-						$temp = @($this.WebAppDetails.EnabledHostNames | where-object { $_.Contains('.azurewebsites.') })
-						$AppURL = $this.FormatURL($temp[0])
-						$apiFunctionsUrl = [string]::Format("https://{0}.scm.{1}/api/functions",$this.ResourceContext.ResourceName,$AppURL)
-					}
-				}
-				else
-				{
-					$temp = @($this.ResourceObject.Properties.HostNames | where-object { $_.Contains('.azurewebsites.') })
-					$AppURL = $this.FormatURL($temp[0])
-					$apiFunctionsUrl = [string]::Format("https://{0}.scm.{1}/api/functions",$this.ResourceContext.ResourceName,$AppURL)
-				}
-				
-				try
-				{
-						$functionDetail = [WebRequestHelper]::InvokeGetWebRequest($apiFunctionsUrl, $headers)
-				
-						#check if functions are present in FunctionApp	
-						if([Helpers]::CheckMember($functionDetail,"config"))
+						$functionDetail = $null
+						$functionAppDetails = Get-AzResource -ResourceGroupName $this.ResourceContext.ResourceGroupName -ResourceName $this.ResourceContext.ResourceName -ResourceType 'Microsoft.Web/sites/functions' -ApiVersion '2015-08-01' -ErrorAction SilentlyContinue
+						if($null -ne $functionAppDetails -and [Helpers]::CheckMember($functionAppDetails,"Properties"))
 						{
-							$bindingsDetail =$functionDetail.config.bindings
-								$ishttpTriggerFunction=$false
-							if(($bindingsDetail| Measure-Object).Count -gt 0)
-							{
-								$bindingsDetail |	 ForEach-Object{
+							$functionDetail = $functionAppDetails | ForEach-Object{ $_.Properties } 
+						}
+					}
+				
+					#check if functions are present in FunctionApp	
+					if([Helpers]::CheckMember($functionDetail,"config"))
+					{
+						$bindingsDetail =$functionDetail.config.bindings
+						$ishttpTriggerFunction=$false
+						if(($bindingsDetail| Measure-Object).Count -gt 0)
+						{
+							$bindingsDetail |	 ForEach-Object{
 								if($_.type -eq "httpTrigger" )
-										{
-										$ishttpTriggerFunction=$true
-									}
+								{
+									$ishttpTriggerFunction=$true
+								}
 								}
 								#if HTTP trigger function is not present, then AAD authentication is not required
 								if(!$ishttpTriggerFunction)
@@ -216,16 +235,16 @@ class AppService: AzSVTBase
 											[MessageData]::new("AAD Authentication for resource " + $this.ResourceContext.ResourceName + " is not required."));
 									return $controlResult;
 								}
-							}
 						}
-						#if no function is present in Functions App, then AAD authentication is not required
-						else
-						{
+					}
+					#if no function is present in Functions App, then AAD authentication is not required
+					else
+					{
 						$controlResult.AddMessage([VerificationResult]::Passed,
-									[MessageData]::new("AAD Authentication for resource " + $this.ResourceContext.ResourceName + " is not required."));
+								[MessageData]::new("AAD Authentication for resource " + $this.ResourceContext.ResourceName + " is not required."));
 						return $controlResult;
 					
-						}
+					}
 				}
 				catch
 				{
@@ -259,6 +278,7 @@ class AppService: AzSVTBase
 				}	
 			
 			#Check if any non AAD authenticaion is also enabled
+			#in case of contoso setups if "AppService.AllowedAuthenticationProviders" is set in ControlSettings,auth providers Ids from that settings should be removed from AppService.NonAADAuthProperties 
 			if([Helpers]::CheckMember($this.ControlSettings,"AppService.NonAADAuthProperties")){
 				$nonAadSettings = New-Object PSObject
 				$nonAADAuthEnabled = $false
@@ -286,37 +306,26 @@ class AppService: AzSVTBase
 				}
 
 				#Check if feature flag is enabled for AppServiceCustomAuthAllowed
-				if($IsAppServiceCustomAuthAllowed){
-					#Check if Configured ExternalRedirectURLs for app service is matching AllowedExternalRedirectURLs URL from ControlSetting
-						if([Helpers]::CheckMember($this.ControlSettings,"AppService.AllowedExternalRedirectURLs"))
+				if($IsAppServiceCustomAuthAllowed)
+				{										
+					#Check if any of the AllowedAuthenticationProviders is configured
+					#For Auth providers those are not allowed , check is done already using control settings for ControlSettings,"AppService.NonAADAuthProperties"
+					if([Helpers]::CheckMember($this.ControlSettings,"AppService.AllowedAuthenticationProviders"))
+					{
+						$AllowedAuthenticationProviders = $this.ControlSettings.AppService.AllowedAuthenticationProviders
+						ForEach($authProvider in $AllowedAuthenticationProviders)
 						{
-							$AllowedExternalRedirectURLs = $this.ControlSettings.AppService.AllowedExternalRedirectURLs
-							$IsConfiguredExtRedirectURLsAllowed = $true;
-							$ConfiguredExternalRedirectURLs = $this.AuthenticationSettings.properties.allowedExternalRedirectUrls
-							#Get External redirect URLs that are configured for app service but not allowed as per controlsettings
-							$RedirectURLsNotInAllowed= @($ConfiguredExternalRedirectURLs|Where-Object{$AllowedExternalRedirectURLs -notcontains $_})
-							
-							if($null -ne $RedirectURLsNotInAllowed -and $RedirectURLsNotInAllowed.Count -gt 0)
+							if([Helpers]::CheckMember($this.AuthenticationSettings.Properties,$authProvider))
 							{
-								$IsConfiguredExtRedirectURLsAllowed = $false;
-							}	
-						}
-						#Check if any of the AllowedAuthenticationProviders is configured
-						if([Helpers]::CheckMember($this.ControlSettings,"AppService.AllowedAuthenticationProviders"))
-						{
-							$AllowedAuthenticationProviders = $this.ControlSettings.AppService.AllowedAuthenticationProviders
-							ForEach($authProvider in $AllowedAuthenticationProviders){
-								if([Helpers]::CheckMember($this.AuthenticationSettings.Properties,$authProvider))
-								{
-									#Configured Auth Providers for App Service are in AllowedAuthenticationProviders
-									$IsAllowedAuthenticationProvidersConfigured = $true
-									Add-Member -InputObject $ConfiguredAuthenticationProvidersSettings -MemberType NoteProperty -Name $authProvider -Value $this.AuthenticationSettings.Properties.$($authProvider)
-								}
+								#Configured Auth Providers for App Service are in AllowedAuthenticationProviders
+								$IsAllowedAuthenticationProvidersConfigured = $true
+								Add-Member -InputObject $ConfiguredAuthenticationProvidersSettings -MemberType NoteProperty -Name $authProvider -Value $this.AuthenticationSettings.Properties.$($authProvider)
 							}
-						}			
-					}
+						}
+					}			
+				}
 				
-				if($AADEnabled -or ($IsAllowedAuthenticationProvidersConfigured -or $IsConfiguredExtRedirectURLsAllowed))
+				if($AADEnabled -or $IsAllowedAuthenticationProvidersConfigured)
 				{
 					if([FeatureFlightingManager]::GetFeatureStatus("EnableAppServiceAADAuthAllowAnonymousCheck",$($this.SubscriptionContext.SubscriptionId)) -eq $true)
 					{
@@ -341,12 +350,7 @@ class AppService: AzSVTBase
 					{
 						$controlResult.AddMessage([MessageData]::new("Authentication Providers configured for " + $this.ResourceContext.ResourceName));
 						$controlResult.AddMessage([MessageData]::new($ConfiguredAuthenticationProvidersSettings));
-					}
-					if($IsConfiguredExtRedirectURLsAllowed)
-					{
-						$controlResult.AddMessage([MessageData]::new("External redirect URLs configured for " + $this.ResourceContext.ResourceName));
-						$controlResult.AddMessage([MessageData]::new($ConfiguredExternalRedirectURLs));
-					}
+					}		
 					if($AADEnabled)	{												
 					$controlResult.AddMessage([MessageData]::new("AAD Authentication for resource " + $this.ResourceContext.ResourceName + " is enabled", $aadSettings));
 					}

@@ -72,7 +72,8 @@
         "TCP",
         "Automated",
         "AuthZ",
-        "ContainerInstances"
+        "ContainerInstances",
+        "ExtendedExpiry"
       ]
     }
   ]

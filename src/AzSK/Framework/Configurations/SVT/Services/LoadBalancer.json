@@ -55,7 +55,8 @@
             "TCP",
             "Automated",
             "NetSec",
-            "LoadBalancer"
+            "LoadBalancer",
+            "ExtendedExpiry"
          ],
          "Enabled": true,
          "DataObjectProperties": [
