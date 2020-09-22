@@ -516,7 +516,7 @@ class CCAutomation: AzCommandBase
 		return $messages;
 	}	
 
-	[MessageData[]] UpdateAzSKContinuousAssurance($FixRuntimeAccount,$NewRuntimeAccount,$RenewCertificate,$FixModules,$SkipCertificateCleanup)
+	[MessageData[]] UpdateAzSKContinuousAssurance($FixRuntimeAccount,$NewRuntimeAccount,$RenewCertificate,$FixModules,$SkipCertificateCleanup,$DeleteOldCredentials)
 	{
 		[MessageData[]] $messages = @();
 		try
@@ -586,6 +586,32 @@ class CCAutomation: AzCommandBase
 			}
 			#endregion
 		
+			if($DeleteOldCredentials)
+			{
+				$appID = ""
+
+				#Fetching appID of CA SPN
+				$connection = Get-AzAutomationConnection -AutomationAccountName $this.AutomationAccount.Name `
+				-ResourceGroupName  $this.AutomationAccount.ResourceGroup -Name $this.connectionAssetName -ErrorAction Stop				
+				$appID = $connection.FieldDefinitionValues.ApplicationId
+
+				#Fetching details of current Certificate associated with Automation account
+				$CACurrentCertificate= Get-AzAutomationCertificate -ResourceGroupName $this.AutomationAccount.ResourceGroup -AutomationAccountName $this.AutomationAccount.Name				
+				
+				#Fetching AD App details from AppId
+				$ADApplication =  [ActiveDirectoryHelper]::GetADAppByAppId($appID)
+
+				#Filtering current certificate among the AD App (SPN) Certificates
+				$ADApplication.keyCredentials = $ADApplication.keyCredentials | Where-Object { 
+					$_.customKeyIdentifier -eq $CACurrentCertificate.Thumbprint
+				} 
+            
+				$this.CAAADApplicationID = $appID;
+				$this.CertStartDate=$ADApplication.keyCredentials.startDate
+				$this.CertEndDate=$ADApplication.keyCredentials.endDate
+				$this.DeleteExistingCertificateForSPN()
+			}
+			
 			#region :Remove existing and create new AzureRunAsConnection if AzureADAppName param is passed else fix RunAsAccount if issue is found
 			$caaccounterror = $false;
 			if(![string]::IsNullOrWhiteSpace($this.AutomationAccount.AzureADAppName))
