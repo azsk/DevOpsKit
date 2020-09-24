@@ -3,7 +3,7 @@
     {
     "refUpdates": [
         {
-            "name": "refs/heads/master",
+            "name": "refs/heads/{4}",
             "oldObjectId": "{0}"
         }
     ],
@@ -28,7 +28,7 @@
 "Delete": {
     "refUpdates": [
         {
-            "name": "refs/heads/master",
+            "name": "refs/heads/{2}",
             "oldObjectId": "{0}"
         }
     ],
