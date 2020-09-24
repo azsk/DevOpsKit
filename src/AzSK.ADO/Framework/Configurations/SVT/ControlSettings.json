@@ -128,8 +128,8 @@
       ]
     }
   ],
-  "AttestationRepo":"",
-  "AttestationBranch":"",
+  "AttestationRepo": "",
+  "AttestationBranch": "",
   "IsAllowLongRunningScan": true,
   "LongRunningScanCheckPoint": 1000,
   "DefaultValidAttestationStates": [
