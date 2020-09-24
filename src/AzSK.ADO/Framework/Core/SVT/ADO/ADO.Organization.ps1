@@ -102,6 +102,7 @@ class Organization: ADOSVTBase
                         $responsePrCollData = $responsePrCollData | Select-Object displayName,mailAddress,subjectKind
                         $stateData = @();
                         $stateData += $responsePrCollData
+                        $controlResult.AddMessage("Total number of Project Collection Service Accounts members: $($responsePrCollData.Count)"); 
                         $controlResult.AddMessage([VerificationResult]::Verify, "Review the members of the group Project Collection Service Accounts: ", $stateData); 
                         $controlResult.SetStateData("Members of the Project Collection Service Accounts group: ", $stateData); 
                     }
