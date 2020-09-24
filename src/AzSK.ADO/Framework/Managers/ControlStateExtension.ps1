@@ -367,6 +367,7 @@ class ControlStateExtension
 
 		$projectName = $this.GetProject();
 		$attestationRepo = [Constants]::AttestationRepo;
+		#Get attesttion repo name from controlsetting file if AttestationRepo varibale value is not empty.
 		if ([Helpers]::CheckMember($this.ControlSettings,"AttestationRepo")) {
 			$attestationRepo =  $this.ControlSettings.AttestationRepo;
 		}
@@ -379,6 +380,7 @@ class ControlStateExtension
         try {
 		$webRequest = Invoke-RestMethod -Uri $uri -Method Get -ContentType "application/json" -Headers @{Authorization=("Basic {0}" -f $base64AuthInfo)}
 		$branchName = [Constants]::AttestationDefaultBranch;
+		#Get attesttion branch name from controlsetting file if AttestationBranch varibale value is not empty.
 		if ([Helpers]::CheckMember($this.ControlSettings,"AttestationBranch")) {
 			$branchName =  $this.ControlSettings.AttestationBranch;
 		}
@@ -481,6 +483,7 @@ class ControlStateExtension
 							$user = "";
 							$base64AuthInfo = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(("{0}:{1}" -f $user,$rmContext.AccessToken)))
 						
+						        #Get attesttion repo name from controlsetting file if AttestationRepo varibale value is not empty.
 							if ([Helpers]::CheckMember($this.ControlSettings,"AttestationRepo")) {
 								$attestationRepo =  $this.ControlSettings.AttestationRepo;
 							}
@@ -582,6 +585,7 @@ class ControlStateExtension
 	{
 		$projectName = $this.GetProject();
 		$branchName =  [Constants]::AttestationDefaultBranch
+		#Get attesttion branch name from controlsetting file if AttestationBranch varibale value is not empty.
 		if ([Helpers]::CheckMember($this.ControlSettings,"AttestationBranch")) {
 			$branchName =  $this.ControlSettings.AttestationBranch;
 		} 
@@ -595,6 +599,7 @@ class ControlStateExtension
 		try
 		{
 			$attestationRepo = [Constants]::AttestationRepo;
+			#Get attesttion repo name from controlsetting file if AttestationRepo varibale value is not empty.
 			if ([Helpers]::CheckMember($this.ControlSettings,"AttestationRepo")) {
 				$attestationRepo =  $this.ControlSettings.AttestationRepo;
 			}
@@ -634,6 +639,7 @@ class ControlStateExtension
 		$projectName = $this.GetProject();
 		$fileName = $this.CreatePath($fileName);
 		$attestationRepo = [Constants]::AttestationRepo;
+		#Get attesttion repo name from controlsetting file if AttestationRepo varibale value is not empty.
 		if ([Helpers]::CheckMember($this.ControlSettings,"AttestationRepo")) {
 			$attestationRepo =  $this.ControlSettings.AttestationRepo;
 		}
@@ -649,7 +655,9 @@ class ControlStateExtension
 		$body = $this.AttestationBody.Delete | ConvertTo-Json -Depth 10;
 		$body = $body.Replace('{0}',$branchId)
 		$body = $body.Replace('{1}',$fileName)
+		
 		$branchName = [Constants]::AttestationDefaultBranch;
+		#Get attesttion branch name from controlsetting file if AttestationBranch varibale value is not empty.
 		if ([Helpers]::CheckMember($this.ControlSettings,"AttestationBranch")) {
 			$branchName =  $this.ControlSettings.AttestationBranch;
 		}
