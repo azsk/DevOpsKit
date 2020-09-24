@@ -50,7 +50,8 @@
           "ADO_Build_DP_No_PlainText_Secrets_In_Definition",
           "ADO_Build_SI_Review_URL_Variables_Settable_At_Queue_Time",
           "ADO_Build_SI_Disable_Task_Group_Edit_Permission",
-          "ADO_Build_SI_Disable_Variable_Group_Edit_Permission"
+          "ADO_Build_SI_Disable_Variable_Group_Edit_Permission",
+          "ADO_Build_SI_Set_Authorization_Scope_To_Current_Project"
         ]
       },
       {

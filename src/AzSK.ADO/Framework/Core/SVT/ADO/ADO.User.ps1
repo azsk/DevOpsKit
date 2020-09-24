@@ -13,16 +13,28 @@ class User: ADOSVTBase {
             if ($responseObj.Count -gt 0) {
                 $AccessPATList = $responseObj | Where-Object { $_.validto -gt $(Get-Date -Format "yyyy-MM-dd") }
                 if ($AccessPATList.Count -gt 0) {
+                    $controlResult.AddMessage("Total number of active user PATs: $($AccessPATList.Count)");
                     $fullAccessPATList = $AccessPATList | Where-Object { $_.scope -eq "app_token" }
+                    $statusSet = $false # Use this variable to check whether scanStaus is already set
                     if (($fullAccessPATList | Measure-Object).Count -gt 0) {
+                        $fullAccessPATListCount = ($fullAccessPATList | Measure-Object).Count
+                        $controlResult.AddMessage("Total number of PAT's configured with full access: $fullAccessPATListCount");
                         $fullAccessPATNames = $fullAccessPATList | Select displayName, scope 
                         $controlResult.AddMessage([VerificationResult]::Failed,
                             "The following PATs have been configured with full access: ", $fullAccessPATNames);
+                        $statusSet = $true
                     }
-                    else {
-                        $AccessPATNames = $responseObj | Select displayName, scope 
-                        $controlResult.AddMessage([VerificationResult]::Verify,
-                            "Verify that the following PATs have minimum required permissions: ", $AccessPATNames)   
+                    $remainingPATList = $AccessPATList | Where-Object { $_.scope -ne "app_token" }
+                    if (($remainingPATList | Measure-Object).Count -gt 0){
+                        $remainingPATListCount = ($remainingPATList | Measure-Object).Count
+                        $controlResult.AddMessage("Total number of PATs configured with custom defined access: $remainingPATListCount");
+                        $remainingAccessPATNames = $remainingPATList | Select displayName, scope 
+                        if ($statusSet) {
+                            $controlResult.AddMessage("Verify that the following PATs have minimum required permissions: ", $remainingAccessPATNames)
+                        }   
+                        else {
+                            $controlResult.AddMessage([VerificationResult]::Verify, "Verify that the following PATs have minimum required permissions: ", $remainingAccessPATNames)                        
+                        }
                     }
                 }
                 else {
@@ -136,13 +148,13 @@ class User: ADOSVTBase {
                         $controlResult.AddMessage("The following PATs expire after 30 days: ", $PATOList )
                     }
                     if (($PATExpri7Days | Measure-Object).Count -gt 0) {
-                        $controlResult.AddMessage([VerificationResult]::Failed)
+                        $controlResult.AddMessage([VerificationResult]::Failed, "Failed: Total number of PATs expire within 7 days: " +($PATExpri7Days | Measure-Object).Count )
                     }
                     elseif (($PATExpri30Days | Measure-Object).Count -gt 0) {
-                        $controlResult.AddMessage([VerificationResult]::Verify)
+                        $controlResult.AddMessage([VerificationResult]::Verify, "Verify: Total number of PATs expire after 7 days but within 30 days: " +($PATExpri30Days | Measure-Object).Count )
                     }
                     else {
-                        $controlResult.AddMessage([VerificationResult]::Passed, "No PATs have been found which expire within 30 days")
+                        $controlResult.AddMessage([VerificationResult]::Passed, "Passed: No PATs have been found which expire within 30 days")
                     }
                 }
                 else {

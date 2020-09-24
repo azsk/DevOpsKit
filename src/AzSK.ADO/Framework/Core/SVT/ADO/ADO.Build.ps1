@@ -599,4 +599,24 @@ class Build: ADOSVTBase
 
         return $controlResult
     }
+
+    hidden [ControlResult] CheckBuildAuthorizationScope([ControlResult] $controlResult)
+    {
+        if([Helpers]::CheckMember($this.BuildObj[0],"jobAuthorizationScope"))
+        {
+            $jobAuthorizationScope = $this.BuildObj[0].jobAuthorizationScope
+            if ($jobAuthorizationScope -eq "projectCollection") {
+                $controlResult.AddMessage([VerificationResult]::Failed,"projectCollection is selected as  build job authorization scope for the build : ", $this.BuildObj[0].name);
+                $controlResult.SetStateData("projectCollection is selected as  build job authorization scope for the build: ", $this.BuildObj[0].name);                 
+            }
+            else {
+                $controlResult.AddMessage([VerificationResult]::Passed,"currentProject is selected as  build job authorization scope for the current build.");                    
+            }
+        }
+        else 
+        {
+            $controlResult.AddMessage([VerificationResult]::Passed,"No Authorization scope found in build definition.");
+        }
+        return $controlResult
+    }
 }

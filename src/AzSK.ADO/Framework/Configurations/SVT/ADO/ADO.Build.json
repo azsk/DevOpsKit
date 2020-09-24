@@ -191,6 +191,23 @@
         "SI"
       ],
       "Enabled": true
-    }
+    },
+    {
+      "ControlID": "ADO_Build_SI_Set_Authorization_Scope_To_Current_Project",
+      "Description": "Do not include loosely permissioned variable groups in your pipeline.",
+      "Id": "Build210",
+      "ControlSeverity": "High",
+      "Automated": "Yes",
+      "MethodName": "CheckBuildAuthorizationScope",
+      "Rationale": "Having projectCollection as build job authorization scope gives access to collection of projects instead of required project.",
+      "Recommendation": "1. Navigate to the build pipeline. 2. Click on options. 3. Select 'Current Project' under the option 'Build job authorization scope'.",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Automated",
+        "SI"
+      ],
+      "Enabled": true
+    }  
   ]
 }
