@@ -3,6 +3,10 @@ class ServicesSecurityStatus: ADOSVTCommandBase
 {
 	[SVTResourceResolver] $Resolver = $null;
 	[bool] $IsPartialCommitScanActive = $false;
+	[System.Diagnostics.Stopwatch] $StopWatch
+	[Datetime] $ScanStart
+	[Datetime] $ScanEnd
+
 	ServicesSecurityStatus([string] $subscriptionId, [InvocationInfo] $invocationContext, [SVTResourceResolver] $resolver):
         Base($subscriptionId, $invocationContext)
     {
@@ -95,6 +99,20 @@ class ServicesSecurityStatus: ADOSVTCommandBase
 					
 		$this.PublishCustomMessage("`nNumber of resources for which security controls will be evaluated: $($automatedResources.Count)",[MessageType]::Info);
 		
+		#if ([ServicesSecurityStatus]::IsiKeyEnabled)
+		#{
+			$this.StopWatch = New-Object System.Diagnostics.Stopwatch
+			$resourceTypeCount =$automatedResources | Group-Object -Property ResourceType |select-object Name, Count
+			$resourceTypeCountHT = @{}
+					foreach ($resType in $resourceTypeCount) 
+					{
+						$resourceTypeCountHT["$($resType.Name)"] = "$($resType.Count)"
+					}
+			
+			[AIOrgTelemetryHelper]::TrackCommandExecution("ADOScanner additional telemetry",
+				@{"RunIdentifier" = $this.RunIdentifier}, $resourceTypeCountHT, $this.InvocationContext);
+		#}
+
 		$totalResources = $automatedResources.Count;
 		[int] $currentCount = 0;
 		$childResources = @();
@@ -102,6 +120,12 @@ class ServicesSecurityStatus: ADOSVTCommandBase
 			$exceptionMessage = "Exception for resource: [ResourceType: $($_.ResourceTypeMapping.ResourceTypeName)] [ResourceGroupName: $($_.ResourceGroupName)] [ResourceName: $($_.ResourceName)]"
             try
             {
+				#if ([ServicesSecurityStatus]::IsiKeyEnabled)
+				#{
+					$this.ScanStart = [DateTime]::UtcNow
+					$this.StopWatch.Restart()
+				#}
+
 				$currentCount += 1;
 				if($totalResources -gt 1)
 				{
@@ -189,6 +213,24 @@ class ServicesSecurityStatus: ADOSVTCommandBase
 						$this.UpdatePartialCommitFile($true)
 					}					
 				}
+				#if ([ServicesSecurityStatus]::IsiKeyEnabled)
+				#{
+					$this.StopWatch.Stop()
+					$this.ScanEnd = [DateTime]::UtcNow
+					
+					$properties =  @{ 
+						EventName = "Resource scanned event";
+						TimeTakenInMs = $this.StopWatch.ElapsedMilliseconds;
+						ResourceCount = "$currentCount/$totalResources"; 
+						ResourceName = $svtObject.ResourceContext.ResourceName;
+						ResourceType = $svtObject.ResourceContext.ResourceType ;
+						ScanStartDateTime = $this.ScanStart;
+						ScanEndDateTime = $this.ScanEnd;
+						RunIdentifier = $this.RunIdentifier;
+					}
+
+					[AIOrgTelemetryHelper]::PublishEvent( "ADOScanner additional telemetry",$properties, @{})
+				#}
 
 			}
             catch

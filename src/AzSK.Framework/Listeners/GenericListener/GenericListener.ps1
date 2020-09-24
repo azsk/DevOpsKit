@@ -85,7 +85,8 @@ class GenericListener: ListenerBase
 		});
 
 		$this.RegisterEvent([SVTEvent]::CommandCompleted, {
-            $currentInstance = [GenericListener]::GetInstance();
+			$currentInstance = [GenericListener]::GetInstance();
+            $currentInstance.PushAIEvents("GenericListener CommandCompleted"); 			
             try 
             {
 				$params = @{};

@@ -35,6 +35,8 @@ class SVTBase: AzSKRoot
 	[ComplianceStateTableEntity[]] $ComplianceStateData = @();
 	[PSObject[]] $ChildSvtObjects = @();
 	[System.Diagnostics.Stopwatch] $StopWatch
+	[Datetime] $ScanStart
+	[Datetime] $ScanEnd
 	#EndRegion
 
 	SVTBase([string] $subscriptionId):
@@ -644,10 +646,16 @@ class SVTBase: AzSKRoot
 				#Getting scan time for each control in Staging environment
 				if ($this.invocationContext.MyCommand.ModuleName -match "staging")
 				{
+					$this.ScanStart = [DateTime]::UtcNow
 					$this.StopWatch.Restart()
 					$scanResult = $this.$methodName($azskScanResult);
 					$this.StopWatch.Stop()
-					$scanResult.ScanTimeInMilliSec = $this.StopWatch.Elapsed.Milliseconds
+					$this.ScanEnd = [DateTime]::UtcNow
+
+					$scanResult.TimeTakenInMs = $this.StopWatch.ElapsedMilliseconds
+					$scanResult.ScanStartDateTime = $this.ScanStart
+					$scanResult.ScanEndDateTime = $this.ScanEnd
+
 					$singleControlResult.ControlResults += $scanResult	
 				}	
 				else

@@ -57,7 +57,10 @@ class ControlResult
 	[int] $MaximumAllowedGraceDays=0;
 	[String] $UserComments	
 	[MessageData[]] $Messages = @();
-	[int] $ScanTimeInMilliSec	
+	[int] $TimeTakenInMs	
+	[DateTime] $ScanStartDateTime
+	[DateTime] $ScanEndDateTime
+
 
     [void] AddMessage([MessageData] $messageData)
     {
