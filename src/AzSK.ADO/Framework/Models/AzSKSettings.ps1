@@ -250,9 +250,16 @@ class AzSKSettings {
 		# If $branch variable valus is null or empty, then set its default value as 'master' (production policy branch)
 		if(!$branch)
 		{
-			$branch = "master";
+			$branch = [Constants]::OrgPolicyDefaultBranch;
 		}
-		$repoName = [Constants]::OrgPolicyRepo + $projectName;
+		$branch = [System.Web.HttpUtility]::UrlEncode($branch)
+
+		$repoName = [Constants]::OrgPolicyRepo;
+		if ($orgName -eq [Constants]::CSEOOrg)
+		{
+			$repoName = [Constants]::OrgPolicyRepoCSEO;
+		}
+		
 		if($projectName)
 		{
 			Write-Host -ForegroundColor Green "Online policy URL set to: [$orgName::$projectName::$repoName]"

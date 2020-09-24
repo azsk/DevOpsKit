@@ -105,9 +105,12 @@ class Constants
 	static [string] $AttRepoStorageUri = "https://dev.azure.com/{0}/{1}/_apis/git/repositories/{2}/pushes?api-version=5.0" 
 	static [string] $GetAttRepoStorageUri = "https://{0}.visualstudio.com/{1}/_apis/git/repositories/{2}/Items?path=%2F{3}&recursionLevel=0&includeContentMetadata=true&versionDescriptor.version={4}&versionDescriptor.versionOptions=0&versionDescriptor.versionType=0&includeContent=true&resolveLfs=true?api-version=4.1-preview.1" 
 	static [string] $AutoUpdateMessage = "Auto-update for AzSK.ADO is currently not enabled for your machine."
-	static [string] $AttestationRepo = "ADOScanner_Attestation"; 
-	static [string] $AttestationBranch = "master"; 
-	static [string] $OrgPolicyRepo = "ADOScanner_Policy_"; 
+	static [string] $AttestationRepo = "ADOScannerAttestation";
+	static [string] $AttestationDefaultBranch = "master"; 
+	static [string] $OrgPolicyRepo = "ADOScannerPolicy";
+	static [string] $OrgPolicyDefaultBranch = "master"; 
+	static [string] $OrgPolicyRepoCSEO = "SR-RM-EEE-ADOScannerPolicy";
+	static [string] $CSEOOrg = "MicrosoftIT";
 	static [string] $OrgAttPrjExtFile = "Org_Config";
 	static [string] $ModuleAutoUpdateAvailableMsg = "A new version of AzSK.ADO is available. Starting the auto-update workflow...`nTo prepare for auto-update, please:`n`t a) Save your work from all active PS sessions including the current one and`n`t b) Close all PS sessions other than the current one. "; 
 

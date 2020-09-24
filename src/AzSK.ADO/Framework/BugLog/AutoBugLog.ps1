@@ -43,6 +43,8 @@ class AutoBugLog {
                 $AreaPath = [BugLogPathManager]::GetAreaPath()
                 $IterationPath = [BugLogPathManager]::GetIterationPath()       
 	
+                #this falg is added to restrict 'Determining bug logging' message should print only once 
+                $printLogBugMsg = $true;
                 #Loop through all the control results for the current resource
                 $ControlResults | ForEach-Object {			
 					
@@ -72,7 +74,11 @@ class AutoBugLog {
                             $this.ManageActiveAndResolvedBugs($ProjectName, $control, $workItem, $AssignedTo)
                         }
                         else {
-                            Write-Host "Determining bugs to log..." -ForegroundColor Cyan
+                            if($printLogBugMsg)
+                            {
+                                Write-Host "Determining bugs to log..." -ForegroundColor Cyan
+                            }
+                            $printLogBugMsg = $false;
 
                             #filling the bug template
                             $Title = "[ADOScanner] Control failure - {0} for resource {1} {2}"

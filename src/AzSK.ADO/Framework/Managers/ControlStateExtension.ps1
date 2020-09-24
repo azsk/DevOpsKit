@@ -366,18 +366,27 @@ class ControlStateExtension
 		$fileName = $FullName.split('\')[-1];
 
 		$projectName = $this.GetProject();
+		$attestationRepo = [Constants]::AttestationRepo;
+		if ([Helpers]::CheckMember($this.ControlSettings,"AttestationRepo")) {
+			$attestationRepo =  $this.ControlSettings.AttestationRepo;
+		}
 
 		$rmContext = [ContextHelper]::GetCurrentContext();
 		$user = "";
 		$base64AuthInfo = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(("{0}:{1}" -f $user,$rmContext.AccessToken)))
 	   
-		$uri = "https://dev.azure.com/{0}/{1}/_apis/git/repositories/{2}/refs?api-version=5.0" -f $this.SubscriptionContext.subscriptionid, $projectName, [Constants]::AttestationRepo 
+		$uri = "https://dev.azure.com/{0}/{1}/_apis/git/repositories/{2}/refs?api-version=5.0" -f $this.SubscriptionContext.subscriptionid, $projectName, $attestationRepo 
         try {
 		$webRequest = Invoke-RestMethod -Uri $uri -Method Get -ContentType "application/json" -Headers @{Authorization=("Basic {0}" -f $base64AuthInfo)}
-		$branchId = ($webRequest.value | where {$_.name -eq 'refs/heads/master'}).ObjectId
+		$branchName = [Constants]::AttestationDefaultBranch;
+		if ([Helpers]::CheckMember($this.ControlSettings,"AttestationBranch")) {
+			$branchName =  $this.ControlSettings.AttestationBranch;
+		}
+		
+		$branchId = ($webRequest.value | where {$_.name -eq "refs/heads/"+$branchName}).ObjectId
 
-		$uri = [Constants]::AttRepoStorageUri -f $this.SubscriptionContext.subscriptionid, $projectName, [Constants]::AttestationRepo  
-		$body = $this.CreateBody($fileContent, $fileName, $branchId);
+		$uri = [Constants]::AttRepoStorageUri -f $this.SubscriptionContext.subscriptionid, $projectName, $attestationRepo  
+		$body = $this.CreateBody($fileContent, $fileName, $branchId, $branchName);
 		$webRequestResult = Invoke-RestMethod -Uri $uri -Method Post -ContentType "application/json" -Headers @{Authorization=("Basic {0}" -f $base64AuthInfo)} -Body $body
 
 		if ($fileName -eq $this.IndexerBlobName) {
@@ -385,14 +394,13 @@ class ControlStateExtension
 		 }   
 	   }
 		catch {
-			$repoName = [Constants]::AttestationRepo
-			Write-Host "Error: Attestation denied.`nThis may be because: `n  (a) $($repoName) repository is not present in the project `n  (b) you do not have write permission on the repository. `n" -ForegroundColor Red
+			Write-Host "Error: Attestation denied.`nThis may be because: `n  (a) $($attestationRepo) repository is not present in the project `n  (b) you do not have write permission on the repository. `n" -ForegroundColor Red
 			Write-Host "See more at https://aka.ms/adoscanner (search for 'ADOScanner_Attestation' on the page). `n" -ForegroundColor Yellow 
 		}
 	}
 
 	
-	[string] CreateBody([string] $fileContent, [string] $fileName, [string] $branchId){
+	[string] CreateBody([string] $fileContent, [string] $fileName, [string] $branchId, [string] $branchName){
 		
 		$body = $this.AttestationBody.Post | ConvertTo-Json -Depth 10
 		$body = $body.Replace("{0}",$branchId) 
@@ -410,6 +418,7 @@ class ControlStateExtension
 
         $content = ($fileContent | ConvertTo-Json -Depth 10) -replace '^.|.$', ''
 		$body = $body.Replace("{3}", $content)
+		$body = $body.Replace("{4}", $branchName)
 
 		return $body;		 
 	}
@@ -441,7 +450,7 @@ class ControlStateExtension
 				$projectName = $this.InvocationContext.BoundParameters["PolicyProject"]
 				if ([string]::IsNullOrEmpty($projectName))
 				{
-
+                    #TODO: azsk setting fetching and add comment for EnableOrgControlAttestation
 					if (!$this.AzSKSettings) 
 					{	
 						$this.AzSKSettings = [ConfigurationManager]::GetAzSKSettings();				
@@ -465,13 +474,18 @@ class ControlStateExtension
 					if ([ControlStateExtension]::IsOrgAttestationProjectFound -eq $false)
 					{
 						#Validate if Attestation repo is available in policy project
+						$attestationRepo = [Constants]::AttestationRepo;
 						try 
 						{
 							$rmContext = [ContextHelper]::GetCurrentContext();
 							$user = "";
 							$base64AuthInfo = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(("{0}:{1}" -f $user,$rmContext.AccessToken)))
 						
-							$uri = "https://dev.azure.com/{0}/{1}/_apis/git/repositories/{2}/refs?api-version=5.0" -f $this.SubscriptionContext.subscriptionid, $projectName, [Constants]::AttestationRepo 
+							if ([Helpers]::CheckMember($this.ControlSettings,"AttestationRepo")) {
+								$attestationRepo =  $this.ControlSettings.AttestationRepo;
+							}
+
+							$uri = "https://dev.azure.com/{0}/{1}/_apis/git/repositories/{2}/refs?api-version=5.0" -f $this.SubscriptionContext.subscriptionid, $projectName, $attestationRepo
 							$webRequest = Invoke-RestMethod -Uri $uri -Method Get -ContentType "application/json" -Headers @{Authorization=("Basic {0}" -f $base64AuthInfo)}
 							[ControlStateExtension]::IsOrgAttestationProjectFound = $true # Policy project and repo found
 						}
@@ -480,7 +494,7 @@ class ControlStateExtension
 							#2010 ToDO: [ControlStateExtension]::IsOrgAttestationProjectFound = $false # Policy project and repo found
 							if ($this.PrintAttestationRepoErr -eq $true)
 							{
-								Write-Host -ForegroundColor Yellow "Could not find attestation repo [$([Constants]::AttestationRepo)] in the policy project."
+								Write-Host -ForegroundColor Yellow "Could not find attestation repo [$($attestationRepo)] in the policy project."
 								$this.PrintAttestationRepoErr = $false;
 							}
 
@@ -567,7 +581,10 @@ class ControlStateExtension
 	[PSObject] GetRepoFileContent($fileName)
 	{
 		$projectName = $this.GetProject();
-		$branchName =  [Constants]::AttestationBranch
+		$branchName =  [Constants]::AttestationDefaultBranch
+		if ([Helpers]::CheckMember($this.ControlSettings,"AttestationBranch")) {
+			$branchName =  $this.ControlSettings.AttestationBranch;
+		} 
 
 		$fileName = $this.CreatePath($fileName);
 
@@ -577,7 +594,11 @@ class ControlStateExtension
 		
 		try
 		{
-		   $uri = [Constants]::GetAttRepoStorageUri -f $this.SubscriptionContext.subscriptionid, $projectName, [Constants]::AttestationRepo, $fileName, $branchName 
+			$attestationRepo = [Constants]::AttestationRepo;
+			if ([Helpers]::CheckMember($this.ControlSettings,"AttestationRepo")) {
+				$attestationRepo =  $this.ControlSettings.AttestationRepo;
+			}
+		   $uri = [Constants]::GetAttRepoStorageUri -f $this.SubscriptionContext.subscriptionid, $projectName, $attestationRepo, $fileName, $branchName 
 		   $webRequestResult = Invoke-RestMethod -Uri $uri -Method Get -ContentType "application/json" -Headers @{Authorization=("Basic {0}" -f $base64AuthInfo)}
            if ($webRequestResult) {
 			# COmmenting this code out. We will be handling encoding-decoding to b64 at SetStateData and WriteDetailedLogs.ps1
@@ -608,26 +629,35 @@ class ControlStateExtension
 		}
 	}
 
-	[void] RemoveExtStorageContent($fileName)
+	[void] RemoveAttestationData($fileName)
 	{
 		$projectName = $this.GetProject();
 		$fileName = $this.CreatePath($fileName);
+		$attestationRepo = [Constants]::AttestationRepo;
+		if ([Helpers]::CheckMember($this.ControlSettings,"AttestationRepo")) {
+			$attestationRepo =  $this.ControlSettings.AttestationRepo;
+		}
 
 		$rmContext = [ContextHelper]::GetCurrentContext();
 		$user = "";
 		$base64AuthInfo = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(("{0}:{1}" -f $user,$rmContext.AccessToken)))
 		
-		$uri = "https://dev.azure.com/{0}/{1}/_apis/git/repositories/{2}/refs?api-version=5.0" -f $this.SubscriptionContext.subscriptionid, $projectName, [Constants]::AttestationRepo 
+		$uri = "https://dev.azure.com/{0}/{1}/_apis/git/repositories/{2}/refs?api-version=5.0" -f $this.SubscriptionContext.subscriptionid, $projectName, $attestationRepo
         $webRequest = Invoke-RestMethod -Uri $uri -Method Get -ContentType "application/json" -Headers @{Authorization=("Basic {0}" -f $base64AuthInfo)}
 		$branchId = ($webRequest.value | where {$_.name -eq 'refs/heads/master'}).ObjectId
 		
 		$body = $this.AttestationBody.Delete | ConvertTo-Json -Depth 10;
 		$body = $body.Replace('{0}',$branchId)
 		$body = $body.Replace('{1}',$fileName)
+		$branchName = [Constants]::AttestationDefaultBranch;
+		if ([Helpers]::CheckMember($this.ControlSettings,"AttestationBranch")) {
+			$branchName =  $this.ControlSettings.AttestationBranch;
+		}
+		$body = $body.Replace('{2}',$branchName)
 
 		try
 		{
-		   $uri = [Constants]::AttRepoStorageUri -f $this.SubscriptionContext.subscriptionid, $projectName, [Constants]::AttestationRepo  
+		   $uri = [Constants]::AttRepoStorageUri -f $this.SubscriptionContext.subscriptionid, $projectName, $attestationRepo 
 		   $webRequestResult = Invoke-RestMethod -Uri $uri -Method Post -ContentType "application/json" -Headers @{Authorization=("Basic {0}" -f $base64AuthInfo)} -Body $body
 		}
 		catch{
@@ -678,7 +708,7 @@ class ControlStateExtension
 		try
 		{
 			$hashFile = "$hash.json";
-			$this.RemoveExtStorageContent($hashFile)
+			$this.RemoveAttestationData($hashFile)
 		}
 		catch
 		{
