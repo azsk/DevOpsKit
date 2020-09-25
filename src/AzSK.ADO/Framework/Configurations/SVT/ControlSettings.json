@@ -50,7 +50,8 @@
           "ADO_Build_DP_No_PlainText_Secrets_In_Definition",
           "ADO_Build_SI_Review_URL_Variables_Settable_At_Queue_Time",
           "ADO_Build_SI_Disable_Task_Group_Edit_Permission",
-          "ADO_Build_SI_Disable_Variable_Group_Edit_Permission"
+          "ADO_Build_SI_Disable_Variable_Group_Edit_Permission",
+          "ADO_Build_AuthZ_Limit_Pipeline_Access"
         ]
       },
       {
@@ -216,7 +217,7 @@
   "AlernateAccountRegularExpressionForOrg": "^SC-.*@.*microsoft.com$",
   "Organization": {
     "InActiveUserActivityLogsPeriodInDays": 90,
-    "TopInActiveUserCount": 500,
+    "TopInActiveUserCount": 100,
     "TrustedExtensionPublishers": [
       "Microsoft",
       "Microsoft DevLabs"
