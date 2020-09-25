@@ -160,14 +160,14 @@ class SVTResourceResolver: AzSKRoot {
 
             #Select Org/User by default...
             $link = "https://dev.azure.com/$($this.organizationName)/_settings"
-            $this.AddSVTResource($this.organizationName, $null ,"ADO.Organization", "Organization/$($organizationId)/", $null, $link);
+            $this.AddSVTResource($this.organizationName, $null ,"ADO.Organization", "Organization/$($this.organizationName)/", $null, $link);
             
         }
 
         if ($this.ResourceTypeName -in ([ResourceTypeName]::User, [ResourceTypeName]::All, [ResourceTypeName]::Org_Project_User, [ResourceTypeName]::Build_Release_SvcConn_AgentPool_User)) {
 
             $link = "https://dev.azure.com/$($this.organizationName)/_settings/users"
-            $this.AddSVTResource($this.organizationName, $null,"ADO.User", "Organization/$($organizationId)/User", $null, $link);
+            $this.AddSVTResource($this.organizationName, $null,"ADO.User", "Organization/$($this.organizationName)/User", $null, $link);
             
         }
 
