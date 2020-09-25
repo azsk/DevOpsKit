@@ -20,12 +20,12 @@
   "instanceNameFormat": "ADO Security Scanner",
   "inputs": [
     {
-      "name": "AzureDevOpsConnectionName",
+      "name": "ADOConnectionName",
       "type": "connectedService:externaltfs",
-      "label": "Azure DevOps Connection",
+      "label": "ADO Service Connection",
       "defaultValue": "",
       "required": true,
-      "helpMarkDown": "Azure DevOps connection required to access resources"
+      "helpMarkDown": "ADO connection required to access resources"
     },
     {
       "name": "OrgName",

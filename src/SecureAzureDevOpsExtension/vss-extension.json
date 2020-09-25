@@ -19,7 +19,8 @@
         "Security",
         "ADO Security",
         "Azure DevOps",
-        "ADO Scanner"
+        "ADO Scanner",
+        "ADO"
     ],
     "content": {
         "details": {
@@ -52,7 +53,7 @@
             }
         },
         {
-            "id": "OrgLevelTemp_Old",
+            "id": "OrgLevelSecuritySummary",
             "type": "ms.vss-dashboards-web.widget",
             "targets": [
                 "ms.vss-dashboards-web.widget-catalog"
@@ -62,7 +63,7 @@
                 "description": "Displays security configuration status for organization and project level controls",
                 "catalogIconUrl": "images/Icon.png",
                 "previewImageUrl": "images/Icon.png",                            
-                "uri": "OrgLevelTemp_Old.html",   
+                "uri": "OrgLevelSecuritySummary.html",   
                 "Sizes": [
                     {
                            "rowSpan": 6,
@@ -123,7 +124,7 @@
             "addressable": true
         },
         {
-            "path": "OrgLevelTemp_Old.html",
+            "path": "OrgLevelSecuritySummary.html",
             "addressable": true
         },
         {
