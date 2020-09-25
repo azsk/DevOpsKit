@@ -463,26 +463,9 @@
       "Enabled": true
     },
     {
-      "ControlID": "ADO_Organization_BCDR_Min_Admin_Count",
-      "Description": "Ensure that there are at least $($this.ControlSettings.Organization.MinPCAMembersPermissible) project collection administrators in your organization.",
-      "Id": "Organization350",
-      "ControlSeverity": "Medium",
-      "Automated": "Yes",
-      "MethodName": "CheckMinPCACount",
-      "Rationale": "Having the minimum required number of administrators reduces the risk of losing admin access. This is useful in case of break-glass account scenarios.",
-      "Recommendation": "Go to Organization settings --> Security --> Permissions --> Groups --> Select the group : Project Collection Administrators --> Review the members of this group",
-      "Tags": [
-        "SDL",
-        "BCDR",
-        "Automated",
-        "Best Practice"
-      ],
-      "Enabled": true
-    },
-    {
       "ControlID": "ADO_Organization_AuthZ_Limit_Admin_Count",
       "Description": "Ensure that there are at most $($this.ControlSettings.Organization.MaxPCAMembersPermissible) project collection administrators in your organization.",
-      "Id": "Organization360",
+      "Id": "Organization350",
       "ControlSeverity": "Medium",
       "Automated": "Yes",
       "MethodName": "CheckMaxPCACount",
@@ -491,6 +474,23 @@
       "Tags": [
         "SDL",
         "AuthZ",
+        "Automated",
+        "Best Practice"
+      ],
+      "Enabled": true
+    },
+    {
+      "ControlID": "ADO_Organization_BCDR_Min_Admin_Count",
+      "Description": "Ensure that there are at least $($this.ControlSettings.Organization.MinPCAMembersPermissible) project collection administrators in your organization.",
+      "Id": "Organization360",
+      "ControlSeverity": "Medium",
+      "Automated": "Yes",
+      "MethodName": "CheckMinPCACount",
+      "Rationale": "Having the minimum required number of administrators reduces the risk of losing admin access. This is useful in case of break-glass account scenarios.",
+      "Recommendation": "Go to Organization settings --> Security --> Permissions --> Groups --> Select the group : Project Collection Administrators --> Review the members of this group",
+      "Tags": [
+        "SDL",
+        "BCDR",
         "Automated",
         "Best Practice"
       ],

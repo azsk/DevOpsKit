@@ -149,7 +149,7 @@
       "Automated": "Yes",
       "MethodName": "CheckExternalSources",
       "Rationale": "Building code from untrusted external sources can allow an attacker to execute arbitrary code in your pipeline. Hence, all repositories added to the pipeline should be carefully reviewed.",
-      "Recommendation": "Validate the external source repo and self-hosted agents for vulnerabilities.",
+      "Recommendation": "Validate the external source code repository used in the pipeline definition for vulnerabilities.",
       "Tags": [
         "SDL",
         "TCP",
