@@ -15,9 +15,9 @@ class User: ADOSVTBase {
                 $AccessPATListCount = ($AccessPATList | Measure-Object).Count
                 if ($AccessPATListCount -gt 0) {
                     $controlResult.AddMessage("Total number of active user PATs: $($AccessPATListCount)");
-                    $fullAccessPATList = $AccessPATList | Where-Object { $_.scope -eq "app_token" }
                     $statusSet = $false # Use this variable to check whether scanStaus is already set
 
+                    $fullAccessPATList = $AccessPATList | Where-Object { $_.scope -eq "app_token" }
                     $fullAccessPATListCount = ($fullAccessPATList | Measure-Object).Count 
                     if ($fullAccessPATListCount -gt 0) {
                         $controlResult.AddMessage("`nTotal number of PAT's configured with full access: $($fullAccessPATListCount)");
