@@ -124,7 +124,7 @@ class SVTResourceResolver: AzSKRoot {
             $this.VariableGroups = "*"
         }  
 
-        if ($this.ProjectNames -eq "*" -or $this.BuildNames -eq "*" -or $this.ReleaseNames -eq "*" -or $this.ServiceConnections -eq "*" -or $this.AgentPools -eq "*" -or $this.VariableGroups -eq "*") {            
+        if (( $this.MaxObjectsToScan -eq 0 -or $this.MaxObjectsToScan -gt $this.longRunningScanCheckPoint) -and ($this.ProjectNames -eq "*" -or $this.BuildNames -eq "*" -or $this.ReleaseNames -eq "*" -or $this.ServiceConnections -eq "*" -or $this.AgentPools -eq "*" -or $this.VariableGroups -eq "*")) {            
             $this.PublishCustomMessage("Using '*' can take a long time for the scan to complete in larger projects. `nYou may want to provide a comma-separated list of projects, builds, releases, service connections, agent pools and variable groups. `n ", [MessageType]::Warning);
             <# BUGBUG: [Aug-2020] Removing this until we can determine the right approach to init org-policy-url for ADO.
             if (!$this.ControlSettings) {
@@ -141,13 +141,15 @@ class SVTResourceResolver: AzSKRoot {
     [void] LoadResourcesForScan() {
         
         #Call APIS for Organization,User/Builds/Releases/ServiceConnections 
+        $organizationId = "";
         if ($this.ResourceTypeName -in ([ResourceTypeName]::Organization, [ResourceTypeName]::All, [ResourceTypeName]::Org_Project_User)) {
             #Checking if org name is correct 
             $apiURL = "https://dev.azure.com/{0}/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1" -f $($this.organizationName);
-
+            
             $inputbody = "{'contributionIds':['ms.vss-features.my-organizations-data-provider'],'dataProviderContext':{'properties':{'sourcePage':{'url':'https://dev.azure.com/$($this.organizationName)','routeId':'ms.vss-tfs-web.suite-me-page-route','routeValues':{'view':'projects','controller':'ContributedPage','action':'Execute'}}}}}" | ConvertFrom-Json
             try {
                 $responseObj = [WebRequestHelper]::InvokePostWebRequest($apiURL, $inputbody);
+                $organizationId = ($responseObj[0].dataProviders."ms.vss-features.my-organizations-data-provider".organizations | Where-Object {$_.name -eq $this.organizationName}).id
                 $inputbody = $null;
                 Remove-Variable inputbody;
             }
@@ -369,7 +371,7 @@ class SVTResourceResolver: AzSKRoot {
                             Remove-Variable  serviceEndpointObj;
                             $nObj = $this.MaxObjectsToScan
                             foreach ($connectionObject in $Connections) {
-                                $resourceId = "Organization/$($this.organizationName)/Project/$projectName/$($connectionObject.Name)/$($connectionObject.Id)";
+                                $resourceId = "Organization/$($this.organizationName)/Project/$projectId/$($connectionObject.Name)/$($connectionObject.Id)";
                                 $link = "https://dev.azure.com/$($this.organizationName)/$projectId/_settings/adminservices?resourceId=$($connectionObject.Id)"; 
                                 $this.AddSVTResource($connectionObject.name, $projectName, "ADO.ServiceConnection", $resourceId, $connectionObject, $link);
                                 
