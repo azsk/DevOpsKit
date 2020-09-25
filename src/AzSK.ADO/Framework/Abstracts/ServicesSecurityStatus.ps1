@@ -6,6 +6,7 @@ class ServicesSecurityStatus: ADOSVTCommandBase
 	[System.Diagnostics.Stopwatch] $StopWatch
 	[Datetime] $ScanStart
 	[Datetime] $ScanEnd
+	[bool] $IsAIEnabled = $false;
 
 	ServicesSecurityStatus([string] $subscriptionId, [InvocationInfo] $invocationContext, [SVTResourceResolver] $resolver):
         Base($subscriptionId, $invocationContext)
@@ -28,6 +29,9 @@ class ServicesSecurityStatus: ADOSVTCommandBase
 		$this.UsePreviewBaselineControls = $invocationContext.BoundParameters["UsePreviewBaselineControls"];
 		$this.BaselineFilterCheck();
 		$this.UsePartialCommitsCheck();
+		if ([RemoteReportHelper]::IsAIOrgTelemetryEnabled()) { 
+			$this.IsAIEnabled = $true; 
+		};
 
 	}
 
@@ -99,8 +103,8 @@ class ServicesSecurityStatus: ADOSVTCommandBase
 					
 		$this.PublishCustomMessage("`nNumber of resources for which security controls will be evaluated: $($automatedResources.Count)",[MessageType]::Info);
 		
-		#if ([ServicesSecurityStatus]::IsiKeyEnabled)
-		#{
+		if ($this.IsAIEnabled)
+		{
 			$this.StopWatch = New-Object System.Diagnostics.Stopwatch
 			$resourceTypeCount =$automatedResources | Group-Object -Property ResourceType |select-object Name, Count
 			$resourceTypeCountHT = @{}
@@ -111,7 +115,7 @@ class ServicesSecurityStatus: ADOSVTCommandBase
 			
 			[AIOrgTelemetryHelper]::TrackCommandExecution("ADOScanner additional telemetry",
 				@{"RunIdentifier" = $this.RunIdentifier}, $resourceTypeCountHT, $this.InvocationContext);
-		#}
+		}
 
 		$totalResources = $automatedResources.Count;
 		[int] $currentCount = 0;
@@ -120,11 +124,11 @@ class ServicesSecurityStatus: ADOSVTCommandBase
 			$exceptionMessage = "Exception for resource: [ResourceType: $($_.ResourceTypeMapping.ResourceTypeName)] [ResourceGroupName: $($_.ResourceGroupName)] [ResourceName: $($_.ResourceName)]"
             try
             {
-				#if ([ServicesSecurityStatus]::IsiKeyEnabled)
-				#{
+				if ($this.IsAIEnabled)
+				{
 					$this.ScanStart = [DateTime]::UtcNow
 					$this.StopWatch.Restart()
-				#}
+				}
 
 				$currentCount += 1;
 				if($totalResources -gt 1)
@@ -213,8 +217,8 @@ class ServicesSecurityStatus: ADOSVTCommandBase
 						$this.UpdatePartialCommitFile($true)
 					}					
 				}
-				#if ([ServicesSecurityStatus]::IsiKeyEnabled)
-				#{
+				if ($this.IsAIEnabled)
+				{
 					$this.StopWatch.Stop()
 					$this.ScanEnd = [DateTime]::UtcNow
 					
@@ -230,7 +234,7 @@ class ServicesSecurityStatus: ADOSVTCommandBase
 					}
 
 					[AIOrgTelemetryHelper]::PublishEvent( "ADOScanner additional telemetry",$properties, @{})
-				#}
+				}
 
 			}
             catch
