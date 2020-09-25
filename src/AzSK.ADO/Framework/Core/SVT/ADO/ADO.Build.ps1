@@ -242,7 +242,7 @@ class Build: ADOSVTBase
 
             # Step2: Fetch detailed permissions of each of group/user from above api call
             # To be evaluated only when -DetailedScan flag is used in GADS command along with control ids  or when controls are to be attested
-            if($this.IsDetailedScanRequired -eq $true)
+            if([AzSKRoot]::IsDetailedScanRequired -eq $true)
             {
                 # release owner
                 $exemptedUserIdentities += $this.BuildObj.authoredBy.id

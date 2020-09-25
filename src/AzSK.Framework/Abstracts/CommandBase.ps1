@@ -395,7 +395,7 @@ class CommandBase: AzSKRoot {
 	[void] CheckDetailedScanStatus(){
 		if((-not([string]::IsNullOrEmpty($this.InvocationContext.BoundParameters['ControlIds'])) -and -not([string]::IsNullOrEmpty($this.InvocationContext.BoundParameters['DetailedScan']))) -or  -not( [string]::IsNullOrEmpty($this.InvocationContext.BoundParameters['ControlsToAttest']))  )
 		{
-			$this.IsDetailedScanRequired = $true
+			[AzSKRoot]::IsDetailedScanRequired = $true
 		}
 	}
 }
