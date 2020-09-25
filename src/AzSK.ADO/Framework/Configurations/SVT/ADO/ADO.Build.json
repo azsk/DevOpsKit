@@ -193,19 +193,19 @@
       "Enabled": true
     },
     {
-      "ControlID": "ADO_Build_SI_Set_Authorization_Scope_To_Current_Project",
-      "Description": "Do not include loosely permissioned variable groups in your pipeline.",
+      "ControlID": "ADO_Build_AuthZ_Limit_Pipeline_Access",
+      "Description": "Limit scope of access for build pipeline to the current project.",
       "Id": "Build210",
-      "ControlSeverity": "High",
+      "ControlSeverity": "Medium",
       "Automated": "Yes",
-      "MethodName": "CheckBuildAuthorizationScope",
-      "Rationale": "Having projectCollection as build job authorization scope gives access to collection of projects instead of required project.",
-      "Recommendation": "1. Navigate to the build pipeline. 2. Click on options. 3. Select 'Current Project' under the option 'Build job authorization scope'.",
+      "MethodName": "CheckBuildAuthZScope",
+      "Rationale": "If pipelines use project collection level tokens, a vulnerability in components used by one project can be leveraged by an attacker to attack all other projects. This is also in keeping with the principle of least privilege.",
+      "Recommendation": "1. Navigate to the build pipeline. 2. Click on Options. 3. Set 'Build job authorization scope' to 'Current Project'.",
       "Tags": [
         "SDL",
         "TCP",
         "Automated",
-        "SI"
+        "AuthZ"
       ],
       "Enabled": true
     }  

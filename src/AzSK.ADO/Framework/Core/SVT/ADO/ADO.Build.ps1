@@ -600,22 +600,21 @@ class Build: ADOSVTBase
         return $controlResult
     }
 
-    hidden [ControlResult] CheckBuildAuthorizationScope([ControlResult] $controlResult)
+    hidden [ControlResult] CheckBuildAuthZScope([ControlResult] $controlResult)
     {
         if([Helpers]::CheckMember($this.BuildObj[0],"jobAuthorizationScope"))
         {
             $jobAuthorizationScope = $this.BuildObj[0].jobAuthorizationScope
             if ($jobAuthorizationScope -eq "projectCollection") {
-                $controlResult.AddMessage([VerificationResult]::Failed,"projectCollection is selected as  build job authorization scope for the build : ", $this.BuildObj[0].name);
-                $controlResult.SetStateData("projectCollection is selected as  build job authorization scope for the build: ", $this.BuildObj[0].name);                 
+                $controlResult.AddMessage([VerificationResult]::Failed,"Access token of build pipeline is scoped to project collection.");               
             }
             else {
-                $controlResult.AddMessage([VerificationResult]::Passed,"currentProject is selected as  build job authorization scope for the current build.");                    
+                $controlResult.AddMessage([VerificationResult]::Passed,"Access token of build pipeline is scoped to current project.");                    
             }
         }
         else 
         {
-            $controlResult.AddMessage([VerificationResult]::Passed,"No Authorization scope found in build definition.");
+            $controlResult.AddMessage([VerificationResult]::Error,"Could not fetch pipeline authorization details.");
         }
         return $controlResult
     }
