@@ -157,26 +157,9 @@
       "Enabled": true
     },
     {
-      "ControlID": "ADO_Project_BCDR_Min_Admin_Count",
-      "Description": "Ensure that there are at least $($this.ControlSettings.Project.MinPAMembersPermissible) project administrators in your project.",
-      "Id": "Project180",
-      "ControlSeverity": "Medium",
-      "Automated": "Yes",
-      "MethodName": "CheckMinPACount",
-      "Rationale": "Having the minimum required number of administrators reduces the risk of losing admin access. This is useful in case of breakglass account scenarios.",
-      "Recommendation": "Go to Project settings --> General --> Permissions --> Groups --> Select the group : Project Administrators --> Review the members of this group",
-      "Tags": [
-        "SDL",
-        "BCDR",
-        "Automated",
-        "Best Practice"
-      ],
-      "Enabled": true
-    },
-    {
       "ControlID": "ADO_Project_AuthZ_Limit_Admin_Count",
       "Description": "Ensure that there are at most $($this.ControlSettings.Project.MaxPAMembersPermissible) project administrators in your project.",
-      "Id": "Project190",
+      "Id": "Project180",
       "ControlSeverity": "Medium",
       "Automated": "Yes",
       "MethodName": "CheckMaxPACount",
@@ -185,6 +168,23 @@
       "Tags": [
         "SDL",
         "AuthZ",
+        "Automated",
+        "Best Practice"
+      ],
+      "Enabled": true
+    },
+    {
+      "ControlID": "ADO_Project_BCDR_Min_Admin_Count",
+      "Description": "Ensure that there are at least $($this.ControlSettings.Project.MinPAMembersPermissible) project administrators in your project.",
+      "Id": "Project190",
+      "ControlSeverity": "Medium",
+      "Automated": "Yes",
+      "MethodName": "CheckMinPACount",
+      "Rationale": "Having the minimum required number of administrators reduces the risk of losing admin access. This is useful in case of breakglass account scenarios.",
+      "Recommendation": "Go to Project settings --> General --> Permissions --> Groups --> Select the group : Project Administrators --> Review the members of this group",
+      "Tags": [
+        "SDL",
+        "BCDR",
         "Automated",
         "Best Practice"
       ],
