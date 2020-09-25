@@ -579,7 +579,7 @@ class Organization: ADOSVTBase
             }
             if(($inactiveUsers | Measure-Object).Count -gt 0)
             {
-                if($inactiveUsers.Count -gt $topInActiveUsers)
+                if($inactiveUsers.Count -ge $topInActiveUsers)
                 {
                     $controlResult.AddMessage("Displaying top $($topInActiveUsers) inactive users")
                 }
@@ -596,17 +596,17 @@ class Organization: ADOSVTBase
                 $neverActiveUsers = $inactiveUsers | Where-Object {$_.InactiveFromDays -eq "User was never active."}
                 $inactiveUsersWithDays = $inactiveUsers | Where-Object {$_.InactiveFromDays -ne "User was never active."} 
 
+                $neverActiveUsersCount = ($neverActiveUsers | Measure-Object).Count
+                if ($neverActiveUsersCount -gt 0) {
+                    $controlResult.AddMessage("`nTotal number of users who were never active: $($neverActiveUsersCount)");
+                    $controlResult.AddMessage("Review users present in the organization who were never active: ",$neverActiveUsers);
+                } 
+                
                 $inactiveUsersWithDaysCount = ($inactiveUsersWithDays | Measure-Object).Count
                 if($inactiveUsersWithDaysCount -gt 0) {
                     $controlResult.AddMessage("`nTotal number of users who are inactive from last $($this.ControlSettings.Organization.InActiveUserActivityLogsPeriodInDays) days: $($inactiveUsersWithDaysCount)");                
                     $controlResult.AddMessage("Review users present in the organization who are inactive from last $($this.ControlSettings.Organization.InActiveUserActivityLogsPeriodInDays) days: ",$inactiveUsersWithDays);
                 }
-
-                $neverActiveUsersCount = ($neverActiveUsers | Measure-Object).Count
-                if ($neverActiveUsersCount -gt 0) {
-                    $controlResult.AddMessage("`nTotal number of users who were never active: $($neverActiveUsersCount)");
-                    $controlResult.AddMessage("Review users present in the organization who were never active: ",$neverActiveUsers);
-                }            
             }
             else {
                 $controlResult.AddMessage([VerificationResult]::Passed,

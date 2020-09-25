@@ -20,8 +20,8 @@ class User: ADOSVTBase {
                     $fullAccessPATList = $AccessPATList | Where-Object { $_.scope -eq "app_token" }
                     $fullAccessPATListCount = ($fullAccessPATList | Measure-Object).Count 
                     if ($fullAccessPATListCount -gt 0) {
-                        $controlResult.AddMessage("`nTotal number of PAT's configured with full access: $($fullAccessPATListCount)");
-                        $fullAccessPATNames = $fullAccessPATList | Select displayName, scope 
+                        $controlResult.AddMessage("`nTotal number of PATs configured with full access: $($fullAccessPATListCount)");
+                        $fullAccessPATNames = $fullAccessPATList | Select-Object displayName, scope 
                         $controlResult.AddMessage([VerificationResult]::Failed,
                             "The following PATs have been configured with full access: ", $fullAccessPATNames);
                         $statusSet = $true
@@ -31,7 +31,7 @@ class User: ADOSVTBase {
                     $remainingPATListCount = ($remainingPATList | Measure-Object).Count
                     if ($remainingPATListCount -gt 0){
                         $controlResult.AddMessage("`nTotal number of PATs configured with custom defined access: $remainingPATListCount");
-                        $remainingAccessPATNames = $remainingPATList | Select displayName, scope 
+                        $remainingAccessPATNames = $remainingPATList | Select-Object displayName, scope 
                         if ($statusSet) {
                             $controlResult.AddMessage("The following PATs have been configured with custom defined access: ", $remainingAccessPATNames)
                         }   
@@ -151,13 +151,13 @@ class User: ADOSVTBase {
                         $controlResult.AddMessage("The following PATs expire after 30 days: ", $PATOList )
                     }
                     if (($PATExpri7Days | Measure-Object).Count -gt 0) {
-                        $controlResult.AddMessage([VerificationResult]::Failed, "Failed: Total number of PATs expire within 7 days: " +($PATExpri7Days | Measure-Object).Count )
+                        $controlResult.VerificationResult = [VerificationResult]::Failed
                     }
                     elseif (($PATExpri30Days | Measure-Object).Count -gt 0) {
-                        $controlResult.AddMessage([VerificationResult]::Verify, "Verify: Total number of PATs expire after 7 days but within 30 days: " +($PATExpri30Days | Measure-Object).Count )
+                        $controlResult.VerificationResult = [VerificationResult]::Verify
                     }
                     else {
-                        $controlResult.AddMessage([VerificationResult]::Passed, "Passed: No PATs have been found which expire within 30 days")
+                        $controlResult.AddMessage([VerificationResult]::Passed, "No PATs have been found which expire within 30 days.")
                     }
                 }
                 else {

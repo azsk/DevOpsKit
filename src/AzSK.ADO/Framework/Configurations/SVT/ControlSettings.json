@@ -215,7 +215,7 @@
   "AlernateAccountRegularExpressionForOrg": "^SC-.*@.*microsoft.com$",
   "Organization": {
     "InActiveUserActivityLogsPeriodInDays": 90,
-    "TopInActiveUserCount": 500,
+    "TopInActiveUserCount": 100,
     "TrustedExtensionPublishers": [
       "Microsoft",
       "Microsoft DevLabs"
