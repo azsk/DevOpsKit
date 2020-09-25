@@ -986,6 +986,7 @@ class SubscriptionCore: AzSVTBase
 			{
 				
 				$criticalPermanentRoles = $permanentRoles | Where-Object{$_.RoleDefinitionName -in $criticalRoles -and ($_.ObjectType -eq 'User' -or $_.ObjectType -eq 'Group')}
+				$criticalPermanentRoles = $criticalPermanentRoles | Where-Object{-not ($_.DisplayName -like 'JIT_*_ElevatedAccess' -and $_.ObjectType -eq 'Group')}
 				if($null -ne $whitelistedPermanentRoles)
 				{
 					$criticalPermanentRoles = $criticalPermanentRoles | Where-Object{ $_.DisplayName -notin $whitelistedPermanentRoles.DisplayName}
