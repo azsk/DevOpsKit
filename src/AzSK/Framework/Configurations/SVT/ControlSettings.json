@@ -486,6 +486,12 @@
     "ExpiryInDays": 2,
     "SupportedSources": []
   },
+  "CentrallyScannedControls": {
+    "SupportedTenantIds": [
+    ],
+    "Controls" : {
+    }
+  },
   "CloudService": {
     "LatestOSSKUIDs": [ "WA-GUEST-OS-4.44_201707-01" ]
   },

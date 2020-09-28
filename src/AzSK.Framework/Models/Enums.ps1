@@ -12,6 +12,7 @@ enum VerificationResult
 	Remediate
 	Skipped
 	NotScanned
+	CentrallyScanned
 }
 
 enum PolicyVerificationResult

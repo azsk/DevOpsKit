@@ -16,36 +16,41 @@ class LogAnalyticsMonitoring: AzCommandBase
 	LogAnalyticsMonitoring([string] $_laWSSubscriptionId,[string] $_laWSResourceGroup,[string] $_laWSId, [InvocationInfo] $invocationContext): 
         Base([string] $_laWSSubscriptionId, $invocationContext) 
     { 	
-		
-			
-					$this.LAWSResourceGroup = $_laWSResourceGroup
-					$this.LAWSId = $_laWSId
-					$laWSInstance = Get-AzOperationalInsightsWorkspace | Where-Object {$_.CustomerId -eq "$_laWSId" -and $_.ResourceGroupName -eq  "$($this.LAWSResourceGroup)"}
-					if($null -eq $laWSInstance)
-					{
-						throw [SuppressedException] "Invalid Log Analytics Workspace."
-					}
-					$this.LAWSName = $laWSInstance.Name;
-					$locationInstance = Get-AzLocation | Where-Object { $_.DisplayName -eq $laWSInstance.Location -or  $_.Location -eq $laWSInstance.Location } 
-					$this.LAWSLocation = $locationInstance.Location
-				
-		
+		$this.LAWSResourceGroup = $_laWSResourceGroup
+		$this.LAWSId = $_laWSId
+		$laWSInstance = Get-AzOperationalInsightsWorkspace | Where-Object {$_.CustomerId -eq "$_laWSId" -and $_.ResourceGroupName -eq  "$($this.LAWSResourceGroup)"}
+		if($null -eq $laWSInstance)
+		{
+			throw [SuppressedException] "Invalid Log Analytics Workspace."
+		}
+		$this.LAWSName = $laWSInstance.Name;
+		#$locationInstance = Get-AzLocation | Where-Object { $_.DisplayName -eq $laWSInstance.Location -or  $_.Location -eq $laWSInstance.Location } 
+		#$this.LAWSLocation = $locationInstance.Location
+		$this.LAWSLocation = $laWSInstance.Location	
 	}
 
-	[void] ConfigureLAWS([string] $_viewName, [bool] $_validateOnly)	
-    {		
-	   Write-Host "WARNING: This command will overwrite the existing AzSK Security View that you may have installed using previous versions of AzSK if you are using the same view name as the one used earlier. In that case we recommend taking a backup using 'Edit -> Export' option available in the Log Analytics workspace.`n" -ForegroundColor Yellow
-	   $input = Read-Host "Enter 'Y' to continue and 'N' to skip installation (Y/N)"
-		while ($input -ne "y" -and $input -ne "n")
-		{
-        if (-not [string]::IsNullOrEmpty($input)) {
-			$this.PublishCustomMessage(("Please select an appropriate option.`n" + [Constants]::DoubleDashLine), [MessageType]::Warning)
-                  
-        }
-        $input = Read-Host "Enter 'Y' to continue and 'N' to skip installation (Y/N)"
-        $input = $input.Trim()
-				
-		}
+	[void] ConfigureLAWS([string] $_viewName, [bool] $_validateOnly, [bool] $forceDeployment)	
+    {	
+		$input = $null
+		# If force switch is passed don't prompt user for consent and deploy solution
+		if($forceDeployment){
+			Write-Host "WARNING: As you have used '-Force' switch, this command will overwrite the existing AzSK Security View that you may have installed using previous versions of AzSK if you are using the same view name as the one used earlier.`n" -ForegroundColor Yellow
+			$input = "Y"
+		}else{
+			# If force switch is not passed, prompt user for consent before deploying solution
+			Write-Host "WARNING: This command will overwrite the existing AzSK Security View that you may have installed using previous versions of AzSK if you are using the same view name as the one used earlier. In that case we recommend taking a backup using 'Edit -> Export' option available in the Log Analytics workspace.`n" -ForegroundColor Yellow
+			$input = Read-Host "Enter 'Y' to continue and 'N' to skip installation (Y/N)"
+			while ($input -ne "y" -and $input -ne "n")
+			{
+				if (-not [string]::IsNullOrEmpty($input)) {
+					$this.PublishCustomMessage(("Please select an appropriate option.`n" + [Constants]::DoubleDashLine), [MessageType]::Warning)
+						
+				}
+				$input = Read-Host "Enter 'Y' to continue and 'N' to skip installation (Y/N)"
+				$input = $input.Trim()		
+			}
+		}	
+	    
 		if ($input -eq "y") 
 		{
 			$this.PublishCustomMessage([Constants]::DoubleDashLine + "`r`nStarted setting up AzSK Monitoring solution pack`r`n"+[Constants]::DoubleDashLine);

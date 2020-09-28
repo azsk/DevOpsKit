@@ -104,7 +104,13 @@ Class LogAnalyticsHelper{
 				# Exception occurred during setting tag. This is kept blank intentionaly to avoid flow break
 			}
 		}
-				
+		
+		$centrallyScannedControls = @{}
+        $ControlSettings = [ConfigurationManager]::LoadServerConfigFile("ControlSettings.json");
+        if([Helpers]::CheckMember($ControlSettings, "CentrallyScannedControls.SupportedTenantIds") -and ($ControlSettings.CentrallyScannedControls.SupportedTenantIds -contains "72f988bf-86f1-41af-91ab-2d7cd011db47") -and [Helpers]::CheckMember($ControlSettings, "CentrallyScannedControls.Controls")){
+            $ControlSettings.CentrallyScannedControls.Controls.Psobject.properties | ForEach-Object { $centrallyScannedControls[$_.Name] = $_.Value }
+		}
+		
 		[array] $eventContext.ControlResults | ForEach-Object{
 			Set-Variable -Name ControlResult -Value $_ -Scope Local
 			$out = [LAWSModel]::new() 
@@ -144,8 +150,17 @@ Class LogAnalyticsHelper{
 			}
 
 			$out.Reference=$eventContext.Metadata.Reference
-			$out.ControlStatus=$ControlResult.VerificationResult.ToString()
-			$out.ActualVerificationResult=$ControlResult.ActualVerificationResult.ToString()
+			if($centrallyScannedControls.Count -gt 0 -and $centrallyScannedControls.ContainsKey($eventContext.ControlItem.ControlID) -and $centrallyScannedControls[$eventContext.ControlItem.ControlID] -eq 1){
+				$out.ControlStatus= ([VerificationResult]::CentrallyScanned).ToString()
+				$out.ActualVerificationResult= ([VerificationResult]::CentrallyScanned).ToString()
+				$out.HasRequiredAccess = $false
+			}
+			else{
+				$out.ControlStatus=$ControlResult.VerificationResult.ToString()
+				$out.ActualVerificationResult=$ControlResult.ActualVerificationResult.ToString()
+				$out.HasRequiredAccess = $ControlResult.CurrentSessionContext.Permissions.HasRequiredAccess 
+			}
+
 			$out.ControlId=$eventContext.ControlItem.ControlID
 			$out.SubscriptionName=$eventContext.SubscriptionContext.SubscriptionName
 			$out.SubscriptionId=$eventContext.SubscriptionContext.SubscriptionId
@@ -155,7 +170,6 @@ Class LogAnalyticsHelper{
 			$out.Source=$AzSKContext.Source
 			$out.Tags=$eventContext.ControlItem.Tags
 			$out.RunIdentifier = $AzSKContext.RunIdentifier
-			$out.HasRequiredAccess = $ControlResult.CurrentSessionContext.Permissions.HasRequiredAccess 
 			$out.ScannerVersion = $AzSKContext.Version
 			$out.IsBaselineControl = $eventContext.ControlItem.IsBaselineControl
 			#addPreviewBaselineControl Flag

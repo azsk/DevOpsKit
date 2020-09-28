@@ -188,6 +188,11 @@ class WriteSummaryFile: FileOutputBase
     {
         if ([string]::IsNullOrEmpty($this.FilePath)) {
             return;
+		}
+		$centrallyScannedControls = @{}
+        $ControlSettings = [ConfigurationManager]::LoadServerConfigFile("ControlSettings.json");
+        if([Helpers]::CheckMember($ControlSettings, "CentrallyScannedControls.SupportedTenantIds") -and ($ControlSettings.CentrallyScannedControls.SupportedTenantIds -contains "72f988bf-86f1-41af-91ab-2d7cd011db47") -and [Helpers]::CheckMember($ControlSettings, "CentrallyScannedControls.Controls")){
+            $ControlSettings.CentrallyScannedControls.Controls.Psobject.properties | ForEach-Object { $centrallyScannedControls[$_.Name] = $_.Value }
         }
         [CsvOutputItem[]] $csvItems = @();
 		$anyAttestedControls = $null -ne ($arguments | 
@@ -308,7 +313,11 @@ class WriteSummaryFile: FileOutputBase
 						{
 							$csvItem.IsControlInGrace = "No"
 						}
-					}					
+					}		
+					if($centrallyScannedControls.Count -gt 0 -and $centrallyScannedControls.ContainsKey($item.ControlItem.ControlID) -and $centrallyScannedControls[$item.ControlItem.ControlID] -eq 1){
+						$csvItem.ActualStatus =  $_.ActualVerificationResult.ToString();
+						$csvItem.Status = ([VerificationResult]::CentrallyScanned).ToString()
+					}	
                     $csvItems += $csvItem;
                 }                                
             }
