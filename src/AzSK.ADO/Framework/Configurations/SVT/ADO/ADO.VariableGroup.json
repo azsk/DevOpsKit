@@ -75,7 +75,7 @@
           {
             "ControlID": "ADO_VariableGroup_DP_Store_Secrets_In_KeyVault",
             "Description": "Consider using a linked Azure key vault for secret variables of the variable group.",
-            "Id": "VariableGroup140",
+            "Id": "VariableGroup150",
             "ControlSeverity": "Low",
             "Automated": "No",
             "MethodName": "",

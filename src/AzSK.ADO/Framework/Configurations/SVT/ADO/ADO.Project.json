@@ -110,7 +110,7 @@
     {
       "ControlID": "ADO_Project_AuthZ_Limit_Release_Pipeline_Access",
       "Description": "Limit scope of access for release pipelines to the current project.",
-      "Id": "Project161",
+      "Id": "Project170",
       "ControlSeverity": "Medium",
       "Automated": "Yes",
       "MethodName": "CheckJobAuthZReleaseScope",
@@ -127,7 +127,7 @@
     {
       "ControlID": "ADO_Project_AuthZ_Limit_Pipeline_Access_To_Referenced_Repos",
       "Description": "Limit scope of access for pipelines to explicitly referenced Azure DevOps repositories.",
-      "Id": "Project162",
+      "Id": "Project180",
       "ControlSeverity": "Medium",
       "Automated": "Yes",
       "MethodName": "CheckAuthZRepoScope",
@@ -144,7 +144,7 @@
     {
       "ControlID": "ADO_Project_DP_Publish_Metadata_From_Pipeline",
       "Description": "Consider using artifact evaluation for fine-grained control over pipeline stages.",
-      "Id": "Project170",
+      "Id": "Project190",
       "ControlSeverity": "Medium",
       "Automated": "Yes",
       "MethodName": "CheckPublishMetadata",
@@ -161,7 +161,7 @@
     {
       "ControlID": "ADO_Project_AuthZ_Limit_Admin_Count",
       "Description": "Ensure that there are at most $($this.ControlSettings.Project.MaxPAMembersPermissible) project administrators in your project.",
-      "Id": "Project180",
+      "Id": "Project200",
       "ControlSeverity": "Medium",
       "Automated": "Yes",
       "MethodName": "CheckMaxPACount",
@@ -178,7 +178,7 @@
     {
       "ControlID": "ADO_Project_BCDR_Min_Admin_Count",
       "Description": "Ensure that there are at least $($this.ControlSettings.Project.MinPAMembersPermissible) project administrators in your project.",
-      "Id": "Project190",
+      "Id": "Project210",
       "ControlSeverity": "Medium",
       "Automated": "Yes",
       "MethodName": "CheckMinPACount",
@@ -195,7 +195,7 @@
     {
       "ControlID": "ADO_Project_AuthN_Use_ALT_Accounts_For_Admin",
       "Description": "Alternate (ALT) accounts must be used for administrative activity at project scope.",
-      "Id": "Project200",
+      "Id": "Project220",
       "ControlSeverity": "High",
       "Automated": "Yes",
       "MethodName": "CheckSCALTForAdminMembers",

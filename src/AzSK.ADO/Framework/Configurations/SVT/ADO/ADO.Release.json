@@ -161,7 +161,7 @@
     {
       "ControlID": "ADO_Release_SI_Review_URL_Variables_Settable_At_Release_Time",
       "Description": "Pipeline variables marked settable at release time and containing URLs should be carefully reviewed.",
-      "Id": "Release192",
+      "Id": "Release200",
       "ControlSeverity": "High",
       "Automated": "Yes",
       "MethodName": "CheckSettableAtReleaseTimeForURL",
@@ -178,7 +178,7 @@
     {
       "ControlID": "ADO_Release_SI_Disable_Task_Group_Edit_Permission",
       "Description": "Do not include loosely permissioned task groups in your pipeline.",
-      "Id": "Release200",
+      "Id": "Release210",
       "ControlSeverity": "High",
       "Automated": "Yes",
       "MethodName": "CheckTaskGroupEditPermission",
@@ -195,7 +195,7 @@
     {
       "ControlID": "ADO_Release_SI_Disable_Variable_Group_Edit_Permission",
       "Description": "Do not include loosely permissioned variable groups in your pipeline.",
-      "Id": "Release210",
+      "Id": "Release220",
       "ControlSeverity": "High",
       "Automated": "Yes",
       "MethodName": "CheckVariableGroupEditPermission",
