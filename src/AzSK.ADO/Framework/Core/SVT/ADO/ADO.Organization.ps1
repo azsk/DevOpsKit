@@ -469,13 +469,20 @@ class Organization: ADOSVTBase
             if(($responseObj -ne $null) -and $responseObj.Count -gt 0 -and ([Helpers]::CheckMember($responseObj[0], 'members')))
             {
                 $guestUsers += $responseObj[0].members
-                $continuationToken =  $responseObj.continuationToken # Use the continuationToken for pagination
+                $continuationToken =  $responseObj[0].continuationToken # Use the continuationToken for pagination
                 while ($continuationToken -ne $null){
                     $urlEncodedToken = [System.Web.HttpUtility]::UrlEncode($continuationToken)
                     $apiURL = "https://{0}.vsaex.visualstudio.com/_apis/UserEntitlements?continuationToken=$urlEncodedToken&%24filter=userType%20eq%20%27guest%27&%24orderBy=name%20Ascending&api-version=5.1-preview.3" -f $($this.SubscriptionContext.SubscriptionName);
-                    $responseObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
-                    $guestUsers += $responseObj[0].members
-                    $continuationToken =  $responseObj.continuationToken
+                    try{
+                        $responseObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
+                        $guestUsers += $responseObj[0].members
+                        $continuationToken =  $responseObj[0].continuationToken
+                    }
+                    catch
+                    {
+                        # Eating the exception here as we could not fetch the further guest users
+                        $continuationToken = $null
+                    }
                 }
                 $guestList = @();
                 $guestList +=  ($guestUsers | Select-Object @{Name="Id"; Expression = {$_.id}},@{Name="IdentityType"; Expression = {$_.user.subjectKind}},@{Name="DisplayName"; Expression = {$_.user.displayName}}, @{Name="MailAddress"; Expression = {$_.user.mailAddress}},@{Name="AccessLevel"; Expression = {$_.accessLevel.licenseDisplayName}},@{Name="LastAccessedDate"; Expression = {$_.lastAccessedDate}},@{Name="InactiveFromDays"; Expression = { if (((Get-Date) -[datetime]::Parse($_.lastAccessedDate)).Days -gt 10000){return "User was never active."} else {return ((Get-Date) -[datetime]::Parse($_.lastAccessedDate)).Days} }})
