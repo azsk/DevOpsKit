@@ -126,7 +126,7 @@
     {
       "ControlID": "ADO_Build_SI_Review_URL_Variables_Settable_At_Queue_Time",
       "Description": "Pipeline variables marked settable at queue time and containing URLs should be carefully reviewed.",
-      "Id": "Build172",
+      "Id": "Build180",
       "ControlSeverity": "High",
       "Automated": "Yes",
       "MethodName": "CheckSettableAtQueueTimeForURL",
@@ -143,7 +143,7 @@
     {
       "ControlID": "ADO_Build_SI_Review_External_Sources",
       "Description": "Review external source code repositories before adding them to your pipeline.",
-      "Id": "Build180",
+      "Id": "Build190",
       "ControlSeverity": "High",
       "Automated": "Yes",
       "MethodName": "CheckExternalSources",
@@ -160,7 +160,7 @@
     {
       "ControlID": "ADO_Build_SI_Disable_Task_Group_Edit_Permission",
       "Description": "Do not include loosely permissioned task groups in your pipeline.",
-      "Id": "Build190",
+      "Id": "Build200",
       "ControlSeverity": "High",
       "Automated": "Yes",
       "MethodName": "CheckTaskGroupEditPermission",
@@ -177,7 +177,7 @@
     {
       "ControlID": "ADO_Build_SI_Disable_Variable_Group_Edit_Permission",
       "Description": "Do not include loosely permissioned variable groups in your pipeline.",
-      "Id": "Build200",
+      "Id": "Build210",
       "ControlSeverity": "High",
       "Automated": "Yes",
       "MethodName": "CheckVariableGroupEditPermission",
@@ -194,7 +194,7 @@
     {
       "ControlID": "ADO_Build_AuthZ_Limit_Pipeline_Access",
       "Description": "Limit scope of access for build pipeline to the current project.",
-      "Id": "Build210",
+      "Id": "Build220",
       "ControlSeverity": "Medium",
       "Automated": "Yes",
       "MethodName": "CheckBuildAuthZScope",

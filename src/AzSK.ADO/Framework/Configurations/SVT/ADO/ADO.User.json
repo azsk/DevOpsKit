@@ -40,7 +40,7 @@
     {
       "ControlID": "ADO_User_AuthZ_Review_Token_Expiration",
       "Description": "Personal access tokens (PAT) near expiry should be renewed.",
-      "Id": "User121",
+      "Id": "User130",
       "ControlSeverity": "Medium",
       "Automated": "Yes",
       "MethodName": "CheckPATExpiration",
@@ -57,7 +57,7 @@
     {
       "ControlID": "ADO_User_AuthN_Disable_Alternate_Credentials",
       "Description": "Alternate credentials must be disabled",
-      "Id": "User130",
+      "Id": "User140",
       "ControlSeverity": "Medium",
       "Automated": "No",
       "MethodName": "CheckAltCred",
