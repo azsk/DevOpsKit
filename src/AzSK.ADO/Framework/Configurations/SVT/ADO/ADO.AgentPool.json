@@ -16,7 +16,8 @@
         "SDL",
         "TCP",
         "Automated",
-        "AuthZ"
+        "AuthZ",
+        "RBAC"
       ],
       "Enabled": true
     },
