@@ -56,7 +56,8 @@ class ListenerBase: EventBase
         }
     }
     
-    [void] PushAIEvents([String] $Eventname)
+    #This is being used only to monitor perf issues in ADOScanner internally
+    [void] PushAIEventsfromHandler([String] $Eventname)
     {
         if ([String]::IsNullOrEmpty([ListenerBase]::isAIKeyEnabled))
         {
@@ -82,7 +83,7 @@ class ListenerBase: EventBase
                     'baseType' = 'EventData'
                     'baseData' = [PSCustomObject]@{
                         'ver' = '2'
-                        'name' = "ADOScanner additional telemetry"
+                        'name' = "Post Command Completion Events"
                         'properties' = $customPropertiesObj
                     }
                 }

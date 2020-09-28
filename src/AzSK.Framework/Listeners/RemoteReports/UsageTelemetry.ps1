@@ -80,7 +80,7 @@ class UsageTelemetry: ListenerBase {
 		$this.RegisterEvent([AzSKRootEvent]::CommandCompleted, {
 			if(-not [UsageTelemetry]::IsAnonymousTelemetryActive()) { return; }
 			$currentInstance = [UsageTelemetry]::GetInstance();
-            $currentInstance.PushAIEvents("UsageTelemetry CommandCompleted"); 
+            $currentInstance.PushAIEventsfromHandler("UsageTelemetry CommandCompleted"); 
 			try
 			{
 				$Properties = @{ "Command" = $currentInstance.invocationContext.MyCommand.Name }

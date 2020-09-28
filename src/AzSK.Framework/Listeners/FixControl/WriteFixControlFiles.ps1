@@ -48,7 +48,7 @@ Repair-AzSKSubscriptionSecurity `
 
         $this.RegisterEvent([SVTEvent]::CommandCompleted, {
 			$currentInstance = [WriteFixControlFiles]::GetInstance();
-            $currentInstance.PushAIEvents("WriteFixControlFiles CommandCompleted"); 
+            $currentInstance.PushAIEventsfromHandler("WriteFixControlFiles CommandCompleted"); 
             try 
             {
 				$currentInstance.CommandCompletedAction($Event.SourceArgs);

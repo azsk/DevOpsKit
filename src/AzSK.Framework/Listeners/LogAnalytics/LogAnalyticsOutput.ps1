@@ -122,7 +122,7 @@ class LogAnalyticsOutput: ListenerBase
 
 			$this.RegisterEvent([SVTEvent]::CommandCompleted, {
 				$currentInstance = [LogAnalyticsOutput]::GetInstance();
-				$currentInstance.PushAIEvents("LogAnalyticsOutput CommandCompleted"); 
+				$currentInstance.PushAIEventsfromHandler("LogAnalyticsOutput CommandCompleted"); 
 				try 
 				{
 					$currentInstance.CommandAction($Event,"Command Completed");				

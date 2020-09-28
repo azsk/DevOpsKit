@@ -228,7 +228,7 @@ class WritePsConsole: FileOutputBase
 
         $this.RegisterEvent([SVTEvent]::CommandCompleted, {
 			$currentInstance = [WritePsConsole]::GetInstance();
-			$currentInstance.PushAIEvents("WritePsConsole CommandCompleted"); 
+			$currentInstance.PushAIEventsfromHandler("WritePsConsole CommandCompleted"); 
             try 
             {
 				if(($Event.SourceArgs | Measure-Object).Count -gt 0)

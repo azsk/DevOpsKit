@@ -27,12 +27,11 @@ class ServicesSecurityStatus: ADOSVTCommandBase
 		#BaseLineControlFilter with control ids
 		$this.UseBaselineControls = $invocationContext.BoundParameters["UseBaselineControls"];
 		$this.UsePreviewBaselineControls = $invocationContext.BoundParameters["UsePreviewBaselineControls"];
-		$this.BaselineFilterCheck();
-		$this.UsePartialCommitsCheck();
 		if ([RemoteReportHelper]::IsAIOrgTelemetryEnabled()) { 
 			$this.IsAIEnabled = $true; 
-		};
-
+		}
+		$this.BaselineFilterCheck();
+		$this.UsePartialCommitsCheck();
 	}
 
 	hidden [SVTEventContext[]] RunForAllResources([string] $methodNameToCall, [bool] $runNonAutomated, [PSObject] $resourcesList)
@@ -106,6 +105,20 @@ class ServicesSecurityStatus: ADOSVTCommandBase
 		if ($this.IsAIEnabled)
 		{
 			$this.StopWatch = New-Object System.Diagnostics.Stopwatch
+			#Send Telemetry for actual resource count. This is being done to monitor perf issues in ADOScanner internally
+			if ($this.UsePartialCommits)
+			{
+				$resourceTypeCount =$this.Resolver.SVTResources | Group-Object -Property ResourceType |select-object Name, Count
+				$resourceTypeCountHT = @{}
+						foreach ($resType in $resourceTypeCount) 
+						{
+							$resourceTypeCountHT["$($resType.Name)"] = "$($resType.Count)"
+						}
+				
+				[AIOrgTelemetryHelper]::TrackCommandExecution("Actual Resources Count",
+					@{"RunIdentifier" = $this.RunIdentifier}, $resourceTypeCountHT, $this.InvocationContext);
+			}
+			#Send Telemetry for target resource count (after partial commits has been checked). This is being done to monitor perf issues in ADOScanner internally
 			$resourceTypeCount =$automatedResources | Group-Object -Property ResourceType |select-object Name, Count
 			$resourceTypeCountHT = @{}
 					foreach ($resType in $resourceTypeCount) 
@@ -113,7 +126,7 @@ class ServicesSecurityStatus: ADOSVTCommandBase
 						$resourceTypeCountHT["$($resType.Name)"] = "$($resType.Count)"
 					}
 			
-			[AIOrgTelemetryHelper]::TrackCommandExecution("ADOScanner additional telemetry",
+			[AIOrgTelemetryHelper]::TrackCommandExecution("Target Resources Count",
 				@{"RunIdentifier" = $this.RunIdentifier}, $resourceTypeCountHT, $this.InvocationContext);
 		}
 
@@ -217,13 +230,14 @@ class ServicesSecurityStatus: ADOSVTCommandBase
 						$this.UpdatePartialCommitFile($true)
 					}					
 				}
+				
+				#Send Telemetry for scan time taken for a resource. This is being done to monitor perf issues in ADOScanner internally
 				if ($this.IsAIEnabled)
 				{
 					$this.StopWatch.Stop()
 					$this.ScanEnd = [DateTime]::UtcNow
 					
 					$properties =  @{ 
-						EventName = "Resource scanned event";
 						TimeTakenInMs = $this.StopWatch.ElapsedMilliseconds;
 						ResourceCount = "$currentCount/$totalResources"; 
 						ResourceName = $svtObject.ResourceContext.ResourceName;
@@ -233,7 +247,7 @@ class ServicesSecurityStatus: ADOSVTCommandBase
 						RunIdentifier = $this.RunIdentifier;
 					}
 
-					[AIOrgTelemetryHelper]::PublishEvent( "ADOScanner additional telemetry",$properties, @{})
+					[AIOrgTelemetryHelper]::PublishEvent( "Resource Scan Completed",$properties, @{})
 				}
 
 			}
@@ -466,7 +480,7 @@ class ServicesSecurityStatus: ADOSVTCommandBase
                     $nonScannedResourceIdList = $nonScannedResourcesList | Select-Object Id | ForEach-Object { $_.Id}
                     #Filter SVT resources based on master resources list available and scan completed
                     #Commenting telemtry here to include PartialScanIdentifier
-                    #[AIOrgTelemetryHelper]::PublishEvent( "Partial Commit Details", @{"TotalSVTResources"= $($this.Resolver.SVTResources | Where-Object { $_.ResourceTypeMapping } | Measure-Object).Count;"UnscannedResource"=$(($nonScannedResourcesList | Measure-Object).Count); "ResourceToBeScanned" = ($this.Resolver.SVTResources | Where-Object {$_.ResourceId -in $nonScannedResourceIdList } | Measure-Object).Count;},$null)
+					#[AIOrgTelemetryHelper]::PublishEvent( "Partial Commit Details", @{"TotalSVTResources"= $($this.Resolver.SVTResources | Where-Object { $_.ResourceTypeMapping } | Measure-Object).Count;"UnscannedResource"=$(($nonScannedResourcesList | Measure-Object).Count); "ResourceToBeScanned" = ($this.Resolver.SVTResources | Where-Object {$_.ResourceId -in $nonScannedResourceIdList } | Measure-Object).Count;},$null)
                     $this.Resolver.SVTResources = $this.Resolver.SVTResources | Where-Object {$_.ResourceId -in $nonScannedResourceIdList }             
                 }
                 else{

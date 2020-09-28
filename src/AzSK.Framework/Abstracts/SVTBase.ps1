@@ -37,6 +37,7 @@ class SVTBase: AzSKRoot
 	[System.Diagnostics.Stopwatch] $StopWatch
 	[Datetime] $ScanStart
 	[Datetime] $ScanEnd
+	[bool] $IsAIEnabled = $false;
 	#EndRegion
 
 	SVTBase([string] $subscriptionId):
@@ -94,6 +95,9 @@ class SVTBase: AzSKRoot
 		#<TODO Framework: Fetch resource group details from resolver itself>
 		$this.ResourceContext.ResourceGroupTags = $this.ResourceTags;
 
+		if ([RemoteReportHelper]::IsAIOrgTelemetryEnabled()) { 
+			$this.IsAIEnabled =$true
+		}
 	}
 
    	hidden [void] LoadSvtConfig([string] $controlsJsonFileName)
@@ -572,7 +576,7 @@ class SVTBase: AzSKRoot
     {
 		[SVTEventContext[]] $automatedControlsResult = @();
 
-		if ($this.invocationContext.MyCommand.ModuleName -match "staging")
+		if ($this.IsAIEnabled)
 		{
 			$this.StopWatch = [System.Diagnostics.Stopwatch]::StartNew();
 		}
@@ -643,8 +647,8 @@ class SVTBase: AzSKRoot
                 $methodName = $controlItem.MethodName;
 				#$this.CurrentControlItem = $controlItem;
 
-				#Getting scan time for each control in Staging environment
-				if ($this.invocationContext.MyCommand.ModuleName -match "staging")
+				#Getting scan time for each control. This is being done to monitor perf issues in ADOScanner internally
+				if ($this.IsAIEnabled)
 				{
 					$this.ScanStart = [DateTime]::UtcNow
 					$this.StopWatch.Restart()
