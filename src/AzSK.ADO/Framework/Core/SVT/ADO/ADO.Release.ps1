@@ -130,8 +130,8 @@ class Release: ADOSVTBase
                         if($noOfCredFound -gt 0)
                         {
                             $varList = $varList | select -Unique
-                            $controlResult.AddMessage([VerificationResult]::Failed,
-                            "Found credentials in release definition. Variables name: $varList" );
+                            $controlResult.AddMessage([VerificationResult]::Failed, "Found credentials in release definition. Variables name: $varList" );
+                            $controlResult.SetStateData("Found credentials in release definition. Variables name: ", $varList);
                         }
                         else {
                             $controlResult.AddMessage([VerificationResult]::Passed, "No credentials found in release definition.");
