@@ -59,7 +59,7 @@ class PartialScanHandler: ListenerBase
 
 		 $this.RegisterEvent([SVTEvent]::CommandCompleted, {
             $currentInstance = [PartialScanManager]::GetInstance();
-            $currentInstance.PushAIEvents("PartialScanHandler CommandCompleted"); 
+            $currentInstance.PushAIEventsfromHandler("PartialScanHandler CommandCompleted"); 
             try 
             {
 				$currentInstance = [PartialScanHandler]::GetInstance();
