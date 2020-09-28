@@ -464,7 +464,7 @@ class Organization: ADOSVTBase
         try 
         {
             $apiURL = "https://{0}.vsaex.visualstudio.com/_apis/UserEntitlements?%24filter=userType%20eq%20%27guest%27&%24orderBy=name%20Ascending&api-version=5.1-preview.3" -f $($this.SubscriptionContext.SubscriptionName);
-            $responseObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL); # returns maximum of 100 guest users, need to paginate for morethan 100 guest users
+            $responseObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL); # returns a maximum of 100 guest users
             $guestUsers = @()
             if(($responseObj -ne $null) -and $responseObj.Count -gt 0 -and ([Helpers]::CheckMember($responseObj[0], 'members')))
             {
