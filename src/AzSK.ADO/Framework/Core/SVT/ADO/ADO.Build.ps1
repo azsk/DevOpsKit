@@ -409,14 +409,14 @@ class Build: ADOSVTBase
     {
         if(($this.BuildObj | Measure-Object).Count -gt 0)
         {
-           if( $this.BuildObj.repository.type -eq 'Git'){
-
             $sourceobj = $this.BuildObj.repository | Select-Object -Property @{Name="Name"; Expression = {$_.Name}},@{Name="Type"; Expression = {$_.type}}
-            $controlResult.AddMessage([VerificationResult]::Passed,"Pipeline code is built on a hosted agent from trusted source.",  $sourceobj); 
-            $sourceobj = $null;
+           if( $this.BuildObj.repository.type -eq 'Git')
+           {
+                $controlResult.AddMessage([VerificationResult]::Passed,"Pipeline code is built from trusted repository.",  $sourceobj); 
+                $sourceobj = $null;
            }
            else {
-                $controlResult.AddMessage([VerificationResult]::Verify,"Pipeline build code is built from external sources.");   
+                $controlResult.AddMessage([VerificationResult]::Verify,"Pipeline code is built from external repository.", $sourceobj);   
            }
         }
 
