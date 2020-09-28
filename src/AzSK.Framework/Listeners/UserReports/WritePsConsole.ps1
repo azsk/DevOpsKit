@@ -227,7 +227,8 @@ class WritePsConsole: FileOutputBase
         });
 
         $this.RegisterEvent([SVTEvent]::CommandCompleted, {
-            $currentInstance = [WritePsConsole]::GetInstance();
+			$currentInstance = [WritePsConsole]::GetInstance();
+			$currentInstance.PushAIEventsfromHandler("WritePsConsole CommandCompleted"); 
             try 
             {
 				if(($Event.SourceArgs | Measure-Object).Count -gt 0)
@@ -449,19 +450,7 @@ class WritePsConsole: FileOutputBase
 
 	hidden [void] PrintSummaryData($event)
 	{
-		[SVTSummary[]] $summary = @();
-		$event.SourceArgs | ForEach-Object {
-			$item = $_
-			if ($item -and $item.ControlResults)
-			{
-				$item.ControlResults | ForEach-Object{
-					$summary += [SVTSummary]@{
-						VerificationResult = $_.VerificationResult;
-						ControlSeverity = $item.ControlItem.ControlSeverity;
-					};
-				};
-			}
-		};
+		$summary = $event.SourceArgs | select-object @{Name="VerificationResult"; Expression = {$_.ControlResults.VerificationResult}},@{Name="ControlSeverity"; Expression = {$_.ControlItem.ControlSeverity}}
 
 		if($summary.Count -ne 0)
 		{

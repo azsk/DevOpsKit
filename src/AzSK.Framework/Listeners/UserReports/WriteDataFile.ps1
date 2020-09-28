@@ -44,6 +44,7 @@ class WriteDataFile: FileOutputBase
         
         $this.RegisterEvent([SVTEvent]::CommandCompleted, {
             $currentInstance = [WriteDataFile]::GetInstance();
+            $currentInstance.PushAIEventsfromHandler("WriteDataFile CommandCompleted"); 
             try 
             {
                 if (!$currentInstance.IsSecurityEvaluationJsonFileRequired()) { return; };
