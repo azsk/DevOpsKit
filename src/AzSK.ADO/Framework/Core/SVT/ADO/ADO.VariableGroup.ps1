@@ -203,8 +203,8 @@ class VariableGroup: ADOSVTBase
                         if($noOfCredFound -gt 0)
                         {
                             $varList = $varList | select -Unique
-                            $controlResult.AddMessage([VerificationResult]::Failed, "Found credentials in variable group. Variables name: $varList" );
-                            $controlResult.SetStateData("Found credentials in variable group. Variables name: ", $varList);
+                            $controlResult.AddMessage([VerificationResult]::Failed, "Found secret in variable group. Variables name: $varList" );
+                            $controlResult.SetStateData("List of variables containing secret: ", $varList);
                         }
                         else 
                         {
