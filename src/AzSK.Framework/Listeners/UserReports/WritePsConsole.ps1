@@ -450,9 +450,9 @@ class WritePsConsole: FileOutputBase
 
 	hidden [void] PrintSummaryData($event)
 	{
-		$summary = $event.SourceArgs | select-object @{Name="VerificationResult"; Expression = {$_.ControlResults.VerificationResult}},@{Name="ControlSeverity"; Expression = {$_.ControlItem.ControlSeverity}}
+		$summary = @($event.SourceArgs | select-object @{Name="VerificationResult"; Expression = {$_.ControlResults.VerificationResult}},@{Name="ControlSeverity"; Expression = {$_.ControlItem.ControlSeverity}})
 
-		if($summary.Count -ne 0)
+		if(($summary | Measure-Object).Count -ne 0)
 		{
 			$summaryResult = @();
 
