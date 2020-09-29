@@ -200,7 +200,7 @@ class RemoteReportsListener: ListenerBase {
 	{
 		$svtObject.GetRoleAssignments();
 		$scanSource = [RemoteReportHelper]::GetScanSource();
-		if([FeatureFlightingManager]::GetFeatureStatus("EnablePIMResourceGroupTelemetry","*") -eq $true -and ($scanSource -eq [ScanSource]::Runbook))
+		if([FeatureFlightingManager]::GetFeatureStatus("EnablePIMResourceGroupTelemetry",$svtObject.CurrentContext.Subscription.Id) -eq $true -and ($scanSource -eq [ScanSource]::Runbook))
 		{
 			$svtObject.GetRGLevelPIMRoles();			
 		}
