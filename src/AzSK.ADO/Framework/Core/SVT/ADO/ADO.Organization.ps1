@@ -487,10 +487,13 @@ class Organization: ADOSVTBase
                 $guestList = @();
                 $guestList +=  ($guestUsers | Select-Object @{Name="Id"; Expression = {$_.id}},@{Name="IdentityType"; Expression = {$_.user.subjectKind}},@{Name="DisplayName"; Expression = {$_.user.displayName}}, @{Name="MailAddress"; Expression = {$_.user.mailAddress}},@{Name="AccessLevel"; Expression = {$_.accessLevel.licenseDisplayName}},@{Name="LastAccessedDate"; Expression = {$_.lastAccessedDate}},@{Name="InactiveFromDays"; Expression = { if (((Get-Date) -[datetime]::Parse($_.lastAccessedDate)).Days -gt 10000){return "User was never active."} else {return ((Get-Date) -[datetime]::Parse($_.lastAccessedDate)).Days} }})
                 
+                # $guestListDetailed would be same if DetailedScan is not enabled.
+                $guestListDetailed = $guestList 
+
                 if([AzSKRoot]::IsDetailedScanRequired -eq $true)
                 {
                     # If DetailedScan is enabled. fetch the project entitlements for the guest user
-                    $guestList = $guestList | ForEach-Object {
+                    $guestListDetailed = $guestList | ForEach-Object {
                         try{
                             $guestUser = $_ 
                             $apiURL = "https://vsaex.dev.azure.com/{0}/_apis/userentitlements/{1}?api-version=6.0-preview.3" -f $($this.SubscriptionContext.SubscriptionName), $($guestUser.Id);
@@ -504,18 +507,18 @@ class Organization: ADOSVTBase
                     }
                 }
                 
-                $totalGuestCount = ($guestList | Measure-Object).Count
+                $totalGuestCount = ($guestListDetailed | Measure-Object).Count
                 $controlResult.AddMessage("Displaying all guest users in the organization...");
                 $controlResult.AddMessage([VerificationResult]::Verify,"Total number of guest users in the organization: $($totalGuestCount)"); 
                 
-                $inactiveGuestUsers = $guestList | Where-Object { $_.InactiveFromDays -eq "User was never active." }
+                $inactiveGuestUsers = $guestListDetailed | Where-Object { $_.InactiveFromDays -eq "User was never active." }
                 $inactiveCount = ($inactiveGuestUsers | Measure-Object).Count
                 if($inactiveCount) {
                     $controlResult.AddMessage("`nTotal number of guest users who were never active: $($inactiveCount)"); 
                     $controlResult.AddMessage("List of guest users who were never active: ",$inactiveGuestUsers);
                 }
                 
-                $activeGuestUsers = $guestList | Where-Object { $_.InactiveFromDays -ne "User was never active." }    
+                $activeGuestUsers = $guestListDetailed | Where-Object { $_.InactiveFromDays -ne "User was never active." }    
                 $activeCount = ($activeGuestUsers | Measure-Object).Count
                 if($activeCount) {
                     $controlResult.AddMessage("`nTotal number of guest users who are active: $($activeCount)"); 
