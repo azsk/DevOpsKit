@@ -41,7 +41,7 @@ class WriteSummaryFile: FileOutputBase
             }
         });
         
-        $this.RegisterEvent([SVTEvent]::EvaluationCompleted, {
+        $this.RegisterEvent([SVTEvent]::CommandCompleted, {
             $currentInstance = [WriteSummaryFile]::GetInstance();
 			
 			if(($Event.SourceArgs.ControlResults|Where-Object{$_.VerificationResult -ne[VerificationResult]::NotScanned}|Measure-Object).Count -gt 0)
