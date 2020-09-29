@@ -242,6 +242,9 @@
     "Subscription" : [ "Owner", "Contributor", "User Access Administrator" ],
     "ResourceGroup" : [ "Owner", "User Access Administrator" ]
   },
+  "ExcludedPIMGroups": { 
+    "DisplayName" : "JIT_*_ElevatedAccess"
+  },
   "CheckPIMCAPolicyTags": false,
   "PIMCAPolicyTags":[],
   "PIMAppId":"01fc33a7-78ba-4d2f-a4b7-768e336e890e",
