@@ -586,7 +586,7 @@ class CCAutomation: AzCommandBase
 			}
 			#endregion
 		
-			if($DeleteOldCredentials)
+			if($DeleteOldCredentials -and (-not $RenewCertificate))
 			{
 				$appID = ""
 
