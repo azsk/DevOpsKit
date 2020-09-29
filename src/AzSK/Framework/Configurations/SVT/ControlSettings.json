@@ -242,7 +242,7 @@
     "Subscription" : [ "Owner", "Contributor", "User Access Administrator" ],
     "ResourceGroup" : [ "Owner", "User Access Administrator" ]
   },
-  "ExcludedPIMGroups": { 
+  "ExemptedPIMGroups": { 
     "DisplayName" : "JIT_*_ElevatedAccess"
   },
   "CheckPIMCAPolicyTags": false,
