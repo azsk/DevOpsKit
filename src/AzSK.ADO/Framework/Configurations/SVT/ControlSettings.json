@@ -12,10 +12,12 @@
           "ADO_Organization_AuthZ_Review_Extension_Managers",
           "ADO_Organization_AuthZ_Review_Project_Collection_Service_Accounts",
           "ADO_Organization_SI_Review_Auto_Injected_Extensions",
+          "ADO_Organization_SI_Limit_Variables_Settable_At_Queue_Time",
           "ADO_Organization_AuthZ_Limit_Non_Release_Pipeline_Access",
           "ADO_Organization_AuthZ_Limit_Release_Pipeline_Access",
           "ADO_Organization_AuthZ_Limit_Pipeline_Access_To_Referenced_Repos",
           "ADO_Organization_DP_Dont_Allow_Public_Projects",
+          "ADO_Organization_Enable_Audit_Stream",
           "ADO_Organization_BCDR_Min_Admin_Count",
           "ADO_Organization_AuthN_Use_ALT_Accounts_For_Admin"
         ]
@@ -24,6 +26,7 @@
         "ResourceType": "Project",
         "ControlIds": [
           "ADO_Project_AuthZ_Set_Visibility_Private_Or_Enterprise",
+          "ADO_Project_SI_Limit_Variables_Settable_At_Queue_Time",
           "ADO_Project_BCDR_Min_Admin_Count",
           "ADO_Project_AuthZ_Limit_Non_Release_Pipeline_Access",
           "ADO_Project_AuthZ_Limit_Release_Pipeline_Access",
