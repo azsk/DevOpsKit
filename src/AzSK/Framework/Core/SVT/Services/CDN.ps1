@@ -62,7 +62,7 @@ class CDN: AzSVTBase
 				$httpAllowedEndpointList | Foreach-Object {
 					$currentEndpoint = $_
 					$isRedirectRuleConfigured = $false
-					if([Helpers]::CheckMember($currentEndpoint,"DeliveryPolicy"))
+					if([Helpers]::CheckMember($currentEndpoint,"DeliveryPolicy.Rules"))
 					{
 						$currentEndpoint.DeliveryPolicy.Rules | Foreach-Object {
 							$currentRule = $_
