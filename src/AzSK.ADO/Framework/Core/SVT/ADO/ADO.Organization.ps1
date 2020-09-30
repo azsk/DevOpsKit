@@ -486,7 +486,8 @@ class Organization: ADOSVTBase
                 }
                 $guestList = @();
                 $guestList +=  ($guestUsers | Select-Object @{Name="Id"; Expression = {$_.id}},@{Name="IdentityType"; Expression = {$_.user.subjectKind}},@{Name="DisplayName"; Expression = {$_.user.displayName}}, @{Name="MailAddress"; Expression = {$_.user.mailAddress}},@{Name="AccessLevel"; Expression = {$_.accessLevel.licenseDisplayName}},@{Name="LastAccessedDate"; Expression = {$_.lastAccessedDate}},@{Name="InactiveFromDays"; Expression = { if (((Get-Date) -[datetime]::Parse($_.lastAccessedDate)).Days -gt 10000){return "User was never active."} else {return ((Get-Date) -[datetime]::Parse($_.lastAccessedDate)).Days} }})
-                
+                $stateData = @();
+                $stateData += ($guestUsers | Select-Object @{Name="Id"; Expression = {$_.id}},@{Name="IdentityType"; Expression = {$_.user.subjectKind}},@{Name="DisplayName"; Expression = {$_.user.displayName}}, @{Name="MailAddress"; Expression = {$_.user.mailAddress}})                
                 if([AzSKRoot]::IsDetailedScanRequired -eq $true)
                 {
                     # If DetailedScan is enabled. fetch the project entitlements for the guest user
@@ -521,7 +522,7 @@ class Organization: ADOSVTBase
                     $controlResult.AddMessage("`nTotal number of guest users who are active: $($activeCount)"); 
                     $controlResult.AddMessage("List of guest users who are active: ",$activeGuestUsers);
                 }  
-                $controlResult.SetStateData("Guest users list: ", $guestList);    
+                $controlResult.SetStateData("Guest users list: ", $stateData);    
             }
             else #external guest access notion is not applicable when AAD is not configured. Instead GitHub user notion is available in non-AAD backed orgs.
             {
