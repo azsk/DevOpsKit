@@ -428,7 +428,7 @@ class Release: ADOSVTBase
             if( [Helpers]::CheckMember($this.ReleaseObj[0],"artifacts") -and ($this.ReleaseObj[0].artifacts | Measure-Object).Count -gt 0){
                # $sourcetypes = @();
                 $sourcetypes = $this.ReleaseObj[0].artifacts;
-                $nonadoresource = $sourcetypes | Where-Object { $_.type -ne 'Git'} ;
+                $nonadoresource = $sourcetypes | Where-Object { $_.type -ne 'TfsGit' -and $_.type -ne 'TfsVersionControl'} ;
                
                if( ($nonadoresource | Measure-Object).Count -gt 0){
                    $nonadoresource = $nonadoresource | Select-Object -Property @{Name="alias"; Expression = {$_.alias}},@{Name="Type"; Expression = {$_.type}}
