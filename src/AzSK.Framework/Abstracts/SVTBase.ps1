@@ -161,6 +161,11 @@ class SVTBase: AzSKRoot
 				{
 					$_.IsPreviewBaselineControl = $true
 				}
+				# Check for control exclusion
+				if ($this.CheckForControlExclusion($_.ControlID))
+				{
+					$_.IsControlExcluded = $true
+				}
 			}
 			#Save the final SVTConfig in cache
 			$policy = [Policy]@{

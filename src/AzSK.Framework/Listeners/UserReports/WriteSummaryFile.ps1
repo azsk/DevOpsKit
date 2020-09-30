@@ -189,12 +189,8 @@ class WriteSummaryFile: FileOutputBase
         if ([string]::IsNullOrEmpty($this.FilePath)) {
             return;
 		}
-		$centrallyScannedControls = @{}
-        $ControlSettings = [ConfigurationManager]::LoadServerConfigFile("ControlSettings.json");
-        if([Helpers]::CheckMember($ControlSettings, "CentrallyScannedControls.SupportedTenantIds") -and ($ControlSettings.CentrallyScannedControls.SupportedTenantIds -contains "72f988bf-86f1-41af-91ab-2d7cd011db47") -and [Helpers]::CheckMember($ControlSettings, "CentrallyScannedControls.Controls")){
-            $ControlSettings.CentrallyScannedControls.Controls.Psobject.properties | ForEach-Object { $centrallyScannedControls[$_.Name] = $_.Value }
-        }
-        [CsvOutputItem[]] $csvItems = @();
+		[CsvOutputItem[]] $csvItems = @();
+		[CsvOutputItem[]] $excludedCSVItems = @();
 		$anyAttestedControls = $null -ne ($arguments | 
 			Where-Object { 
 				$null -ne ($_.ControlResults | Where-Object { $_.AttestationStatus -ne [AttestationStatus]::None } | Select-Object -First 1) 
@@ -275,8 +271,6 @@ class WriteSummaryFile: FileOutputBase
                         $csvItem.ResourceGroupName = $item.ResourceContext.ResourceGroupName;
 						$csvItem.ResourceId = $item.ResourceContext.ResourceId;
 						$csvItem.DetailedLogFile = "/$([Helpers]::SanitizeFolderName($item.ResourceContext.ResourceGroupName))/$($item.FeatureName).LOG";
-
-						
 					}
 					else
 					{
@@ -314,11 +308,13 @@ class WriteSummaryFile: FileOutputBase
 							$csvItem.IsControlInGrace = "No"
 						}
 					}		
-					if($centrallyScannedControls.Count -gt 0 -and $centrallyScannedControls.ContainsKey($item.ControlItem.ControlID) -and $centrallyScannedControls[$item.ControlItem.ControlID] -eq 1){
-						$csvItem.ActualStatus =  $_.ActualVerificationResult.ToString();
-						$csvItem.Status = ([VerificationResult]::CentrallyScanned).ToString()
+					# If control is excluded, put item to excludedItemList to generate separate csv for such items 
+					if($item.ControlItem.IsControlExcluded){
+						$excludedCSVItems += $csvItem;
+					}else{
+						$csvItems += $csvItem;
 					}	
-                    $csvItems += $csvItem;
+                    
                 }                                
             }
         } 
@@ -339,6 +335,23 @@ class WriteSummaryFile: FileOutputBase
 			  $nonNullProps += "UserComments";
 			}
 			 $csvItems | Select-Object -Property $nonNullProps | Export-Csv $this.FilePath -NoTypeInformation
+		}
+		
+		# Genearte separate CSV for excluded items
+		if ($excludedCSVItems.Count -gt 0) {
+			# Remove Null properties
+			$nonNullProps = @();
+			
+			[CsvOutputItem].GetMembers() | Where-Object { $_.MemberType -eq [System.Reflection.MemberTypes]::Property } | ForEach-Object {
+				$propName = $_.Name;
+				if(($excludedCSVItems | Where-object { -not [string]::IsNullOrWhiteSpace($_.$propName) } | Measure-object).Count -ne 0)
+				{
+					$nonNullProps += $propName;
+				}
+			};
+			$currentInstance = [WriteSummaryFile]::GetInstance();
+			$filePath = $currentInstance.CalculateFilePath($arguments[0].SubscriptionContext, ("ExcludedControls-" + $currentInstance.RunIdentifier + ".csv"));
+			$excludedCSVItems | Select-Object -Property $nonNullProps | Export-Csv $filePath  -NoTypeInformation
         }
     }	
 

@@ -247,6 +247,11 @@ class WritePsConsole: FileOutputBase
 						$currentInstance.WriteMessage([Constants]::AttestationReadMsg + [ConfigurationManager]::GetAzSKConfigData().AzSKRGName, [MessageType]::Info)
 						
 					}
+					# TODO: We can put msg here for Excluded controls and get it from AzSK.json
+					$anyControlExcluded = ($Event.SourceArgs.ControlItem | Where-Object{ $_.IsControlExcluded -eq $true } | Measure-Object ).Count -gt 0
+					if($anyControlExcluded){
+						$currentInstance.WriteMessage("** Please note that one or more controls are in excluded state which means scan event for these controls will not be considered for compliance. For more details, please refer: https://aka.ms/azsk/excludedcontrols **", [MessageType]::Warning)
+					}
 					$currentInstance.WriteMessage([Constants]::SingleDashLine, [MessageType]::Info)
 				}
 
@@ -443,19 +448,13 @@ class WritePsConsole: FileOutputBase
 
 	hidden [void] PrintSummaryData($event)
 	{
-		$centrallyScannedControls = @{}
-        $ControlSettings = [ConfigurationManager]::LoadServerConfigFile("ControlSettings.json");
-        if([Helpers]::CheckMember($ControlSettings, "CentrallyScannedControls.SupportedTenantIds") -and ($ControlSettings.CentrallyScannedControls.SupportedTenantIds -contains "72f988bf-86f1-41af-91ab-2d7cd011db47") -and [Helpers]::CheckMember($ControlSettings, "CentrallyScannedControls.Controls")){
-            $ControlSettings.CentrallyScannedControls.Controls.Psobject.properties | ForEach-Object { $centrallyScannedControls[$_.Name] = $_.Value }
-		}
-		
 		[SVTSummary[]] $summary = @();
-		$event.SourceArgs | ForEach-Object {
+		<#$event.SourceArgs | ForEach-Object {
 			$item = $_
 			if ($item -and $item.ControlResults)
 			{
-				if($centrallyScannedControls.Count -gt 0 -and $centrallyScannedControls.ContainsKey($item.ControlItem.ControlID) -and $centrallyScannedControls[$item.ControlItem.ControlID] -eq 1){
-					$item.ControlResults[0].VerificationResult  = [VerificationResult]::CentrallyScanned
+				if($item.ControlItem.IsControlExcluded){
+					$item.ControlResults[0].VerificationResult  = [VerificationResult]::Excluded
 				}
 				$item.ControlResults | ForEach-Object{
 					$summary += [SVTSummary]@{
@@ -464,7 +463,9 @@ class WritePsConsole: FileOutputBase
 					};
 				};
 			}
-		};
+		};#>
+
+		$summary += @($event.SourceArgs | select-object @{Name="VerificationResult"; Expression = { if($_.ControlItem.IsControlExcluded) { [VerificationResult]::Excluded } else { $_.ControlResults.VerificationResult} }},@{Name="ControlSeverity"; Expression = {$_.ControlItem.ControlSeverity}})
 
 		if($summary.Count -ne 0)
 		{

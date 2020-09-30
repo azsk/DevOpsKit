@@ -105,11 +105,6 @@ Class LogAnalyticsHelper{
 			}
 		}
 		
-		$centrallyScannedControls = @{}
-        $ControlSettings = [ConfigurationManager]::LoadServerConfigFile("ControlSettings.json");
-        if([Helpers]::CheckMember($ControlSettings, "CentrallyScannedControls.SupportedTenantIds") -and ($ControlSettings.CentrallyScannedControls.SupportedTenantIds -contains "72f988bf-86f1-41af-91ab-2d7cd011db47") -and [Helpers]::CheckMember($ControlSettings, "CentrallyScannedControls.Controls")){
-            $ControlSettings.CentrallyScannedControls.Controls.Psobject.properties | ForEach-Object { $centrallyScannedControls[$_.Name] = $_.Value }
-		}
 		
 		[array] $eventContext.ControlResults | ForEach-Object{
 			Set-Variable -Name ControlResult -Value $_ -Scope Local
@@ -150,17 +145,18 @@ Class LogAnalyticsHelper{
 			}
 
 			$out.Reference=$eventContext.Metadata.Reference
-			if($centrallyScannedControls.Count -gt 0 -and $centrallyScannedControls.ContainsKey($eventContext.ControlItem.ControlID) -and $centrallyScannedControls[$eventContext.ControlItem.ControlID] -eq 1){
-				$out.ControlStatus= ([VerificationResult]::CentrallyScanned).ToString()
-				$out.ActualVerificationResult= ([VerificationResult]::CentrallyScanned).ToString()
+			if($eventContext.ControlItem.IsControlExcluded){
+				$out.IsControlExcluded = $true
 				$out.HasRequiredAccess = $false
+				# TODO: We can put reason here as well
 			}
 			else{
-				$out.ControlStatus=$ControlResult.VerificationResult.ToString()
-				$out.ActualVerificationResult=$ControlResult.ActualVerificationResult.ToString()
+				$out.IsControlExcluded = $false
 				$out.HasRequiredAccess = $ControlResult.CurrentSessionContext.Permissions.HasRequiredAccess 
 			}
 
+			$out.ControlStatus=$ControlResult.VerificationResult.ToString()
+			$out.ActualVerificationResult=$ControlResult.ActualVerificationResult.ToString()
 			$out.ControlId=$eventContext.ControlItem.ControlID
 			$out.SubscriptionName=$eventContext.SubscriptionContext.SubscriptionName
 			$out.SubscriptionId=$eventContext.SubscriptionContext.SubscriptionId
@@ -477,6 +473,8 @@ Class LAWSModel {
 	[string] $ScannedBy
 	[string] $Env
 	[string] $ComponentId
+	# Added IsControlExcluded Tag
+	[bool] $IsControlExcluded
 }
 
 Class LAWSResourceInvModel{
