@@ -371,7 +371,7 @@ class SVTResourceResolver: AzSKRoot {
                             Remove-Variable  serviceEndpointObj;
                             $nObj = $this.MaxObjectsToScan
                             foreach ($connectionObject in $Connections) {
-                                $resourceId = "Organization/$($this.organizationName)/Project/$projectId/$($connectionObject.Name)/$($connectionObject.Id)";
+                                $resourceId = "Organization/$($this.organizationName)/Project/$projectId/ServiceConnection/$($connectionObject.Id)";
                                 $link = "https://dev.azure.com/$($this.organizationName)/$projectId/_settings/adminservices?resourceId=$($connectionObject.Id)"; 
                                 $this.AddSVTResource($connectionObject.name, $projectName, "ADO.ServiceConnection", $resourceId, $connectionObject, $link);
                                 
