@@ -430,11 +430,11 @@ class ERvNet : SVTIaasBase
             if($null -ne $nonApprovedResources )
             {
 				$controlResult.SetStateData("Non approved resources in ERVNet ResourceGroup", $nonApprovedResources);
-				$controlResult.AddMessage([VerificationResult]::Failed, [MessageData]::new("Other resource types found apart from Microsoft.Network\*. Below are the Resource IDs and Resource Types available under the ResourceGroup - ["+ $this.ResourceContext.ResourceGroupName +"]",($nonApprovedResources | Select-Object ResourceType, ResourceID)));
+				$controlResult.AddMessage([VerificationResult]::Failed, [MessageData]::new("Other resource types found apart from Microsoft.Network\* and Microsoft.EventGrid\*. Below are the Resource IDs and Resource Types available under the ResourceGroup - ["+ $this.ResourceContext.ResourceGroupName +"]",($nonApprovedResources | Select-Object ResourceType, ResourceID)));
             }
             else
 			{
-				$controlResult.AddMessage([VerificationResult]::Passed, [MessageData]::new("No other resource types found apart from Microsoft.Network\* . Below are the Resource ID available under the ResourceGroup - ["+ $this.ResourceContext.ResourceGroupName +"]"));
+				$controlResult.AddMessage([VerificationResult]::Passed, [MessageData]::new("No other resource types found apart from Microsoft.Network\* and Microsoft.EventGrid\*. Below are the Resource ID available under the ResourceGroup - ["+ $this.ResourceContext.ResourceGroupName +"]"));
             }
 
 			$controlResult.AddMessage([MessageData]::new("Resources configured under ResourceGroup - ["+ $this.ResourceContext.ResourceGroupName +"]",($resources | Select-Object ResourceType, ResourceID)));
