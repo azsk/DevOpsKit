@@ -1828,7 +1828,7 @@ class CCAutomation: AzCommandBase
 
 			if($haveSubscriptionRBACAccess -and $haveRGRBACAccess -and $haveAARGAccess)
 			{
-				$resultMsg = "RunAs Account is correctly set up."
+				$resultMsg = "RunAs Account [$($spName)] is correctly set up."
 				$resultStatus = "OK"
 				$isPassed = $true
 			}
