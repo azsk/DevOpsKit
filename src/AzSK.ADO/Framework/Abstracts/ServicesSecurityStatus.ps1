@@ -3,6 +3,11 @@ class ServicesSecurityStatus: ADOSVTCommandBase
 {
 	[SVTResourceResolver] $Resolver = $null;
 	[bool] $IsPartialCommitScanActive = $false;
+	[System.Diagnostics.Stopwatch] $StopWatch
+	[Datetime] $ScanStart
+	[Datetime] $ScanEnd
+	[bool] $IsAIEnabled = $false;
+
 	ServicesSecurityStatus([string] $subscriptionId, [InvocationInfo] $invocationContext, [SVTResourceResolver] $resolver):
         Base($subscriptionId, $invocationContext)
     {
@@ -22,9 +27,11 @@ class ServicesSecurityStatus: ADOSVTCommandBase
 		#BaseLineControlFilter with control ids
 		$this.UseBaselineControls = $invocationContext.BoundParameters["UseBaselineControls"];
 		$this.UsePreviewBaselineControls = $invocationContext.BoundParameters["UsePreviewBaselineControls"];
+		if ([RemoteReportHelper]::IsAIOrgTelemetryEnabled()) { 
+			$this.IsAIEnabled = $true; 
+		}
 		$this.BaselineFilterCheck();
 		$this.UsePartialCommitsCheck();
-
 	}
 
 	hidden [SVTEventContext[]] RunForAllResources([string] $methodNameToCall, [bool] $runNonAutomated, [PSObject] $resourcesList)
@@ -95,6 +102,34 @@ class ServicesSecurityStatus: ADOSVTCommandBase
 					
 		$this.PublishCustomMessage("`nNumber of resources for which security controls will be evaluated: $($automatedResources.Count)",[MessageType]::Info);
 		
+		if ($this.IsAIEnabled)
+		{
+			$this.StopWatch = New-Object System.Diagnostics.Stopwatch
+			#Send Telemetry for actual resource count. This is being done to monitor perf issues in ADOScanner internally
+			if ($this.UsePartialCommits)
+			{
+				$resourceTypeCount =$this.Resolver.SVTResources | Group-Object -Property ResourceType |select-object Name, Count
+				$resourceTypeCountHT = @{}
+						foreach ($resType in $resourceTypeCount) 
+						{
+							$resourceTypeCountHT["$($resType.Name)"] = "$($resType.Count)"
+						}
+				
+				[AIOrgTelemetryHelper]::TrackCommandExecution("Actual Resources Count",
+					@{"RunIdentifier" = $this.RunIdentifier}, $resourceTypeCountHT, $this.InvocationContext);
+			}
+			#Send Telemetry for target resource count (after partial commits has been checked). This is being done to monitor perf issues in ADOScanner internally
+			$resourceTypeCount =$automatedResources | Group-Object -Property ResourceType |select-object Name, Count
+			$resourceTypeCountHT = @{}
+					foreach ($resType in $resourceTypeCount) 
+					{
+						$resourceTypeCountHT["$($resType.Name)"] = "$($resType.Count)"
+					}
+			
+			[AIOrgTelemetryHelper]::TrackCommandExecution("Target Resources Count",
+				@{"RunIdentifier" = $this.RunIdentifier}, $resourceTypeCountHT, $this.InvocationContext);
+		}
+
 		$totalResources = $automatedResources.Count;
 		[int] $currentCount = 0;
 		$childResources = @();
@@ -102,6 +137,12 @@ class ServicesSecurityStatus: ADOSVTCommandBase
 			$exceptionMessage = "Exception for resource: [ResourceType: $($_.ResourceTypeMapping.ResourceTypeName)] [ResourceGroupName: $($_.ResourceGroupName)] [ResourceName: $($_.ResourceName)]"
             try
             {
+				if ($this.IsAIEnabled)
+				{
+					$this.ScanStart = [DateTime]::UtcNow
+					$this.StopWatch.Restart()
+				}
+
 				$currentCount += 1;
 				if($totalResources -gt 1)
 				{
@@ -188,6 +229,25 @@ class ServicesSecurityStatus: ADOSVTCommandBase
 						# Update durable resource tracker file
 						$this.UpdatePartialCommitFile($true)
 					}					
+				}
+				
+				#Send Telemetry for scan time taken for a resource. This is being done to monitor perf issues in ADOScanner internally
+				if ($this.IsAIEnabled)
+				{
+					$this.StopWatch.Stop()
+					$this.ScanEnd = [DateTime]::UtcNow
+					
+					$properties =  @{ 
+						TimeTakenInMs = $this.StopWatch.ElapsedMilliseconds;
+						ResourceCount = "$currentCount/$totalResources"; 
+						ResourceName = $svtObject.ResourceContext.ResourceName;
+						ResourceType = $svtObject.ResourceContext.ResourceType ;
+						ScanStartDateTime = $this.ScanStart;
+						ScanEndDateTime = $this.ScanEnd;
+						RunIdentifier = $this.RunIdentifier;
+					}
+
+					[AIOrgTelemetryHelper]::PublishEvent( "Resource Scan Completed",$properties, @{})
 				}
 
 			}
@@ -420,7 +480,7 @@ class ServicesSecurityStatus: ADOSVTCommandBase
                     $nonScannedResourceIdList = $nonScannedResourcesList | Select-Object Id | ForEach-Object { $_.Id}
                     #Filter SVT resources based on master resources list available and scan completed
                     #Commenting telemtry here to include PartialScanIdentifier
-                    #[AIOrgTelemetryHelper]::PublishEvent( "Partial Commit Details", @{"TotalSVTResources"= $($this.Resolver.SVTResources | Where-Object { $_.ResourceTypeMapping } | Measure-Object).Count;"UnscannedResource"=$(($nonScannedResourcesList | Measure-Object).Count); "ResourceToBeScanned" = ($this.Resolver.SVTResources | Where-Object {$_.ResourceId -in $nonScannedResourceIdList } | Measure-Object).Count;},$null)
+					#[AIOrgTelemetryHelper]::PublishEvent( "Partial Commit Details", @{"TotalSVTResources"= $($this.Resolver.SVTResources | Where-Object { $_.ResourceTypeMapping } | Measure-Object).Count;"UnscannedResource"=$(($nonScannedResourcesList | Measure-Object).Count); "ResourceToBeScanned" = ($this.Resolver.SVTResources | Where-Object {$_.ResourceId -in $nonScannedResourceIdList } | Measure-Object).Count;},$null)
                     $this.Resolver.SVTResources = $this.Resolver.SVTResources | Where-Object {$_.ResourceId -in $nonScannedResourceIdList }             
                 }
                 else{

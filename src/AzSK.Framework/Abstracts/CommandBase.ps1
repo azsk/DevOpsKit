@@ -282,7 +282,9 @@ class CommandBase: AzSKRoot {
 				$this.PublishCustomMessage("Your Org AzSK.ADO version [$serverVersion] is too old. It must be updated to latest available version [$psGalleryVersion].",[MessageType]::Error);
 			}
 		}
-		
+
+		#Validate if detailed scan results is required in control evaluation
+		$this.CheckDetailedScanStatus();
 	}
 	
 	# <TODO Framework: Move to module helper class>
@@ -387,6 +389,16 @@ class CommandBase: AzSKRoot {
 		$loadedAzSKModules= Get-Module | Where-Object { $_.Name -like "AzSK*"};
 		if($env:AzSKSkipMultiModuleCheck -ne $true -and $null -ne $loadedAzSKModules -and ($loadedAzSKModules| Measure-Object).Count -gt 1){
 			throw [SuppressedException]::new("ERROR: Multiple AzSK modules loaded in same session, this will lead to issues when running AzSK cmdlets.",[SuppressedExceptionType]::Generic)
+		}
+	}
+
+	[void] CheckDetailedScanStatus(){
+		if(-not([string]::IsNullOrEmpty($this.InvocationContext.BoundParameters['ControlIds'])) -or -not([string]::IsNullOrEmpty($this.InvocationContext.BoundParameters['DetailedScan'])) -or  -not( [string]::IsNullOrEmpty($this.InvocationContext.BoundParameters['ControlsToAttest']))  )
+		{
+			[AzSKRoot]::IsDetailedScanRequired = $true
+		}
+		else {
+			[AzSKRoot]::IsDetailedScanRequired = $false
 		}
 	}
 }

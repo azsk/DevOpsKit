@@ -97,11 +97,12 @@ class Organization: ADOSVTBase
                     
                     $responsePrCollObj = [WebRequestHelper]::InvokePostWebRequest($prmemberurl,$inputbody);
                     $responsePrCollData = $responsePrCollObj.dataProviders.'ms.vss-admin-web.org-admin-members-data-provider'.identities
-                
-                    if(($responsePrCollData | Measure-Object).Count -gt 0){
+                    $memberCount = ($responsePrCollData | Measure-Object).Count                
+                    if($memberCount -gt 0){
                         $responsePrCollData = $responsePrCollData | Select-Object displayName,mailAddress,subjectKind
                         $stateData = @();
                         $stateData += $responsePrCollData
+                        $controlResult.AddMessage("Total number of Project Collection Service Accounts: $($memberCount)"); 
                         $controlResult.AddMessage([VerificationResult]::Verify, "Review the members of the group Project Collection Service Accounts: ", $stateData); 
                         $controlResult.SetStateData("Members of the Project Collection Service Accounts group: ", $stateData); 
                     }
@@ -462,16 +463,69 @@ class Organization: ADOSVTBase
     {
         try 
         {
-            $apiURL = "https://{0}.vsaex.visualstudio.com/_apis/UserEntitlements?top=100&filter=userType+eq+%27guest%27&api-version=5.0-preview.2" -f $($this.SubscriptionContext.SubscriptionName);
-            $responseObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
-        
-            if(($responseObj -ne $null) -and ($responseObj[0].totalCount -gt 0) -and ([Helpers]::CheckMember($responseObj[0], 'members')))
+            $apiURL = "https://{0}.vsaex.visualstudio.com/_apis/UserEntitlements?%24filter=userType%20eq%20%27guest%27&%24orderBy=name%20Ascending&api-version=5.1-preview.3" -f $($this.SubscriptionContext.SubscriptionName);
+            $responseObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL); # returns a maximum of 100 guest users
+            $guestUsers = @()
+            if(($responseObj -ne $null) -and $responseObj.Count -gt 0 -and ([Helpers]::CheckMember($responseObj[0], 'members')))
             {
-                $controlResult.AddMessage("No. of guest identities present: " + ($responseObj[0].totalCount));
+                $guestUsers += $responseObj[0].members
+                $continuationToken =  $responseObj[0].continuationToken # Use the continuationToken for pagination
+                while ($continuationToken -ne $null){
+                    $urlEncodedToken = [System.Web.HttpUtility]::UrlEncode($continuationToken)
+                    $apiURL = "https://{0}.vsaex.visualstudio.com/_apis/UserEntitlements?continuationToken=$urlEncodedToken&%24filter=userType%20eq%20%27guest%27&%24orderBy=name%20Ascending&api-version=5.1-preview.3" -f $($this.SubscriptionContext.SubscriptionName);
+                    try{
+                        $responseObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
+                        $guestUsers += $responseObj[0].members
+                        $continuationToken =  $responseObj[0].continuationToken
+                    }
+                    catch
+                    {
+                        # Eating the exception here as we could not fetch the further guest users
+                        $continuationToken = $null
+                    }
+                }
                 $guestList = @();
-                $guestList +=  ($responseObj[0].members | Select-Object @{Name="IdentityType"; Expression = {$_.user.subjectKind}},@{Name="DisplayName"; Expression = {$_.user.displayName}}, @{Name="MailAddress"; Expression = {$_.user.mailAddress}},@{Name="AccessLevel"; Expression = {$_.accessLevel.licenseDisplayName}},@{Name="LastAccessedDate"; Expression = {$_.lastAccessedDate}})
-                $controlResult.AddMessage([VerificationResult]::Verify, "Review the below list of guest users: ",$guestList);      
-                $controlResult.SetStateData("Guest users list: ", $guestList);    
+                $guestList +=  ($guestUsers | Select-Object @{Name="Id"; Expression = {$_.id}},@{Name="IdentityType"; Expression = {$_.user.subjectKind}},@{Name="DisplayName"; Expression = {$_.user.displayName}}, @{Name="MailAddress"; Expression = {$_.user.mailAddress}},@{Name="AccessLevel"; Expression = {$_.accessLevel.licenseDisplayName}},@{Name="LastAccessedDate"; Expression = {$_.lastAccessedDate}},@{Name="InactiveFromDays"; Expression = { if (((Get-Date) -[datetime]::Parse($_.lastAccessedDate)).Days -gt 10000){return "User was never active."} else {return ((Get-Date) -[datetime]::Parse($_.lastAccessedDate)).Days} }})
+                $stateData = @();
+                $stateData += ($guestUsers | Select-Object @{Name="Id"; Expression = {$_.id}},@{Name="IdentityType"; Expression = {$_.user.subjectKind}},@{Name="DisplayName"; Expression = {$_.user.displayName}}, @{Name="MailAddress"; Expression = {$_.user.mailAddress}})                
+                # $guestListDetailed would be same if DetailedScan is not enabled.
+                $guestListDetailed = $guestList 
+
+                if([AzSKRoot]::IsDetailedScanRequired -eq $true)
+                {
+                    # If DetailedScan is enabled. fetch the project entitlements for the guest user
+                    $guestListDetailed = $guestList | ForEach-Object {
+                        try{
+                            $guestUser = $_ 
+                            $apiURL = "https://vsaex.dev.azure.com/{0}/_apis/userentitlements/{1}?api-version=6.0-preview.3" -f $($this.SubscriptionContext.SubscriptionName), $($guestUser.Id);
+                            $projectEntitlements = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
+                            $userProjectEntitlements = $projectEntitlements[0].projectEntitlements
+                        }
+                        catch {
+                            $userProjectEntitlements = "Could not fetch project entitlement details of the user."
+                        }
+                        return @{Id = $guestUser.Id; IdentityType = $guestUser.IdentityType; DisplayName = $guestUser.IdentityType; MailAddress = $guestUser.MailAddress; AccessLevel = $guestUser.AccessLevel; LastAccessedDate = $guestUser.LastAccessedDate; InactiveFromDays = $guestUser.InactiveFromDays; ProjectEntitlements = $userProjectEntitlements} 
+                    }
+                }
+                
+                $totalGuestCount = ($guestListDetailed | Measure-Object).Count
+                $controlResult.AddMessage("Displaying all guest users in the organization...");
+                $controlResult.AddMessage([VerificationResult]::Verify,"Total number of guest users in the organization: $($totalGuestCount)"); 
+                
+                $inactiveGuestUsers = $guestListDetailed | Where-Object { $_.InactiveFromDays -eq "User was never active." }
+                $inactiveCount = ($inactiveGuestUsers | Measure-Object).Count
+                if($inactiveCount) {
+                    $controlResult.AddMessage("`nTotal number of guest users who were never active: $($inactiveCount)"); 
+                    $controlResult.AddMessage("List of guest users who were never active: ",$inactiveGuestUsers);
+                }
+                
+                $activeGuestUsers = $guestListDetailed | Where-Object { $_.InactiveFromDays -ne "User was never active." }    
+                $activeCount = ($activeGuestUsers | Measure-Object).Count
+                if($activeCount) {
+                    $controlResult.AddMessage("`nTotal number of guest users who are active: $($activeCount)"); 
+                    $controlResult.AddMessage("List of guest users who are active: ",$activeGuestUsers);
+                }  
+                $controlResult.SetStateData("Guest users list: ", $stateData);    
             }
             else #external guest access notion is not applicable when AAD is not configured. Instead GitHub user notion is available in non-AAD backed orgs.
             {
@@ -543,19 +597,34 @@ class Organization: ADOSVTBase
             }
             if(($inactiveUsers | Measure-Object).Count -gt 0)
             {
-                if($inactiveUsers.Count -gt $topInActiveUsers)
+                if($inactiveUsers.Count -ge $topInActiveUsers)
                 {
                     $controlResult.AddMessage("Displaying top $($topInActiveUsers) inactive users")
                 }
                 #inactive user with days from how many days user is inactive, if user account created and was never active, in this case lastaccessdate is default 01-01-0001
-                $inactiveUsersWithDays = ($inactiveUsers | Select-Object -Property @{Name="Name"; Expression = {$_.User.displayName}},@{Name="mailAddress"; Expression = {$_.User.mailAddress}},@{Name="InactiveFromDays"; Expression = { if (((Get-Date) -[datetime]::Parse($_.lastAccessedDate)).Days -gt 10000){return "User was never active."} else {return ((Get-Date) -[datetime]::Parse($_.lastAccessedDate)).Days} }})
-            
+                $inactiveUsers = ($inactiveUsers | Select-Object -Property @{Name="Name"; Expression = {$_.User.displayName}},@{Name="mailAddress"; Expression = {$_.User.mailAddress}},@{Name="InactiveFromDays"; Expression = { if (((Get-Date) -[datetime]::Parse($_.lastAccessedDate)).Days -gt 10000){return "User was never active."} else {return ((Get-Date) -[datetime]::Parse($_.lastAccessedDate)).Days} }})
                 #set data for attestation
-                $inactiveUsers = ($inactiveUsers | Select-Object -Property @{Name="Name"; Expression = {$_.User.displayName}},@{Name="mailAddress"; Expression = {$_.User.mailAddress}})
+                $inactiveUsersStateData = ($inactiveUsers | Select-Object -Property @{Name="Name"; Expression = {$_.User.displayName}},@{Name="mailAddress"; Expression = {$_.User.mailAddress}})
                 
-                $controlResult.AddMessage([VerificationResult]::Failed,
-                                        "Review users present in the organization who are inactive from last $($this.ControlSettings.Organization.InActiveUserActivityLogsPeriodInDays) days: ",$inactiveUsersWithDays);
-                $controlResult.SetStateData("Inactive users list: ", $inactiveUsers);
+                $inactiveUsersCount = ($inactiveUsers | Measure-Object).Count
+                $controlResult.AddMessage([VerificationResult]::Failed,"Total number of inactive review users present in the organization: $($inactiveUsersCount)");
+                $controlResult.SetStateData("Inactive users list: ", $inactiveUsersStateData);
+
+                # segregate never active users from the list
+                $neverActiveUsers = $inactiveUsers | Where-Object {$_.InactiveFromDays -eq "User was never active."}
+                $inactiveUsersWithDays = $inactiveUsers | Where-Object {$_.InactiveFromDays -ne "User was never active."} 
+
+                $neverActiveUsersCount = ($neverActiveUsers | Measure-Object).Count
+                if ($neverActiveUsersCount -gt 0) {
+                    $controlResult.AddMessage("`nTotal number of users who were never active: $($neverActiveUsersCount)");
+                    $controlResult.AddMessage("Review users present in the organization who were never active: ",$neverActiveUsers);
+                } 
+                
+                $inactiveUsersWithDaysCount = ($inactiveUsersWithDays | Measure-Object).Count
+                if($inactiveUsersWithDaysCount -gt 0) {
+                    $controlResult.AddMessage("`nTotal number of users who are inactive from last $($this.ControlSettings.Organization.InActiveUserActivityLogsPeriodInDays) days: $($inactiveUsersWithDaysCount)");                
+                    $controlResult.AddMessage("Review users present in the organization who are inactive from last $($this.ControlSettings.Organization.InActiveUserActivityLogsPeriodInDays) days: ",$inactiveUsersWithDays);
+                }
             }
             else {
                 $controlResult.AddMessage([VerificationResult]::Passed,

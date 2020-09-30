@@ -2,6 +2,7 @@
 class ListenerBase: EventBase
 {
     [array] $RegisteredEvents = @();
+    static [string] $isAIKeyEnabled =$null
     
     ListenerBase()
     {   
@@ -54,6 +55,48 @@ class ListenerBase: EventBase
              $this.PublishException($_);
         }
     }
+    
+    #This is being used only to monitor perf issues in ADOScanner internally
+    [void] PushAIEventsfromHandler([String] $Eventname)
+    {
+        if ([String]::IsNullOrEmpty([ListenerBase]::isAIKeyEnabled))
+        {
+            [ListenerBase]::isAIKeyEnabled = [RemoteReportHelper]::IsAIOrgTelemetryEnabled()
+        }
+        if([ListenerBase]::isAIKeyEnabled -eq $true)
+        {
+            $iKey = [RemoteReportHelper]::GetAIOrgTelemetryKey()
+
+            $customPropertiesObj =  @{ 
+                'CalledBy'= $Eventname; 
+                'RunIdentifier' =$this.runidentifier ;
+                'Command' = $this.InvocationContext.InvocationName ;
+            }
+            $bodyObject = [PSCustomObject]@{
+                'name' = "Microsoft.ApplicationInsights.$iKey.Event"
+                'time' = ([System.dateTime]::UtcNow.ToString('o'))
+                'iKey' = $iKey
+                'tags' = [PSCustomObject]@{
+                    'ai.internal.sdkVersion' = 'dotnet: 2.1.0.26048'
+                }
+                'data' = [PSCustomObject]@{
+                    'baseType' = 'EventData'
+                    'baseData' = [PSCustomObject]@{
+                        'ver' = '2'
+                        'name' = "Post Command Completion Events"
+                        'properties' = $customPropertiesObj
+                    }
+                }
+            }
+            
+            $bodyAsCompressedJson = $bodyObject | ConvertTo-JSON -Depth 10 -Compress
+            $headers = @{
+                'Content-Type' = 'application/x-json-stream';
+            }
+            Invoke-RestMethod -Uri "https://dc.services.visualstudio.com/v2/track" -Method Post -Headers $headers -Body $bodyAsCompressedJson
+        }
+    }
+    
 }
 
 

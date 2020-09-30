@@ -350,7 +350,7 @@ class Release: ADOSVTBase
 
             # Fetch detailed permissions of each of group/user from above api call
             # To be evaluated only when -DetailedScan flag is used in GADS command along with control ids  or when controls are to be attested
-            if((-not([string]::IsNullOrEmpty($this.InvocationContext.BoundParameters['ControlIds'])) -and -not([string]::IsNullOrEmpty($this.InvocationContext.BoundParameters['DetailedScan']))) -or  -not( [string]::IsNullOrEmpty($this.InvocationContext.BoundParameters['ControlsToAttest']))  )
+            if([AzSKRoot]::IsDetailedScanRequired -eq $true)
             {
                 # exclude release owner
                 $exemptedUserIdentities += $this.ReleaseObj.createdBy.id
@@ -398,9 +398,10 @@ class Release: ADOSVTBase
                 }
             }
             else{
+                # Non detailed scan results
                 if(($responseObj.identities|Measure-Object).Count -gt 0)
                 {
-                    $accessList= $responseObj.identities | Select-Object -Property @{Name="Name"; Expression = {$_.FriendlyDisplayName}},@{Name="IdentityType"; Expression = {$_.IdentityType}},@{Name="Scope"; Expression = {$_.Scope}}
+                    $accessList= $responseObj.identities | Select-Object -Property @{Name="IdentityName"; Expression = {$_.FriendlyDisplayName}},@{Name="IdentityType"; Expression = {$_.IdentityType}},@{Name="Scope"; Expression = {$_.Scope}}
                     $controlResult.AddMessage([VerificationResult]::Verify,"Validate that the following identities have been provided with minimum RBAC access to [$($this.ResourceContext.ResourceName)] pipeline.", $accessList);
                     $controlResult.SetStateData("Release pipeline access list: ", $accessList);
                 }

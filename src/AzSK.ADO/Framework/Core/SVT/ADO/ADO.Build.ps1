@@ -242,7 +242,7 @@ class Build: ADOSVTBase
 
             # Step2: Fetch detailed permissions of each of group/user from above api call
             # To be evaluated only when -DetailedScan flag is used in GADS command along with control ids  or when controls are to be attested
-            if((-not([string]::IsNullOrEmpty($this.InvocationContext.BoundParameters['ControlIds'])) -and -not([string]::IsNullOrEmpty($this.InvocationContext.BoundParameters['DetailedScan']))) -or  -not( [string]::IsNullOrEmpty($this.InvocationContext.BoundParameters['ControlsToAttest']))  )
+            if([AzSKRoot]::IsDetailedScanRequired -eq $true)
             {
                 # release owner
                 $exemptedUserIdentities += $this.BuildObj.authoredBy.id
@@ -289,9 +289,10 @@ class Build: ADOSVTBase
                 } 
             }
             else{
+                # Non detailed scan results
                 if(($responseObj.identities|Measure-Object).Count -gt 0)
                 {
-                    $accessList= $responseObj.identities | Select-Object -Property @{Name="Name"; Expression = {$_.FriendlyDisplayName}},@{Name="IdentityType"; Expression = {$_.IdentityType}},@{Name="Scope"; Expression = {$_.Scope}}
+                    $accessList= $responseObj.identities | Select-Object -Property @{Name="IdentityName"; Expression = {$_.FriendlyDisplayName}},@{Name="IdentityType"; Expression = {$_.IdentityType}},@{Name="Scope"; Expression = {$_.Scope}}
                     $controlResult.AddMessage([VerificationResult]::Verify,"Validate that the following identities have been provided with minimum RBAC access to [$($this.ResourceContext.ResourceName)] pipeline.", $accessList);
                     $controlResult.SetStateData("Build pipeline access list: ", $accessList);
                 }
@@ -591,6 +592,25 @@ class Build: ADOSVTBase
             $controlResult.AddMessage([VerificationResult]::Passed,"No variable groups found in build definition.");
         }
 
+        return $controlResult
+    }
+
+    hidden [ControlResult] CheckBuildAuthZScope([ControlResult] $controlResult)
+    {
+        if([Helpers]::CheckMember($this.BuildObj[0],"jobAuthorizationScope"))
+        {
+            $jobAuthorizationScope = $this.BuildObj[0].jobAuthorizationScope
+            if ($jobAuthorizationScope -eq "projectCollection") {
+                $controlResult.AddMessage([VerificationResult]::Failed,"Access token of build pipeline is scoped to project collection.");               
+            }
+            else {
+                $controlResult.AddMessage([VerificationResult]::Passed,"Access token of build pipeline is scoped to current project.");                    
+            }
+        }
+        else 
+        {
+            $controlResult.AddMessage([VerificationResult]::Error,"Could not fetch pipeline authorization details.");
+        }
         return $controlResult
     }
 }

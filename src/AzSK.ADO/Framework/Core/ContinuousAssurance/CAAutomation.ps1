@@ -290,13 +290,33 @@ class CAAutomation : ADOSVTCommandBase
 				{
 					$Context = set-azcontext -Subscription $this.SubscriptionId -Force  
 				}
+				$RoleAssignment = @()
 				$Scope = "/subscriptions/"+$this.SubscriptionId
-				$RoleAssignment = @((Get-AzRoleAssignment -Scope $Scope -SignInName $Context.Account.Id -IncludeClassicAdministrators ).RoleDefinitionName | where {$_ -eq "Owner" -or $_ -eq "CoAdministrator" -or $_ -match "ServiceAdministrator"} )
-				if ($RoleAssignment.Count -eq 0)
+				$RoleAssignmentSub = @(Get-AzRoleAssignment -Scope $Scope -SignInName $Context.Account.Id -IncludeClassicAdministrators -ErrorAction SilentlyContinue)
+				if ($RoleAssignmentSub.Count -gt 0)
 				{
-					$this.PublishCustomMessage("Please make sure you have Owner role on target subscription. If your permissions were elevated recently, please run the 'Disconnect-AzAccount' command to clear the Azure cache and try again.", [MessageType]::Info);
+					$RoleAssignment = @($RoleAssignmentSub | Where-Object {$_.RoleDefinitionName -eq "Owner" -or $_.RoleDefinitionName -eq "CoAdministrator" -or $_.RoleDefinitionName -match "ServiceAdministrator"} )
 				}
-				$output = 'OK'
+				# If Sub level permissions are not adequate then check RG level permissions
+				if ($RoleAssignment.Count -gt 0)
+				{
+					$output = 'OK'
+				}
+				else
+				{
+					#Step 3: Check if user has Owner permissions on provided RG name or ADOScannerRG
+					$Scope = $Scope +"/resourceGroups/"+ $this.RGName
+					$RoleAssignmentRG = @(Get-AzRoleAssignment -Scope $Scope -SignInName $Context.Account.Id -ErrorAction SilentlyContinue)
+					$RoleAssignment = @($RoleAssignmentRG | Where-Object {$_.RoleDefinitionName -eq "Owner"} )
+
+					if ($RoleAssignment.Count -eq 0)
+					{
+						$this.PublishCustomMessage("Please make sure you have Owner role on target subscription or resource group. If your permissions were elevated recently, please run the 'Disconnect-AzAccount' command to clear the Azure cache and try again.", [MessageType]::Info);
+					}
+					else {
+						$output = 'OK'
+					}
+				}
 			}
 		}
 		catch{

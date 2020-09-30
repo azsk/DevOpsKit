@@ -11,6 +11,7 @@ class AzSKRoot: EventBase
     #Region: Properties
     [SubscriptionContext] $SubscriptionContext;
 	[bool] $RunningLatestPSModule = $true;
+	static [bool] $IsDetailedScanRequired = $false;
     #EndRegion
 
     #Region: Constructor 

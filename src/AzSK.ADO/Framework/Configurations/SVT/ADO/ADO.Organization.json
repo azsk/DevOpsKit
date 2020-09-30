@@ -246,7 +246,7 @@
     {
       "ControlID": "ADO_Organization_AuthN_Use_ALT_Accounts_For_Admin",
       "Description": "Alternate (ALT) accounts must be used for administrative activity at organization scope.",
-      "Id": "Organization242",
+      "Id": "Organization250",
       "ControlSeverity": "High",
       "Automated": "Yes",
       "MethodName": "CheckSCALTForAdminMembers",
@@ -263,7 +263,7 @@
     {
       "ControlID": "ADO_Organization_AuthZ_Review_Project_Collection_Service_Accounts",
       "Description": "Review and minimize accounts that are members of the Project Collection Service Accounts group.",
-      "Id": "Organization250",
+      "Id": "Organization260",
       "ControlSeverity": "High",
       "Automated": "Yes",
       "MethodName": "CheckProCollSerAcc",
@@ -297,7 +297,7 @@
     {
       "ControlID": "ADO_Organization_AuthZ_Verify_Enterprise_Access_To_Projects",
       "Description": "Consider disabling enterprise access to projects in your organization.",
-      "Id": "Organization290",
+      "Id": "Organization280",
       "ControlSeverity": "Medium",
       "Automated": "Yes",
       "MethodName": "CheckEnterpriseAccess",
@@ -314,7 +314,7 @@
     {
       "ControlID": "ADO_Organization_AuthZ_Enable_AAD_Conditional_Access_Policy",
       "Description": "Consider enabling AAD conditional access policy for your organization.",
-      "Id": "Organization300",
+      "Id": "Organization290",
       "ControlSeverity": "Medium",
       "Automated": "Yes",
       "MethodName": "CheckCAP",
@@ -331,7 +331,7 @@
     {
       "ControlID": "ADO_Organization_DP_Disable_Anonymous_Access_To_Badges",
       "Description": "Disable anonymous access to status badge API for parallel pipelines.",
-      "Id": "Organization310",
+      "Id": "Organization300",
       "ControlSeverity": "Low",
       "Automated": "Yes",
       "MethodName": "CheckBadgeAnonAccess",
@@ -348,7 +348,7 @@
     {
       "ControlID": "ADO_Organization_SI_Limit_Variables_Settable_At_Queue_Time",
       "Description": "Limit pipeline variables marked settable at queue time.",
-      "Id": "Organization320",
+      "Id": "Organization310",
       "ControlSeverity": "Medium",
       "Automated": "Yes",
       "MethodName": "CheckSettableQueueTime",
@@ -365,7 +365,7 @@
     {
       "ControlID": "ADO_Organization_AuthZ_Limit_Non_Release_Pipeline_Access",
       "Description": "Limit scope of access for non-release pipelines to the current project.",
-      "Id": "Organization330",
+      "Id": "Organization320",
       "ControlSeverity": "Medium",
       "Automated": "Yes",
       "MethodName": "CheckJobAuthZScope",
@@ -382,7 +382,7 @@
     {
       "ControlID": "ADO_Organization_AuthZ_Limit_Release_Pipeline_Access",
       "Description": "Limit scope of access for release pipelines to the current project.",
-      "Id": "Organization331",
+      "Id": "Organization330",
       "ControlSeverity": "Medium",
       "Automated": "Yes",
       "MethodName": "CheckJobAuthZReleaseScope",
@@ -399,7 +399,7 @@
     {
       "ControlID": "ADO_Organization_AuthZ_Limit_Pipeline_Access_To_Referenced_Repos",
       "Description": "Limit scope of access for pipelines to explicitly referenced Azure DevOps repositories.",
-      "Id": "Organization332",
+      "Id": "Organization340",
       "ControlSeverity": "Medium",
       "Automated": "Yes",
       "MethodName": "CheckAuthZRepoScope",
@@ -416,7 +416,7 @@
     {
       "ControlID": "ADO_Organization_AuthZ_Review_Invite_Users_Setting",
       "Description": "Review if project and team admins should be allowed to invite new users.",
-      "Id": "Organization338",
+      "Id": "Organization350",
       "ControlSeverity": "Medium",
       "Automated": "Yes",
       "MethodName": "CheckPolicyProjectTeamAdminUserInvitation",
@@ -433,7 +433,7 @@
     {
       "ControlID": "ADO_Organization_Backup_Audit_Logs",
       "Description": "Backup audit logs to an external location periodically.",
-      "Id": "Organization340",
+      "Id": "Organization360",
       "ControlSeverity": "Medium",
       "Automated": "No",
       "MethodName": "",
@@ -450,7 +450,7 @@
     {
       "ControlID": "ADO_Organization_Enable_Audit_Stream",
       "Description": "Enable audit streaming to support alerting, monitoring and analysis of audit logs over longer periods.",
-      "Id": "Organization342",
+      "Id": "Organization370",
       "ControlSeverity": "Medium",
       "Automated": "Yes",
       "MethodName": "CheckAuditStream",
@@ -465,26 +465,9 @@
       "Enabled": true
     },
     {
-      "ControlID": "ADO_Organization_BCDR_Min_Admin_Count",
-      "Description": "Ensure that there are at least $($this.ControlSettings.Organization.MinPCAMembersPermissible) project collection administrators in your organization.",
-      "Id": "Organization350",
-      "ControlSeverity": "Medium",
-      "Automated": "Yes",
-      "MethodName": "CheckMinPCACount",
-      "Rationale": "Having the minimum required number of administrators reduces the risk of losing admin access. This is useful in case of break-glass account scenarios.",
-      "Recommendation": "Go to Organization settings --> Security --> Permissions --> Groups --> Select the group : Project Collection Administrators --> Review the members of this group",
-      "Tags": [
-        "SDL",
-        "BCDR",
-        "Automated",
-        "Best Practice"
-      ],
-      "Enabled": true
-    },
-    {
       "ControlID": "ADO_Organization_AuthZ_Limit_Admin_Count",
       "Description": "Ensure that there are at most $($this.ControlSettings.Organization.MaxPCAMembersPermissible) project collection administrators in your organization.",
-      "Id": "Organization360",
+      "Id": "Organization380",
       "ControlSeverity": "Medium",
       "Automated": "Yes",
       "MethodName": "CheckMaxPCACount",
@@ -493,6 +476,23 @@
       "Tags": [
         "SDL",
         "AuthZ",
+        "Automated",
+        "Best Practice"
+      ],
+      "Enabled": true
+    },
+    {
+      "ControlID": "ADO_Organization_BCDR_Min_Admin_Count",
+      "Description": "Ensure that there are at least $($this.ControlSettings.Organization.MinPCAMembersPermissible) project collection administrators in your organization.",
+      "Id": "Organization390",
+      "ControlSeverity": "Medium",
+      "Automated": "Yes",
+      "MethodName": "CheckMinPCACount",
+      "Rationale": "Having the minimum required number of administrators reduces the risk of losing admin access. This is useful in case of break-glass account scenarios.",
+      "Recommendation": "Go to Organization settings --> Security --> Permissions --> Groups --> Select the group : Project Collection Administrators --> Review the members of this group",
+      "Tags": [
+        "SDL",
+        "BCDR",
         "Automated",
         "Best Practice"
       ],

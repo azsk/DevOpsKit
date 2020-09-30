@@ -216,10 +216,9 @@ class AIOrgTelemetry: ListenerBase {
 				$properties.Add("AttestationStatus", $results[0].AttestationStatus)
 				$properties.Add("VerificationResult", $results[0].VerificationResult)
 				$properties.Add("HasRequiredAccess", $results[0].CurrentSessionContext.Permissions.HasRequiredAccess)
-				if ($this.invocationContext.MyCommand.ModuleName -match "staging")
-				{
-					$properties.Add("ScanTimeInMilliSec", $results[0].ScanTimeInMilliSec)
-				}
+				$properties.Add("TimeTakenInMs", $results[0].TimeTakenInMs)
+				$properties.Add("ScanStartDateTime", $results[0].ScanStartDateTime)
+				$properties.Add("ScanEndDateTime", $results[0].ScanEndDateTime)
 				if($null -ne $context.ResourceContext){
 					if($context.ResourceContext.ResourceName -eq $results[0].ChildResourceName -or [string]::IsNullOrWhiteSpace($results[0].ChildResourceName)){
 						$properties.Add("IsNestedResource", 'No')
