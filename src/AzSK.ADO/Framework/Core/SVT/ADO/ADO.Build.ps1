@@ -409,8 +409,8 @@ class Build: ADOSVTBase
     {
         if(($this.BuildObj | Measure-Object).Count -gt 0)
         {
-            $sourceobj = $this.BuildObj.repository | Select-Object -Property @{Name="Name"; Expression = {$_.Name}},@{Name="Type"; Expression = {$_.type}}
-           if( $this.BuildObj.repository.type -eq 'TfsGit' -or $this.BuildObj.repository.type -eq 'TfsVersionControl')
+            $sourceobj = $this.BuildObj[0].repository | Select-Object -Property @{Name="Name"; Expression = {$_.Name}},@{Name="Type"; Expression = {$_.type}}
+           if( ($this.BuildObj[0].repository.type -eq 'TfsGit') -or ($this.BuildObj[0].repository.type -eq 'TfsVersionControl'))
            {
                 $controlResult.AddMessage([VerificationResult]::Passed,"Pipeline code is built from trusted repository.",  $sourceobj); 
                 $sourceobj = $null;
