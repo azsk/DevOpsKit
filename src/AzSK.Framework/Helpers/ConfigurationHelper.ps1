@@ -166,7 +166,7 @@ class ConfigurationHelper {
 			}
 
 			#If we were trying to fetch SCMD and the returned JSON does not have 'OnlinePolicyList' something is wrong!
-			#In ADO this happens if ADOScanner_Policy_<ProjName> repo does not exist.
+			#In ADO this happens if ADOScannerPolicy repo does not exist.
 			#ADOTOD: Perhaps we should query for repo being present when the OnlinePolicyURL is formed (or first used)
 			if ($bFetchingSCMD -and -not [Helpers]::CheckMember($fileContent, "OnlinePolicyList"))
 			{
