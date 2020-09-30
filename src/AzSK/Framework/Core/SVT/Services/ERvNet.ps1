@@ -425,7 +425,7 @@ class ERvNet : SVTIaasBase
 
         if($null -ne $resources)
         {
-            #control will pass for "Microsoft.EventGrid" type resources
+            #control will exempt "Microsoft.EventGrid" type resources in the RG
             $nonApprovedResources = [array]($resources | Where-Object { -not ($_.ResourceType.StartsWith("Microsoft.Network","CurrentCultureIgnoreCase") -or $_.ResourceType.StartsWith("Microsoft.EventGrid","CurrentCultureIgnoreCase"))})            
             if($null -ne $nonApprovedResources )
             {
