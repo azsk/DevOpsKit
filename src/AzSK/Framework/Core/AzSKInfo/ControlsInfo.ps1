@@ -128,30 +128,30 @@ class ControlsInfo: AzCommandBase
 					$controls.Controls = ($controls.Controls | Where-Object { $_.Enabled -eq $true })
 
 					# Filter control for ControlIds
-					if ($this.ControlIds.Count -gt 0) 
+					if ($controls.Controls -and $this.ControlIds.Count -gt 0) 
 					{
 						$controls.Controls = ($controls.Controls | Where-Object { $this.ControlIds -contains $_.ControlId })
 					}
 
 					# Filter control for ControlId Contains
-					if (-not [string]::IsNullOrEmpty($this.ControlIdContains)) 
+					if ($controls.Controls -and -not [string]::IsNullOrEmpty($this.ControlIdContains)) 
 					{
 						$controls.Controls = ($controls.Controls | Where-Object { $_.ControlId -Match $this.ControlIdContains })
 					}
 
 					# Filter control for Tags
-					if ($this.Tags.Count -gt 0) 
+					if ($controls.Controls -and $this.Tags.Count -gt 0) 
 					{
 						$controls.Controls = ($controls.Controls | Where-Object { ((Compare-Object $_.Tags $this.Tags -PassThru -IncludeEqual -ExcludeDifferent) | Measure-Object).Count -gt 0 })
 					}
 
 					# Filter control for ControlSeverity
-					if (-not [string]::IsNullOrEmpty($this.ControlSeverity)) 
+					if ($controls.Controls -and -not [string]::IsNullOrEmpty($this.ControlSeverity)) 
 					{
 						$controls.Controls = ($controls.Controls | Where-Object { $this.ControlSeverity -eq $_.ControlSeverity })
 					}
 
-					if ($controls.Controls.Count -gt 0)
+					if ($controls.Controls -and $controls.Controls.Count -gt 0)
 					{
 						if($PolicyExpandedFlag)
 						{
