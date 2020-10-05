@@ -149,7 +149,8 @@ class SVTStatusReport : AzSVTCommandBase
 		$this.PublishCustomMessage("`r`n"+[Constants]::DoubleDashLine+"`r`nSummary of attestation details:`r`n`r`n");
 		$this.DisplayAttestationStatusWiseControlsCount($Result);
 		$this.DisplaySeverityWiseControlsCount($Result);
-		$this.DisplayControlIdWiseCount($Result)
+		$this.DisplayControlIdWiseCount($Result);
+		$this.DisplayExcludedControlsCount($Result);
 		$this.DisplayExpiryDateWiseControlsCount($Result);
 	}
 	hidden [void] DisplayAttestationStatusWiseControlsCount([SVTEventContext[]] $Result)
@@ -200,6 +201,19 @@ class SVTStatusReport : AzSVTCommandBase
 		$this.PublishCustomMessage("Distribution of controls that have been attested:`r`n"+($groupResult|out-string));
 		$this.PublishCustomMessage([Constants]::DoubleDashLine);
 
+	}
+	hidden [void] DisplayExcludedControlsCount([SVTEventContext[]] $Result)
+	{
+		$excludedControls = $Result.ControlItem | Where-Object {$_.IsControlExcluded}
+		if($excludedControls){
+			$groupResult = $excludedControls | Group ControlId | ForEach{
+				[pscustomobject]@{
+				'ControlId'=$_.name
+				'ControlsCount'=$_.count}
+				}
+			$this.PublishCustomMessage("Distribution of excluded controls that have been attested:`r`n"+($groupResult|out-string));
+			$this.PublishCustomMessage([Constants]::DoubleDashLine);
+		}
 	}
 	hidden [void] DisplayExpiryDateWiseControlsCount([SVTEventContext[]] $Result)
 	{

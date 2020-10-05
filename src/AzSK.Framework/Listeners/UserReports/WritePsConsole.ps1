@@ -250,7 +250,13 @@ class WritePsConsole: FileOutputBase
 					# TODO: We can put msg here for Excluded controls and get it from AzSK.json
 					$anyControlExcluded = ($Event.SourceArgs.ControlItem | Where-Object{ $_.IsControlExcluded -eq $true } | Measure-Object ).Count -gt 0
 					if($anyControlExcluded){
-						$currentInstance.WriteMessage("** Please note that one or more controls are in excluded state which means scan event for these controls will not be considered for compliance. For more details, please refer: https://aka.ms/azsk/excludedcontrols **", [MessageType]::Warning)
+						$currentInstance.WriteMessage([Constants]::SingleDashLine, [MessageType]::Info)
+						if($controlsScanned)
+					    {
+							$currentInstance.WriteMessage("** Attention **`r`nPlease note that one or more controls are in excluded state which means scan event for these controls will not be considered for compliance. For more details, please refer: https://aka.ms/azsk/excludedcontrols", [MessageType]::Warning)
+						}else{
+							$currentInstance.WriteMessage("** Attention **`r`nPlease note that one or more controls are in excluded state. For more details on excluded controls, please refer: https://aka.ms/azsk/excludedcontrols", [MessageType]::Warning)
+						}
 					}
 					$currentInstance.WriteMessage([Constants]::SingleDashLine, [MessageType]::Info)
 				}

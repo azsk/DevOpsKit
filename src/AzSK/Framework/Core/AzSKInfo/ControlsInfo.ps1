@@ -94,6 +94,7 @@ class ControlsInfo: AzCommandBase
 		}
 
 		$previewBaselineControls = @();
+		$excludedControls = @();
 
 		if([Helpers]::CheckMember($this.ControlSettings,"PreviewBaselineControls.ResourceTypeControlIdMappingList") )
 		{
@@ -102,6 +103,13 @@ class ControlsInfo: AzCommandBase
 		if([Helpers]::CheckMember($this.ControlSettings,"PreviewBaselineControls.SubscriptionControlIdList") )
 		{
 			$previewBaselineControls += $this.ControlSettings.PreviewBaselineControls.SubscriptionControlIdList | ForEach-Object {  $_ }
+		}
+		$TenantId = ([ContextHelper]::GetCurrentRMContext()).Tenant.Id
+		if([Helpers]::CheckMember($this.ControlSettings, "ControlsToExcludeFromScan.TenantIds") `
+							-and ($this.ControlSettings.ControlsToExcludeFromScan.TenantIds -contains $TenantId) `
+							-and [Helpers]::CheckMember($this.ControlSettings, "ControlsToExcludeFromScan.ControlIds") )
+		{
+			$excludedControls += $this.ControlSettings.ControlsToExcludeFromScan.ControlIds
 		}
 
 		if($this.PreviewBaslineControls)
@@ -183,6 +191,15 @@ class ControlsInfo: AzCommandBase
 								{
 									$isPreviewBaselineControls = "No"
 								}
+
+								if($_.IsControlExcluded)
+								{
+									$isControlExcluded = "Yes"
+								}
+								else
+								{
+									$isControlExcluded = "No"
+								}
 													
 								$ctrlObj = New-Object -TypeName PSObject
 								$ctrlObj | Add-Member -NotePropertyName FeatureName -NotePropertyValue $controls.FeatureName 
@@ -191,6 +208,7 @@ class ControlsInfo: AzCommandBase
 								$ctrlObj | Add-Member -NotePropertyName ControlSeverity -NotePropertyValue $_.ControlSeverity
 								$ctrlObj | Add-Member -NotePropertyName IsBaselineControl -NotePropertyValue $isBaselineControls
 								$ctrlObj | Add-Member -NotePropertyName IsPreviewBaselineControl -NotePropertyValue $isPreviewBaselineControls
+								$ctrlObj | Add-Member -NotePropertyName IsControlExcluded -NotePropertyValue $isControlExcluded
 								$ctrlObj | Add-Member -NotePropertyName Rationale -NotePropertyValue $_.Rationale
 								$ctrlObj | Add-Member -NotePropertyName Recommendation -NotePropertyValue $_.Recommendation
 								$ctrlObj | Add-Member -NotePropertyName Automated -NotePropertyValue $_.Automated
@@ -239,6 +257,16 @@ class ControlsInfo: AzCommandBase
 									$isPreviewBaselineControls = "No"
 								}
 
+								if($excludedControls -contains $_.ControlID)
+								{
+									$isControlExcluded = "Yes"
+								}
+								else
+								{
+									$isControlExcluded = "No"
+								}
+								
+
 								$ControlSeverity = $_.ControlSeverity
 								if([Helpers]::CheckMember($this.ControlSettings,"ControlSeverity.$ControlSeverity"))
 								{
@@ -256,6 +284,7 @@ class ControlsInfo: AzCommandBase
 								$ctrlObj | Add-Member -NotePropertyName ControlSeverity -NotePropertyValue $_.ControlSeverity
 								$ctrlObj | Add-Member -NotePropertyName IsBaselineControl -NotePropertyValue $isBaselineControls
 								$ctrlObj | Add-Member -NotePropertyName IsPreviewBaselineControl -NotePropertyValue $isPreviewBaselineControls
+								$ctrlObj | Add-Member -NotePropertyName IsControlExcluded -NotePropertyValue $isControlExcluded
 								$ctrlObj | Add-Member -NotePropertyName Rationale -NotePropertyValue $_.Rationale
 								$ctrlObj | Add-Member -NotePropertyName Recommendation -NotePropertyValue $_.Recommendation
 								$ctrlObj | Add-Member -NotePropertyName Automated -NotePropertyValue $_.Automated
@@ -283,7 +312,7 @@ class ControlsInfo: AzCommandBase
 						$controlSummary += $ctrlSummary
 					} 
                 }
-
+	
 		if($controlSummary.Count -gt 0)
 		{
 			$controlCSV = New-Object -TypeName WriteCSVData
@@ -326,8 +355,14 @@ class ControlsInfo: AzCommandBase
 
 			$controlSummary += $totalSummaryMarker
 			$controlSummary += $ctrlSummary
-
 			$this.PublishCustomMessage(($controlSummary | Format-Table | Out-String), [MessageType]::Default)
+			$excludedControls = @($allControls |  Where-Object {$_.IsControlExcluded -eq 'Yes'})
+			if($excludedControls.Count -gt 0){
+				$this.PublishCustomMessage([Constants]::DoubleDashLine, [MessageType]::Default);
+				$this.PublishCustomMessage("Total no. of excluded controls: " + $excludedControls.Count , [MessageType]::Default)
+				$this.PublishCustomMessage("** Attention **`r`nPlease note that one or more controls are in excluded state. For more details on excluded controls, please refer: https://aka.ms/azsk/excludedcontrols", [MessageType]::Warning);
+				$this.PublishCustomMessage([Constants]::DoubleDashLine, [MessageType]::Default);
+			}
 		}
         
 	}

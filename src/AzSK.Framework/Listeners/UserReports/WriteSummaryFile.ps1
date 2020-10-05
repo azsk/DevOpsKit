@@ -1,7 +1,8 @@
 Set-StrictMode -Version Latest 
 class WriteSummaryFile: FileOutputBase
 {   
-    hidden static [WriteSummaryFile] $Instance = $null;
+	hidden static [WriteSummaryFile] $Instance = $null;
+	[bool] $IsResourceScanned;
 
     static [WriteSummaryFile] GetInstance()
     {
@@ -47,11 +48,13 @@ class WriteSummaryFile: FileOutputBase
 			if(($Event.SourceArgs.ControlResults|Where-Object{$_.VerificationResult -ne[VerificationResult]::NotScanned}|Measure-Object).Count -gt 0)
 			{
 				$currentInstance.SetFilePath($Event.SourceArgs[0].SubscriptionContext, ("SecurityReport-" + $currentInstance.RunIdentifier + ".csv"));
+				$currentInstance.IsResourceScanned = $true;
 			}
 			else
 			{
 				# While running GAI -InfoType AttestationInfo, no controls are evaluated. So the value of VerificationResult is by default NotScanned for all controls.
 				# In that case the csv file should be renamed to AttestationReport.
+				$currentInstance.IsResourceScanned = $false;
 				$currentInstance.SetFilePath($Event.SourceArgs[0].SubscriptionContext, ("AttestationReport-" + $currentInstance.RunIdentifier + ".csv"));
 			}
 
@@ -59,6 +62,7 @@ class WriteSummaryFile: FileOutputBase
 			try 
 			{
 				$currentInstance.WriteToCSV($Event.SourceArgs);
+				$currentInstance.IsResourceScanned = $false;
 				$currentInstance.FilePath = "";
 			}
 			catch 
@@ -195,6 +199,10 @@ class WriteSummaryFile: FileOutputBase
 			Where-Object { 
 				$null -ne ($_.ControlResults | Where-Object { $_.AttestationStatus -ne [AttestationStatus]::None } | Select-Object -First 1) 
 			} | Select-Object -First 1);
+		$anyExcludedControls = $null -ne ($arguments | 
+			Where-Object { 
+				$null -ne ($_.ControlItem | Where-Object { $_.IsControlExcluded -eq $true } | Select-Object -First 1) 
+			} | Select-Object -First 1);
 
 		#$anyFixableControls = $null -ne ($arguments | Where-Object { $_.ControlItem.FixControl } | Select-Object -First 1);
 		#Validate if preview baseline control flag is passed to mark csv
@@ -259,6 +267,29 @@ class WriteSummaryFile: FileOutputBase
 					{
 						$csvItem.IsPreviewBaselineControl = "No";
 					}
+					# If control is excluded, put item to excludedItemList to generate separate csv for such items 
+					if($anyExcludedControls){
+						if($this.IsResourceScanned){
+							if($item.ControlItem.IsControlExcluded){
+								$excludedCSVItems += $csvItem;
+							}else{
+								$csvItems += $csvItem;
+							}	
+						}else{
+							if($item.ControlItem.IsControlExcluded)
+							{
+								$csvItem.IsControlExcluded = "Yes"
+							}
+							else 
+							{
+								$csvItem.IsControlExcluded = "No"
+							}
+							$csvItems += $csvItem;
+						}
+						
+					}else{
+						$csvItems += $csvItem;
+					}
 
 					if($anyAttestedControls)
 					{
@@ -308,16 +339,9 @@ class WriteSummaryFile: FileOutputBase
 							$csvItem.IsControlInGrace = "No"
 						}
 					}		
-					# If control is excluded, put item to excludedItemList to generate separate csv for such items 
-					if($item.ControlItem.IsControlExcluded){
-						$excludedCSVItems += $csvItem;
-					}else{
-						$csvItems += $csvItem;
-					}	
-                    
                 }                                
             }
-        } 
+        }
 
         if ($csvItems.Count -gt 0) {
 			# Remove Null properties
