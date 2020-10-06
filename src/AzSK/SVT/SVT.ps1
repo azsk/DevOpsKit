@@ -598,9 +598,17 @@ function Get-AzSKExpressRouteNetworkSecurityStatus
 
 		}
 	}
-	
-	Get-AzSKAzureServicesSecurityStatus -SubscriptionId $SubscriptionId -ResourceGroupNames $erResourceGroups -ResourceName $ResourceName `
+
+	if([string]::IsNullOrEmpty($ControlIds))
+	{
+		Get-AzSKAzureServicesSecurityStatus -SubscriptionId $SubscriptionId -ResourceGroupNames $erResourceGroups -ResourceName $ResourceName `
+			-ResourceTypeName ([SVTMapping]::ERvNetTypeName) -FilterTags $FilterTags -ExcludeTags $ExcludeTags -DoNotOpenOutputFolder:$DoNotOpenOutputFolder -AttestControls $ControlsToAttest -GeneratePDF $GeneratePDF -GenerateFixScript:$GenerateFixScript -ExcludeControlIds $ExcludeControlIds
+	}
+	else
+	{
+		Get-AzSKAzureServicesSecurityStatus -SubscriptionId $SubscriptionId -ResourceGroupNames $erResourceGroups -ResourceName $ResourceName `
 			-ResourceTypeName ([SVTMapping]::ERvNetTypeName) -ControlIds $ControlIds -FilterTags $FilterTags -ExcludeTags $ExcludeTags -DoNotOpenOutputFolder:$DoNotOpenOutputFolder -AttestControls $ControlsToAttest -GeneratePDF $GeneratePDF -GenerateFixScript:$GenerateFixScript -ExcludeControlIds $ExcludeControlIds
+	}
 	
 }
 
