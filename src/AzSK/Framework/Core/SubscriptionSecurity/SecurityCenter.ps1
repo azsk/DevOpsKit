@@ -261,7 +261,7 @@ class SecurityCenter: AzSKRoot
 			}
 			catch
 			{
-				throw [System.ArgumentException] ("Error occurred while configuring security contact settings.");
+				throw ([SuppressedException]::new(("Error occurred while configuring security contact settings.`nFor more details refer to the troubleshooting guidelines at: http://aka.ms/AzSKDocs."), [SuppressedExceptionType]::Generic))
 			}
 		}
 		return $messages;
