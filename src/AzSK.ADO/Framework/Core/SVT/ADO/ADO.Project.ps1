@@ -45,13 +45,11 @@ class Project: ADOSVTBase
 
     hidden [ControlResult] CheckPublicProjects([ControlResult] $controlResult)
 	{
-        $apiURL = $this.ResourceContext.ResourceId;
         try 
         {
-            $responseObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
-            if([Helpers]::CheckMember($responseObj,"visibility"))
+            if([Helpers]::CheckMember($this.ResourceContext.ResourceDetails,"visibility"))
             {
-                $visibility = $responseObj.visibility;
+                $visibility = $this.ResourceContext.ResourceDetails.visibility;
                 if(($visibility -eq "private") -or ($visibility -eq "organization"))
                 {
                     $controlResult.AddMessage([VerificationResult]::Passed, "Project visibility is set to '$visibility'."); 

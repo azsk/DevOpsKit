@@ -14,9 +14,10 @@ class Build: ADOSVTBase
             $securityNamespacesObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
             [Build]::SecurityNamespaceId = ($securityNamespacesObj | Where-Object { ($_.Name -eq "Build") -and ($_.actions.name -contains "ViewBuilds")}).namespaceId
         }
-
+        $buildId = $this.ResourceContext.ResourceDetails.id
+        $projectId = ($this.ResourceContext.ResourceId -split "Project/")[-1].Split('/')[0]
         # Get build object
-        $apiURL = $this.ResourceContext.ResourceId
+        $apiURL = "https://dev.azure.com/$($this.SubscriptionContext.SubscriptionName)/$projectId/_apis/build/Definitions/$buildId";
         $this.BuildObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
 
         if(($this.BuildObj | Measure-Object).Count -eq 0)
