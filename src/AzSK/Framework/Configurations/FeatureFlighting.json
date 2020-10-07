@@ -194,15 +194,6 @@
       "IsEnabled": true
     },
     {
-      "Name": "EnableKeyVaultApplicationsFix",
-      "Description": "",
-      "Sources": ["*"],
-      "EnabledForSubs": [],
-      "DisabledForSubs": [],
-      "UnderPreview": false,
-      "IsEnabled": true
-    },
-    {
       "Name": "EnableAppServiceCustomAuth",
       "Description": "",
       "Sources": ["*"],

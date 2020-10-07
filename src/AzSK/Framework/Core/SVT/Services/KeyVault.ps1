@@ -269,23 +269,16 @@ class KeyVault: AzSVTBase
     {
         try{
               $outputList = @();
-              if([FeatureFlightingManager]::GetFeatureStatus("EnableKeyVaultApplicationsFix",$($this.SubscriptionContext.SubscriptionId)) -eq $true)
+			  $this.GetApplicationsInAccessPolicy()
+			  if($this.ErrorWhileFetchingApplicationDetails)
               {
-                  $this.GetApplicationsInAccessPolicy()
-                  if($this.ErrorWhileFetchingApplicationDetails)
-                  {
-                    # When there is exception to read  application details, mark control as Manual 
-                    $controlResult.AddMessage([VerificationResult]::Manual,
+				# When there is exception to read  application details, mark control as Manual 
+				$controlResult.AddMessage([VerificationResult]::Manual,
                                         [MessageData]::new("Unable to fetch application details due to insufficient privileges."));
-                    $controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false;
-                    return $controlResult
-                    }
-                    $appList = $this.AADApplicationsList
-              }
-              else
-              {
-                  $appList = $this.GetAzureRmKeyVaultApplications()
-              }
+				$controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false;
+				return $controlResult
+			  }
+              $appList = $this.AADApplicationsList
               
               $appList |
                 ForEach-Object {
@@ -339,25 +332,17 @@ class KeyVault: AzSVTBase
    
 	hidden [ControlResult] CheckAppsSharingKeyVault([ControlResult] $controlResult)
 	{		
-		if([FeatureFlightingManager]::GetFeatureStatus("EnableKeyVaultApplicationsFix",$($this.SubscriptionContext.SubscriptionId)) -eq $true)
+		$this.GetApplicationsInAccessPolicy()
+		if($this.ErrorWhileFetchingApplicationDetails)
 		{
-			$this.GetApplicationsInAccessPolicy()
-			if($this.ErrorWhileFetchingApplicationDetails)
-			{
-				# When there is exception to read  application details, mark control as Manual 
-				$controlResult.AddMessage([VerificationResult]::Manual,
-										[MessageData]::new("Unable to fetch application details due to insufficient privileges."));
-			    $controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false;
-				return $controlResult
-			}
-			$appList = $this.AllApplicationsList
-			$controlResult.SetStateData("Key Vault sharing app list", ($appList| Select-Object -Property ApplicationId, DisplayName, Id, ObjectType))
+			# When there is exception to read  application details, mark control as Manual 
+			$controlResult.AddMessage([VerificationResult]::Manual,
+									[MessageData]::new("Unable to fetch application details due to insufficient privileges."));
+			$controlResult.CurrentSessionContext.Permissions.HasRequiredAccess = $false;
+			return $controlResult
 		}
-		else
-		{
-			$appList = $this.GetAzureRmKeyVaultApplications()
-			$controlResult.SetStateData("Key Vault sharing app list", $appList); 
-		}		
+		$appList = $this.AllApplicationsList
+		$controlResult.SetStateData("Key Vault sharing app list", ($appList| Select-Object -Property ApplicationId, DisplayName, Id, ObjectType))	
 
 		if( ($appList | Measure-Object ).Count -gt 1)
 		{
@@ -537,21 +522,6 @@ class KeyVault: AzSVTBase
 		return $controlResult;
    }
 
-   hidden [PSObject] GetAzureRmKeyVaultApplications()  
-     {
-        $applicationList = @();
-        $this.ResourceObject.AccessPolicies  | 
-        ForEach-Object { 
-            $svcPrincipal= Get-AzADServicePrincipal -ObjectId $_.ObjectId
-            if($svcPrincipal){
-                $application = Get-AzADApplication -ApplicationId $svcPrincipal.ApplicationId
-                if($application){
-                    $applicationList += $application
-                }
-            }
-        }
-        return $applicationList;
-}
     hidden [void] GetApplicationsInAccessPolicy()  
      {
 		try{
