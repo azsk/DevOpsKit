@@ -428,7 +428,7 @@ class Build: ADOSVTBase
     {
         #Task groups have type 'metaTask' whereas individual tasks have type 'task'
         $taskGroups = @();
-        if([Helpers]::CheckMember($this.BuildObj[0].process,"phases"))
+        if([Helpers]::CheckMember($this.BuildObj[0].process,"phases")) #phases is not available for YAML-based pipelines.
         {
             if([Helpers]::CheckMember($this.BuildObj[0].process.phases[0],"steps"))
             {
@@ -544,7 +544,14 @@ class Build: ADOSVTBase
         }
         else 
         {
-            $controlResult.AddMessage([VerificationResult]::Error,"Could not fetch the list of task groups used in the pipeline.");
+            if([Helpers]::CheckMember($this.BuildObj[0].process,"yamlFilename")) #if the pipeline is YAML-based - control should pass as task groups are not supported for YAML pipelines.
+            {
+                $controlResult.AddMessage([VerificationResult]::Passed,"Task groups are not supported in YAML pipelines.");
+            }   
+            else 
+            {
+                $controlResult.AddMessage([VerificationResult]::Error,"Could not fetch the list of task groups used in the pipeline.");    
+            }
         }
         return $controlResult;
     }
