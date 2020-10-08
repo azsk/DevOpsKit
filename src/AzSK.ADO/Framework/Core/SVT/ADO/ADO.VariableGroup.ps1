@@ -294,46 +294,59 @@ class VariableGroup: ADOSVTBase
         if (([Helpers]::CheckMember($releaseDefnsObj, "count") -and $releaseDefnsObj[0].count -gt 0) -or (($releaseDefnsObj | Measure-Object).Count -gt 0 -and [Helpers]::CheckMember($releaseDefnsObj[0], "name"))) {
             $i = 1;                   
             foreach ($relDef in $releaseDefnsObj) {
-                $apiURL =  $relDef.url
-                $releaseObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
+                try{
 
-                $definitionId = ''
-                $pipelineType = ''
-                
-                $varGrps = @();
-                
-                #add var groups scoped at release scope.
-                if((($releaseObj[0].variableGroups) | Measure-Object).Count -gt 0)
-                {
-                    $varGrps += $releaseObj[0].variableGroups
-                }
+                    $apiURL =  $relDef.url
+                    $releaseObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
 
-                # Each release pipeline has atleast 1 env.
-                $envCount = ($releaseObj[0].environments).Count
-
-                for($j=0; $j -lt $envCount; $j++)
-                {
-                    if((($releaseObj[0].environments[$j].variableGroups) | Measure-Object).Count -gt 0)
+                    $definitionId = ''
+                    $pipelineType = ''
+                    
+                    $varGrps = @();
+                    
+                    #add var groups scoped at release scope.
+                    if((($releaseObj[0].variableGroups) | Measure-Object).Count -gt 0)
                     {
-                        $varGrps += $releaseObj[0].environments[$j].variableGroups
+                        $varGrps += $releaseObj[0].variableGroups
+                    }
+
+                    # Each release pipeline has atleast 1 env.
+                    $envCount = ($releaseObj[0].environments).Count
+
+                    for($j=0; $j -lt $envCount; $j++)
+                    {
+                        if((($releaseObj[0].environments[$j].variableGroups) | Measure-Object).Count -gt 0)
+                        {
+                            $varGrps += $releaseObj[0].environments[$j].variableGroups
+                        }
+                    }
+
+                    if(($varGrps | Measure-Object).Count -gt 0)
+                    {
+                        $varGrps | ForEach-Object{
+                            try{
+
+                                $varGrpURL = ("https://{0}.visualstudio.com/{1}/_apis/distributedtask/variablegroups/{2}") -f $orgName, $projId, $_;
+                                $varGrpObj = [WebRequestHelper]::InvokeGetWebRequest($varGrpURL);
+
+                                $definitionId =  $releaseObj[0].id;
+                                $pipelineType = 'Release';
+
+                                $releaseSTData = $ReleaseSTDetails.Data | Where-Object { ($_.releaseDefinitionID -eq $definitionId) -and ($_.projectName -eq $projectName) };
+                                if($releaseSTData){
+                                    $variableGroupSTMapping.data += @([PSCustomObject] @{ variableGroupName = $varGrpObj.name; variableGroupID = $varGrpObj.id; serviceID = $releaseSTData.serviceID; projectName = $releaseSTData.projectName; projectID = $releaseSTData.projectID; orgName = $releaseSTData.orgName } )
+                                }
+                                Write-Host "$i - Id = $definitionId - PipelineType = $pipelineType"
+                            }
+                            catch{
+                                Write-Host "$i - Exception while fetching variable group id: $_"
+                            }
+                        }
                     }
                 }
-
-                if(($varGrps | Measure-Object).Count -gt 0)
+                catch
                 {
-                    $varGrps | ForEach-Object{
-                        $varGrpURL = ("https://{0}.visualstudio.com/{1}/_apis/distributedtask/variablegroups/{2}") -f $orgName, $projId, $_;
-                        $varGrpObj = [WebRequestHelper]::InvokeGetWebRequest($varGrpURL);
-
-                        $definitionId =  $releaseObj[0].id;
-                        $pipelineType = 'Release';
-
-                        $releaseSTData = $ReleaseSTDetails.Data | Where-Object { ($_.releaseDefinitionID -eq $definitionId) -and ($_.projectName -eq $projectName) };
-                        if($releaseSTData){
-                            $variableGroupSTMapping.data += @([PSCustomObject] @{ variableGroupName = $varGrpObj.name; variableGroupID = $varGrpObj.id; serviceID = $releaseSTData.serviceID; projectName = $releaseSTData.projectName; projectID = $releaseSTData.projectID; orgName = $releaseSTData.orgName } )
-                        }
-                        Write-Host "$i - Id = $definitionId - PipelineType = $pipelineType"
-                    }
+                    Write-Host "$i - Exception while fetching release pipeline: [$($relDef.url)]."
                 }
                 $i++   
             }
