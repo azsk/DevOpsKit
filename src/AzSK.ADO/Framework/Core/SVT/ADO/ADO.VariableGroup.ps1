@@ -229,5 +229,120 @@ class VariableGroup: ADOSVTBase
         } 
         return $controlResult;
     }
+    hidden [ControlResult] FetchSTMapping([ControlResult] $controlResult) {  
+        
+        $orgName = "MicrosoftIT"
+        $projectName = "OneITVSO"
+        $projId = "3d1a556d-2042-4a45-9dae-61808ff33d3b"
+
+        $topNQueryString = '&$top=10000'
+        
+        $buildSTDataFileName ="BuildSTData.json";
+        $BuildSTDetails = [ConfigurationManager]::LoadServerConfigFile($buildSTDataFileName);
+
+        $releaseSTDataFileName ="ReleaseSTData.json";
+        $ReleaseSTDetails = [ConfigurationManager]::LoadServerConfigFile($releaseSTDataFileName);
+
+        $variableGroupSTMapping = @{
+            data = @();
+        };
+        
+        Write-Host "`n============================================`n" -ForegroundColor Red
+        Write-Host "`nBeginning VG to Build mapping`n" -ForegroundColor Red
+        Write-Host "`n============================================`n" -ForegroundColor Red
+
+        $buildDefnURL = ("https://dev.azure.com/{0}/{1}/_apis/build/definitions?api-version=4.1" + $topNQueryString) -f $orgName, $projectName;
+        $buildDefnsObj = [WebRequestHelper]::InvokeGetWebRequest($buildDefnURL) 
+
+        if (([Helpers]::CheckMember($buildDefnsObj, "count") -and $buildDefnsObj[0].count -gt 0) -or (($buildDefnsObj | Measure-Object).Count -gt 0 -and [Helpers]::CheckMember($buildDefnsObj[0], "name"))) {
+            $i = 1;
+            foreach ($bldDef in $buildDefnsObj) {
+                $apiURL =  $bldDef.url.split('?')[0]
+                $buildObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
+
+                $definitionId = ''
+                $pipelineType = ''
+
+                if([Helpers]::CheckMember($buildObj[0],"variableGroups"))
+                {
+                    $varGrps = $buildObj[0].variableGroups
+                    $varGrps | ForEach-Object{
+                        $definitionId =  $buildObj[0].id;
+                        $pipelineType = 'Build';
+
+                        $buildSTData = $BuildSTDetails.Data | Where-Object { ($_.buildDefinitionID -eq $definitionId) -and ($_.projectName -eq $projectName) };
+                        if($buildSTData){
+                            $variableGroupSTMapping.data += @([PSCustomObject] @{ variableGroupName = $_.name; variableGroupID = $_.id; serviceID = $buildSTData.serviceID; projectName = $buildSTData.projectName; projectID = $buildSTData.projectID; orgName = $buildSTData.orgName } )
+                        }
+                        Write-Host "$i - Id = $definitionId - PipelineType = $pipelineType"
+                    }
+                }
+                
+                $i++
+            }
+            $buildDefnsObj = $null;
+            Remove-Variable buildDefnsObj;
+        }
+
+        Write-Host "`n============================================`n" -ForegroundColor Red
+        Write-Host "`nBeginning VG to Release mapping`n" -ForegroundColor Red
+        Write-Host "`n============================================`n" -ForegroundColor Red
+
+        $releaseDefnURL = ("https://vsrm.dev.azure.com/{0}/{1}/_apis/release/definitions?api-version=4.1-preview.3" +$topNQueryString) -f $($this.SubscriptionContext.SubscriptionName), $projectName;
+        $releaseDefnsObj = [WebRequestHelper]::InvokeGetWebRequest($releaseDefnURL);
+                            
+        if (([Helpers]::CheckMember($releaseDefnsObj, "count") -and $releaseDefnsObj[0].count -gt 0) -or (($releaseDefnsObj | Measure-Object).Count -gt 0 -and [Helpers]::CheckMember($releaseDefnsObj[0], "name"))) {
+            $i = 1;                   
+            foreach ($relDef in $releaseDefnsObj) {
+                $apiURL =  $relDef.url
+                $releaseObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
+
+                $definitionId = ''
+                $pipelineType = ''
+                
+                $varGrps = @();
+                
+                #add var groups scoped at release scope.
+                if((($releaseObj[0].variableGroups) | Measure-Object).Count -gt 0)
+                {
+                    $varGrps += $releaseObj[0].variableGroups
+                }
+
+                # Each release pipeline has atleast 1 env.
+                $envCount = ($releaseObj[0].environments).Count
+
+                for($j=0; $j -lt $envCount; $j++)
+                {
+                    if((($releaseObj[0].environments[$j].variableGroups) | Measure-Object).Count -gt 0)
+                    {
+                        $varGrps += $releaseObj[0].environments[$j].variableGroups
+                    }
+                }
+
+                if(($varGrps | Measure-Object).Count -gt 0)
+                {
+                    $varGrps | ForEach-Object{
+                        $varGrpURL = ("https://{0}.visualstudio.com/{1}/_apis/distributedtask/variablegroups/{2}") -f $orgName, $projId, $_;
+                        $varGrpObj = [WebRequestHelper]::InvokeGetWebRequest($varGrpURL);
+
+                        $definitionId =  $releaseObj[0].id;
+                        $pipelineType = 'Release';
+
+                        $releaseSTData = $ReleaseSTDetails.Data | Where-Object { ($_.releaseDefinitionID -eq $definitionId) -and ($_.projectName -eq $projectName) };
+                        if($releaseSTData){
+                            $variableGroupSTMapping.data += @([PSCustomObject] @{ variableGroupName = $varGrpObj.name; variableGroupID = $varGrpObj.id; serviceID = $releaseSTData.serviceID; projectName = $releaseSTData.projectName; projectID = $releaseSTData.projectID; orgName = $releaseSTData.orgName } )
+                        }
+                        Write-Host "$i - Id = $definitionId - PipelineType = $pipelineType"
+                    }
+                }
+                $i++   
+            }
+            $releaseDefnsObj = $null;
+            Remove-Variable $releaseDefnsObj
+        }
+
+        $variableGroupSTMapping | ConvertTo-Json -Depth 10 | Out-File 'C:\Users\abdaga\Downloads\VariableGroupSTMapping.json'  
+        return $controlResult;
+    }
 
 }

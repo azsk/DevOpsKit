@@ -441,4 +441,74 @@ class ServiceConnection: ADOSVTBase
          
         return $controlResult;
     }
+    hidden [ControlResult] FetchSTMapping([ControlResult] $controlResult) {  
+        
+        $orgName = "MicrosoftIT"
+        $projectName = "OneITVSO"
+
+        $serviceEndpointURL = ("https://dev.azure.com/{0}/{1}/_apis/serviceendpoint/endpoints?api-version=4.1-preview.1") -f $orgName, $projectName;
+        $serviceEndpointObj = [WebRequestHelper]::InvokeGetWebRequest($serviceEndpointURL)
+
+        $Connections = $null
+        if (([Helpers]::CheckMember($serviceEndpointObj, "count") -and $serviceEndpointObj[0].count -gt 0) -or (($serviceEndpointObj | Measure-Object).Count -gt 0 -and [Helpers]::CheckMember($serviceEndpointObj[0], "name"))) {
+            
+            $Connections = $serviceEndpointObj | Where-Object { ($_.type -eq "azurerm" -or $_.type -eq "azure" -or $_.type -eq "git" -or $_.type -eq "github" -or $_.type -eq "externaltfs") } 
+            
+        }
+
+        $i = 1;
+        $buildSTDataFileName ="BuildSTData.json";
+        $BuildSTDetails = [ConfigurationManager]::LoadServerConfigFile($buildSTDataFileName);
+
+        $releaseSTDataFileName ="ReleaseSTData.json";
+        $ReleaseSTDetails = [ConfigurationManager]::LoadServerConfigFile($releaseSTDataFileName);
+
+        $svcConnSTMapping = @{
+            data = @();
+        };
+        
+        $Connections | ForEach-Object {
+            $projectId = "3d1a556d-2042-4a45-9dae-61808ff33d3b"
+            $apiURL = "https://{0}.visualstudio.com/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1" -f $orgName
+            $sourcePageUrl = "https://{0}.visualstudio.com/{1}/_settings/adminservices" -f $orgName, $projectName;
+            $inputbody = "{'contributionIds':['ms.vss-serviceEndpoints-web.service-endpoints-details-data-provider'],'dataProviderContext':{'properties':{'serviceEndpointId':'$($_.id)','projectId':'$($projectId)','sourcePage':{'url':'$($sourcePageUrl)','routeId':'ms.vss-admin-web.project-admin-hub-route','routeValues':{'project':'$($projectName)','adminPivot':'adminservices','controller':'ContributedPage','action':'Execute'}}}}}" | ConvertFrom-Json
+            
+            $definitionId = '';
+            $pipelineType = '';
+            $responseObj = [WebRequestHelper]::InvokePostWebRequest($apiURL, $inputbody); 
+            
+            if ([Helpers]::CheckMember($responseObj, "dataProviders") -and $responseObj.dataProviders."ms.vss-serviceEndpoints-web.service-endpoints-details-data-provider") {
+                
+                $serviceConnEndPointDetail = $responseObj.dataProviders."ms.vss-serviceEndpoints-web.service-endpoints-details-data-provider"
+                if ($serviceConnEndPointDetail -and [Helpers]::CheckMember($serviceConnEndPointDetail, "serviceEndpointExecutionHistory") ) {
+                    if ([Helpers]::CheckMember($serviceConnEndPointDetail.serviceEndpointExecutionHistory[0].data, "planType") -and $serviceConnEndPointDetail.serviceEndpointExecutionHistory[0].data.planType -eq "Build") {
+                        
+                        $definitionId = $serviceConnEndPointDetail.serviceEndpointExecutionHistory[0].data.definition.id;
+                        $pipelineType = 'Build';
+                        
+                        $buildSTData = $BuildSTDetails.Data | Where-Object { ($_.buildDefinitionID -eq $definitionId) -and ($_.projectName -eq $projectName) };
+                        if($buildSTData){
+                            $svcConnSTMapping.data += @([PSCustomObject] @{ serviceConnectionName = $_.Name; serviceConnectionID = $_.id; serviceID = $buildSTData.serviceID; projectName = $buildSTData.projectName; projectID = $buildSTData.projectID; orgName = $buildSTData.orgName } )
+                        }
+                        
+                    }
+                    elseif ([Helpers]::CheckMember($serviceConnEndPointDetail.serviceEndpointExecutionHistory[0].data, "planType") -and $serviceConnEndPointDetail.serviceEndpointExecutionHistory[0].data.planType -eq "Release") {
+                        $definitionId = $serviceConnEndPointDetail.serviceEndpointExecutionHistory[0].data.definition.id;
+                        $pipelineType = 'Release'; 
+                        
+                        $releaseSTData = $ReleaseSTDetails.Data | Where-Object { ($_.releaseDefinitionID -eq $definitionId) -and ($_.projectName -eq $projectName) };
+                        if($releaseSTData){
+                            $svcConnSTMapping.data += @([PSCustomObject] @{ serviceConnectionName = $_.Name; serviceConnectionID = $_.id; serviceID = $releaseSTData.serviceID; projectName = $releaseSTData.projectName; projectID = $releaseSTData.projectID; orgName = $releaseSTData.orgName } )
+                        }
+                    }
+                    
+                }
+            }
+
+            Write-Host "$i - Id = $definitionId - PipelineType = $pipelineType"
+            $i++
+        }
+        $svcConnSTMapping | ConvertTo-Json -Depth 10 | Out-File 'C:\Users\abdaga\Downloads\ServiceConnectionSTMapping.json' 
+        return $controlResult;
+    }
 }

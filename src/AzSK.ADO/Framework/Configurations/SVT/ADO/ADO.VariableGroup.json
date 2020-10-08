@@ -88,6 +88,23 @@
               "DP"
             ],
             "Enabled": true
+          },
+          {
+            "ControlID": "ADO_VariableGroup_ST_Mapping",
+            "Description": "TBD",
+            "Id": "VariableGroup160",
+            "ControlSeverity": "High",
+            "Automated": "Yes",
+            "MethodName": "FetchSTMapping",
+            "Rationale": "TBD",
+            "Recommendation": "TBD",
+            "Tags": [
+              "SDL",
+              "TCP",
+              "Automated",
+              "AuthZ"
+            ],
+            "Enabled": true
           }
     ]
 }

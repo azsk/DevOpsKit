@@ -170,4 +170,70 @@ class AgentPool: ADOSVTBase
         $agentPool = $null;
         return $controlResult
     }
+    hidden [ControlResult] FetchSTMapping([ControlResult] $controlResult) {  
+        
+        $orgName = "MicrosoftIT"
+        $projectName = "OneITVSO"
+
+        $agentPoolsDefnURL = ("https://{0}.visualstudio.com/{1}/_settings/agentqueues?__rt=fps&__ver=2") -f $($this.SubscriptionContext.SubscriptionName), $projectName;
+        $agentPoolsDefnsObj = [WebRequestHelper]::InvokeGetWebRequest($agentPoolsDefnURL);
+        
+        $taskAgentQueues = $null;
+        
+        if (([Helpers]::CheckMember($agentPoolsDefnsObj, "fps.dataProviders.data") ) -and (($agentPoolsDefnsObj.fps.dataProviders.data."ms.vss-build-web.agent-queues-data-provider") -and $agentPoolsDefnsObj.fps.dataProviders.data."ms.vss-build-web.agent-queues-data-provider".taskAgentQueues)) {
+            $taskAgentQueues = $agentPoolsDefnsObj.fps.dataProviders.data."ms.vss-build-web.agent-queues-data-provider".taskAgentQueues | where-object{$_.pool.isLegacy -eq $false}; 
+        }
+
+        $i = 1;
+        $buildSTDataFileName ="BuildSTData.json";
+        $BuildSTDetails = [ConfigurationManager]::LoadServerConfigFile($buildSTDataFileName);
+
+        $releaseSTDataFileName ="ReleaseSTData.json";
+        $ReleaseSTDetails = [ConfigurationManager]::LoadServerConfigFile($releaseSTDataFileName);
+
+        $agentPoolSTMapping = @{
+            data = @();
+        };
+         
+        $taskAgentQueues | ForEach-Object {
+            $projectId = "3d1a556d-2042-4a45-9dae-61808ff33d3b"
+            $agtPoolId = $_.id
+            $agentPoolsURL = "https://{0}.visualstudio.com/{1}/_settings/agentqueues?queueId={2}&__rt=fps&__ver=2" -f $orgName, $projectId, $agtPoolId
+            $agentPool = [WebRequestHelper]::InvokeGetWebRequest($agentPoolsURL);
+            
+            $definitionId = '';
+            $pipelineType = '';
+            
+            if (([Helpers]::CheckMember($agentPool[0], "fps.dataProviders.data") ) -and ($agentPool[0].fps.dataProviders.data."ms.vss-build-web.agent-jobs-data-provider")) {
+                $agentPoolJobs = $agentPool[0].fps.dataProviders.data."ms.vss-build-web.agent-jobs-data-provider".jobs | Where-Object { $_.scopeId -eq $projectId };
+                #If agent pool has been queued at least once
+                if (($agentPoolJobs | Measure-Object).Count -gt 0) {
+                    if ([Helpers]::CheckMember($agentPoolJobs[0], "planType") -and $agentPoolJobs[0].planType -eq "Build") {
+                        $definitionId = $agentPoolJobs[0].definition.id;
+                        $pipelineType = 'Build';
+
+                        $buildSTData = $BuildSTDetails.Data | Where-Object { ($_.buildDefinitionID -eq $definitionId) -and ($_.projectName -eq $projectName) };
+                        if($buildSTData){
+                            $agentPoolSTMapping.data += @([PSCustomObject] @{ agentPoolName = $_.Name; agentPoolID = $_.id; serviceID = $buildSTData.serviceID; projectName = $buildSTData.projectName; projectID = $buildSTData.projectID; orgName = $buildSTData.orgName } )
+                        }
+                    }
+                    elseif ([Helpers]::CheckMember($agentPoolJobs[0], "planType") -and $agentPoolJobs[0].planType -eq "Release") {
+                        $definitionId = $agentPoolJobs[0].definition.id;
+                        $pipelineType = 'Release';
+
+                        $releaseSTData = $ReleaseSTDetails.Data | Where-Object { ($_.releaseDefinitionID -eq $definitionId) -and ($_.projectName -eq $projectName) };
+                        if($releaseSTData){
+                            $agentPoolSTMapping.data += @([PSCustomObject] @{ agentPoolName = $_.Name; agentPoolID = $_.id; serviceID = $releaseSTData.serviceID; projectName = $releaseSTData.projectName; projectID = $releaseSTData.projectID; orgName = $releaseSTData.orgName } )
+                        }
+                    }
+                }
+                
+            }
+
+            Write-Host "$i - Id = $definitionId - PipelineType = $pipelineType"
+            $i++
+        }
+        $agentPoolSTMapping | ConvertTo-Json -Depth 10 | Out-File 'C:\Users\abdaga\Downloads\AgentPoolSTMapping.json' 
+        return $controlResult;
+    }
 }
