@@ -115,6 +115,18 @@ class AzSVTCommandBase: SVTCommandBase {
                 [SVTControlAttestation] $svtControlAttestation = [SVTControlAttestation]::new($arguments, $this.AttestationOptions, $this.SubscriptionContext, $this.InvocationContext);
                 #The current context user would be able to read the storage blob only if he has minimum of contributor access.
                 if ($svtControlAttestation.controlStateExtension.HasControlStateReadAccessPermissions()) {
+                   # Check if latest version is being used for attestation,block attestation otherwise
+                    $AzSKModuleName= [Constants]::AzSKModuleName
+		            $moduleVersionInUse= [Constants]::AzSKCurrentModuleVersion
+                    $latestVersion = [System.Version] ([ConfigurationManager]::GetAzSKConfigData().GetLatestAzSKVersion($AzSKModuleName));
+                    if($latestVersion -ne $moduleVersionInUse){
+                        [MessageData] $data = [MessageData]@{
+                            Message     = ("Please use latest $($AzSKModuleName) module v.'$($latestVersion)' for attestation. The version currently being used is '$($moduleVersionInUse)'");
+                            MessageType = [MessageType]::Error;
+                        };
+                        $this.PublishCustomMessage($data)
+                        return
+                    }
                     if (-not [string]::IsNullOrWhiteSpace($this.AttestationOptions.JustificationText) -or $this.AttestationOptions.IsBulkClearModeOn) {
                         $this.PublishCustomMessage([Constants]::HashLine + "`n`nStarting Control Attestation workflow in bulk mode...`n`n");
                     }
