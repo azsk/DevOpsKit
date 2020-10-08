@@ -21,6 +21,7 @@ class ControlStateExtension
 	hidden [int] $retryCount = 3;
 	hidden [string] $UniqueRunId;
 	hidden [bool] $GetControlStateByResourceId = $false;
+	hidden [string[]] $ControlsExcludedByOrgPolicy = @();
 	hidden [SubscriptionContext] $SubscriptionContext;
     hidden [InvocationInfo] $InvocationContext;
 	ControlStateExtension([SubscriptionContext] $subscriptionContext, [InvocationInfo] $invocationContext)
@@ -34,6 +35,15 @@ class ControlStateExtension
 		if([FeatureFlightingManager]::GetFeatureStatus("GetControlStateByResourceId",$($this.SubscriptionContext.SubscriptionId))) 
 		{
 			$this.GetControlStateByResourceId = $true;
+		}
+
+		$controlSettings = [ConfigurationManager]::LoadServerConfigFile("ControlSettings.json");
+		$TenantId = ([ContextHelper]::GetCurrentRMContext()).Tenant.Id
+		if([Helpers]::CheckMember($controlSettings, "ControlsToExcludeFromScan.TenantIds") `
+							-and ($controlSettings.ControlsToExcludeFromScan.TenantIds -contains $TenantId) `
+							-and [Helpers]::CheckMember($controlSettings, "ControlsToExcludeFromScan.ControlIds") )
+		{
+			$this.ControlsExcludedByOrgPolicy += $controlSettings.ControlsToExcludeFromScan.ControlIds
 		}
 	}
 
@@ -410,8 +420,8 @@ class ControlStateExtension
 		}
 
 
-		#Filter out the "Passed" controls
-		$finalControlStates = $controlStates | Where-Object { $_.ActualVerificationResult -ne [VerificationResult]::Passed};
+		#Filter out the "Passed" controls which are not excluded by org policy
+		$finalControlStates = $controlStates | Where-Object { $_.ActualVerificationResult -ne [VerificationResult]::Passed -or $this.ControlsExcludedByOrgPolicy -contains $_.ControlId};
 		if(($finalControlStates | Measure-Object).Count -gt 0)
 		{
 			if($Override)

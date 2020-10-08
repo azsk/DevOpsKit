@@ -148,7 +148,6 @@ Class LogAnalyticsHelper{
 			if($eventContext.ControlItem.IsControlExcluded){
 				$out.IsControlExcluded = $true
 				$out.HasRequiredAccess = $false
-				# TODO: We can put reason here as well
 			}
 			else{
 				$out.IsControlExcluded = $false

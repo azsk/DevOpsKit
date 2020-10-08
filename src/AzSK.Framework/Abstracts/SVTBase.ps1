@@ -946,11 +946,11 @@ class SVTBase: AzSKRoot
 					$childResourceState = $controlState | Where-Object { $_.ChildResourceName -eq $currentItem.ChildResourceName } | Select-Object -First 1;
 					if ($childResourceState)
 					{
-						# Skip passed ones from State Management
-						if ($currentItem.ActualVerificationResult -ne [VerificationResult]::Passed)
+						# Skip passed ones (that are not marked excluded as per org policy) from State Management
+						if (($currentItem.ActualVerificationResult -ne [VerificationResult]::Passed) -or ($eventcontext.controlItem.IsControlExcluded -eq $true))
 						{
-							#compare the states
-							if (($childResourceState.ActualVerificationResult -eq $currentItem.ActualVerificationResult) -and $childResourceState.State)
+							#compare the states if control is not marked excluded as per org policy
+							if (($childResourceState.ActualVerificationResult -eq $currentItem.ActualVerificationResult -or $eventcontext.controlItem.IsControlExcluded) -and $childResourceState.State)
 							{
 								$currentItem.StateManagement.AttestedStateData = $childResourceState.State;
 
@@ -1110,6 +1110,12 @@ class SVTBase: AzSKRoot
 									}
 								}
 								#endregion: Prevent attestation drift due to dev changes
+
+								#region: Respect attestation for controls excluded by org policy
+								if($eventcontext.controlItem.IsControlExcluded){
+									$this.ModifyControlResult($currentItem, $childResourceState);
+								}
+								#endregion: Respect attestation for controls excluded by org policy
 
 							}
 						}

@@ -48,7 +48,13 @@ class SVTControlAttestation
 	[ControlState] ComputeEffectiveControlState([ControlState] $controlState, [string] $ControlSeverity, [bool] $isSubscriptionControl, [SVTEventContext] $controlItem, [ControlResult] $controlResult)
 	{
 		Write-Host "$([Constants]::SingleDashLine)" -ForegroundColor Cyan
-		Write-Host "ControlId            : $($controlState.ControlId)`nControlSeverity      : $ControlSeverity`nDescription          : $($controlItem.ControlItem.Description)`nCurrentControlStatus : $($controlState.ActualVerificationResult)`n"		
+		if(-not $controlItem.ControlItem.IsControlExcluded){
+			Write-Host "ControlId            : $($controlState.ControlId)`nControlSeverity      : $ControlSeverity`nDescription          : $($controlItem.ControlItem.Description)`nCurrentControlStatus : $($controlState.ActualVerificationResult)`n"	
+		}else{
+			Write-Host "ControlId            : $($controlState.ControlId)`nControlSeverity      : $ControlSeverity`nDescription          : $($controlItem.ControlItem.Description)`n"	
+			Write-Host "`r`nPlease note that this control is in excluded state. For more details on excluded controls, please refer: https://aka.ms/azsk/excludedcontrols`n" -ForegroundColor Yellow
+		}
+			
 		if(-not $controlResult.CurrentSessionContext.Permissions.HasRequiredAccess)
 		{
 			Write-Host "Skipping attestation process for this control. You do not have required permissions to evaluate this control. `nNote: If your permissions were elevated recently, please run the 'Disconnect-AzAccount' command to clear the Azure cache and try again." -ForegroundColor Yellow
@@ -76,8 +82,8 @@ class SVTControlAttestation
 			$tempCurrentStateObject  = $controlResult.StateManagement.CurrentStateData;
 		}
 
-		#display the current state only if the state object is not empty
-		if($null -ne $tempCurrentStateObject -and $null -ne $tempCurrentStateObject.DataObject)
+		#display the current state only if the state object is not empty and control is not excluded as per org policy
+		if($null -ne $tempCurrentStateObject -and $null -ne $tempCurrentStateObject.DataObject -and $controlItem.ControlItem.IsControlExcluded -eq $false)
 		{
 			Write-Host "Configuration data to be attested:" -ForegroundColor Cyan
 			Write-Host "$([JsonHelper]::ConvertToPson($tempCurrentStateObject.DataObject))"
@@ -313,7 +319,12 @@ class SVTControlAttestation
 		#Checking if control is attestable 
        
 		if($this.isControlAttestable($controlItem, $controlResult))
-		{	# Checking if the attestation state provided in command parameter is valid for the control
+		{	
+			# Print warning message for excluded controls
+			if($controlItem.ControlItem.IsControlExcluded){
+				Write-Host "Please note that this control is in excluded state. For more details on excluded controls, please refer: https://aka.ms/azsk/excludedcontrols" -ForegroundColor Yellow
+			}
+			# Checking if the attestation state provided in command parameter is valid for the control
 			if( $this.attestOptions.AttestationStatus -in $ValidAttestationStatesHashTable.Name)
 			{
 			
@@ -481,7 +492,7 @@ class SVTControlAttestation
 							[ControlResult[]] $matchedControlResults = @();
 							$controlItem.ControlResults | ForEach-Object {
 								$controlResult = $_
-								if($controlResult.ActualVerificationResult -ne [VerificationResult]::Passed -and $controlResult.ActualVerificationResult -ne [VerificationResult]::Error)
+								if(($controlResult.ActualVerificationResult -ne [VerificationResult]::Passed -and $controlResult.ActualVerificationResult -ne [VerificationResult]::Error) -or $controlItem.ControlItem.IsControlExcluded)
 								{
 									if($this.AttestControlsChoice -eq [AttestControls]::All)
 									{
