@@ -119,9 +119,9 @@ class AzSVTCommandBase: SVTCommandBase {
                     $AzSKModuleName= [Constants]::AzSKModuleName
 		            $moduleVersionInUse= [Constants]::AzSKCurrentModuleVersion
                     $latestVersion = [System.Version] ([ConfigurationManager]::GetAzSKConfigData().GetLatestAzSKVersion($AzSKModuleName));
-                    if($latestVersion -ne $moduleVersionInUse){
+                    if($latestVersion -ne $moduleVersionInUse -and [ConfigurationManager]::GetAzSKSettings().IsSAW -eq $false){
                         [MessageData] $data = [MessageData]@{
-                            Message     = ("Please use latest $($AzSKModuleName) module v.'$($latestVersion)' for attestation. The version currently being used is '$($moduleVersionInUse)'");
+                            Message     = ([Constants]::HashLine +"`n`nAborting the attestation flow since you are using an older version of $($AzSKModuleName).Please install and use the latest version '$($latestVersion)' to ensure that you are always using the latest security controls.");
                             MessageType = [MessageType]::Error;
                         };
                         $this.PublishCustomMessage($data)
