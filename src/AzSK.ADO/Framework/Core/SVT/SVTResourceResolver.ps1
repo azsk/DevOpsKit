@@ -36,7 +36,6 @@ class SVTResourceResolver: AzSKRoot {
     hidden [PSObject] $svcConnSTDetails;
     hidden [PSObject] $agtPoolSTDetails;
     hidden [PSObject] $varGroupSTDetails;
-    hidden [bool] $scanAllArtifacts = $false;
 
     SVTResourceResolver([string]$organizationName, $ProjectNames, $BuildNames, $ReleaseNames, $AgentPools, $ServiceConnectionNames, $VariableGroupNames, $MaxObj, $ScanAllArtifacts, $PATToken, $ResourceTypeName, $AllowLongRunningScan, $ServiceId): Base($organizationName, $PATToken) {
         $this.MaxObjectsToScan = $MaxObj #default = 0 => scan all if "*" specified...
@@ -133,8 +132,6 @@ class SVTResourceResolver: AzSKRoot {
             $this.AgentPools = "*"
             $this.ServiceConnections = "*"
             $this.VariableGroups = "*"
-
-            $this.scanAllArtifacts = $ScanAllArtifacts;
         }  
 
         if (( $this.MaxObjectsToScan -eq 0 -or $this.MaxObjectsToScan -gt $this.longRunningScanCheckPoint) -and ($this.ProjectNames -eq "*" -or $this.BuildNames -eq "*" -or $this.ReleaseNames -eq "*" -or $this.ServiceConnections -eq "*" -or $this.AgentPools -eq "*" -or $this.VariableGroups -eq "*")) {            
@@ -538,7 +535,7 @@ class SVTResourceResolver: AzSKRoot {
     {
         $this.PublishCustomMessage("Getting service associated resources...");
         
-        if ($this.scanAllArtifacts -or ($this.ResourceTypeName -in ([ResourceTypeName]::Build, [ResourceTypeName]::All, [ResourceTypeName]::Build_Release, [ResourceTypeName]::Build_Release_SvcConn_AgentPool_User))) 
+        if ($this.ResourceTypeName -in ([ResourceTypeName]::Build, [ResourceTypeName]::All, [ResourceTypeName]::Build_Release, [ResourceTypeName]::Build_Release_SvcConn_AgentPool_User))
         {
            if (!$this.buildSTDetails) {
                 $this.buildSTDetails = [ConfigurationManager]::LoadServerConfigFile("BuildSTData.json");
@@ -551,7 +548,7 @@ class SVTResourceResolver: AzSKRoot {
             }
         }
 
-        if ($this.scanAllArtifacts -or ($this.ResourceTypeName -in ([ResourceTypeName]::Release, [ResourceTypeName]::All, [ResourceTypeName]::Build_Release, [ResourceTypeName]::Build_Release_SvcConn_AgentPool_User)))
+        if ($this.ResourceTypeName -in ([ResourceTypeName]::Release, [ResourceTypeName]::All, [ResourceTypeName]::Build_Release, [ResourceTypeName]::Build_Release_SvcConn_AgentPool_User))
         {
             if (!$this.releaseSTDetails) {
                 $this.releaseSTDetails = [ConfigurationManager]::LoadServerConfigFile("ReleaseSTData.json");
@@ -563,7 +560,7 @@ class SVTResourceResolver: AzSKRoot {
             }
         }
 
-        if ($this.scanAllArtifacts -or ($this.ResourceTypeName -in ([ResourceTypeName]::ServiceConnection, [ResourceTypeName]::All, [ResourceTypeName]::Build_Release_SvcConn_AgentPool_User)))
+        if ($this.ResourceTypeName -in ([ResourceTypeName]::ServiceConnection, [ResourceTypeName]::All, [ResourceTypeName]::Build_Release_SvcConn_AgentPool_User))
         {
             if (!$this.svcConnSTDetails) {
                 $this.svcConnSTDetails = [ConfigurationManager]::LoadServerConfigFile("ServiceConnectionSTMapping.json");
@@ -574,27 +571,27 @@ class SVTResourceResolver: AzSKRoot {
                 $this.ServiceConnections = $svcConnData.serviceConnectionName
             }
         }
-        if ($this.scanAllArtifacts -or ($this.ResourceTypeName -in ([ResourceTypeName]::AgentPool, [ResourceTypeName]::All, [ResourceTypeName]::Build_Release_SvcConn_AgentPool_User))) 
+        if ($this.ResourceTypeName -in ([ResourceTypeName]::AgentPool, [ResourceTypeName]::All, [ResourceTypeName]::Build_Release_SvcConn_AgentPool_User))
         {
             if (!$this.agtPoolSTDetails) {
                 $this.agtPoolSTDetails = [ConfigurationManager]::LoadServerConfigFile("AgentPoolSTMapping.json");
             }
             
-            $agtData = $this.agtPoolSTDetails.Data | Where-Object { ($_.serviceId -eq $stId) -and ($_.projectName -eq $projectName) }
-            if ($agtData) {
-                $this.AgentPools = $agtData.agentPoolName
+            $agtPoolData = $this.agtPoolSTDetails.Data | Where-Object { ($_.serviceId -eq $stId) -and ($_.projectName -eq $projectName) }
+            if ($agtPoolData) {
+                $this.AgentPools = $agtPoolData.agentPoolName
             }
         }
 
-        if ($this.scanAllArtifacts -or ($this.ResourceTypeName -in ([ResourceTypeName]::VariableGroup, [ResourceTypeName]::All)))
+        if ($this.ResourceTypeName -in ([ResourceTypeName]::VariableGroup, [ResourceTypeName]::All))
         {
             if (!$this.varGroupSTDetails) {
                 $this.varGroupSTDetails = [ConfigurationManager]::LoadServerConfigFile("VariableGroupSTMapping.json");
             }
             
-            $varData = $this.varGroupSTDetails.Data | Where-Object { ($_.serviceId -eq $stId) -and ($_.projectName -eq $projectName) }
-            if ($varData) {
-                $this.VariableGroupNames = $varData.variableGroupName
+            $varGrpData = $this.varGroupSTDetails.Data | Where-Object { ($_.serviceId -eq $stId) -and ($_.projectName -eq $projectName) }
+            if ($varGrpData) {
+                $this.VariableGroupNames = $varGrpData.variableGroupName
             }
         }
     }
