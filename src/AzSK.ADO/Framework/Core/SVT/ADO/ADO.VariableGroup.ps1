@@ -236,9 +236,6 @@ class VariableGroup: ADOSVTBase
         $projId = "3d1a556d-2042-4a45-9dae-61808ff33d3b"
 
         $topNQueryString = '&$top=10000'
-        
-        $buildSTDataFileName ="BuildSTData.json";
-        $BuildSTDetails = [ConfigurationManager]::LoadServerConfigFile($buildSTDataFileName);
 
         $releaseSTDataFileName ="ReleaseSTData.json";
         $ReleaseSTDetails = [ConfigurationManager]::LoadServerConfigFile($releaseSTDataFileName);
@@ -246,51 +243,20 @@ class VariableGroup: ADOSVTBase
         $variableGroupSTMapping = @{
             data = @();
         };
-        
-        Write-Host "`n============================================`n" -ForegroundColor Red
-        Write-Host "`nBeginning VG to Build mapping`n" -ForegroundColor Red
-        Write-Host "`n============================================`n" -ForegroundColor Red
-
-        $buildDefnURL = ("https://dev.azure.com/{0}/{1}/_apis/build/definitions?api-version=4.1" + $topNQueryString) -f $orgName, $projectName;
-        $buildDefnsObj = [WebRequestHelper]::InvokeGetWebRequest($buildDefnURL) 
-
-        if (([Helpers]::CheckMember($buildDefnsObj, "count") -and $buildDefnsObj[0].count -gt 0) -or (($buildDefnsObj | Measure-Object).Count -gt 0 -and [Helpers]::CheckMember($buildDefnsObj[0], "name"))) {
-            $i = 1;
-            foreach ($bldDef in $buildDefnsObj) {
-                $apiURL =  $bldDef.url.split('?')[0]
-                $buildObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
-
-                $definitionId = ''
-                $pipelineType = ''
-
-                if([Helpers]::CheckMember($buildObj[0],"variableGroups"))
-                {
-                    $varGrps = $buildObj[0].variableGroups
-                    $varGrps | ForEach-Object{
-                        $definitionId =  $buildObj[0].id;
-                        $pipelineType = 'Build';
-
-                        $buildSTData = $BuildSTDetails.Data | Where-Object { ($_.buildDefinitionID -eq $definitionId) -and ($_.projectName -eq $projectName) };
-                        if($buildSTData){
-                            $variableGroupSTMapping.data += @([PSCustomObject] @{ variableGroupName = $_.name; variableGroupID = $_.id; serviceID = $buildSTData.serviceID; projectName = $buildSTData.projectName; projectID = $buildSTData.projectID; orgName = $buildSTData.orgName } )
-                        }
-                        Write-Host "$i - Id = $definitionId - PipelineType = $pipelineType"
-                    }
-                }
-                
-                $i++
-            }
-            $buildDefnsObj = $null;
-            Remove-Variable buildDefnsObj;
-        }
 
         Write-Host "`n============================================`n" -ForegroundColor Red
         Write-Host "`nBeginning VG to Release mapping`n" -ForegroundColor Red
         Write-Host "`n============================================`n" -ForegroundColor Red
 
-        $releaseDefnURL = ("https://vsrm.dev.azure.com/{0}/{1}/_apis/release/definitions?api-version=4.1-preview.3" +$topNQueryString) -f $($this.SubscriptionContext.SubscriptionName), $projectName;
-        $releaseDefnsObj = [WebRequestHelper]::InvokeGetWebRequest($releaseDefnURL);
-                            
+        $releaseDefnsObj = $null;
+        try{
+            $releaseDefnURL = ("https://vsrm.dev.azure.com/{0}/{1}/_apis/release/definitions?api-version=4.1-preview.3" +$topNQueryString) -f $($this.SubscriptionContext.SubscriptionName), $projectName;
+            $releaseDefnsObj = [WebRequestHelper]::InvokeGetWebRequest($releaseDefnURL);
+        }
+        catch
+        {
+
+        }    
         if (([Helpers]::CheckMember($releaseDefnsObj, "count") -and $releaseDefnsObj[0].count -gt 0) -or (($releaseDefnsObj | Measure-Object).Count -gt 0 -and [Helpers]::CheckMember($releaseDefnsObj[0], "name"))) {
             $i = 1;                   
             foreach ($relDef in $releaseDefnsObj) {
@@ -335,8 +301,8 @@ class VariableGroup: ADOSVTBase
                                 $releaseSTData = $ReleaseSTDetails.Data | Where-Object { ($_.releaseDefinitionID -eq $definitionId) -and ($_.projectName -eq $projectName) };
                                 if($releaseSTData){
                                     $variableGroupSTMapping.data += @([PSCustomObject] @{ variableGroupName = $varGrpObj.name; variableGroupID = $varGrpObj.id; serviceID = $releaseSTData.serviceID; projectName = $releaseSTData.projectName; projectID = $releaseSTData.projectID; orgName = $releaseSTData.orgName } )
+                                    Write-Host "$i - Id = $definitionId - PipelineType = $pipelineType"
                                 }
-                                Write-Host "$i - Id = $definitionId - PipelineType = $pipelineType"
                             }
                             catch{
                                 Write-Host "$i - Exception while fetching variable group id: $_"
@@ -351,7 +317,53 @@ class VariableGroup: ADOSVTBase
                 $i++   
             }
             $releaseDefnsObj = $null;
-            Remove-Variable $releaseDefnsObj
+        }
+        $variableGroupSTMapping | ConvertTo-Json -Depth 10 | Out-File 'C:\Users\abdaga\Downloads\VariableGroupSTMapping.json'  
+
+        $buildSTDataFileName ="BuildSTData.json";
+        $BuildSTDetails = [ConfigurationManager]::LoadServerConfigFile($buildSTDataFileName);
+
+        Write-Host "`n============================================`n" -ForegroundColor Red
+        Write-Host "`nBeginning VG to Build mapping`n" -ForegroundColor Red
+        Write-Host "`n============================================`n" -ForegroundColor Red
+
+        $buildDefnsObj = $null;
+        
+        try{
+            $buildDefnURL = ("https://dev.azure.com/{0}/{1}/_apis/build/definitions?api-version=4.1" + $topNQueryString) -f $orgName, $projectName;
+            $buildDefnsObj = [WebRequestHelper]::InvokeGetWebRequest($buildDefnURL) 
+        }
+        catch{
+
+        }
+        
+        if (([Helpers]::CheckMember($buildDefnsObj, "count") -and $buildDefnsObj[0].count -gt 0) -or (($buildDefnsObj | Measure-Object).Count -gt 0 -and [Helpers]::CheckMember($buildDefnsObj[0], "name"))) {
+            $i = 1;
+            foreach ($bldDef in $buildDefnsObj) {
+                $apiURL =  $bldDef.url.split('?')[0]
+                $buildObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
+
+                $definitionId = ''
+                $pipelineType = ''
+
+                if([Helpers]::CheckMember($buildObj[0],"variableGroups"))
+                {
+                    $varGrps = $buildObj[0].variableGroups
+                    $varGrps | ForEach-Object{
+                        $definitionId =  $buildObj[0].id;
+                        $pipelineType = 'Build';
+
+                        $buildSTData = $BuildSTDetails.Data | Where-Object { ($_.buildDefinitionID -eq $definitionId) -and ($_.projectName -eq $projectName) };
+                        if($buildSTData){
+                            $variableGroupSTMapping.data += @([PSCustomObject] @{ variableGroupName = $_.name; variableGroupID = $_.id; serviceID = $buildSTData.serviceID; projectName = $buildSTData.projectName; projectID = $buildSTData.projectID; orgName = $buildSTData.orgName } )
+                            Write-Host "$i - Id = $definitionId - PipelineType = $pipelineType"
+                        }
+                    }
+                }
+                
+                $i++
+            }
+            $buildDefnsObj = $null;
         }
 
         $variableGroupSTMapping | ConvertTo-Json -Depth 10 | Out-File 'C:\Users\abdaga\Downloads\VariableGroupSTMapping.json'  
