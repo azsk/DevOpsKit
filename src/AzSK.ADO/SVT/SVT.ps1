@@ -217,7 +217,7 @@ function Get-AzSKADOSecurityStatus
 		[string]
 		[Parameter(HelpMessage="Service id for which the security evaluation has to be performed.")]
 		[ValidateNotNullOrEmpty()]
-		[Alias("svid")]
+		[Alias("svcid")]
 		$ServiceId
 
 	)
