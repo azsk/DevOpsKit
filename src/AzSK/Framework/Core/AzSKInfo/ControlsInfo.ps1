@@ -118,118 +118,174 @@ class ControlsInfo: AzCommandBase
 
 		$resourcetypes | ForEach-Object{
 					$controls = [ConfigurationManager]::GetSVTConfig($_.JsonFileName); 
+					[bool] $PolicyExpandedFlag = $false #Flag to represent whether control attributes have been updated or not
+					if([ConfigurationHelper]::PolicyCacheContent[$_.JsonFileName].State -eq [PolicyCacheStatus]::Final)
+					{
+						$PolicyExpandedFlag = $true
+					}
 
 					# Filter control for enable only			
 					$controls.Controls = ($controls.Controls | Where-Object { $_.Enabled -eq $true })
 
 					# Filter control for ControlIds
-					if ([Helpers]::CheckMember($controls, "Controls") -and $this.ControlIds.Count -gt 0) 
+					if ($this.ControlIds.Count -gt 0) 
 					{
 						$controls.Controls = ($controls.Controls | Where-Object { $this.ControlIds -contains $_.ControlId })
 					}
 
 					# Filter control for ControlId Contains
-					if ([Helpers]::CheckMember($controls, "Controls") -and (-not [string]::IsNullOrEmpty($this.ControlIdContains))) 
+					if (-not [string]::IsNullOrEmpty($this.ControlIdContains)) 
 					{
 						$controls.Controls = ($controls.Controls | Where-Object { $_.ControlId -Match $this.ControlIdContains })
 					}
 
 					# Filter control for Tags
-					if ([Helpers]::CheckMember($controls, "Controls") -and $this.Tags.Count -gt 0) 
+					if ($this.Tags.Count -gt 0) 
 					{
 						$controls.Controls = ($controls.Controls | Where-Object { ((Compare-Object $_.Tags $this.Tags -PassThru -IncludeEqual -ExcludeDifferent) | Measure-Object).Count -gt 0 })
 					}
 
 					# Filter control for ControlSeverity
-					if ([Helpers]::CheckMember($controls, "Controls") -and (-not [string]::IsNullOrEmpty($this.ControlSeverity))) 
+					if (-not [string]::IsNullOrEmpty($this.ControlSeverity)) 
 					{
 						$controls.Controls = ($controls.Controls | Where-Object { $this.ControlSeverity -eq $_.ControlSeverity })
 					}
 
-					if ([Helpers]::CheckMember($controls, "Controls") -and $controls.Controls.Count -gt 0)
+					if ($controls.Controls.Count -gt 0)
 					{
-						$SVTConfig.Add($controls.FeatureName, @($controls.Controls))
+						if($PolicyExpandedFlag)
+						{
+							$controls.Controls | Foreach-Object {
+								
+								if($_.FixControl)
+								{
+									$fixControl = "Yes"
+								}
+								else
+								{
+									$fixControl = "No"
+								}
+								
+								if($_.IsBaselineControl)
+								{
+									$isBaselineControls = "Yes"
+								}
+								else
+								{
+									$isBaselineControls = "No"
+								}
+
+								if($_.IsPreviewBaselineControl)
+								{
+									$isPreviewBaselineControls = "Yes"
+								}
+								else
+								{
+									$isPreviewBaselineControls = "No"
+								}
+													
+								$ctrlObj = New-Object -TypeName PSObject
+								$ctrlObj | Add-Member -NotePropertyName FeatureName -NotePropertyValue $controls.FeatureName 
+								$ctrlObj | Add-Member -NotePropertyName ControlID -NotePropertyValue $_.ControlID
+								$ctrlObj | Add-Member -NotePropertyName Description -NotePropertyValue $_.Description
+								$ctrlObj | Add-Member -NotePropertyName ControlSeverity -NotePropertyValue $_.ControlSeverity
+								$ctrlObj | Add-Member -NotePropertyName IsBaselineControl -NotePropertyValue $isBaselineControls
+								$ctrlObj | Add-Member -NotePropertyName IsPreviewBaselineControl -NotePropertyValue $isPreviewBaselineControls
+								$ctrlObj | Add-Member -NotePropertyName Rationale -NotePropertyValue $_.Rationale
+								$ctrlObj | Add-Member -NotePropertyName Recommendation -NotePropertyValue $_.Recommendation
+								$ctrlObj | Add-Member -NotePropertyName Automated -NotePropertyValue $_.Automated
+								$ctrlObj | Add-Member -NotePropertyName SupportsAutoFix -NotePropertyValue $fixControl
+								$tags = [system.String]::Join(", ", $_.Tags)
+								$ctrlObj | Add-Member -NotePropertyName Tags -NotePropertyValue $tags 
+
+								$allControls += $ctrlObj
+
+								if($this.Full)
+								{
+									$this.PublishCustomMessage([Helpers]::ConvertObjectToString($ctrlObj, $true), [MessageType]::Info);
+									$this.PublishCustomMessage([Constants]::SingleDashLine, [MessageType]::Info);
+								}
+							}
+						}
+						else
+						{						
+							$controls.Controls | Foreach-Object {
+								$_.Description = $global:ExecutionContext.InvokeCommand.ExpandString($_.Description)
+								$_.Recommendation = $global:ExecutionContext.InvokeCommand.ExpandString($_.Recommendation)
+								if($_.FixControl)
+								{
+									$fixControl = "Yes"
+								}
+								else
+								{
+									$fixControl = "No"
+								}
+								
+								if($baselineControls -contains $_.ControlID)
+								{
+									$isBaselineControls = "Yes"
+								}
+								else
+								{
+									$isBaselineControls = "No"
+								}
+
+								if($previewBaselineControls -contains $_.ControlID)
+								{
+									$isPreviewBaselineControls = "Yes"
+								}
+								else
+								{
+									$isPreviewBaselineControls = "No"
+								}
+
+								$ControlSeverity = $_.ControlSeverity
+								if([Helpers]::CheckMember($this.ControlSettings,"ControlSeverity.$ControlSeverity"))
+								{
+									$_.ControlSeverity = $this.ControlSettings.ControlSeverity.$ControlSeverity
+								}
+								else
+								{
+									$_.ControlSeverity = $ControlSeverity
+								}
+													
+								$ctrlObj = New-Object -TypeName PSObject
+								$ctrlObj | Add-Member -NotePropertyName FeatureName -NotePropertyValue $controls.FeatureName 
+								$ctrlObj | Add-Member -NotePropertyName ControlID -NotePropertyValue $_.ControlID
+								$ctrlObj | Add-Member -NotePropertyName Description -NotePropertyValue $_.Description
+								$ctrlObj | Add-Member -NotePropertyName ControlSeverity -NotePropertyValue $_.ControlSeverity
+								$ctrlObj | Add-Member -NotePropertyName IsBaselineControl -NotePropertyValue $isBaselineControls
+								$ctrlObj | Add-Member -NotePropertyName IsPreviewBaselineControl -NotePropertyValue $isPreviewBaselineControls
+								$ctrlObj | Add-Member -NotePropertyName Rationale -NotePropertyValue $_.Rationale
+								$ctrlObj | Add-Member -NotePropertyName Recommendation -NotePropertyValue $_.Recommendation
+								$ctrlObj | Add-Member -NotePropertyName Automated -NotePropertyValue $_.Automated
+								$ctrlObj | Add-Member -NotePropertyName SupportsAutoFix -NotePropertyValue $fixControl
+								$tags = [system.String]::Join(", ", $_.Tags)
+								$ctrlObj | Add-Member -NotePropertyName Tags -NotePropertyValue $tags 
+
+								$allControls += $ctrlObj
+
+								if($this.Full)
+								{
+									$this.PublishCustomMessage([Helpers]::ConvertObjectToString($ctrlObj, $true), [MessageType]::Info);
+									$this.PublishCustomMessage([Constants]::SingleDashLine, [MessageType]::Info);
+								}
+							}
+					    }
+
+						$ctrlSummary = New-Object -TypeName PSObject
+						$ctrlSummary | Add-Member -NotePropertyName FeatureName -NotePropertyValue $controls.FeatureName 
+						$ctrlSummary | Add-Member -NotePropertyName Total -NotePropertyValue ($controls.Controls).Count
+						$ctrlSummary | Add-Member -NotePropertyName $this.GetControlSeverity('Critical') -NotePropertyValue (($controls.Controls | Where-Object { $_.ControlSeverity -eq $this.GetControlSeverity("Critical") })|Measure-Object).Count
+						$ctrlSummary | Add-Member -NotePropertyName $this.GetControlSeverity('High') -NotePropertyValue (($controls.Controls | Where-Object { $_.ControlSeverity -eq $this.GetControlSeverity("High") })|Measure-Object).Count
+						$ctrlSummary | Add-Member -NotePropertyName $this.GetControlSeverity('Medium') -NotePropertyValue (($controls.Controls | Where-Object { $_.ControlSeverity -eq $this.GetControlSeverity("Medium") })|Measure-Object).Count
+						$ctrlSummary | Add-Member -NotePropertyName $this.GetControlSeverity('Low') -NotePropertyValue (($controls.Controls | Where-Object { $_.ControlSeverity -eq $this.GetControlSeverity("Low") })|Measure-Object).Count
+						$controlSummary += $ctrlSummary
 					} 
                 }
 
-		if($SVTConfig.Keys.Count -gt 0)
+		if($controlSummary.Count -gt 0)
 		{
-
-			$SVTConfig.Keys  | Foreach-Object {
-				$featureName = $_
-				$SVTConfig[$_] | Foreach-Object {
-					$_.Description = $global:ExecutionContext.InvokeCommand.ExpandString($_.Description)
-					$_.Recommendation = $global:ExecutionContext.InvokeCommand.ExpandString($_.Recommendation)
-					if($_.FixControl)
-					{
-						$fixControl = "Yes"
-					}
-					else
-					{
-						$fixControl = "No"
-					}
-					
-					if($baselineControls -contains $_.ControlID)
-					{
-						$isBaselineControls = "Yes"
-					}
-					else
-					{
-						$isBaselineControls = "No"
-					}
-
-					if($previewBaselineControls -contains $_.ControlID)
-					{
-						$isPreviewBaselineControls = "Yes"
-					}
-					else
-					{
-						$isPreviewBaselineControls = "No"
-					}
-
-					$ControlSeverity = $_.ControlSeverity
-					if([Helpers]::CheckMember($this.ControlSettings,"ControlSeverity.$ControlSeverity"))
-					{
-						$_.ControlSeverity = $this.ControlSettings.ControlSeverity.$ControlSeverity
-					}
-					else
-					{
-						$_.ControlSeverity = $ControlSeverity
-					}
-										
-					$ctrlObj = New-Object -TypeName PSObject
-					$ctrlObj | Add-Member -NotePropertyName FeatureName -NotePropertyValue $featureName 
-					$ctrlObj | Add-Member -NotePropertyName ControlID -NotePropertyValue $_.ControlID
-					$ctrlObj | Add-Member -NotePropertyName Description -NotePropertyValue $_.Description
-					$ctrlObj | Add-Member -NotePropertyName ControlSeverity -NotePropertyValue $_.ControlSeverity
-					$ctrlObj | Add-Member -NotePropertyName IsBaselineControl -NotePropertyValue $isBaselineControls
-					$ctrlObj | Add-Member -NotePropertyName IsPreviewBaselineControl -NotePropertyValue $isPreviewBaselineControls
-					$ctrlObj | Add-Member -NotePropertyName Rationale -NotePropertyValue $_.Rationale
-					$ctrlObj | Add-Member -NotePropertyName Recommendation -NotePropertyValue $_.Recommendation
-					$ctrlObj | Add-Member -NotePropertyName Automated -NotePropertyValue $_.Automated
-					$ctrlObj | Add-Member -NotePropertyName SupportsAutoFix -NotePropertyValue $fixControl
-					$tags = [system.String]::Join(", ", $_.Tags)
-					$ctrlObj | Add-Member -NotePropertyName Tags -NotePropertyValue $tags 
-
-					$allControls += $ctrlObj
-
-					if($this.Full)
-					{
-						$this.PublishCustomMessage([Helpers]::ConvertObjectToString($ctrlObj, $true), [MessageType]::Info);
-						$this.PublishCustomMessage([Constants]::SingleDashLine, [MessageType]::Info);
-					}
-				}
-
-				$ctrlSummary = New-Object -TypeName PSObject
-				$ctrlSummary | Add-Member -NotePropertyName FeatureName -NotePropertyValue $featureName 
-				$ctrlSummary | Add-Member -NotePropertyName Total -NotePropertyValue ($SVTConfig[$_]).Count
-				$ctrlSummary | Add-Member -NotePropertyName $this.GetControlSeverity('Critical') -NotePropertyValue (($SVTConfig[$_] | Where-Object { $_.ControlSeverity -eq $this.GetControlSeverity("Critical") })|Measure-Object).Count
-				$ctrlSummary | Add-Member -NotePropertyName $this.GetControlSeverity('High') -NotePropertyValue (($SVTConfig[$_] | Where-Object { $_.ControlSeverity -eq $this.GetControlSeverity("High") })|Measure-Object).Count
-				$ctrlSummary | Add-Member -NotePropertyName $this.GetControlSeverity('Medium') -NotePropertyValue (($SVTConfig[$_] | Where-Object { $_.ControlSeverity -eq $this.GetControlSeverity("Medium") })|Measure-Object).Count
-				$ctrlSummary | Add-Member -NotePropertyName $this.GetControlSeverity('Low') -NotePropertyValue (($SVTConfig[$_] | Where-Object { $_.ControlSeverity -eq $this.GetControlSeverity("Low") })|Measure-Object).Count
-				$controlSummary += $ctrlSummary
-			}
-
 			$controlCSV = New-Object -TypeName WriteCSVData
 			$controlCSV.FileName = 'Control_Details_' + [String] $this.InvocationContext.Mycommand.ModuleName + "_" + [String] $this.GetCurrentModuleVersion()
 			$controlCSV.FileExtension = 'csv'

@@ -43,7 +43,7 @@ class SubscriptionSecurity: AzCommandBase
 				$updateSecurityContacts = $true;
 				$updateProvisioningSettings = $true;
 				$updateOptionalPolicies = $false;
-				$messages += $secCenter.SetPolicies($updateProvisioningSettings,$updatePolicies,$updateSecurityContacts,$updateOptionalPolicies);
+				$messages += $secCenter.SetPolicies($updateProvisioningSettings,$updatePolicies,$updateSecurityContacts,$updateOptionalPolicies,$false);
 				$this.PublishCustomMessage([Constants]::DoubleDashLine + "`r`nCompleted Security Center configuration`r`n" + [Constants]::DoubleDashLine, [MessageType]::Update);
 			} 
 		}
@@ -187,7 +187,7 @@ class SubscriptionSecurity: AzCommandBase
 				$updateProvisioningSettings = $true;
 				$updateOptionalPolicies = $false;
 				#calling the ASC policy method with default params i.e. without ASC security poc email and phone number
-				$messages += $secCenter.SetPolicies($updateProvisioningSettings,$updatePolicies,$updateSecurityContacts,$updateOptionalPolicies);
+				$messages += $secCenter.SetPolicies($updateProvisioningSettings,$updatePolicies,$updateSecurityContacts,$updateOptionalPolicies,$false);
 				$this.PublishCustomMessage([Constants]::DoubleDashLine + "`r`nCompleted updates for Security Center configuration`r`n" + [Constants]::DoubleDashLine, [MessageType]::Update);
 			} 
 		}
@@ -252,7 +252,7 @@ class SubscriptionSecurity: AzCommandBase
 		if ($caAccount) 
 		{
 			#Passing parameter FixRuntimeAccount, RenewCertificate and FixModules as false by default
-			$messages += $caAccount.UpdateAzSKContinuousAssurance($false, $false, $false, $false);
+			$messages += $caAccount.UpdateAzSKContinuousAssurance($false, $false, $false, $false,$true);
 		}
 		return $messages;
     }

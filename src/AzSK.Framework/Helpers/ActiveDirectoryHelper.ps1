@@ -1,5 +1,5 @@
 Set-StrictMode -Version Latest 
-class ActiveDirectoryHelper {
+class ActiveDirectoryHelper {       
 
 		static [PSObject] GetADAppServicePrincipalByAppId($ApplicationId)
 		{
@@ -124,7 +124,7 @@ class ActiveDirectoryHelper {
 			{
 				 Throw "There was a problem while updating the service principal with new certificate"    
 			}
-	}
+		}
 
 		static [PSObject] GetADAppByAppId($ApplicationId)
 		{
@@ -158,14 +158,14 @@ class ActiveDirectoryHelper {
 			[string]
 			$Delete = "False"
 		)
-		{
+		{	
 			#Initialization
 			$TenantId = ([ContextHelper]::GetCurrentRMContext()).Tenant.Id
 			$ApiVersion = "1.6"
 			$GraphUri = [WebRequestHelper]::GetGraphUrl()
 			$GraphApiUrl = $GraphUri + $TenantId + "/applications/{0}?api-version=$ApiVersion"
 			$startDateString = $NotBefore.ToString("O");
-			$endDateString = $NotAfter.ToString("O");
+			$endDateString = $NotAfter.ToString("O");            
 
 			if($Delete -eq "False")
 			{
@@ -174,10 +174,9 @@ class ActiveDirectoryHelper {
 					throw "Public Certificate cannot be null"
 				}
 			}
-
-			$ADApplication =  [ActiveDirectoryHelper]::GetADAppByAppId($ApplicationID)
+			$ADApplication =  [ActiveDirectoryHelper]::GetADAppByAppId($ApplicationID)	
 			if($Delete -eq "False")
-			{
+			{             
 				$publicCertString = [System.Convert]::ToBase64String($PublicCert.GetRawCertData());
 
 				$credentialObject = New-Object -TypeName PSObject
@@ -187,27 +186,198 @@ class ActiveDirectoryHelper {
 				$credentialObject | Add-Member -MemberType NoteProperty -Name type -Value "AsymmetricX509Cert" -PassThru `
 										| Add-Member -MemberType NoteProperty -Name usage -Value "Verify" -PassThru `
                                         | Add-Member -MemberType NoteProperty -Name value -Value $publicCertString
+                
                 if ([bool](Get-Member -InputObject $ADApplication -Name "keyCredentials"))
 				{
 					[System.Collections.ArrayList]$keys = $ADApplication.keyCredentials
 					$keys.Add($credentialObject)
 					$ADApplication.keyCredentials = $keys
+                    
 				}
 				else
 				{
 					$ADApplication | Add-Member -MemberType NoteProperty -Name keyCredentials -Value @($credentialObject)
 				}
+               
 			}
 			elseif($Delete -eq "True")
 			{	
 				$ADApplication.keyCredentials = $ADApplication.keyCredentials | Where-Object { 
 					[System.DateTime]::Parse($_.startDate).ToUniversalTime() -ne $NotBefore.ToUniversalTime() `
-					-and [System.DateTime]::Parse($_.endDate).ToUniversalTime() -ne $NotAfter.ToUniversalTime() `
+					-and [System.DateTime]::Parse($_.endDate).ToUniversalTime() -ne $NotAfter.ToUniversalTime() 
 				} 
 			}
 			elseif($Delete -eq "All")
 			{
 				$ADApplication.keyCredentials = @()
+			}
+			elseif($Delete -eq "DeleteSelected")
+            {                
+               # Collecting all Certificates -> Old + Latest Certificates
+               [System.Collections.ArrayList]$AllCerts = $ADApplication.keyCredentials
+
+               # Filtering out the latest Certificate among all Certificates
+               [System.Collections.ArrayList]$latestCert = @($AllCerts | Where-Object { 
+					[System.DateTime]::Parse($_.startDate).ToUniversalTime() -eq $NotBefore.ToUniversalTime() `
+					-and [System.DateTime]::Parse($_.endDate).ToUniversalTime() -eq $NotAfter.ToUniversalTime() 
+				})
+
+                # Filtering out the Older Certificates associated with CA SPN
+				[System.Collections.ArrayList]$OldCerts = @($AllCerts | Where-Object { $latestCert -notcontains $_ })
+				
+				if($OldCerts.count -gt 0)
+				{
+                	Write-host "We found the following older credentials associated with [$($ADApplication.displayname)]:" -ForegroundColor Yellow
+								
+               		# Displaying older Certificates in form of table               
+                	$display= $OldCerts|Format-Table -Property  @{name="Index";expression={$OldCerts.IndexOf($_)}},@{name="Thumbprint";expression={$_.customKeyIdentifier}},@{name="EndDate(MM-dd-yyyy)";expression={([datetime] $_.endDate).ToString("MM/dd/yyyy")}} | Out-String
+                	Write-Host $display
+
+                	Write-host "Before deleting make sure that these certificates are not used anywhere else!" -ForegroundColor Yellow
+                	Write-Host "Please select an action from below: `n[A]: Delete all`n[N]: Delete none`n[S]: Delete selected" -ForegroundColor Cyan         
+                
+                	# Initializing an empty array list to add certificates for deletion
+                	[System.Collections.ArrayList] $CertificatesToRemove = @() 
+                
+                	$userChoice=""
+                	while($userChoice -ne 'A' -and $userChoice -ne 'N' -and $userChoice -ne 'S')
+                	{
+                 		$userChoice = Read-Host "User choice"
+                    	if(-not [string]::IsNullOrWhiteSpace($userChoice))
+				    	{
+							$userChoice = $userChoice.Trim();
+				    	}
+                	}
+
+                	# Variable used for taking confirmation for any/all Certificate deletion.
+                	$confirmation=""
+
+                	switch ($userChoice.ToUpper())
+                	{                    
+			        	"A" #DeleteAll
+			       	 	{	
+                      		while($confirmation.ToUpper() -ne 'Y' -and $confirmation.ToUpper() -ne 'N')
+                      		{
+                      			$confirmation = Read-Host "Do you want to delete all certificates ? (Y/N)"
+                       			if(-not [string]::IsNullOrWhiteSpace($confirmation))
+				         		{
+					        		$confirmation = $confirmation.Trim();
+				         		}
+                      		} 
+                      		if($confirmation.ToUpper() -eq 'Y')
+                      		{ 
+                      			Write-Host "Deleting all certificates. This may take few min..." -ForegroundColor Yellow			
+			          			$ADApplication.keyCredentials = $latestCert
+                      		}
+                      		else
+                      		{
+                      			Write-Host "No certificates were deleted." -ForegroundColor Yellow
+                      		}
+                       		break  				
+			        	}
+			        	"N" #None
+			        	{
+                        	Write-Host "No certificates were deleted." -ForegroundColor Yellow                   
+			            	break
+			        	}
+			        	"S" #Select
+			        	{
+                      		do{  
+                            		# flag used for validating the indexes entered by user.
+                            		$validIndexFlag=$true
+                            		$invalidindexes=""
+                            		$indexs=Read-Host "Enter comma separated index(es) from the above table"
+                            		$indexs = $indexs.Trim();
+                            		if([string]::IsNullOrWhiteSpace($indexs) -or $indexs -eq ',')
+                            		{
+                            			Write-Host "You have entered blank values, please enter a valid index."  -ForegroundColor Yellow 
+                            			$validIndexFlag=$false                     
+                            		}
+                            		else
+                            		{
+                             			$indexArray = $indexs.Split(',',[System.StringSplitOptions]::RemoveEmptyEntries).Trim()
+                             			$indexArray | ForEach-Object{
+                                                             			$currentIndex=$_
+                                                             			try
+                                                             			{
+                                                              				#Using Array index property to validate whether the index is valid or not.
+                                                              				if($OldCerts[$currentIndex]){ }
+                                                             			}
+                                                             			catch
+                                                             			{
+                                                                			$validIndexFlag = $false
+
+                                                                			# Collecting all invalid indexes and making a comma separated string like '1,2,'
+                                                                			# so that same string can be displayed in case of invalid indexes 
+                                                                			$invalidindexes += $currentIndex+","
+                                                             			}
+                                                        			}
+                             			if($validIndexFlag)
+                              			{
+                                   			 # All indexes are valid.
+                                    		$OldCerts | Where-Object { 
+                                                                        if($indexArray -contains $OldCerts.IndexOf($_))
+                                                                        {
+                                                                           	$CertificatesToRemove.add($OldCerts[$OldCerts.IndexOf($_)])
+                                                                        }
+                                                    
+                                                                 	 }
+
+                                         	Write-Host "Certificates selected for deletion: " -ForegroundColor Cyan 
+                                         	$output=$CertificatesToRemove|Format-Table -Property @{name="Thumbprint(s)";expression={$_.customKeyIdentifier}} | Out-String 
+                                         	Write-Host $output
+                                    		while($confirmation.ToUpper() -ne 'Y' -and $confirmation.ToUpper() -ne 'N')
+                                     		{
+                                      			$confirmation = Read-Host "Do you want to delete the selected certificates ? (Y/N)"
+                                      			if(-not [string]::IsNullOrWhiteSpace($confirmation))
+				                         		{
+					                       			$confirmation = $confirmation.Trim();
+				                         		}
+                                     		} 
+                                    		if($confirmation.ToUpper() -eq 'Y')
+                                    		{                                          
+                                         		$ADApplication.keyCredentials	= $AllCerts | Where-Object { $CertificatesToRemove -notcontains $_ }
+                                         		$ADApplication.keyCredentials=[System.Collections.ArrayList]@($ADApplication.keyCredentials)
+                                         		Write-Host "Deleting selected certificates." -ForegroundColor Yellow
+                                    		}
+                                    		else
+                                    		{
+                                        		Write-Host "No certificates were deleted." -ForegroundColor Yellow
+                                    		}                               
+                             			}
+                             			else
+                             			{
+                                			# All/ Any index is/are invalid
+                                			Write-Host "Please provide valid index(es) from above table." -ForegroundColor Yellow
+
+                                			#Checking the count of invalid indexes so that valid message ( for 1 or many invalid indexes) can be displayed.
+                                			if($invalidindexes.Split(',',[System.StringSplitOptions]::RemoveEmptyEntries).count -eq 1)
+                                			{
+                                   				# Printing invalidindexes string without last comma => 1, => 1
+                                   				Write-Host " $(-join$invalidindexes[0..($invalidindexes.Length-2)]) is not a valid index. "
+                                			}
+                                			else
+                                			{
+                                   				# Printing invalidindexes string without last comma => 1,2, => 1,2
+                                   				Write-Host " $(-join$invalidindexes[0..($invalidindexes.Length-2)]) are not valid indexes. "
+                                			}
+                                			Write-Host "No certificates were deleted." -ForegroundColor Yellow
+                             			} 
+                         			} 
+                        	  }while(-not($validIndexFlag))
+                             break
+			        	}
+						Default 
+						{
+                            Write-Host "You have entered incorrect choice. Please enter valid choice." -ForegroundColor Yellow
+                        }
+                	}
+				}	
+				else 
+				{
+					Write-Host "There are no old credentials associated with [$($ADApplication.displayname)]" -ForegroundColor Yellow
+					Write-Host "Skipping the process for deleting old certificates." -ForegroundColor Yellow
+				}  
 			}
 		    $finalCredsObject = $ADApplication | Select-Object -Property keyCredentials
 			$body = ConvertTo-Json -InputObject $finalCredsObject 
@@ -227,13 +397,14 @@ class ActiveDirectoryHelper {
 
 			if($null -eq $updateResult)
 			{
-				 Throw "There was a problem while updating the service principal with new certificate"    
+				Throw "There was a problem while updating the service principal with new certificate"    
 			}
-	}
-
+	
+		}
+		
 		static [PSObject] NewSelfSignedCertificate($AppName,$CertStartDate,$CertEndDate,$Provider)
 		{
-				$newCertificate = New-SelfSignedCertificate -DnsName $AppName `
+			$newCertificate = New-SelfSignedCertificate -DnsName $AppName `
 																	-Subject "CN=$AppName" `
 																	-CertStoreLocation Cert:\CurrentUser\My `
 																	-KeyExportPolicy Exportable `
@@ -245,6 +416,6 @@ class ActiveDirectoryHelper {
 																	-KeyUsageProperty Decrypt `
 																	-Provider $Provider `
 																	-ErrorAction Stop 
-				return $newCertificate
+			return $newCertificate
 		}
 }

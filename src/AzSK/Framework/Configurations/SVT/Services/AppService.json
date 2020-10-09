@@ -64,7 +64,8 @@
           "AppService",
           "FunctionApp",
           "Windows",
-          "Linux"
+          "Linux",
+          "ExtendedExpiry"
         ],
         "Enabled": true
       },

@@ -53,7 +53,12 @@ function Set-AzSKAzureSecurityCenterPolicies
 		[switch]
         [Parameter(Mandatory = $false, HelpMessage = "Switch to specify whether to set the optional ASC policies.")]
 		[Alias("eop","OptionalPolicies")]
-		$EnableOptionalPolicies
+		$EnableOptionalPolicies,
+
+        [switch]
+        [Parameter(Mandatory = $false, HelpMessage = "Switch to set Standard Prcing tier for ASC.")]
+		[Alias("sats")]
+		$SetASCTier
     )
 
 	Begin
@@ -86,7 +91,7 @@ function Set-AzSKAzureSecurityCenterPolicies
 				
 				
 				
-				return $secCenter.SetPolicies($updateSecurityContacts,$setOptionalPolicy);
+				return $secCenter.SetPolicies($updateSecurityContacts,$setOptionalPolicy,$SetASCTier);
 			}
 		}
 		catch 

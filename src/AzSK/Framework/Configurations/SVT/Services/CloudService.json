@@ -15,7 +15,8 @@
         "SDL",
         "AuthN",
         "Classic",
-        "Manual"
+        "Manual",
+        "ExtendedExpiry"
       ],
       "Enabled": true
     },

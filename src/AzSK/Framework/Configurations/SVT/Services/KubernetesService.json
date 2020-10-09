@@ -11,7 +11,7 @@
       "Automated": "Yes",
       "MethodName": "CheckClusterRBAC",
       "Rationale": "Enabling RBAC in a cluster lets you finely control access to various operations at the cluster/node/pod/namespace scopes for different stakeholders. Without RBAC enabled, every user has full access to the cluster which is a violation of the principle of least privilege. Note that Azure Kubernetes Service does not currently support other mechanisms to define authorization in Kubernetes (such as Attribute-based Access Control authorization or Node authorization).",
-      "Recommendation": "RBAC flag must be enabled while creating the Kubernetes Service. Existing non-RBAC enabled Kubernetes Service clusters cannot currently be updated for RBAC use. Refer: https://docs.microsoft.com/en-us/azure/aks/aad-integration.",
+      "Recommendation": "RBAC flag must be enabled while creating the Kubernetes Service. Existing non-RBAC enabled Kubernetes Service clusters cannot currently be updated for RBAC use. Refer: https://docs.microsoft.com/en-us/azure/aks/concepts-identity#kubernetes-role-based-access-control-rbac",
       "Tags": [
         "SDL",
         "TCP",
@@ -31,7 +31,7 @@
       "Automated": "Yes",
       "MethodName": "CheckAADEnabled",
       "Rationale": "Using the native enterprise directory for authentication ensures that there is a built-in high level of assurance in the user identity established for subsequent access control.All Enterprise subscriptions are automatically associated with their enterprise directory (xxx.onmicrosoft.com) and users in the native directory are trusted for authentication to enterprise subscriptions.",
-      "Recommendation": "Refer: https://docs.microsoft.com/en-us/azure/aks/aad-integration to configure AAD in Kubernetes Service.",
+      "Recommendation": "Go to Azure Portal --> Kubernetes Services --> Select Kubernetes Cluster --> Settings --> Configuration --> AKS-managed Azure Active Directory --> Enabled. For more details refer: https://docs.microsoft.com/en-us/azure/aks/managed-aad",
       "Tags": [
         "SDL",
         "Best Practice",
@@ -213,7 +213,7 @@
       "Automated": "Yes",
       "MethodName": "CheckMonitoringConfiguration",
       "Rationale": "Auditing enables log collection of important system events pertinent to security. Regular monitoring of audit logs can help to detect any suspicious and malicious activity early and respond in a timely manner.",
-      "Recommendation": "Refer: https://docs.microsoft.com/en-us/azure/azure-monitor/insights/container-insights-overview.",
+      "Recommendation": "Refer: https://docs.microsoft.com/en-us/azure/azure-monitor/insights/container-insights-enable-existing-clusters",
       "Tags": [
         "SDL",
         "TCP",
@@ -231,12 +231,13 @@
       "Automated": "Yes",
       "MethodName": "CheckNodeOpenPorts",
       "Rationale": "Open remote management ports expose a VM/compute node to a high level of risk from internet-based attacks that attempt to brute force credentials to gain admin access to the machine.",
-      "Recommendation": "Go to Azure Portal --> VM Settings --> Networking --> Inbound security rules --> Select security rule which allows management ports (e.g. RDP-3389, WINRM-5985, SSH-22) --> Click 'Deny' under Action --> Click Save.",
+      "Recommendation": "Go to Azure Portal --> Kubernetes Node Resource Group --> VM/VMSS Settings --> Networking --> Inbound security rules --> Select security rule which allows management ports (e.g. RDP-3389, WINRM-5985, SSH-22) --> Click 'Deny' under Action --> Click Save.",
       "Tags": [
         "SDL",
         "TCP",
         "Manual",
         "NetSec",
+        "OwnerAccess",
         "KubernetesService"
       ],
       "Enabled": true
