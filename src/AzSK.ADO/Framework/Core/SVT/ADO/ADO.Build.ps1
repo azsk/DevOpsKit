@@ -114,7 +114,7 @@ class Build: ADOSVTBase
                                     #If regex is in text form, the match will be case-sensitive.
                                     if ($buildVarValue -cmatch $patterns.RegexList[$i]) { 
                                         $noOfCredFound +=1
-                                        $varList += "$buildVarName ";   
+                                        $varList += "$buildVarName";   
                                         break  
                                         }
                                     }
@@ -161,15 +161,15 @@ class Build: ADOSVTBase
                     };
                     if(($varList | Measure-Object).Count -gt 0 )
                     {
-                        $varList = $varList | select -Unique
+                        $varList = $varList | select -Unique | Sort-object
                         $stateData.VariableList += $varList
-                        $controlResult.AddMessage("`nList of variable containing secret: ", $varList);
+                        $controlResult.AddMessage("`nList of variable(s) containing secret: ", $varList);
                     }
                     if(($varGrpList | Measure-Object).Count -gt 0 )
                     {
-                        $varGrpList = $varGrpList | select -Unique
+                        $varGrpList = $varGrpList | select -Unique | Sort-object
                         $stateData.VariableGroupList += $varGrpList
-                        $controlResult.AddMessage("`nList of variable group containing secret: ", $varGrpList);
+                        $controlResult.AddMessage("`nList of variable(s) containing secret in variable group(s): ", $varGrpList);
                     }
                     $controlResult.SetStateData("List of variable and variable group containing secret: ", $stateData );
                 }
