@@ -142,32 +142,32 @@ class SVTResourceResolver: AzSKRoot {
         
         #Call APIS for Organization,User/Builds/Releases/ServiceConnections 
         $organizationId = "";
-        if ($this.ResourceTypeName -in ([ResourceTypeName]::Organization, [ResourceTypeName]::All, [ResourceTypeName]::Org_Project_User)) {
-            #Checking if org name is correct 
-            $apiURL = "https://dev.azure.com/{0}/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1" -f $($this.organizationName);
-            
-            $inputbody = "{'contributionIds':['ms.vss-features.my-organizations-data-provider'],'dataProviderContext':{'properties':{'sourcePage':{'url':'https://dev.azure.com/$($this.organizationName)','routeId':'ms.vss-tfs-web.suite-me-page-route','routeValues':{'view':'projects','controller':'ContributedPage','action':'Execute'}}}}}" | ConvertFrom-Json
-            try {
-                $responseObj = [WebRequestHelper]::InvokePostWebRequest($apiURL, $inputbody);
-                $organizationId = ($responseObj[0].dataProviders."ms.vss-features.my-organizations-data-provider".organizations | Where-Object {$_.name -eq $this.organizationName}).id
-                $inputbody = $null;
-                Remove-Variable inputbody;
-            }
-            catch {
-                Write-Host 'Organization not found: Incorrect organization name or you do not have neccessary permission to access the organization.' -ForegroundColor Red
-                throw;
-            }
-
+        
+        #Checking if org name is correct 
+        $apiURL = "https://dev.azure.com/{0}/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1" -f $($this.organizationName);
+        
+        $inputbody = "{'contributionIds':['ms.vss-features.my-organizations-data-provider'],'dataProviderContext':{'properties':{'sourcePage':{'url':'https://dev.azure.com/$($this.organizationName)','routeId':'ms.vss-tfs-web.suite-me-page-route','routeValues':{'view':'projects','controller':'ContributedPage','action':'Execute'}}}}}" | ConvertFrom-Json
+        try {
+            $responseObj = [WebRequestHelper]::InvokePostWebRequest($apiURL, $inputbody);
+            $organizationId = ($responseObj[0].dataProviders."ms.vss-features.my-organizations-data-provider".organizations | Where-Object {$_.name -eq $this.organizationName}).id
+            $inputbody = $null;
+            Remove-Variable inputbody;
+        }
+        catch {
+            Write-Host 'Organization not found: Incorrect organization name or you do not have neccessary permission to access the organization.' -ForegroundColor Red
+            throw;
+        }
+        if ($this.ResourceTypeName -in ([ResourceTypeName]::Organization, [ResourceTypeName]::All, [ResourceTypeName]::Org_Project_User)) 
+        {
             #Select Org/User by default...
             $link = "https://dev.azure.com/$($this.organizationName)/_settings"
-            $this.AddSVTResource($this.organizationName, $null ,"ADO.Organization", "Organization/$($organizationId)/", $null, $link);
-            
+            $this.AddSVTResource($this.organizationName, $null ,"ADO.Organization", "organization/$($organizationId)", $null, $link);
         }
 
         if ($this.ResourceTypeName -in ([ResourceTypeName]::User, [ResourceTypeName]::All, [ResourceTypeName]::Org_Project_User, [ResourceTypeName]::Build_Release_SvcConn_AgentPool_User)) {
 
             $link = "https://dev.azure.com/$($this.organizationName)/_settings/users"
-            $this.AddSVTResource($this.organizationName, $null,"ADO.User", "Organization/$($organizationId)/User", $null, $link);
+            $this.AddSVTResource($this.organizationName, $null,"ADO.User", "organization/$($organizationId)/user", $null, $link);
             
         }
 
@@ -189,7 +189,7 @@ class SVTResourceResolver: AzSKRoot {
                 $responseObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL) ;
             }
             catch {
-                Write-Host 'Project not found: Incorrect organization or project name or you do not have neccessary permission to access the organization.' -ForegroundColor Red
+                Write-Host 'Project not found: Incorrect project name or you do not have neccessary permission to access the project.' -ForegroundColor Red
                 throw;
             }
             if (([Helpers]::CheckMember($responseObj, "count") -and $responseObj[0].count -gt 0) -or (($responseObj | Measure-Object).Count -gt 0 -and [Helpers]::CheckMember($responseObj[0], "name")))
@@ -216,7 +216,8 @@ class SVTResourceResolver: AzSKRoot {
                     if ($this.ResourceTypeName -in ([ResourceTypeName]::Project, [ResourceTypeName]::All, [ResourceTypeName]::Org_Project_User)) 
                     {
                         $link = $thisProj.url.Replace('/_apis/projects', '') + '/_settings/'
-                        $this.AddSVTResource($thisProj.name, $this.organizationName,"ADO.Project", $thisProj.url, $null, $link);
+                        $resourceId = "organization/$organizationId/project/$projectId" 
+                        $this.AddSVTResource($thisProj.name, $this.organizationName,"ADO.Project", $resourceId, $thisProj, $link);
                         
                     }
                     #check if long running scan allowed or not.
@@ -237,7 +238,8 @@ class SVTResourceResolver: AzSKRoot {
                                 $nObj = $this.MaxObjectsToScan
                                 foreach ($bldDef in $buildDefnsObj) {
                                     $link = $bldDef.url.split('?')[0].replace('_apis/build/Definitions/', '_build?definitionId=');
-                                    $this.AddSVTResource($bldDef.name, $bldDef.project.name, "ADO.Build", $bldDef.url.split('?')[0], $bldDef, $link);
+                                    $buildResourceId = "organization/$organizationId/project/$projectId/build/$($bldDef.id)";
+                                    $this.AddSVTResource($bldDef.name, $bldDef.project.name, "ADO.Build", $buildResourceId, $bldDef, $link);
                                    
                                     if (--$nObj -eq 0) { break; } 
                                 }
@@ -253,7 +255,8 @@ class SVTResourceResolver: AzSKRoot {
                                 if (([Helpers]::CheckMember($buildDefnsObj, "count") -and $buildDefnsObj[0].count -gt 0) -or (($buildDefnsObj | Measure-Object).Count -gt 0 -and [Helpers]::CheckMember($buildDefnsObj[0], "name"))) {
                                     foreach ($bldDef in $buildDefnsObj) {
                                         $link = $bldDef.url.split('?')[0].replace('_apis/build/Definitions/', '_build?definitionId=');
-                                        $this.AddSVTResource($bldDef.name, $bldDef.project.name, "ADO.Build", $bldDef.url.split('?')[0], $bldDef, $link);
+                                        $buildResourceId = "organization/$organizationId/project/$projectId/build/$($bldDef.id)";
+                                        $this.AddSVTResource($bldDef.name, $bldDef.project.name, "ADO.Build", $buildResourceId, $bldDef, $link);
                                         
                                     }
                                     $buildDefnsObj = $null;
@@ -284,7 +287,8 @@ class SVTResourceResolver: AzSKRoot {
                                 $nObj = $this.MaxObjectsToScan
                                 foreach ($relDef in $releaseDefnsObj) {
                                     $link = "https://dev.azure.com/{0}/{1}/_release?_a=releases&view=mine&definitionId={2}" -f $this.SubscriptionContext.SubscriptionName, $projectName, $relDef.url.split('/')[-1];
-                                    $this.AddSVTResource($relDef.name, $projectName, "ADO.Release", $relDef.url, $null, $link);
+                                    $releaseResourceId = "organization/$organizationId/project/$projectId/release/$($relDef.id)";
+                                    $this.AddSVTResource($relDef.name, $projectName, "ADO.Release", $releaseResourceId, $null, $link);
                                     
                                     if (--$nObj -eq 0) { break; } 
                                 }
@@ -319,7 +323,8 @@ class SVTResourceResolver: AzSKRoot {
 
                                         foreach ($relDef in $releaseDefinitions) {
                                             $link = "https://dev.azure.com/{0}/{1}/_release?_a=releases&view=mine&definitionId={2}" -f $this.SubscriptionContext.SubscriptionName, $projectName, $relDef.url.split('/')[-1];
-                                            $this.AddSVTResource($relDef.name, $projectName, "ADO.Release", $relDef.url, $null, $link);
+                                            $releaseResourceId = "organization/$organizationId/project/$projectId/release/$($relDef.id)";
+                                            $this.AddSVTResource($relDef.name, $projectName, "ADO.Release", $releaseResourceId, $null, $link);
                                             
                                         }
                                         $releaseDefinitions = $null;
@@ -371,7 +376,7 @@ class SVTResourceResolver: AzSKRoot {
                             Remove-Variable  serviceEndpointObj;
                             $nObj = $this.MaxObjectsToScan
                             foreach ($connectionObject in $Connections) {
-                                $resourceId = "Organization/$($this.organizationName)/Project/$projectId/ServiceConnection/$($connectionObject.Id)";
+                                $resourceId = "organization/$organizationId/project/$projectId/serviceconnection/$($connectionObject.Id)";
                                 $link = "https://dev.azure.com/$($this.organizationName)/$projectId/_settings/adminservices?resourceId=$($connectionObject.Id)"; 
                                 $this.AddSVTResource($connectionObject.name, $projectName, "ADO.ServiceConnection", $resourceId, $connectionObject, $link);
                                 
@@ -409,8 +414,9 @@ class SVTResourceResolver: AzSKRoot {
                                 
                                 foreach ($taq in $taskAgentQueues) {
                                     $resourceId = "https://{0}.visualstudio.com/_apis/securityroles/scopes/distributedtask.agentqueuerole/roleassignments/resources/{1}_{2}" -f $($this.SubscriptionContext.SubscriptionName), $($taq.projectId), $taq.id
+                                    $agtpoolResourceId = "organization/$organizationId/project/$projectId/agentpool/$($taq.id)";
                                     $link = "https://{0}.visualstudio.com/{1}/_settings/agentqueues?queueId={2}&view=security" -f $($this.SubscriptionContext.SubscriptionName), $($taq.projectId), $taq.id
-                                    $this.AddSVTResource($taq.name, $projectName, "ADO.AgentPool", $resourceId, $null, $link);
+                                    $this.AddSVTResource($taq.name, $projectName, "ADO.AgentPool", $agtpoolResourceId, $null, $link);
                                     
                                     if (--$nObj -eq 0) { break; }
                                 }
@@ -449,8 +455,8 @@ class SVTResourceResolver: AzSKRoot {
 
                             $nObj = $this.MaxObjectsToScan
                             foreach ($group in $varGroups) {
-                                $resourceId = ("https://{0}.visualstudio.com/{1}/_apis/distributedtask/variablegroups/{2}") -f $($this.organizationName), $projectId, $($group.Id);
-                                $link = ("https://{0}.visualstudio.com/{1}/_library?itemType=VariableGroups&view=VariableGroupView&variableGroupId={2}") -f $($this.organizationName), $projectName, $($group.Id);; 
+                                $resourceId = "organization/$organizationId/project/$projectId/variablegroup/$($group.Id)";
+                                $link = ("https://{0}.visualstudio.com/{1}/_library?itemType=VariableGroups&view=VariableGroupView&variableGroupId={2}") -f $($this.organizationName), $projectName, $($group.Id); 
                                 $this.AddSVTResource($group.name, $projectName, "ADO.VariableGroup", $resourceId, $group, $link);
                                 
                                 if (--$nObj -eq 0) { break; }

@@ -545,15 +545,14 @@ class ControlStateExtension
 		$base64AuthInfo = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(("{0}:{1}" -f $user, $rmContext.AccessToken)))
 		$fileName = [Constants]::OrgAttPrjExtFile 
 
-		$apiURL = "https://dev.azure.com/{0}/_apis/projects?api-version=4.1" -f $($this.SubscriptionContext.SubscriptionName);
+		$apiURL = "https://dev.azure.com/{0}/_apis/projects/{1}?api-version=6.0" -f $($this.SubscriptionContext.SubscriptionName), $projectName;
 		try { 
 			$responseObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL) ;
-			$projects = $responseObj | Where-Object { $projectName -contains $_.name }
-
-			if ($null -eq $projects) {
-				Write-Host "$($projectName) Project not found: Incorrect project name or you do not have neccessary permission to access the project." -ForegroundColor Red
-				return $false
-			}
+			#$projects = $responseObj | Where-Object { $projectName -contains $_.name }
+			#if ($null -eq $projects) {
+			#	Write-Host "$($projectName) Project not found: Incorrect project name or you do not have neccessary permission to access the project." -ForegroundColor Red
+			#	return $false
+			#}
                    
 		}
 		catch {

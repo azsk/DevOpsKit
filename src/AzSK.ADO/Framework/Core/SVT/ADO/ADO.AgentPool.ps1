@@ -3,10 +3,14 @@ class AgentPool: ADOSVTBase
 {    
 
     hidden [PSObject] $AgentObj;
+    hidden [PSObject] $ProjectId;
+    hidden [PSObject] $AgentPoolId;
     
     AgentPool([string] $subscriptionId, [SVTResource] $svtResource): Base($subscriptionId,$svtResource) 
     {
-        $apiURL = $this.ResourceContext.ResourceId
+        $this.AgentPoolId =  ($this.ResourceContext.ResourceId -split "agentpool/")[-1]
+        $this.ProjectId = ($this.ResourceContext.ResourceId -split "project/")[-1].Split('/')[0]
+        $apiURL = "https://$($this.SubscriptionContext.SubscriptionName).visualstudio.com/_apis/securityroles/scopes/distributedtask.agentqueuerole/roleassignments/resources/$($this.ProjectId)_$($this.AgentPoolId)";
         $this.AgentObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
 
     }
@@ -76,10 +80,7 @@ class AgentPool: ADOSVTBase
     hidden [ControlResult] CheckPrjAllPipelineAccess([ControlResult] $controlResult)
     {
         try {
-            $projectId = $this.ResourceContext.ResourceId.Split('/')[-1].Split('_')[0];
-            $agtPoolId = $this.ResourceContext.ResourceId.Split('/')[-1].Split('_')[1];
-
-            $agentPoolsURL = "https://dev.azure.com/{0}/{1}/_apis/build/authorizedresources?type=queue&id={2}" -f $($this.SubscriptionContext.SubscriptionName),$projectId ,$agtPoolId;
+            $agentPoolsURL = "https://dev.azure.com/{0}/{1}/_apis/build/authorizedresources?type=queue&id={2}" -f $($this.SubscriptionContext.SubscriptionName),$this.ProjectId ,$this.AgentPoolId;
             $agentPoolsObj = [WebRequestHelper]::InvokeGetWebRequest($agentPoolsURL);
                                    
              if([Helpers]::CheckMember($agentPoolsObj,"authorized") -and $agentPoolsObj.authorized)
@@ -101,10 +102,8 @@ class AgentPool: ADOSVTBase
     hidden [ControlResult] CheckInActiveAgentPool([ControlResult] $controlResult)
     {
         try 
-        {
-            $projectId = $this.ResourceContext.ResourceId.Split('/')[-1].Split('_')[0];
-            $agtPoolId = $this.ResourceContext.ResourceId.Split('/')[-1].Split('_')[1];    
-            $agentPoolsURL = "https://{0}.visualstudio.com/{1}/_settings/agentqueues?queueId={2}&__rt=fps&__ver=2" -f $($this.SubscriptionContext.SubscriptionName), $projectId, $agtPoolId
+        {   
+            $agentPoolsURL = "https://{0}.visualstudio.com/{1}/_settings/agentqueues?queueId={2}&__rt=fps&__ver=2" -f $($this.SubscriptionContext.SubscriptionName), $this.ProjectId ,$this.AgentPoolId;
             $agentPool = [WebRequestHelper]::InvokeGetWebRequest($agentPoolsURL);
             
             if (([Helpers]::CheckMember($agentPool[0], "fps.dataProviders.data") ) -and ($agentPool[0].fps.dataProviders.data."ms.vss-build-web.agent-jobs-data-provider")) 

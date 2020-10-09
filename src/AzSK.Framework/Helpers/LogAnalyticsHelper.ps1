@@ -84,7 +84,7 @@ Class LogAnalyticsHelper{
 	static [PSObject[]] GetLAWSBodyObjects([SVTEventContext] $eventContext,[AzSKContextDetails] $AzSKContext)
 	{
 		[PSObject[]] $output = @();
-	
+
 		[array] $eventContext.ControlResults | ForEach-Object{
 			Set-Variable -Name ControlResult -Value $_ -Scope Local
 			$out = [LAWSModel]::new() 
@@ -98,7 +98,7 @@ Class LogAnalyticsHelper{
 				$out.PartialScanIdentifier=$eventContext.PartialScanIdentifier
 			}
 
-			$out.Env = [AzSKSettings]::GetInstance().GetScanSource();
+			$out.Env = $this.GetModuleName();
 			$out.Reference=$eventContext.Metadata.Reference
 			$out.ControlStatus=$ControlResult.VerificationResult.ToString()
 			$out.ActualVerificationResult=$ControlResult.ActualVerificationResult.ToString()

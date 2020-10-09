@@ -11,16 +11,10 @@ class Release: ADOSVTBase
     {
         [system.gc]::Collect();
         # Get release object
-        $apiURL = $this.ResourceContext.ResourceId
+        $releaseId =  ($this.ResourceContext.ResourceId -split "release/")[-1]
+        $this.ProjectId = ($this.ResourceContext.ResourceId -split "project/")[-1].Split('/')[0]
+        $apiURL = "https://vsrm.dev.azure.com/$($this.SubscriptionContext.SubscriptionName)/$($this.ProjectId)/_apis/Release/definitions/$releaseId"
         $this.ReleaseObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
-        # Get project id
-        $pattern = "https://$($this.SubscriptionContext.SubscriptionName).vsrm.visualstudio.com/(.*?)/_apis/Release/definitions/$($this.ReleaseObj.id)"
-        $this.ProjectId = [regex]::match($this.ReleaseObj.url.ToLower(), $pattern.ToLower()).Groups[1].Value
-        if([string]::IsNullOrEmpty($this.ProjectId))
-        {
-            $pattern = "https://vsrm.dev.azure.com/$($this.SubscriptionContext.SubscriptionName)/(.*?)/_apis/Release/definitions/$($this.ReleaseObj.id)"
-            $this.ProjectId = [regex]::match($this.ReleaseObj.url.ToLower(), $pattern.ToLower()).Groups[1].Value
-        }
         # Get security namespace identifier of current release pipeline.
         if ([string]::IsNullOrEmpty([Release]::SecurityNamespaceId)) {
             $apiURL = "https://dev.azure.com/{0}/_apis/securitynamespaces?api-version=5.0" -f $($this.SubscriptionContext.SubscriptionName)
