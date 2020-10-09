@@ -8,8 +8,8 @@ class AgentPool: ADOSVTBase
     
     AgentPool([string] $subscriptionId, [SVTResource] $svtResource): Base($subscriptionId,$svtResource) 
     {
-        $this.AgentPoolId =  ($this.ResourceContext.ResourceId -split "AgentPool/")[-1]
-        $this.ProjectId = ($this.ResourceContext.ResourceId -split "Project/")[-1].Split('/')[0]
+        $this.AgentPoolId =  ($this.ResourceContext.ResourceId -split "agentpool/")[-1]
+        $this.ProjectId = ($this.ResourceContext.ResourceId -split "project/")[-1].Split('/')[0]
         $apiURL = "https://$($this.SubscriptionContext.SubscriptionName).visualstudio.com/_apis/securityroles/scopes/distributedtask.agentqueuerole/roleassignments/resources/$($this.ProjectId)_$($this.AgentPoolId)";
         $this.AgentObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
 
