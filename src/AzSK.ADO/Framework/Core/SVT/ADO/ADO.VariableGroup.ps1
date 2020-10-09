@@ -368,7 +368,7 @@ class VariableGroup: ADOSVTBase
 
         #Removing duplicate entries of the tuple (variableGroupId,serviceId)
         $variableGroupSTMapping.data = $variableGroupSTMapping.data | Sort-Object -Unique variableGroupID,serviceID
-        $variableGroupSTMapping | ConvertTo-Json -Depth 10 | Out-File 'C:\Users\abdaga\Downloads\VariableGroupSTMapping.json'  
+        $variableGroupSTMapping | ConvertTo-Json -Depth 10 | Out-File 'C:\Users\abdaga\Downloads\VariableGroupSTData.json'  
         return $controlResult;
     }
 

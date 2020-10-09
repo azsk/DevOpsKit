@@ -233,7 +233,7 @@ class AgentPool: ADOSVTBase
             Write-Host "$i - Id = $definitionId - PipelineType = $pipelineType"
             $i++
         }
-        $agentPoolSTMapping | ConvertTo-Json -Depth 10 | Out-File 'C:\Users\abdaga\Downloads\AgentPoolSTMapping.json' 
+        $agentPoolSTMapping | ConvertTo-Json -Depth 10 | Out-File 'C:\Users\abdaga\Downloads\AgentPoolSTData.json' 
         return $controlResult;
     }
 }

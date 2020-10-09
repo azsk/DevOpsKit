@@ -508,7 +508,7 @@ class ServiceConnection: ADOSVTBase
             Write-Host "$i - Id = $definitionId - PipelineType = $pipelineType"
             $i++
         }
-        $svcConnSTMapping | ConvertTo-Json -Depth 10 | Out-File 'C:\Users\abdaga\Downloads\ServiceConnectionSTMapping.json' 
+        $svcConnSTMapping | ConvertTo-Json -Depth 10 | Out-File 'C:\Users\abdaga\Downloads\ServiceConnectionSTData.json' 
         return $controlResult;
     }
 }
