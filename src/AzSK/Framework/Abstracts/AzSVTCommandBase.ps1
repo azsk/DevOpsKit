@@ -134,7 +134,7 @@ class AzSVTCommandBase: SVTCommandBase {
                         if($latestVersion -gt $moduleVersionInUse -and [ConfigurationManager]::GetAzSKSettings().IsSAW -eq $false)
                         {
                             [MessageData] $data = [MessageData]@{
-                            Message     = ([Constants]::HashLine +"`n`nAborting the attestation flow since you are using an older version of $($AzSKModuleName).Please install and use the latest version '$($latestVersion)' to ensure that you are always using the latest security controls.");
+                            Message     = ([Constants]::DoubleDashLine +"`n`nAborting the attestation flow since you are using an older version of $($AzSKModuleName).Please install and use the latest version '$($latestVersion)' to ensure that you are always using the latest security controls.");
                             MessageType = [MessageType]::Error;
                             };
                             $this.PublishCustomMessage($data)
