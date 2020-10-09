@@ -193,7 +193,12 @@ function Install-AzSKMonitoringSolution
 		[switch]
 		[Alias("dnof")]
 		[Parameter(Mandatory = $false, HelpMessage = "Switch to specify whether to open output folder.")]
-		$DoNotOpenOutputFolder
+		$DoNotOpenOutputFolder,
+
+		[switch]
+		[Alias("f")]
+		[Parameter(Mandatory = $false, HelpMessage = "Switch to force deployment without further user consent.")]
+		$Force
     )
 	Begin
 	{
@@ -209,7 +214,7 @@ function Install-AzSKMonitoringSolution
 				Write-Host "WARNING: The command 'Install-AzSKOMSSolution' will soon be deprecated. It will be replaced by 'Install-AzSKMonitoringSolution'.`n" -ForegroundColor Yellow
 			}
 			$monitoringInstance = [LogAnalyticsMonitoring]::new($LAWSSubscriptionId, $LAWSResourceGroup, $LAWSId, $PSCmdlet.MyInvocation);
-			$monitoringInstance.InvokeFunction($monitoringInstance.ConfigureLAWS, @($ViewName, $ValidateOnly));
+			$monitoringInstance.InvokeFunction($monitoringInstance.ConfigureLAWS, @($ViewName, $ValidateOnly,$Force));
 		}
 		catch
 		{
