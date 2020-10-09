@@ -149,7 +149,8 @@ class Organization: ADOSVTBase
                     {
                         $adminGroups = @();
                         $adminGroups += $response.dataProviders."ms.vss-admin-web.org-admin-groups-data-provider".identities | where { $_.displayName -in $adminGroupNames }
-                        
+                        $PCSAGroup = $response.dataProviders."ms.vss-admin-web.org-admin-groups-data-provider".identities | where { $_.displayName -eq "Project Collection Service Accounts"}
+                            
                         if(($adminGroups | Measure-Object).Count -gt 0)
                         {
                             #global variable to track admin members across all admin groups
@@ -157,7 +158,7 @@ class Organization: ADOSVTBase
                             
                             for ($i = 0; $i -lt $adminGroups.Count; $i++) 
                             {
-                                # [AdministratorHelper]::AllPCAMembers is a static variable. Always needs ro be initialized. At the end of each iteration, it will be populated with members of that particular admin group.
+                                # [AdministratorHelper]::AllPCAMembers is a static variable. Always needs to be initialized. At the end of each iteration, it will be populated with members of that particular admin group.
                                 [AdministratorHelper]::AllPCAMembers = @();
                                 # Helper function to fetch flattened out list of group members.
                                 [AdministratorHelper]::FindPCAMembers($adminGroups[$i].descriptor, $this.SubscriptionContext.SubscriptionName)
@@ -166,14 +167,37 @@ class Organization: ADOSVTBase
                                 # Add the members of current group to this temp variable.
                                 $groupMembers += [AdministratorHelper]::AllPCAMembers
                                 # Create a custom object to append members of current group with the group name. Each of these custom object is added to the global variable $allAdminMembers for further analysis of SC-Alt detection.
-                                $groupMembers | ForEach-Object {$allAdminMembers += @( [PSCustomObject] @{ name = $_.displayName; mailAddress = $_.mailAddress; groupName = $adminGroups[$i].displayName } )} 
+                                $groupMembers | ForEach-Object {$allAdminMembers += @( [PSCustomObject] @{ name = $_.displayName; mailAddress = $_.mailAddress; id = $_.identityId; groupName = $adminGroups[$i].displayName } )} 
                             }
                             
+                            if(($PCSAGroup | Measure-Object).Count -gt 0)
+                            {
+                                $allPCSAMembers = @();
+
+                                # [AdministratorHelper]::AllPCAMembers is a static variable. Needs to be reinitialized as it might contain group info from the previous for loop.
+                                [AdministratorHelper]::AllPCAMembers = @();
+                                # Helper function to fetch flattened out list of group members.
+                                [AdministratorHelper]::FindPCAMembers($PCSAGroup.descriptor, $this.SubscriptionContext.SubscriptionName)
+
+                                $groupMembers = @();
+                                # Add the members of current group to this temp variable.
+                                $groupMembers += [AdministratorHelper]::AllPCAMembers
+
+                                # Preparing the list of members of PCSA which needs to be subtracted from $allAdminMembers
+                                #USE IDENTITY ID
+                                $groupMembers | ForEach-Object {$allPCSAMembers += @( [PSCustomObject] @{ name = $_.displayName; mailAddress = $_.mailAddress; id = $_.identityId; groupName = "Project Collection Administrators" } )} 
+
+                            }
+
+                            #Removing PCSA members from PCA members using id.
+                            #TODO: HAVE ANOTHER CONTROL TO CHECK FOR PCA because some service accounts might be added directly as PCA and as well as part of PCSA. This new control will serve as a hygiene control.
+                            $allAdminMembers = $allAdminMembers | ? {$_.id -notin $allPCSAMembers.id}
+
                             # clearing cached value in [AdministratorHelper]::AllPCAMembers as it can be used in attestation later and might have incorrect group loaded.
                             [AdministratorHelper]::AllPCAMembers = @();
                             
                             # Filtering out distinct entries. A user might be added directly to the admin group or might be a member of a child group of the admin group.
-                            $allAdminMembers = $allAdminMembers| Sort-Object -Property mailAddress -Unique
+                            $allAdminMembers = $allAdminMembers| Sort-Object -Property id -Unique
 
                             if(($allAdminMembers | Measure-Object).Count -gt 0)
                             {
@@ -184,27 +208,32 @@ class Organization: ADOSVTBase
                                     {
                                         $nonSCMembers = @();
                                         $nonSCMembers += $allAdminMembers | Where-Object { $_.mailAddress -notmatch $matchToSCAlt }  
+                                        $nonSCCount = ($nonSCMembers | Measure-Object).Count
+
                                         $SCMembers = @();
                                         $SCMembers += $allAdminMembers | Where-Object { $_.mailAddress -match $matchToSCAlt }
+                                        $SCCount = ($SCMembers | Measure-Object).Count
 
-                                        if (($nonSCMembers | Measure-Object).Count -gt 0) 
+                                        if ($nonSCCount -gt 0) 
                                         {
                                             $nonSCMembers = $nonSCMembers | Select-Object name,mailAddress,groupName
                                             $stateData = @();
                                             $stateData += $nonSCMembers
-                                            $controlResult.AddMessage([VerificationResult]::Verify, "Review the users having admin privileges with non SC-ALT accounts: ", $stateData); 
-                                            $controlResult.SetStateData("List of users having admin privileges with non SC-ALT accounts: ", $stateData); 
+                                            $controlResult.AddMessage([VerificationResult]::Failed, "`nTotal number of non SC-ALT accounts with admin privileges:  $nonSCCount"); 
+                                            $controlResult.AddMessage("Review the non SC-ALT accounts with admin privileges: ", $stateData);  
+                                            $controlResult.SetStateData("List of non SC-ALT accounts with admin privileges: ", $stateData); 
                                         }
                                         else 
                                         {
                                             $controlResult.AddMessage([VerificationResult]::Passed, "No users have admin privileges with non SC-ALT accounts.");
                                         }
-                                        if (($SCMembers | Measure-Object).Count -gt 0) 
+                                        if ($SCCount -gt 0) 
                                         {
                                             $SCMembers = $SCMembers | Select-Object name,mailAddress,groupName
                                             $SCData = @();
                                             $SCData += $SCMembers
-                                            $controlResult.AddMessage("Users having admin privileges with SC-ALT accounts: ", $SCData);  
+                                            $controlResult.AddMessage("`nTotal number of SC-ALT accounts with admin privileges: $SCCount");  
+                                            $controlResult.AddMessage("SC-ALT accounts with admin privileges: ", $SCData);  
                                         }
                                     }
                                     else {
@@ -375,19 +404,30 @@ class Organization: ADOSVTBase
 
                 if($extCount -gt 0)
                 {               
-                    $controlResult.AddMessage("No. of extensions installed: " + $extCount);
+                    $controlResult.AddMessage("No. of installed extensions: " + $extCount);
 
                     $trustedExtPublishers = $this.ControlSettings.Organization.TrustedExtensionPublishers;
 
                     $trustedExtensions = @(); #Publishers trusted by Microsoft
                     $trustedExtensions += $extensionList | Where-Object {$_.publisherName -in $trustedExtPublishers}
+                    $trustedCount = ($trustedExtensions | Measure-Object).Count
                     
                     $unTrustedExtensions = @(); #Publishers not trusted by Microsoft
                     $unTrustedExtensions += $extensionList | Where-Object {$_.publisherName -notin $trustedExtPublishers}
-                        
-                    $controlResult.AddMessage([VerificationResult]::Verify, "Review the below list of installed extensions: ");  
-                    $controlResult.AddMessage("Extensions (from trusted publisher): ", $trustedExtensions);
-                    $controlResult.AddMessage("Extensions (from untrusted publisher): ", $unTrustedExtensions);
+                    $unTrustedCount = ($unTrustedExtensions | Measure-Object).Count
+                    
+                    $controlResult.AddMessage("`nList of trusted publishers: ", $trustedExtPublishers);
+                    $controlResult.AddMessage([VerificationResult]::Verify, "`nReview the below list of installed extensions: ");  
+
+                    if($unTrustedCount -gt 0){
+                        $controlResult.AddMessage("`nNo. of installed extensions (from untrusted publishers): $unTrustedCount");
+                        $controlResult.AddMessage("Installed extensions (from untrusted publishers): ", $unTrustedExtensions);
+                    }
+
+                    if($trustedCount -gt 0){
+                        $controlResult.AddMessage("`nNo. of installed extensions (from trusted publishers): $trustedCount");
+                        $controlResult.AddMessage("Installed extensions (from trusted publishers): ", $trustedExtensions);
+                    }
 
                     $stateData = @{
                         Trusted_Extensions = @();
@@ -607,7 +647,7 @@ class Organization: ADOSVTBase
                 $inactiveUsersStateData = ($inactiveUsers | Select-Object -Property @{Name="Name"; Expression = {$_.User.displayName}},@{Name="mailAddress"; Expression = {$_.User.mailAddress}})
                 
                 $inactiveUsersCount = ($inactiveUsers | Measure-Object).Count
-                $controlResult.AddMessage([VerificationResult]::Failed,"Total number of inactive review users present in the organization: $($inactiveUsersCount)");
+                $controlResult.AddMessage([VerificationResult]::Failed,"Total number of inactive users present in the organization: $($inactiveUsersCount)");
                 $controlResult.SetStateData("Inactive users list: ", $inactiveUsersStateData);
 
                 # segregate never active users from the list
@@ -627,14 +667,12 @@ class Organization: ADOSVTBase
                 }
             }
             else {
-                $controlResult.AddMessage([VerificationResult]::Passed,
-                                        "No inactive users found")   
+                $controlResult.AddMessage([VerificationResult]::Passed, "No inactive users found")   
             }
         }
         else
         {
-            $controlResult.AddMessage([VerificationResult]::Passed,
-                                        "No inactive users found");
+            $controlResult.AddMessage([VerificationResult]::Passed, "No inactive users found");
         }
         
         return $controlResult;

@@ -403,13 +403,13 @@ class Project: ADOSVTBase
                                 # Add the members of current group to this temp variable.
                                 $groupMembers += [AdministratorHelper]::AllPAMembers
                                 # Create a custom object to append members of current group with the group name. Each of these custom object is added to the global variable $allAdminMembers for further analysis of SC-Alt detection.
-                                $groupMembers | ForEach-Object {$allAdminMembers += @( [PSCustomObject] @{ name = $_.displayName; mailAddress = $_.mailAddress; groupName = $adminGroups[$i].displayName } )} 
+                                $groupMembers | ForEach-Object {$allAdminMembers += @( [PSCustomObject] @{ name = $_.displayName; mailAddress = $_.mailAddress; id = $_.identityId; groupName = $adminGroups[$i].displayName } )} 
                             }
                             
                             # clearing cached value in [AdministratorHelper]::AllPAMembers as it can be used in attestation later and might have incorrect group loaded.
                             [AdministratorHelper]::AllPAMembers = @();
                             # Filtering out distinct entries. A user might be added directly to the admin group or might be a member of a child group of the admin group.
-                            $allAdminMembers = $allAdminMembers| Sort-Object -Property mailAddress -Unique
+                            $allAdminMembers = $allAdminMembers| Sort-Object -Property id -Unique
 
                             if(($allAdminMembers | Measure-Object).Count -gt 0)
                             {
@@ -420,26 +420,32 @@ class Project: ADOSVTBase
                                     {
                                         $nonSCMembers = @();
                                         $nonSCMembers += $allAdminMembers | Where-Object { $_.mailAddress -notmatch $matchToSCAlt }
+                                        $nonSCCount = ($nonSCMembers | Measure-Object).Count
+
                                         $SCMembers = @();
                                         $SCMembers += $allAdminMembers | Where-Object { $_.mailAddress -match $matchToSCAlt }   
-                                        if (($nonSCMembers | Measure-Object).Count -gt 0) 
+                                        $SCCount = ($SCMembers | Measure-Object).Count
+
+                                        if ($nonSCCount -gt 0) 
                                         {
                                             $nonSCMembers = $nonSCMembers | Select-Object name,mailAddress,groupName
                                             $stateData = @();
                                             $stateData += $nonSCMembers
-                                            $controlResult.AddMessage([VerificationResult]::Verify, "Review the users having admin privileges with non SC-ALT accounts: ", $stateData); 
-                                            $controlResult.SetStateData("List of users having admin privileges with non SC-ALT accounts: ", $stateData); 
+                                            $controlResult.AddMessage([VerificationResult]::Failed, "`nTotal number of non SC-ALT accounts with admin privileges: $nonSCCount"); 
+                                            $controlResult.AddMessage("Review the non SC-ALT accounts with admin privileges: ", $stateData);  
+                                            $controlResult.SetStateData("List of non SC-ALT accounts with admin privileges: ", $stateData); 
                                         }
                                         else 
                                         {
                                             $controlResult.AddMessage([VerificationResult]::Passed, "No users have admin privileges with non SC-ALT accounts.");
                                         }
-                                        if (($SCMembers | Measure-Object).Count -gt 0) 
+                                        if ($SCCount -gt 0) 
                                         {
                                             $SCMembers = $SCMembers | Select-Object name,mailAddress,groupName
                                             $SCData = @();
                                             $SCData += $SCMembers
-                                            $controlResult.AddMessage("Users having admin privileges with SC-ALT accounts: ", $SCData);
+                                            $controlResult.AddMessage("`nTotal number of SC-ALT accounts with admin privileges: $SCCount");  
+                                            $controlResult.AddMessage("SC-ALT accounts with admin privileges: ", $SCData);  
                                         }
                                     }
                                     else {
