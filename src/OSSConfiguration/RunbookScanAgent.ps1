@@ -79,13 +79,13 @@ function RunAzSKScan() {
 
 	if($null -ne $usageTelelmetryLevel -and (-not [string]::IsNullOrWhiteSpace($usageTelelmetryLevel.Value)))
 	{
-		Write-Output("SA: Setting Telemetry usage to $($usageTelelmetryLevel.Value)")
+		Write-Output("SA: Setting telemetry usage to $($usageTelelmetryLevel.Value)")
 		Set-AzSKUsageTelemetryLevel -Level $usageTelelmetryLevel.Value.Trim()
+		#------------------------------------Clear session state to ensure updated policy settings are used-------------------
+		Clear-AzSKSessionState
 	}
 
-	#------------------------------------Clear session state to ensure updated policy settings are used-------------------
-	Clear-AzSKSessionState
-
+	
 	################################ End: Configure AzSK for the scan ######################################### 
     PublishEvent -EventName "CA Scan Started" -Properties @{
         "ResourceGroupNames"       = $ResourceGroupNames; `
