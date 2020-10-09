@@ -283,7 +283,12 @@ class SVTControlAttestation
 	[ControlState] ComputeEffectiveControlStateInBulkMode([ControlState] $controlState, [string] $ControlSeverity, [bool] $isSubscriptionControl, [SVTEventContext] $controlItem, [ControlResult] $controlResult)
 	{
 		Write-Host "$([Constants]::SingleDashLine)" -ForegroundColor Cyan		
-		Write-Host "ControlId            : $($controlState.ControlId)`nControlSeverity      : $ControlSeverity`nDescription          : $($controlItem.ControlItem.Description)`nCurrentControlStatus : $($controlState.ActualVerificationResult)`n"
+		if(-not $controlItem.ControlItem.IsControlExcluded){
+			Write-Host "ControlId            : $($controlState.ControlId)`nControlSeverity      : $ControlSeverity`nDescription          : $($controlItem.ControlItem.Description)`nCurrentControlStatus : $($controlState.ActualVerificationResult)`n"	
+		}else{
+			Write-Host "ControlId            : $($controlState.ControlId)`nControlSeverity      : $ControlSeverity`nDescription          : $($controlItem.ControlItem.Description)`n"
+			Write-Host "`r`nPlease note that this control is in excluded state. For more details on excluded controls, please refer: https://aka.ms/azsk/excludedcontrols`n" -ForegroundColor Yellow
+		}
 		if(-not $controlResult.CurrentSessionContext.Permissions.HasRequiredAccess)
 		{
 			Write-Host "Skipping attestation process for this control. You do not have required permissions to evaluate this control. `nNote: If your permissions were elevated recently, please run the 'Disconnect-AzAccount' command to clear the Azure cache and try again." -ForegroundColor Yellow
@@ -320,10 +325,6 @@ class SVTControlAttestation
        
 		if($this.isControlAttestable($controlItem, $controlResult))
 		{	
-			# Print warning message for excluded controls
-			if($controlItem.ControlItem.IsControlExcluded){
-				Write-Host "Please note that this control is in excluded state. For more details on excluded controls, please refer: https://aka.ms/azsk/excludedcontrols" -ForegroundColor Yellow
-			}
 			# Checking if the attestation state provided in command parameter is valid for the control
 			if( $this.attestOptions.AttestationStatus -in $ValidAttestationStatesHashTable.Name)
 			{
