@@ -134,7 +134,7 @@ class Release: ADOSVTBase
                     {
                         $varGrps = @();
                         $varGrps += $this.ReleaseObj[0].variableGroups
-                        $envCount = (($this.ReleaseObj[0].environments) | Measure-Object).Count
+                        $envCount = ($this.ReleaseObj[0].environments).Count
 
                         if ($envCount -gt 0) 
                         {
