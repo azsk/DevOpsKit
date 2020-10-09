@@ -161,13 +161,13 @@ class SVTResourceResolver: AzSKRoot {
         {
             #Select Org/User by default...
             $link = "https://dev.azure.com/$($this.organizationName)/_settings"
-            $this.AddSVTResource($this.organizationName, $null ,"ADO.Organization", "Organization/$($organizationId)/", $null, $link);
+            $this.AddSVTResource($this.organizationName, $null ,"ADO.Organization", "organization/$($organizationId)", $null, $link);
         }
 
         if ($this.ResourceTypeName -in ([ResourceTypeName]::User, [ResourceTypeName]::All, [ResourceTypeName]::Org_Project_User, [ResourceTypeName]::Build_Release_SvcConn_AgentPool_User)) {
 
             $link = "https://dev.azure.com/$($this.organizationName)/_settings/users"
-            $this.AddSVTResource($this.organizationName, $null,"ADO.User", "Organization/$($organizationId)/User", $null, $link);
+            $this.AddSVTResource($this.organizationName, $null,"ADO.User", "organization/$($organizationId)/user", $null, $link);
             
         }
 
@@ -216,7 +216,7 @@ class SVTResourceResolver: AzSKRoot {
                     if ($this.ResourceTypeName -in ([ResourceTypeName]::Project, [ResourceTypeName]::All, [ResourceTypeName]::Org_Project_User)) 
                     {
                         $link = $thisProj.url.Replace('/_apis/projects', '') + '/_settings/'
-                        $resourceId = "Organization/$organizationId/Project/$projectId" 
+                        $resourceId = "organization/$organizationId/project/$projectId" 
                         $this.AddSVTResource($thisProj.name, $this.organizationName,"ADO.Project", $resourceId, $thisProj, $link);
                         
                     }
@@ -238,7 +238,7 @@ class SVTResourceResolver: AzSKRoot {
                                 $nObj = $this.MaxObjectsToScan
                                 foreach ($bldDef in $buildDefnsObj) {
                                     $link = $bldDef.url.split('?')[0].replace('_apis/build/Definitions/', '_build?definitionId=');
-                                    $buildResourceId = "Organization/$organizationId/Project/$projectId/Build/$($bldDef.id)";
+                                    $buildResourceId = "organization/$organizationId/project/$projectId/build/$($bldDef.id)";
                                     $this.AddSVTResource($bldDef.name, $bldDef.project.name, "ADO.Build", $buildResourceId, $bldDef, $link);
                                    
                                     if (--$nObj -eq 0) { break; } 
@@ -255,7 +255,7 @@ class SVTResourceResolver: AzSKRoot {
                                 if (([Helpers]::CheckMember($buildDefnsObj, "count") -and $buildDefnsObj[0].count -gt 0) -or (($buildDefnsObj | Measure-Object).Count -gt 0 -and [Helpers]::CheckMember($buildDefnsObj[0], "name"))) {
                                     foreach ($bldDef in $buildDefnsObj) {
                                         $link = $bldDef.url.split('?')[0].replace('_apis/build/Definitions/', '_build?definitionId=');
-                                        $buildResourceId = "Organization/$organizationId/Project/$projectId/Build/$($bldDef.id)";
+                                        $buildResourceId = "organization/$organizationId/project/$projectId/build/$($bldDef.id)";
                                         $this.AddSVTResource($bldDef.name, $bldDef.project.name, "ADO.Build", $buildResourceId, $bldDef, $link);
                                         
                                     }
@@ -287,7 +287,7 @@ class SVTResourceResolver: AzSKRoot {
                                 $nObj = $this.MaxObjectsToScan
                                 foreach ($relDef in $releaseDefnsObj) {
                                     $link = "https://dev.azure.com/{0}/{1}/_release?_a=releases&view=mine&definitionId={2}" -f $this.SubscriptionContext.SubscriptionName, $projectName, $relDef.url.split('/')[-1];
-                                    $releaseResourceId = "Organization/$organizationId/Project/$projectId/Release/$($relDef.id)";
+                                    $releaseResourceId = "organization/$organizationId/project/$projectId/release/$($relDef.id)";
                                     $this.AddSVTResource($relDef.name, $projectName, "ADO.Release", $releaseResourceId, $null, $link);
                                     
                                     if (--$nObj -eq 0) { break; } 
@@ -323,7 +323,7 @@ class SVTResourceResolver: AzSKRoot {
 
                                         foreach ($relDef in $releaseDefinitions) {
                                             $link = "https://dev.azure.com/{0}/{1}/_release?_a=releases&view=mine&definitionId={2}" -f $this.SubscriptionContext.SubscriptionName, $projectName, $relDef.url.split('/')[-1];
-                                            $releaseResourceId = "Organization/$organizationId/Project/$projectId/Release/$($relDef.id)";
+                                            $releaseResourceId = "organization/$organizationId/project/$projectId/release/$($relDef.id)";
                                             $this.AddSVTResource($relDef.name, $projectName, "ADO.Release", $releaseResourceId, $null, $link);
                                             
                                         }
@@ -376,7 +376,7 @@ class SVTResourceResolver: AzSKRoot {
                             Remove-Variable  serviceEndpointObj;
                             $nObj = $this.MaxObjectsToScan
                             foreach ($connectionObject in $Connections) {
-                                $resourceId = "Organization/$organizationId/Project/$projectId/ServiceConnection/$($connectionObject.Id)";
+                                $resourceId = "organization/$organizationId/project/$projectId/serviceconnection/$($connectionObject.Id)";
                                 $link = "https://dev.azure.com/$($this.organizationName)/$projectId/_settings/adminservices?resourceId=$($connectionObject.Id)"; 
                                 $this.AddSVTResource($connectionObject.name, $projectName, "ADO.ServiceConnection", $resourceId, $connectionObject, $link);
                                 
@@ -414,7 +414,7 @@ class SVTResourceResolver: AzSKRoot {
                                 
                                 foreach ($taq in $taskAgentQueues) {
                                     $resourceId = "https://{0}.visualstudio.com/_apis/securityroles/scopes/distributedtask.agentqueuerole/roleassignments/resources/{1}_{2}" -f $($this.SubscriptionContext.SubscriptionName), $($taq.projectId), $taq.id
-                                    $agtpoolResourceId = "Organization/$organizationId/Project/$projectId/AgentPool/$($taq.id)";
+                                    $agtpoolResourceId = "organization/$organizationId/project/$projectId/agentpool/$($taq.id)";
                                     $link = "https://{0}.visualstudio.com/{1}/_settings/agentqueues?queueId={2}&view=security" -f $($this.SubscriptionContext.SubscriptionName), $($taq.projectId), $taq.id
                                     $this.AddSVTResource($taq.name, $projectName, "ADO.AgentPool", $agtpoolResourceId, $null, $link);
                                     
@@ -455,7 +455,7 @@ class SVTResourceResolver: AzSKRoot {
 
                             $nObj = $this.MaxObjectsToScan
                             foreach ($group in $varGroups) {
-                                $resourceId = "Organization/$organizationId/Project/$projectId/VariableGroup/$($group.Id)";
+                                $resourceId = "organization/$organizationId/project/$projectId/variablegroup/$($group.Id)";
                                 $link = ("https://{0}.visualstudio.com/{1}/_library?itemType=VariableGroups&view=VariableGroupView&variableGroupId={2}") -f $($this.organizationName), $projectName, $($group.Id); 
                                 $this.AddSVTResource($group.name, $projectName, "ADO.VariableGroup", $resourceId, $group, $link);
                                 
