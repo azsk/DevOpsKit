@@ -21,7 +21,8 @@ class APIManagement: AzSVTBase
         if (-not $this.ResourceObject) {
             $this.ResourceObject = Get-AzResource -Name $this.ResourceContext.ResourceName  `
                                     -ResourceType $this.ResourceContext.ResourceType `
-                                    -ResourceGroupName $this.ResourceContext.ResourceGroupName
+									-ResourceGroupName $this.ResourceContext.ResourceGroupName `
+									-ApiVersion '2019-12-01'
             if(-not $this.ResourceObject)
             {
                 throw ([SuppressedException]::new(("Resource '{0}' not found under Resource Group '{1}'" -f ($this.ResourceContext.ResourceName), ($this.ResourceContext.ResourceGroupName)), [SuppressedExceptionType]::InvalidOperation))
