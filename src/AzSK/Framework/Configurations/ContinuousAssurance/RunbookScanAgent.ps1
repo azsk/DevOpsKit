@@ -74,6 +74,16 @@ function RunAzSKScan() {
 	# implied because the end user who sets up CA would need to accept the EULA to run AzSK on their desktop.    
 	Set-AzSKPrivacyNoticeResponse -AcceptPrivacyNotice "yes" 
 
+	# Check if automation acccount variable UsageTelemetryLevel is set 
+	# Set telemetry level as value of this variable
+	$usageTelelmetryLevel = Get-AzAutomationVariable -Name "UsageTelemetryLevel" -AutomationAccountName $AutomationAccountName -ResourceGroupName $AutomationAccountRG -ErrorAction SilentlyContinue
+
+	if($null -ne $usageTelelmetryLevel -and [string]::IsNullOrWhiteSpace($usageTelelmetryLevel.Value))
+	{
+		Write-Output("SA: Setting Telemetry usage to $($usageTelelmetryLevel.Value)")
+		Set-AzSKUsageTelemetryLevel -Level $usageTelelmetryLevel.Value.Trim()
+	}
+
 	################################ End: Configure AzSK for the scan ######################################### 
     PublishEvent -EventName "CA Scan Started" -Properties @{
         "ResourceGroupNames"       = $ResourceGroupNames; `

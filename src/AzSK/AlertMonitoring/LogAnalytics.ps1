@@ -216,7 +216,7 @@ function Install-AzSKMonitoringSolution
 				Write-Host "WARNING: The command 'Install-AzSKOMSSolution' will soon be deprecated. It will be replaced by 'Install-AzSKMonitoringSolution'.`n" -ForegroundColor Yellow
 			}
 			$monitoringInstance = [LogAnalyticsMonitoring]::new($LAWSSubscriptionId, $LAWSResourceGroup, $LAWSId, $PSCmdlet.MyInvocation);
-			$monitoringInstance.InvokeFunction($monitoringInstance.ConfigureLAWS, @($ViewName, $ValidateOnly, $Force));
+			$monitoringInstance.InvokeFunction($monitoringInstance.ConfigureLAWS, @($ViewName, $ValidateOnly,$Force));
 		}
 		catch
 		{

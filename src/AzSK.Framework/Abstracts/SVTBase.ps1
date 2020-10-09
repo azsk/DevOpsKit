@@ -1012,9 +1012,23 @@ class SVTBase: AzSKRoot
 									{
 										if ($eventcontext.controlItem.OnAttestationDrift -and `
 											(-not [String]::IsNullOrEmpty($eventcontext.controlItem.OnAttestationDrift.ApplyToVersionsUpto)))
-										{							
+										{	
+											#check if drift is expected in all AzSK versions(* is specified in the control json file)		
+											if ($eventcontext.controlItem.OnAttestationDrift.ApplyToVersionsUpto -eq "*")
+											{
+												$IsDriftAllowedInCurrVer = $true
+											}
 											# Check if attested version is less than or equal to the last stable version (as specified in the control json file)
-											if ([System.Version] $childResourceState.Version -le [System.Version] $eventcontext.controlItem.OnAttestationDrift.ApplyToVersionsUpto)
+											elseif ([System.Version] $childResourceState.Version -le [System.Version] $eventcontext.controlItem.OnAttestationDrift.ApplyToVersionsUpto) 
+											{
+												$IsDriftAllowedInCurrVer = $true
+											}
+											else 
+											{
+												$IsDriftAllowedInCurrVer = $false
+											}						
+				
+											if ($IsDriftAllowedInCurrVer)
 											{	
 												# Check action to be taken on drift
 												# Repect attestation if attested with older version
@@ -1325,8 +1339,22 @@ class SVTBase: AzSKRoot
 					(-not [String]::IsNullOrEmpty($eventcontext.controlItem.OnAttestationDrift.OverrideAttestationExpiryInDays)) -and `
 					($eventcontext.controlItem.OnAttestationDrift.ActionOnAttestationDrift -eq [ActionOnAttestationDrift]::OverrideAttestationExpiryPeriod))
 				{
+					# Check if drift is expected in all AzSK versions(* is specified in the control json file)
+					if ($eventcontext.controlItem.OnAttestationDrift.ApplyToVersionsUpto -eq "*")
+					{
+						$IsDriftAllowedInCurrVer = $true
+					}
 					# Check if attested version is less than or equal to the last stable version (as specified in the control json file)
-					if ([System.Version] $controlState.Version -le [System.Version] $eventcontext.controlItem.OnAttestationDrift.ApplyToVersionsUpto)
+					elseif ([System.Version] $controlState.Version -le [System.Version] $eventcontext.controlItem.OnAttestationDrift.ApplyToVersionsUpto) 
+					{
+						$IsDriftAllowedInCurrVer = $true
+					}
+					else 
+					{
+						$IsDriftAllowedInCurrVer = $false
+					}
+					
+					if ($IsDriftAllowedInCurrVer)
 					{
 						# Change attestation expiry period if number of days left for control to expire is greater than custom attestation expiry period
 						# This sets the attestation to expire before the original expiry period

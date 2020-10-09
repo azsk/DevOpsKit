@@ -47,6 +47,9 @@ class ControlsInfo: AzCommandBase
 		$allControls = @()
 		$controlSummary = @()
 
+		# Fetch control Setting data
+		$this.ControlSettings = [ConfigurationManager]::LoadServerConfigFile("ControlSettings.json");
+
 		# Filter Control for Resource Type / Resource Type Name
 		if([string]::IsNullOrWhiteSpace($this.ResourceType) -and [string]::IsNullOrWhiteSpace($this.ResourceTypeName))
 		{
@@ -54,6 +57,17 @@ class ControlsInfo: AzCommandBase
 			$this.PublishCustomMessage([Constants]::DefaultControlInfoCmdMsg, [MessageType]::Default);
 			$this.DoNotOpenOutputFolder = $true;
 			return;
+		}
+
+		#Check if this org wants IPAddress to be treated as its own resource.
+		if([Helpers]::CheckMember($this.ControlSettings,"PublicIpAddress",$false) -and [Helpers]::CheckMember($this.ControlSettings.PublicIpAddress,"EnablePublicIpResource",$false))
+		{
+			#If not, let us remove the resource type entry from the mapping
+			$treatPublicIPasResource = $this.ControlSettings.PublicIpAddress.EnablePublicIpResource
+			if( -not $treatPublicIPasResource)
+			{
+				[SVTMapping]::Mapping = ([SVTMapping]::Mapping | Where-Object { $_.ResourceType -ne 'Microsoft.Network/publicIPAddresses'});
+			}
 		}
 
 		#throw if user has set params for ResourceTypeName and ResourceType
@@ -77,9 +91,6 @@ class ControlsInfo: AzCommandBase
 			$resourcetypes += ([SVTMapping]::SubscriptionMapping | Select-Object JsonFileName)
 			$resourcetypes += ([SVTMapping]::Mapping | Sort-Object ResourceTypeName | Select-Object JsonFileName )
 		}
-
-		# Fetch control Setting data
-		$this.ControlSettings = [ConfigurationManager]::LoadServerConfigFile("ControlSettings.json");
 
 		# Filter control for baseline controls
 		$baselineControls = @();

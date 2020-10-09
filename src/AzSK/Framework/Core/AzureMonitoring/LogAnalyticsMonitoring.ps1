@@ -26,32 +26,31 @@ class LogAnalyticsMonitoring: AzCommandBase
 		$this.LAWSName = $laWSInstance.Name;
 		#$locationInstance = Get-AzLocation | Where-Object { $_.DisplayName -eq $laWSInstance.Location -or  $_.Location -eq $laWSInstance.Location } 
 		#$this.LAWSLocation = $locationInstance.Location
-		$this.LAWSLocation = $laWSInstance.Location	
+		$this.LAWSLocation = $laWSInstance.Location
 	}
 
-	[void] ConfigureLAWS([string] $_viewName, [bool] $_validateOnly, [bool] $forceDeployment)	
+	[void] ConfigureLAWS([string] $_viewName, [bool] $_validateOnly,[bool] $forceDeployment)	
     {	
-		$input = $null
 		# If force switch is passed don't prompt user for consent and deploy solution
-		if($forceDeployment){
-			Write-Host "WARNING: As you have used '-Force' switch, this command will overwrite the existing AzSK Security View that you may have installed using previous versions of AzSK if you are using the same view name as the one used earlier.`n" -ForegroundColor Yellow
-			$input = "Y"
-		}else{
-			# If force switch is not passed, prompt user for consent before deploying solution
+		if($forceDeployment)
+		{
+			$userInput = "y"
+		}
+		else{
 			Write-Host "WARNING: This command will overwrite the existing AzSK Security View that you may have installed using previous versions of AzSK if you are using the same view name as the one used earlier. In that case we recommend taking a backup using 'Edit -> Export' option available in the Log Analytics workspace.`n" -ForegroundColor Yellow
-			$input = Read-Host "Enter 'Y' to continue and 'N' to skip installation (Y/N)"
-			while ($input -ne "y" -and $input -ne "n")
+	    	$userInput = Read-Host "Enter 'Y' to continue and 'N' to skip installation (Y/N)"
+			while ($userInput -ne "y" -and $userInput -ne "n")
 			{
-				if (-not [string]::IsNullOrEmpty($input)) {
+				if (-not [string]::IsNullOrEmpty($userInput)) {
 					$this.PublishCustomMessage(("Please select an appropriate option.`n" + [Constants]::DoubleDashLine), [MessageType]::Warning)
-						
+					
 				}
-				$input = Read-Host "Enter 'Y' to continue and 'N' to skip installation (Y/N)"
-				$input = $input.Trim()		
-			}
+				$userInput = Read-Host "Enter 'Y' to continue and 'N' to skip installation (Y/N)"
+				$userInput = $userInput.Trim()	
+		    }
 		}	
 	    
-		if ($input -eq "y") 
+		if ($userInput -eq "y") 
 		{
 			$this.PublishCustomMessage([Constants]::DoubleDashLine + "`r`nStarted setting up AzSK Monitoring solution pack`r`n"+[Constants]::DoubleDashLine);
 			$LAWSLogPath = Join-Path $([Constants]::AzSKTempFolderPath) "LogAnalytics";
@@ -69,7 +68,7 @@ class LogAnalyticsMonitoring: AzCommandBase
 			$this.PublishCustomMessage("`r`n2) The Log Analytics view installed contains a basic set of queries over DevOps Kit scan events. Please feel free to customize them once you get familiar with the queries.`r`nWe also periodically publish updated/richer queries at: https://aka.ms/devopskit/omsqueries. `r`n",[MessageType]::Warning);
 		
 		}
-		if ($input -eq "n")
+		if ($userInput -eq "n")
 		{
 			$this.PublishCustomMessage("Skipping installation of AzSK Monitoring solution pack...`n" , [MessageType]::Info)
 			return;
@@ -97,7 +96,7 @@ class LogAnalyticsMonitoring: AzCommandBase
             $SubErrorMessages = $SubErrorMessages | ForEach-Object { $_.Exception.Message.TrimEnd("`r`n") }
             $ErrorMessages += $SubErrorMessages
            
-        }
+     }
         if ($ErrorMessages)
         {
             "", ("{0} returned the following errors:" -f ("Template deployment", "Validation")[[bool]$_validateOnly]), @($ErrorMessages) | ForEach-Object { $this.PublishCustomMessage([MessageData]::new($_));}
