@@ -209,6 +209,8 @@ class SVTResourceResolver: AzSKRoot {
                 if (!$projects) {
                     Write-Host 'No project found to perform the scan.' -ForegroundColor Red
                 }
+                $TotalSvc = 0;
+                $ScannableSvc = 0;
                 foreach ($thisProj in $projects) 
                 {
                     $projectName = $thisProj.name
@@ -358,6 +360,7 @@ class SVTResourceResolver: AzSKRoot {
                         # Here we are fetching all the svc conns in the project and then filtering out. But in build & release we fetch them individually unless '*' is used for fetching all of them.
                         $serviceEndpointURL = ("https://dev.azure.com/{0}/{1}/_apis/serviceendpoint/endpoints?api-version=4.1-preview.1") -f $($this.organizationName), $($projectName);
                         $serviceEndpointObj = [WebRequestHelper]::InvokeGetWebRequest($serviceEndpointURL)
+                        $TotalSvc += ($serviceEndpointObj | Measure-Object).Count
                     
                         if (([Helpers]::CheckMember($serviceEndpointObj, "count") -and $serviceEndpointObj[0].count -gt 0) -or (($serviceEndpointObj | Measure-Object).Count -gt 0 -and [Helpers]::CheckMember($serviceEndpointObj[0], "name"))) {
                             # Currently get only Azure Connections as all controls are applicable for same
@@ -369,6 +372,7 @@ class SVTResourceResolver: AzSKRoot {
                             else {
                                 $Connections = $serviceEndpointObj | Where-Object { ($_.type -eq "azurerm" -or $_.type -eq "azure" -or $_.type -eq "git" -or $_.type -eq "github" -or $_.type -eq "externaltfs") -and ($this.ServiceConnections -eq $_.name) }  
                             }
+                            $ScannableSvc += ($connections | Measure-Object).Count
 
                             #Initialising null to SecurityNamespaceId variable for new scan, it is static variable, setting once only in svc class and same value is applicable for all the svc con withing org
                             [ServiceConnection]::SecurityNamespaceId = $null;
@@ -470,6 +474,19 @@ class SVTResourceResolver: AzSKRoot {
                     }                    
                     if (--$nProj -eq 0) { break; } #nProj is set to MaxObj before loop.
                     
+                }
+                #Display count of total svc and svcs to be scanned
+                #sending the details to telemetry as well
+                if ($TotalSvc -gt 0)
+                {
+                    $this.PublishCustomMessage("Total service connections: $TotalSvc");
+                    $this.PublishCustomMessage("Service connections to be scanned: $ScannableSvc");
+
+                    $properties =  @{ 
+                        "TotalServiceConnections" = $TotalSvc;
+                        "ScannableServiceConnections" = $ScannableSvc; 
+                    }
+                    [AIOrgTelemetryHelper]::PublishEvent( "Service Connections count",$properties, @{})
                 }
             }
         }
