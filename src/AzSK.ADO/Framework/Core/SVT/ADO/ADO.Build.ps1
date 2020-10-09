@@ -140,7 +140,7 @@ class Build: ADOSVTBase
                                         #If regex is in text form, the match will be case-sensitive.
                                         if ($varValue -cmatch $patterns.RegexList[$i]) { 
                                             $noOfCredFound +=1
-                                            $varGrpList += "$($varGrp.Name):$varName ";   
+                                            $varGrpList += "[$($varGrp.Name)]:$varName";   
                                             break  
                                             }
                                         }
@@ -154,19 +154,24 @@ class Build: ADOSVTBase
                     $controlResult.AddMessage([VerificationResult]::Passed, "No variables found in build definition.");
                 }
                 else {
-                    $detailLogs = "Found secrets in build definition.`r`n"
+                    $controlResult.AddMessage([VerificationResult]::Failed, "Found secrets in build definition.");
+                    $stateData = @{
+                        VariableList = @();
+                        VariableGroupList = @();
+                    };
                     if(($varList | Measure-Object).Count -gt 0 )
                     {
                         $varList = $varList | select -Unique
-                        $detailLogs += "Variables name: $varList `r`n"
+                        $stateData.VariableList += $varList
+                        $controlResult.AddMessage("`nList of variable containing secret: ", $varList);
                     }
                     if(($varGrpList | Measure-Object).Count -gt 0 )
                     {
                         $varGrpList = $varGrpList | select -Unique
-                        $detailLogs += "Variable Group and variable name: $varGrpList `r`n"
+                        $stateData.VariableGroupList += $varGrpList
+                        $controlResult.AddMessage("`nList of variable group containing secret: ", $varGrpList);
                     }
-                    $controlResult.AddMessage([VerificationResult]::Failed, $detailLogs );
-                    $controlResult.SetStateData("List of variable name containing secret: ", $varList + $varGrpList );
+                    $controlResult.SetStateData("List of variable and variable group containing secret: ", $stateData );
                 }
                 $patterns = $null;
             }
