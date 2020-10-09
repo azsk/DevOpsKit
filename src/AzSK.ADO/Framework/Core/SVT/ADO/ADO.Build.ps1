@@ -81,14 +81,15 @@ class Build: ADOSVTBase
         }
         else {
           try {      
-            if([Helpers]::CheckMember($this.BuildObj[0],"variables")) 
-            {
+            $patterns = $this.ControlSettings.Patterns | where {$_.RegexCode -eq "SecretsInBuild"} | Select-Object -Property RegexList;
+            $exclusions = $this.ControlSettings.Build.ExcludeFromSecretsCheck;
+            if(($patterns | Measure-Object).Count -gt 0)
+            { 
                 $varList = @();
-                $noOfCredFound = 0;     
-                $patterns = $this.ControlSettings.Patterns | where {$_.RegexCode -eq "SecretsInBuild"} | Select-Object -Property RegexList;
-                $exclusions = $this.ControlSettings.Build.ExcludeFromSecretsCheck;
-                if(($patterns | Measure-Object).Count -gt 0)
-                {                
+                $varGrpList = @();
+                $noOfCredFound = 0;   
+                if([Helpers]::CheckMember($this.BuildObj[0],"variables")) 
+                {
                     Get-Member -InputObject $this.BuildObj[0].variables -MemberType Properties | ForEach-Object {
                         if([Helpers]::CheckMember($this.BuildObj[0].variables.$($_.Name),"value") -and  (-not [Helpers]::CheckMember($this.BuildObj[0].variables.$($_.Name),"isSecret")))
                         {
@@ -113,32 +114,65 @@ class Build: ADOSVTBase
                                     #If regex is in text form, the match will be case-sensitive.
                                     if ($buildVarValue -cmatch $patterns.RegexList[$i]) { 
                                         $noOfCredFound +=1
-                                        $varList += " $buildVarName";   
+                                        $varList += "$buildVarName ";   
                                         break  
                                         }
                                     }
                             }
                         } 
                     }
-                    if($noOfCredFound -gt 0)
+                }
+                if(([Helpers]::CheckMember($this.BuildObj[0],"variableGroups")) -and ([Helpers]::CheckMember($this.BuildObj[0],"variableGroups.variables"))) 
+                {
+                    $this.BuildObj[0].variableGroups| ForEach-Object {
+                       $varGrp = $_
+                        Get-Member -InputObject $_.variables -MemberType Properties | ForEach-Object {
+
+                            if([Helpers]::CheckMember($varGrp.variables.$($_.Name) ,"value") -and  (-not [Helpers]::CheckMember($varGrp.variables.$($_.Name) ,"isSecret")))
+                            {
+                                $varName = $_.Name
+                                $varValue = $varGrp.variables.$($_.Name).value 
+                                if ($exclusions -notcontains $varName)
+                                {
+                                    for ($i = 0; $i -lt $patterns.RegexList.Count; $i++) {
+                                        #Note: We are using '-cmatch' here. 
+                                        #When we compile the regex, we don't specify ignoreCase flag.
+                                        #If regex is in text form, the match will be case-sensitive.
+                                        if ($varValue -cmatch $patterns.RegexList[$i]) { 
+                                            $noOfCredFound +=1
+                                            $varGrpList += "$($varGrp.Name):$varName ";   
+                                            break  
+                                            }
+                                        }
+                                }
+                            } 
+                        }
+                    }
+                }
+                if($noOfCredFound -eq 0) 
+                {
+                    $controlResult.AddMessage([VerificationResult]::Passed, "No variables found in build definition.");
+                }
+                else {
+                    $detailLogs = "Found secrets in build definition.`r`n"
+                    if(($varList | Measure-Object).Count -gt 0 )
                     {
                         $varList = $varList | select -Unique
-                        $controlResult.AddMessage([VerificationResult]::Failed, "Found secrets in build definition. Variables name: $varList" );
-                        $controlResult.SetStateData("List of variable name containing secret: ", $varList);
+                        $detailLogs += "Variables name: $varList `r`n"
                     }
-                    else {
-                        $controlResult.AddMessage([VerificationResult]::Passed, "No credentials found in build definition.");
+                    if(($varGrpList | Measure-Object).Count -gt 0 )
+                    {
+                        $varGrpList = $varGrpList | select -Unique
+                        $detailLogs += "Variable Group and variable name: $varGrpList `r`n"
                     }
-                    $patterns = $null;
+                    $controlResult.AddMessage([VerificationResult]::Failed, $detailLogs );
+                    $controlResult.SetStateData("List of variable name containing secret: ", $varList + $varGrpList );
                 }
-                else 
-                {
-                    $controlResult.AddMessage([VerificationResult]::Manual, "Regular expressions for detecting credentials in pipeline variables are not defined in your organization.");    
-                }
+                $patterns = $null;
             }
             else 
             {
-                $controlResult.AddMessage([VerificationResult]::Passed, "No variables found in build definition.");
+                $controlResult.AddMessage([VerificationResult]::Manual, "Regular expressions for detecting credentials in pipeline variables are not defined in your organization.");    
             }
         }
         catch {
