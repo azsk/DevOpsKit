@@ -47,6 +47,7 @@ class ControlsInfo: AzCommandBase
 		$allControls = @()
 		$controlSummary = @()
 
+		# Fetch control Setting data
 		$this.ControlSettings = [ConfigurationManager]::LoadServerConfigFile("ControlSettings.json");
 
 		# Filter Control for Resource Type / Resource Type Name
@@ -90,9 +91,6 @@ class ControlsInfo: AzCommandBase
 			$resourcetypes += ([SVTMapping]::SubscriptionMapping | Select-Object JsonFileName)
 			$resourcetypes += ([SVTMapping]::Mapping | Sort-Object ResourceTypeName | Select-Object JsonFileName )
 		}
-
-		# Fetch control Setting data
-		$this.ControlSettings = [ConfigurationManager]::LoadServerConfigFile("ControlSettings.json");
 
 		# Filter control for baseline controls
 		$baselineControls = @();
