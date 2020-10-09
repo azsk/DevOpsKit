@@ -114,8 +114,9 @@ class AzSVTCommandBase: SVTCommandBase {
             try {
                 [SVTControlAttestation] $svtControlAttestation = [SVTControlAttestation]::new($arguments, $this.AttestationOptions, $this.SubscriptionContext, $this.InvocationContext);
                 #The current context user would be able to read the storage blob only if he has minimum of contributor access.
-                if ($svtControlAttestation.controlStateExtension.HasControlStateReadAccessPermissions()) {
-                   # Check if latest version is being used for attestation,block attestation otherwise
+                if ($svtControlAttestation.controlStateExtension.HasControlStateReadAccessPermissions()) 
+                {
+                    # Check if latest version is being used for attestation,block attestation otherwise
                     if([FeatureFlightingManager]::GetFeatureStatus("BlockAttestationFromOlderModuleVersion",$($this.SubscriptionContext.SubscriptionId)) -eq $true)
                     {
                         $BlockAttestationFromOlderModuleVersion = $true
@@ -129,7 +130,7 @@ class AzSVTCommandBase: SVTCommandBase {
                         $AzSKModuleName= [Constants]::AzSKModuleName
                         $moduleVersionInUse= [Constants]::AzSKCurrentModuleVersion                    
                         $latestVersion = [System.Version] ([ConfigurationManager]::GetAzSKConfigData().GetLatestAzSKVersion($AzSKModuleName));
-                        if($latestVersion -ne $moduleVersionInUse -and [ConfigurationManager]::GetAzSKSettings().IsSAW -eq $false)
+                        if($latestVersion -gt $moduleVersionInUse -and [ConfigurationManager]::GetAzSKSettings().IsSAW -eq $false)
                         {
                             [MessageData] $data = [MessageData]@{
                             Message     = ([Constants]::HashLine +"`n`nAborting the attestation flow since you are using an older version of $($AzSKModuleName).Please install and use the latest version '$($latestVersion)' to ensure that you are always using the latest security controls.");
@@ -176,7 +177,8 @@ class AzSVTCommandBase: SVTCommandBase {
                     $this.PublishCustomMessage($data)
                 }
             }
-            catch {
+            catch 
+            {
                 $this.CommandError($_);
             }
         }
