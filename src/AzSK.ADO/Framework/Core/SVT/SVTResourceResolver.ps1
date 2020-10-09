@@ -29,17 +29,20 @@ class SVTResourceResolver: AzSKRoot {
     #Local variables for longrunningscan for controlsettings variables
     [bool] $isAllowLongRunningScanInPolicy = $true
     [int] $longRunningScanCheckPoint = 1000;
-    
-    SVTResourceResolver([string]$organizationName, $ProjectNames, $BuildNames, $ReleaseNames, $AgentPools, $ServiceConnectionNames, $VariableGroupNames, $ScanAllArtifacts, $PATToken, $ResourceTypeName, $AllowLongRunningScan): Base($organizationName, $PATToken) {
-        $this.SetallTheParamValues($organizationName, $ProjectNames, $BuildNames, $ReleaseNames, $AgentPools, $ServiceConnectionNames, $VariableGroupNames, $ScanAllArtifacts, $PATToken, $ResourceTypeName, $AllowLongRunningScan);
-    }
 
-    SVTResourceResolver([string]$organizationName, $ProjectNames, $BuildNames, $ReleaseNames, $AgentPools, $ServiceConnectionNames, $VariableGroupNames, $MaxObj, $ScanAllArtifacts, $PATToken, $ResourceTypeName, $AllowLongRunningScan): Base($organizationName, $PATToken) {
+    hidden [string[]] $serviceId = @();
+    hidden [PSObject] $buildSTDetails;
+    hidden [PSObject] $releaseSTDetails;
+    hidden [PSObject] $svcConnSTDetails;
+    hidden [PSObject] $agtPoolSTDetails;
+    hidden [PSObject] $varGroupSTDetails;
+
+    SVTResourceResolver([string]$organizationName, $ProjectNames, $BuildNames, $ReleaseNames, $AgentPools, $ServiceConnectionNames, $VariableGroupNames, $MaxObj, $ScanAllArtifacts, $PATToken, $ResourceTypeName, $AllowLongRunningScan, $ServiceId): Base($organizationName, $PATToken) {
         $this.MaxObjectsToScan = $MaxObj #default = 0 => scan all if "*" specified...
-        $this.SetallTheParamValues($organizationName, $ProjectNames, $BuildNames, $ReleaseNames, $AgentPools, $ServiceConnectionNames, $VariableGroupNames, $ScanAllArtifacts, $PATToken, $ResourceTypeName, $AllowLongRunningScan);            
+        $this.SetallTheParamValues($organizationName, $ProjectNames, $BuildNames, $ReleaseNames, $AgentPools, $ServiceConnectionNames, $VariableGroupNames, $ScanAllArtifacts, $PATToken, $ResourceTypeName, $AllowLongRunningScan, $ServiceId);            
     }
 
-    [void] SetallTheParamValues([string]$organizationName, $ProjectNames, $BuildNames, $ReleaseNames, $AgentPools, $ServiceConnectionNames, $VariableGroupNames, $ScanAllArtifacts, $PATToken, $ResourceTypeName, $AllowLongRunningScan) { 
+    [void] SetallTheParamValues([string]$organizationName, $ProjectNames, $BuildNames, $ReleaseNames, $AgentPools, $ServiceConnectionNames, $VariableGroupNames, $ScanAllArtifacts, $PATToken, $ResourceTypeName, $AllowLongRunningScan, $ServiceId) { 
         $this.organizationName = $organizationName
         $this.ResourceTypeName = $ResourceTypeName
         $this.allowLongRunningScan = $AllowLongRunningScan
@@ -107,6 +110,13 @@ class SVTResourceResolver: AzSKRoot {
             $this.VariableGroups = "*"
         }
 
+        if (-not [string]::IsNullOrEmpty($ServiceId)) {
+            $this.serviceId += $this.ConvertToStringArray($ServiceId);
+            if ($this.serviceId.Count -eq 0) {
+                throw [SuppressedException] "The parameter 'ServiceId' does not contain any string."
+            }
+        }
+
         #User should always provide project name (comma separated list or '*') to scan builds in an org. Else no controls will be scanned if -rtn is 'Build'
         #if (-not [string]::IsNullOrEmpty($ResourceTypeName) -and $ResourceTypeName -ne "All" -and ([string]::IsNullOrEmpty($ProjectNames))) {
         #    $this.ProjectNames = "*"
@@ -157,7 +167,7 @@ class SVTResourceResolver: AzSKRoot {
             Write-Host 'Organization not found: Incorrect organization name or you do not have neccessary permission to access the organization.' -ForegroundColor Red
             throw;
         }
-        if ($this.ResourceTypeName -in ([ResourceTypeName]::Organization, [ResourceTypeName]::All, [ResourceTypeName]::Org_Project_User)) 
+        if ($this.ResourceTypeName -in ([ResourceTypeName]::Organization, [ResourceTypeName]::All, [ResourceTypeName]::Org_Project_User) -and ([string]::IsNullOrEmpty($this.serviceId)) ) 
         {
             #Select Org/User by default...
             $link = "https://dev.azure.com/$($this.organizationName)/_settings"
@@ -224,6 +234,10 @@ class SVTResourceResolver: AzSKRoot {
                     if(!$this.isAllowLongRunningScanCheck())
                     {
                         return;
+                    }
+
+                    if($this.serviceId.Count -gt 0) {
+                        $this.FetchServiceAssociatedResources($this.serviceId, $projectName);
                     }
 
                     if ($this.BuildNames.Count -gt 0 -and ($this.ResourceTypeName -in ([ResourceTypeName]::Build, [ResourceTypeName]::All, [ResourceTypeName]::Build_Release, [ResourceTypeName]::Build_Release_SvcConn_AgentPool_User))) {
@@ -515,5 +529,70 @@ class SVTResourceResolver: AzSKRoot {
         }                         
                                         
         $this.SVTResources += $svtResource
+    }
+
+    [void] FetchServiceAssociatedResources($stId, $projectName)
+    {
+        $this.PublishCustomMessage("Getting service associated resources...");
+        
+        if ($this.ResourceTypeName -in ([ResourceTypeName]::Build, [ResourceTypeName]::All, [ResourceTypeName]::Build_Release, [ResourceTypeName]::Build_Release_SvcConn_AgentPool_User))
+        {
+           if (!$this.buildSTDetails) {
+                $this.buildSTDetails = [ConfigurationManager]::LoadServerConfigFile("BuildSTData.json");
+                #$buildstData = $buildSTDetails.Data | Where-Object {$_.serviceId -eq $STDataForRepo[0].serviceID}
+            }
+            
+            $buildstData = $this.buildSTDetails.Data | Where-Object { ($_.serviceId -eq $stId) -and ($_.projectName -eq $projectName) }
+            if ($buildstData) {
+                $this.BuildNames = $buildstData.buildDefinitionName
+            }
+        }
+
+        if ($this.ResourceTypeName -in ([ResourceTypeName]::Release, [ResourceTypeName]::All, [ResourceTypeName]::Build_Release, [ResourceTypeName]::Build_Release_SvcConn_AgentPool_User))
+        {
+            if (!$this.releaseSTDetails) {
+                $this.releaseSTDetails = [ConfigurationManager]::LoadServerConfigFile("ReleaseSTData.json");
+            }
+            
+            $relstData = $this.releaseSTDetails.Data | Where-Object { ($_.serviceId -eq $stId) -and ($_.projectName -eq $projectName) }
+            if ($relstData) {
+                $this.ReleaseNames = $relstData.releaseDefinitionName
+            }
+        }
+
+        if ($this.ResourceTypeName -in ([ResourceTypeName]::ServiceConnection, [ResourceTypeName]::All, [ResourceTypeName]::Build_Release_SvcConn_AgentPool_User))
+        {
+            if (!$this.svcConnSTDetails) {
+                $this.svcConnSTDetails = [ConfigurationManager]::LoadServerConfigFile("ServiceConnectionSTMapping.json");
+            }
+            
+            $svcConnData = $this.svcConnSTDetails.Data | Where-Object { ($_.serviceId -eq $stId) -and ($_.projectName -eq $projectName) }
+            if ($svcConnData) {
+                $this.ServiceConnections = $svcConnData.serviceConnectionName
+            }
+        }
+        if ($this.ResourceTypeName -in ([ResourceTypeName]::AgentPool, [ResourceTypeName]::All, [ResourceTypeName]::Build_Release_SvcConn_AgentPool_User))
+        {
+            if (!$this.agtPoolSTDetails) {
+                $this.agtPoolSTDetails = [ConfigurationManager]::LoadServerConfigFile("AgentPoolSTMapping.json");
+            }
+            
+            $agtPoolData = $this.agtPoolSTDetails.Data | Where-Object { ($_.serviceId -eq $stId) -and ($_.projectName -eq $projectName) }
+            if ($agtPoolData) {
+                $this.AgentPools = $agtPoolData.agentPoolName
+            }
+        }
+
+        if ($this.ResourceTypeName -in ([ResourceTypeName]::VariableGroup, [ResourceTypeName]::All))
+        {
+            if (!$this.varGroupSTDetails) {
+                $this.varGroupSTDetails = [ConfigurationManager]::LoadServerConfigFile("VariableGroupSTMapping.json");
+            }
+            
+            $varGrpData = $this.varGroupSTDetails.Data | Where-Object { ($_.serviceId -eq $stId) -and ($_.projectName -eq $projectName) }
+            if ($varGrpData) {
+                $this.VariableGroupNames = $varGrpData.variableGroupName
+            }
+        }
     }
 }
