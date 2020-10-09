@@ -455,23 +455,34 @@ class WritePsConsole: FileOutputBase
 	hidden [void] PrintSummaryData($event)
 	{
 		[SVTSummary[]] $summary = @();
-		<#$event.SourceArgs | ForEach-Object {
-			$item = $_
-			if ($item -and $item.ControlResults)
-			{
-				if($item.ControlItem.IsControlExcluded){
-					$item.ControlResults[0].VerificationResult  = [VerificationResult]::Excluded
-				}
-				$item.ControlResults | ForEach-Object{
-					$summary += [SVTSummary]@{
-						VerificationResult = $_.VerificationResult;
-						ControlSeverity = $item.ControlItem.ControlSeverity;
+		$OptimizeScanSummaryGeneration = [FeatureFlightingManager]::GetFeatureStatus("OptimizeScanSummaryGeneration","*")
+		
+		if($OptimizeScanSummaryGeneration){
+			$summary += @($event.SourceArgs | select-object @{Name="VerificationResult"; Expression = { if($_.ControlItem.IsControlExcluded) { [VerificationResult]::Excluded } else { $_.ControlResults.VerificationResult} }},@{Name="ControlSeverity"; Expression = {$_.ControlItem.ControlSeverity}})
+		}else{
+			$event.SourceArgs | ForEach-Object {
+				$item = $_
+				if ($item -and $item.ControlResults)
+				{
+					$item.ControlResults | ForEach-Object{
+						if($item.ControlItem.IsControlExcluded){
+							$summary += [SVTSummary]@{
+								VerificationResult = [VerificationResult]::Excluded;
+								ControlSeverity = $item.ControlItem.ControlSeverity;
+							};
+						}else{
+							$summary += [SVTSummary]@{
+								VerificationResult = $_.VerificationResult;
+								ControlSeverity = $item.ControlItem.ControlSeverity;
+							};
+						}
 					};
-				};
-			}
-		};#>
+				}
+			};
+		}
+		
 
-		$summary += @($event.SourceArgs | select-object @{Name="VerificationResult"; Expression = { if($_.ControlItem.IsControlExcluded) { [VerificationResult]::Excluded } else { $_.ControlResults.VerificationResult} }},@{Name="ControlSeverity"; Expression = {$_.ControlItem.ControlSeverity}})
+		
 
 		if($summary.Count -ne 0)
 		{
