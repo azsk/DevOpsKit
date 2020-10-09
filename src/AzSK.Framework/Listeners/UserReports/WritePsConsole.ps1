@@ -455,9 +455,9 @@ class WritePsConsole: FileOutputBase
 	hidden [void] PrintSummaryData($event)
 	{
 		[SVTSummary[]] $summary = @();
-		$OptimizeScanSummaryGeneration = [FeatureFlightingManager]::GetFeatureStatus("OptimizeScanSummaryGeneration","*")
+		$optimizedScanSummaryGenerationEnabled = [FeatureFlightingManager]::GetFeatureStatus("EnableOptimizedScanSummaryGeneration","*")
 		
-		if($OptimizeScanSummaryGeneration){
+		if($optimizedScanSummaryGenerationEnabled){
 			$summary += @($event.SourceArgs | select-object @{Name="VerificationResult"; Expression = { if($_.ControlItem.IsControlExcluded) { [VerificationResult]::Excluded } else { $_.ControlResults.VerificationResult} }},@{Name="ControlSeverity"; Expression = {$_.ControlItem.ControlSeverity}})
 		}else{
 			$event.SourceArgs | ForEach-Object {

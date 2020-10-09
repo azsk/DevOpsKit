@@ -521,10 +521,10 @@ class SVTControlAttestation
 							$filteredControlItems += $controlItem;
 						}
 					}
+					$excludedControlsByPolicy = @()
 					if($count -gt 0)
 					{
 						Write-Host "No. of controls that need to be attested: $count" -ForegroundColor Cyan
-
 						 foreach( $controlItem in $filteredControlItems)
 						 {
 							$controlId = $controlItem.ControlItem.ControlID
@@ -532,6 +532,9 @@ class SVTControlAttestation
 							$controlResult = $null;
 							$controlStatus = "";
 							$isPrevAttested = $false;
+							if($controlItem.ControlItem.IsControlExcluded){
+								$excludedControlsByPolicy += $controlId
+							}
 							if(($controlItem.ControlResults | Measure-Object).Count -gt 0)
 							{								
 								foreach( $controlResult in $controlItem.ControlResults)
@@ -591,6 +594,7 @@ class SVTControlAttestation
 							$Global:AttestationValue = $true
 							Write-Host "Attestation summary for this resource:" -ForegroundColor Cyan
 							$output = @()
+							$outputForExcludedControls = @()
 							$resourceControlStates | ForEach-Object {
 								$out = "" | Select-Object ControlId, EvaluatedResult, EffectiveResult, AttestationChoice
 								$out.ControlId = $_.ControlId
@@ -599,7 +603,16 @@ class SVTControlAttestation
 								$out.AttestationChoice = $_.AttestationStatus.ToString()
 								$output += $out
 							}
-							Write-Host ($output | Format-Table ControlId, EvaluatedResult, EffectiveResult, AttestationChoice | Out-String) -ForegroundColor Cyan
+							$outputForExcludedControls += $output | Where-Object { $excludedControlsByPolicy -contains $_.ControlId }
+							if($outputForExcludedControls.Count -gt 0){
+								$output = $output | Where-Object { $excludedControlsByPolicy -notcontains $_.ControlId }
+								Write-Host ($output | Format-Table ControlId, EvaluatedResult, EffectiveResult, AttestationChoice | Out-String) -ForegroundColor Cyan
+								Write-Host "Attestation summary for this resource (for excluded controls):" -ForegroundColor Cyan
+								Write-Host ($outputForExcludedControls | Format-Table ControlId, EffectiveResult, AttestationChoice | Out-String) -ForegroundColor Cyan
+							}else{
+								Write-Host ($output | Format-Table ControlId, EvaluatedResult, EffectiveResult, AttestationChoice | Out-String) -ForegroundColor Cyan
+							}
+							
 						}
 
 						Write-Host "Committing the attestation details for this resource..." -ForegroundColor Cyan

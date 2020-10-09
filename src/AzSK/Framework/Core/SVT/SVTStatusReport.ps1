@@ -205,14 +205,9 @@ class SVTStatusReport : AzSVTCommandBase
 	hidden [void] DisplayExcludedControlsCount([SVTEventContext[]] $Result)
 	{
 		$excludedControls = $Result.ControlItem | Where-Object {$_.IsControlExcluded}
-		if($excludedControls){
-			$groupResult = $excludedControls | Group ControlId | ForEach{
-				[pscustomobject]@{
-				'ControlId'=$_.name
-				'ControlsCount'=$_.count}
-				}
-			$this.PublishCustomMessage("Distribution of excluded controls that have been attested:`r`n"+($groupResult|out-string));
-			$this.PublishCustomMessage([Constants]::DoubleDashLine);
+		if($null -ne $excludedControls -and ($excludedControls | Measure-Object).Count -gt 0){
+			$this.PublishCustomMessage([Constants]::SingleDashLine+"`r`n`r`nCount of excluded controls: $(($excludedControls | Measure-Object).Count)`r`n");
+			$this.PublishCustomMessage([Constants]::SingleDashLine);
 		}
 	}
 	hidden [void] DisplayExpiryDateWiseControlsCount([SVTEventContext[]] $Result)
