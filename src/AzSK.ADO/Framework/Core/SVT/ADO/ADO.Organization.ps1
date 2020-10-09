@@ -621,60 +621,63 @@ class Organization: ADOSVTBase
 
     hidden [ControlResult] CheckInActiveUsers([ControlResult] $controlResult)
     {
+        try {
+            $topInActiveUsers = $this.ControlSettings.Organization.TopInActiveUserCount 
+            $apiURL = "https://{0}.vsaex.visualstudio.com/_apis/UserEntitlements?top={1}&filter=&sortOption=lastAccessDate+ascending" -f $($this.SubscriptionContext.SubscriptionName), $topInActiveUsers;
+            $responseObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
 
-        $topInActiveUsers = $this.ControlSettings.Organization.TopInActiveUserCount 
-        $apiURL = "https://{0}.vsaex.visualstudio.com/_apis/UserEntitlements?top={1}&filter=&sortOption=lastAccessDate+ascending" -f $($this.SubscriptionContext.SubscriptionName), $topInActiveUsers;
-        $responseObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
-
-        if($responseObj.Count -gt 0)
-        {
-            $inactiveUsers =  @()
-            $responseObj[0].items | ForEach-Object { 
-                if([datetime]::Parse($_.lastAccessedDate) -lt ((Get-Date).AddDays(-$($this.ControlSettings.Organization.InActiveUserActivityLogsPeriodInDays))))
-                {
-                    $inactiveUsers+= $_
-                }                
-            }
-            if(($inactiveUsers | Measure-Object).Count -gt 0)
+            if($responseObj.Count -gt 0)
             {
-                if($inactiveUsers.Count -ge $topInActiveUsers)
+                $inactiveUsers =  @()
+                $responseObj[0].items | ForEach-Object { 
+                    if([datetime]::Parse($_.lastAccessedDate) -lt ((Get-Date).AddDays(-$($this.ControlSettings.Organization.InActiveUserActivityLogsPeriodInDays))))
+                    {
+                        $inactiveUsers+= $_
+                    }                
+                }
+                if(($inactiveUsers | Measure-Object).Count -gt 0)
                 {
-                    $controlResult.AddMessage("Displaying top $($topInActiveUsers) inactive users")
+                    if($inactiveUsers.Count -ge $topInActiveUsers)
+                    {
+                        $controlResult.AddMessage("Displaying top $($topInActiveUsers) inactive users")
+                    }
+                    #inactive user with days from how many days user is inactive, if user account created and was never active, in this case lastaccessdate is default 01-01-0001
+                    $inactiveUsers = ($inactiveUsers | Select-Object -Property @{Name="Name"; Expression = {$_.User.displayName}},@{Name="mailAddress"; Expression = {$_.User.mailAddress}},@{Name="InactiveFromDays"; Expression = { if (((Get-Date) -[datetime]::Parse($_.lastAccessedDate)).Days -gt 10000){return "User was never active."} else {return ((Get-Date) -[datetime]::Parse($_.lastAccessedDate)).Days} }})
+                    #set data for attestation
+                    $inactiveUsersStateData = ($inactiveUsers | Select-Object -Property @{Name="Name"; Expression = {$_.Name}},@{Name="mailAddress"; Expression = {$_.mailAddress}})
+                    
+                    $inactiveUsersCount = ($inactiveUsers | Measure-Object).Count
+                    $controlResult.AddMessage([VerificationResult]::Failed,"Total number of inactive users present in the organization: $($inactiveUsersCount)");
+                    $controlResult.SetStateData("Inactive users list: ", $inactiveUsersStateData);
+
+                    # segregate never active users from the list
+                    $neverActiveUsers = $inactiveUsers | Where-Object {$_.InactiveFromDays -eq "User was never active."}
+                    $inactiveUsersWithDays = $inactiveUsers | Where-Object {$_.InactiveFromDays -ne "User was never active."} 
+
+                    $neverActiveUsersCount = ($neverActiveUsers | Measure-Object).Count
+                    if ($neverActiveUsersCount -gt 0) {
+                        $controlResult.AddMessage("`nTotal number of users who were never active: $($neverActiveUsersCount)");
+                        $controlResult.AddMessage("Review users present in the organization who were never active: ",$neverActiveUsers);
+                    } 
+                    
+                    $inactiveUsersWithDaysCount = ($inactiveUsersWithDays | Measure-Object).Count
+                    if($inactiveUsersWithDaysCount -gt 0) {
+                        $controlResult.AddMessage("`nTotal number of users who are inactive from last $($this.ControlSettings.Organization.InActiveUserActivityLogsPeriodInDays) days: $($inactiveUsersWithDaysCount)");                
+                        $controlResult.AddMessage("Review users present in the organization who are inactive from last $($this.ControlSettings.Organization.InActiveUserActivityLogsPeriodInDays) days: ",$inactiveUsersWithDays);
+                    }
                 }
-                #inactive user with days from how many days user is inactive, if user account created and was never active, in this case lastaccessdate is default 01-01-0001
-                $inactiveUsers = ($inactiveUsers | Select-Object -Property @{Name="Name"; Expression = {$_.User.displayName}},@{Name="mailAddress"; Expression = {$_.User.mailAddress}},@{Name="InactiveFromDays"; Expression = { if (((Get-Date) -[datetime]::Parse($_.lastAccessedDate)).Days -gt 10000){return "User was never active."} else {return ((Get-Date) -[datetime]::Parse($_.lastAccessedDate)).Days} }})
-                #set data for attestation
-                $inactiveUsersStateData = ($inactiveUsers | Select-Object -Property @{Name="Name"; Expression = {$_.Name}},@{Name="mailAddress"; Expression = {$_.mailAddress}})
-                
-                $inactiveUsersCount = ($inactiveUsers | Measure-Object).Count
-                $controlResult.AddMessage([VerificationResult]::Failed,"Total number of inactive users present in the organization: $($inactiveUsersCount)");
-                $controlResult.SetStateData("Inactive users list: ", $inactiveUsersStateData);
-
-                # segregate never active users from the list
-                $neverActiveUsers = $inactiveUsers | Where-Object {$_.InactiveFromDays -eq "User was never active."}
-                $inactiveUsersWithDays = $inactiveUsers | Where-Object {$_.InactiveFromDays -ne "User was never active."} 
-
-                $neverActiveUsersCount = ($neverActiveUsers | Measure-Object).Count
-                if ($neverActiveUsersCount -gt 0) {
-                    $controlResult.AddMessage("`nTotal number of users who were never active: $($neverActiveUsersCount)");
-                    $controlResult.AddMessage("Review users present in the organization who were never active: ",$neverActiveUsers);
-                } 
-                
-                $inactiveUsersWithDaysCount = ($inactiveUsersWithDays | Measure-Object).Count
-                if($inactiveUsersWithDaysCount -gt 0) {
-                    $controlResult.AddMessage("`nTotal number of users who are inactive from last $($this.ControlSettings.Organization.InActiveUserActivityLogsPeriodInDays) days: $($inactiveUsersWithDaysCount)");                
-                    $controlResult.AddMessage("Review users present in the organization who are inactive from last $($this.ControlSettings.Organization.InActiveUserActivityLogsPeriodInDays) days: ",$inactiveUsersWithDays);
+                else {
+                    $controlResult.AddMessage([VerificationResult]::Passed, "No inactive users found.")   
                 }
             }
-            else {
-                $controlResult.AddMessage([VerificationResult]::Passed, "No inactive users found")   
+            else
+            {
+                $controlResult.AddMessage([VerificationResult]::Passed, "No inactive users found.");
             }
         }
-        else
-        {
-            $controlResult.AddMessage([VerificationResult]::Passed, "No inactive users found");
+        catch {
+            $controlResult.AddMessage([VerificationResult]::Error, "Could not fetch the list of users in the organization.");
         }
-        
         return $controlResult;
     }
 
