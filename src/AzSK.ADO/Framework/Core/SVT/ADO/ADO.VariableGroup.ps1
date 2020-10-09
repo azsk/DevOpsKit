@@ -8,7 +8,7 @@ class VariableGroup: ADOSVTBase
     
     VariableGroup([string] $subscriptionId, [SVTResource] $svtResource): Base($subscriptionId,$svtResource) 
     {
-        $this.ProjectId = ($this.ResourceContext.ResourceId -split "Project/")[-1].Split('/')[0];
+        $this.ProjectId = ($this.ResourceContext.ResourceId -split "project/")[-1].Split('/')[0];
         $this.VarGrpId = $this.ResourceContext.ResourceDetails.id
         $apiURL = "https://$($this.SubscriptionContext.SubscriptionName).visualstudio.com/$($this.ProjectId)/_apis/distributedtask/variablegroups/$($this.VarGrpId)"
         $this.VarGrp = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
