@@ -212,6 +212,15 @@
       "IsEnabled": true
     },
     {
+      "Name": "BlockAttestationFromOlderModuleVersion",
+      "Description": "",
+      "Sources": ["*"],
+      "EnabledForSubs": [],
+      "DisabledForSubs": [],
+      "UnderPreview": false,
+      "IsEnabled": true
+    },
+    {
       "Name": "EnableConditionalAccessRGControlEvaluation",
       "Description": "",
       "Sources": ["*"],
