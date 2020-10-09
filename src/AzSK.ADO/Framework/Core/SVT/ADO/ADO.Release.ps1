@@ -134,10 +134,10 @@ class Release: ADOSVTBase
                     {
                         $varGrps = @();
                         $varGrps += $this.ReleaseObj[0].variableGroups
-                        if ((($this.ReleaseObj[0].environments) | Measure-Object).Count -gt 0) 
-                        {
-                            $envCount = ($this.ReleaseObj[0].environments).Count
+                        $envCount = (($this.ReleaseObj[0].environments) | Measure-Object).Count
 
+                        if ($envCount -gt 0) 
+                        {
                             # Each release pipeline has atleast 1 env.
                             for($i=0; $i -lt $envCount; $i++)
                             {
@@ -149,8 +149,15 @@ class Release: ADOSVTBase
 
                             $varGrpObj = @();
                             $varGrps | ForEach-Object {
-                                $varGrpURL = ("https://{0}.visualstudio.com/{1}/_apis/distributedtask/variablegroups/{2}") -f $($this.SubscriptionContext.SubscriptionName), $this.ProjectId, $_;
-                                $varGrpObj += [WebRequestHelper]::InvokeGetWebRequest($varGrpURL);
+                                try
+                                {
+                                    $varGrpURL = ("https://{0}.visualstudio.com/{1}/_apis/distributedtask/variablegroups/{2}") -f $($this.SubscriptionContext.SubscriptionName), $this.ProjectId, $_;
+                                    $varGrpObj += [WebRequestHelper]::InvokeGetWebRequest($varGrpURL);
+                                }
+                                catch
+                                {
+                                    #eat exception if api failure occurs
+                                }
                             }
 
                             $varGrpObj| ForEach-Object {
