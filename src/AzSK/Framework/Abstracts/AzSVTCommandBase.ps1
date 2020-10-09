@@ -111,7 +111,8 @@ class AzSVTCommandBase: SVTCommandBase {
 
     [void] PostCommandCompletedAction([SVTEventContext[]] $arguments) {
         if ($this.AttestationOptions -ne $null -and $this.AttestationOptions.AttestControls -ne [AttestControls]::None) {
-            try {
+            try 
+            {
                 [SVTControlAttestation] $svtControlAttestation = [SVTControlAttestation]::new($arguments, $this.AttestationOptions, $this.SubscriptionContext, $this.InvocationContext);
                 #The current context user would be able to read the storage blob only if he has minimum of contributor access.
                 if ($svtControlAttestation.controlStateExtension.HasControlStateReadAccessPermissions()) 
