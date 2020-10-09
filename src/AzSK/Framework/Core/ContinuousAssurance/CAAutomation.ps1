@@ -596,7 +596,7 @@ class CCAutomation: AzCommandBase
 				$appID = $connection.FieldDefinitionValues.ApplicationId
 
 				#Fetching details of current Certificate associated with Automation account
-				$CACurrentCertificate= Get-AzAutomationCertificate -ResourceGroupName $this.AutomationAccount.ResourceGroup -AutomationAccountName $this.AutomationAccount.Name				
+				$CACurrentCertificate= Get-AzAutomationCertificate -ResourceGroupName $this.AutomationAccount.ResourceGroup -AutomationAccountName $this.AutomationAccount.Name	-Name $this.certificateAssetName			
 				
 				#Fetching AD App details from AppId
 				$ADApplication =  [ActiveDirectoryHelper]::GetADAppByAppId($appID)
@@ -605,11 +605,20 @@ class CCAutomation: AzCommandBase
 				$ADApplication.keyCredentials = $ADApplication.keyCredentials | Where-Object { 
 					$_.customKeyIdentifier -eq $CACurrentCertificate.Thumbprint
 				} 
-            
-				$this.CAAADApplicationID = $appID;
-				$this.CertStartDate=$ADApplication.keyCredentials.startDate
-				$this.CertEndDate=$ADApplication.keyCredentials.endDate
-				$this.DeleteExistingCertificateForSPN()
+				
+				if(![string]::IsNullOrWhiteSpace($ADApplication.keyCredentials))
+				{
+					$this.CAAADApplicationID = $appID;
+					$this.CertStartDate=$ADApplication.keyCredentials.startDate
+					$this.CertEndDate=$ADApplication.keyCredentials.endDate
+					$this.DeleteExistingCertificateForSPN()
+				}
+				else 
+				{
+					Write-Host "There are no old credentials associated with [$($ADApplication.displayname)]" -ForegroundColor Yellow
+					Write-Host "Skipping the process for deleting old certificates." -ForegroundColor Yellow
+				}
+				
 			}
 			
 			#region :Remove existing and create new AzureRunAsConnection if AzureADAppName param is passed else fix RunAsAccount if issue is found
