@@ -580,7 +580,7 @@ class SVTResourceResolver: AzSKRoot {
         if ($this.ResourceTypeName -in ([ResourceTypeName]::ServiceConnection, [ResourceTypeName]::All, [ResourceTypeName]::Build_Release_SvcConn_AgentPool_User))
         {
             if (!$this.svcConnSTDetails) {
-                $this.svcConnSTDetails = [ConfigurationManager]::LoadServerConfigFile("ServiceConnectionSTMapping.json");
+                $this.svcConnSTDetails = [ConfigurationManager]::LoadServerConfigFile("ServiceConnectionSTData.json");
             }
             
             $svcConnData = $this.svcConnSTDetails.Data | Where-Object { ($_.serviceId -eq $stId) -and ($_.projectName -eq $projectName) }
@@ -591,7 +591,7 @@ class SVTResourceResolver: AzSKRoot {
         if ($this.ResourceTypeName -in ([ResourceTypeName]::AgentPool, [ResourceTypeName]::All, [ResourceTypeName]::Build_Release_SvcConn_AgentPool_User))
         {
             if (!$this.agtPoolSTDetails) {
-                $this.agtPoolSTDetails = [ConfigurationManager]::LoadServerConfigFile("AgentPoolSTMapping.json");
+                $this.agtPoolSTDetails = [ConfigurationManager]::LoadServerConfigFile("AgentPoolSTData.json");
             }
             
             $agtPoolData = $this.agtPoolSTDetails.Data | Where-Object { ($_.serviceId -eq $stId) -and ($_.projectName -eq $projectName) }
@@ -603,7 +603,7 @@ class SVTResourceResolver: AzSKRoot {
         if ($this.ResourceTypeName -in ([ResourceTypeName]::VariableGroup, [ResourceTypeName]::All))
         {
             if (!$this.varGroupSTDetails) {
-                $this.varGroupSTDetails = [ConfigurationManager]::LoadServerConfigFile("VariableGroupSTMapping.json");
+                $this.varGroupSTDetails = [ConfigurationManager]::LoadServerConfigFile("VariableGroupSTData.json");
             }
             
             $varGrpData = $this.varGroupSTDetails.Data | Where-Object { ($_.serviceId -eq $stId) -and ($_.projectName -eq $projectName) }
