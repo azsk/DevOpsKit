@@ -34,7 +34,6 @@ class LogAnalyticsMonitoring: AzCommandBase
 		# If force switch is passed don't prompt user for consent and deploy solution
 		if($forceDeployment)
 		{
-			Write-Host "WARNING: As you have used '-Force' switch, this command will overwrite the existing AzSK Security View that you may have installed using previous versions of AzSK if you are using the same view name as the one used earlier.`n" -ForegroundColor Yellow
 			$userInput = "y"
 		}
 		else{
