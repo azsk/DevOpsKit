@@ -84,9 +84,6 @@ function RunAzSKScan() {
 		Set-AzSKUsageTelemetryLevel -Level $usageTelelmetryLevel.Value.Trim()
 	}
 
-	#------------------------------------Clear session state to ensure updated policy settings are used-------------------
-	Clear-AzSKSessionState
-
 	################################ End: Configure AzSK for the scan ######################################### 
     PublishEvent -EventName "CA Scan Started" -Properties @{
         "ResourceGroupNames"       = $ResourceGroupNames; `
