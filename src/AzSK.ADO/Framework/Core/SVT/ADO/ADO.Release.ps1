@@ -11,8 +11,8 @@ class Release: ADOSVTBase
     {
         [system.gc]::Collect();
         # Get release object
-        $releaseId =  ($this.ResourceContext.ResourceId -split "Release/")[-1]
-        $this.ProjectId = ($this.ResourceContext.ResourceId -split "Project/")[-1].Split('/')[0]
+        $releaseId =  ($this.ResourceContext.ResourceId -split "release/")[-1]
+        $this.ProjectId = ($this.ResourceContext.ResourceId -split "project/")[-1].Split('/')[0]
         $apiURL = "https://vsrm.dev.azure.com/$($this.SubscriptionContext.SubscriptionName)/$($this.ProjectId)/_apis/Release/definitions/$releaseId"
         $this.ReleaseObj = [WebRequestHelper]::InvokeGetWebRequest($apiURL);
         # Get security namespace identifier of current release pipeline.
