@@ -26,6 +26,7 @@ class UserConfig
 	  hidden [WebhookSetting] $WebhookDetails
 	  hidden [string] $StorageAccountName
 	  hidden [string] $StorageAccountRG
+	  hidden [string] $UsageTelemetryLevel
 }
 
 class WebhookSetting
