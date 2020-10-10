@@ -194,7 +194,7 @@
       "IsEnabled": true
     },
     {
-      "Name": "EnableKeyVaultApplicationsFix",
+      "Name": "EnableAppServiceCustomAuth",
       "Description": "",
       "Sources": ["*"],
       "EnabledForSubs": [],
@@ -203,7 +203,7 @@
       "IsEnabled": true
     },
     {
-      "Name": "EnableAppServiceCustomAuth",
+      "Name": "BlockAttestationFromOlderModuleVersion",
       "Description": "",
       "Sources": ["*"],
       "EnabledForSubs": [],
