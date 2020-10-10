@@ -45,7 +45,7 @@ class CCAutomation: AzCommandBase
 	[bool] $AltLAWSVariablesExist = $false;
 	[bool] $OMSVariablesExist = $false;
 	[bool] $AltOMSVariablesExist = $false;
-    [bool] $SkipDeletionFlag = $false;
+	[bool] $SkipDeletionFlag = $false;
     hidden [System.DateTime]$CertStartDate 
     hidden [System.DateTime]$CertEndDate 
 	
@@ -57,7 +57,9 @@ class CCAutomation: AzCommandBase
 	[string] $AutomationAccountName, `
 	[string] $ResourceGroupNames, `
 	[string] $AzureADAppName, `
-	[int] $ScanIntervalInHours) : Base($subscriptionId, $invocationContext)
+	[int] $ScanIntervalInHours,`
+	[string] $UsageTelemetryLevel
+	) : Base($subscriptionId, $invocationContext)
     {
 		$this.defaultScanIntervalInHours = [int]([ConfigurationManager]::GetAzSKConfigData().CAScanIntervalInHours);
 		if([string]::IsNullOrWhiteSpace($ScanIntervalInHours))
@@ -99,6 +101,10 @@ class CCAutomation: AzCommandBase
 		}
 		$this.UserConfig = [UserConfig]@{			
 			ResourceGroupNames = $ResourceGroupNames
+		}
+		if(-not [string]::IsNullOrWhiteSpace($UsageTelemetryLevel))
+		{
+			$this.UserConfig.UsageTelemetryLevel = $UsageTelemetryLevel			
 		}
 		$this.DoNotOpenOutputFolder = $true;
 	}
@@ -516,7 +522,7 @@ class CCAutomation: AzCommandBase
 		return $messages;
 	}	
 
-	[MessageData[]] UpdateAzSKContinuousAssurance($FixRuntimeAccount,$NewRuntimeAccount,$RenewCertificate,$FixModules,$SkipCertificateCleanup,$DeleteOldCredentials)
+	[MessageData[]] UpdateAzSKContinuousAssurance($FixRuntimeAccount,$NewRuntimeAccount,$RenewCertificate,$FixModules,$SkipCertificateCleanup,$DeleteOldCredentials,$UsageTelemetryLevel)
 	{
 		[MessageData[]] $messages = @();
 		try
@@ -541,7 +547,7 @@ class CCAutomation: AzCommandBase
             if($SkipCertificateCleanup)
             {
                 $this.SkipDeletionFlag = $true
-            }
+			}
 
 			#region :Check if automation account is compatible for update
 			$existingAccount = $this.GetCABasicResourceInstance()
@@ -812,7 +818,7 @@ class CCAutomation: AzCommandBase
 				$this.OutputObject.StorageAccountName = $newStorageName 
 			}
 		
-			#endregion
+			#endregion 
 
 			#region :update user configurable variables (Log Analytics workspace details and App RGs) which are present in params
             if($null -ne $this.UserConfig -and $null -ne $this.UserConfig.LAWSCredential)
@@ -949,6 +955,17 @@ class CCAutomation: AzCommandBase
 				}
 			}
 			#endregion
+
+			if(-not [string]::IsNullOrWhiteSpace($UsageTelemetryLevel))
+			{
+				$telemetryLevel = [Variable]@{
+					Name = "UsageTelemetryLevel";
+					Value = $UsageTelemetryLevel;
+					IsEncrypted = $false;
+					Description ="Telemetry settings"
+				}
+				$this.UpdateVariable($telemetryLevel)
+			}
 
 			#region: Update CA target subs in central scan mode
 			if($this.IsCentralScanModeOn)
@@ -3147,6 +3164,16 @@ class CCAutomation: AzCommandBase
 				Description ="CA will download latest available AzSK module from PSGallery if specified value is 'True'"
 			}	#>
 
+		if($null -ne $this.UserConfig.UsageTelemetryLevel -and (-not [string]::IsNullOrWhiteSpace($this.UserConfig.UsageTelemetryLevel)))
+		{
+			$varUsageTelemetryLevel = [Variable]@{
+				Name = "UsageTelemetryLevel";
+				Value = $this.UserConfig.UsageTelemetryLevel;
+				IsEncrypted = $false;
+				Description ="Telemetry settings"
+			}
+			$this.Variables += @($varUsageTelemetryLevel)
+		}
 		$this.Variables|ForEach-Object{
 
 			New-AzAutomationVariable -Name $_.Name -Encrypted $_.IsEncrypted `

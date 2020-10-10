@@ -48,6 +48,8 @@ function Install-AzSKContinuousAssurance
 		This enables AzSK CA in central scanning mode. Use this switch along with TargetSubscriptionIds param to register target subscriptions in the central CA.
 	.PARAMETER DoNotOpenOutputFolder
 		Switch to specify whether to open output folder.
+	.PARAMETER UsageTelemetryLevel
+		Usage telemetry level settings 
 	.NOTES
 	
 
@@ -189,7 +191,15 @@ function Install-AzSKContinuousAssurance
 		[switch]
 		[Parameter(Mandatory = $false, ParameterSetName = "Default", HelpMessage = "Trigger scan on resource addition.")]
 		[Alias("sod")]
-		$ScanOnDeployment
+		$ScanOnDeployment,
+
+		[Parameter(Mandatory = $false, ParameterSetName = "Default")]
+		[Parameter(Mandatory = $false, ParameterSetName = "CentralScanMode")]
+		[ValidateSet('None','Anonymous')]
+        [string]
+		[Alias("utl")]
+		$UsageTelemetryLevel
+		
     )
 	Begin
 	{
@@ -228,10 +238,10 @@ function Install-AzSKContinuousAssurance
 				}
 				$ccAccount = [CCAutomation]::new($SubscriptionId, $PSCmdlet.MyInvocation,`
 					$AutomationAccountLocation, $AutomationAccountRGName, $AutomationAccountName, $ResourceGroupNames,`
-					$AzureADAppName, $ScanIntervalInHours);
+					$AzureADAppName, $ScanIntervalInHours,$UsageTelemetryLevel);
 				#set the Log Analytics workspace settings
-				$ccAccount.SetLAWSSettings($LAWSId, $LAWSSharedKey, $AltLAWSId, $AltLAWSSharedKey);
-	
+				$ccAccount.SetLAWSSettings($LAWSId, $LAWSSharedKey, $AltLAWSId, $AltLAWSSharedKey);				
+
 				#set the Webhook settings
 				$ccAccount.SetWebhookSettings($WebhookUrl, $WebhookAuthZHeaderName, $WebhookAuthZHeaderValue);
 				
@@ -322,15 +332,17 @@ function Update-AzSKContinuousAssurance
     .PARAMETER NewRuntimeAccount
 		Use this switch to create new CA runtime account.
 	.PARAMETER RenewCertificate
-			 Renews certificate credential of CA SPN if the caller is Owner of the AAD Application (SPN). If the caller is not Owner, a new application is created with a corresponding SPN and a certificate owned by the caller. CA uses the updated credential going forward.
+		Renews certificate credential of CA SPN if the caller is Owner of the AAD Application (SPN). If the caller is not Owner, a new application is created with a corresponding SPN and a certificate owned by the caller. CA uses the updated credential going forward.
 	.PARAMETER FixModules
-			 Use this switch in case 'Az.Automation' module extraction fails in CA Automation Account. 
+		Use this switch in case 'Az.Automation' module extraction fails in CA Automation Account. 
 	.PARAMETER DoNotOpenOutputFolder
 		Switch to specify whether to open output folder.
     .PARAMETER SkipCertificateCleanup
 		Use this switch in case of skipping process for deleting old certificates configured with CA SPN.
 	.PARAMETER DeleteOldCredentials
 		Use this switch in case of deleting old certificates configured with CA SPN
+	.PARAMETER UsageTelemetryLevel
+		Use this in case telemetry settings needs to be updated
 	.NOTES
 	
 
@@ -473,6 +485,13 @@ function Update-AzSKContinuousAssurance
 
 		[Parameter(Mandatory = $false, ParameterSetName = "Default")]
 		[Parameter(Mandatory = $false, ParameterSetName = "CentralScanMode")]
+		[ValidateSet('None','Anonymous')]
+        [string]
+		[Alias("utl")]
+		$UsageTelemetryLevel,
+
+		[Parameter(Mandatory = $false, ParameterSetName = "Default")]
+		[Parameter(Mandatory = $false, ParameterSetName = "CentralScanMode")]
         [switch]
 		[Alias("fm")]
 		$FixModules,
@@ -533,7 +552,7 @@ function Update-AzSKContinuousAssurance
 			}
 			else {
 			$ccAccount = [CCAutomation]::new($SubscriptionId, $PSCmdlet.MyInvocation, $null, $AutomationAccountRGName, $AutomationAccountName, `
-			$ResourceGroupNames, $AzureADAppName, $ScanIntervalInHours);
+			$ResourceGroupNames, $AzureADAppName, $ScanIntervalInHours, "");
 			if($PSCmdlet.ParameterSetName -eq "RemoveSettings")
 			{
 				switch($Remove)
@@ -579,7 +598,7 @@ function Update-AzSKContinuousAssurance
 						$ccAccount.LoggingOption = $LoggingOption;
 					}
 				}
-				return $ccAccount.InvokeFunction($ccAccount.UpdateAzSKContinuousAssurance,@($FixRuntimeAccount,$NewRuntimeAccount,$RenewCertificate,$FixModules,$SkipCertificateCleanup,$DeleteOldCredentials));
+				return $ccAccount.InvokeFunction($ccAccount.UpdateAzSKContinuousAssurance,@($FixRuntimeAccount,$NewRuntimeAccount,$RenewCertificate,$FixModules,$SkipCertificateCleanup,$DeleteOldCredentials,$UsageTelemetryLevel));
 			}
 			}
 			}
