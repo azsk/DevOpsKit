@@ -608,7 +608,7 @@ class SVTResourceResolver: AzSKRoot {
             
             $varGrpData = $this.varGroupSTDetails.Data | Where-Object { ($_.serviceId -eq $stId) -and ($_.projectName -eq $projectName) }
             if ($varGrpData) {
-                $this.VariableGroupNames = $varGrpData.variableGroupName
+                $this.VariableGroups = $varGrpData.variableGroupName
             }
         }
     }
