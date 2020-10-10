@@ -548,68 +548,148 @@ class SVTResourceResolver: AzSKRoot {
         $this.SVTResources += $svtResource
     }
 
-    [void] FetchServiceAssociatedResources($stId, $projectName)
+    [void] FetchServiceAssociatedResources($svcId, $projectName)
     {
         $this.PublishCustomMessage("Getting service associated resources...");
+        $bUseADOInfoAPI = $false;
+        if ($this.ControlSettings -eq $null)
+        {
+            $this.ControlSettings = [ConfigurationManager]::LoadServerConfigFile("ControlSettings.json");
+        }
+
+        $adoInfoAPI = $this.ControlSettings.ADOInfoAPI;
+        $code = $null
+        $baseURL=$null
+        if ($adoInfoAPI -ne $null -and $Env:AzSKADODoNotUseADOInfoAPI -ne $true)
+        {
+            if ($adoInfoAPI.Enabled)
+            {
+                $bUseADOInfoAPI = $true;
+                $code = $adoInfoAPI.Code;
+                $baseURL = $adoInfoAPI.Endpoint;
+            }
+        }
         
-        if ($this.ResourceTypeName -in ([ResourceTypeName]::Build, [ResourceTypeName]::All, [ResourceTypeName]::Build_Release, [ResourceTypeName]::Build_Release_SvcConn_AgentPool_User))
+        if ($bUseADOInfoAPI -eq $true)
         {
-           if (!$this.buildSTDetails) {
-                $this.buildSTDetails = [ConfigurationManager]::LoadServerConfigFile("BuildSTData.json");
-                #$buildstData = $buildSTDetails.Data | Where-Object {$_.serviceId -eq $STDataForRepo[0].serviceID}
-            }
-            
-            $buildstData = $this.buildSTDetails.Data | Where-Object { ($_.serviceId -eq $stId) -and ($_.projectName -eq $projectName) }
-            if ($buildstData) {
-                $this.BuildNames = $buildstData.buildDefinitionName
-            }
-        }
+            $func='/api/getadoinfo'
+            $qs= "?svcId={0}" -f $svcId
+            $adoInfoInvokeURL= $baseURL + $func + $qs
 
-        if ($this.ResourceTypeName -in ([ResourceTypeName]::Release, [ResourceTypeName]::All, [ResourceTypeName]::Build_Release, [ResourceTypeName]::Build_Release_SvcConn_AgentPool_User))
-        {
-            if (!$this.releaseSTDetails) {
-                $this.releaseSTDetails = [ConfigurationManager]::LoadServerConfigFile("ReleaseSTData.json");
+            $Header = @{
+                "x-functions-key" = $code;
             }
-            
-            $relstData = $this.releaseSTDetails.Data | Where-Object { ($_.serviceId -eq $stId) -and ($_.projectName -eq $projectName) }
-            if ($relstData) {
-                $this.ReleaseNames = $relstData.releaseDefinitionName
-            }
-        }
+            $rsrcList = $null
+            $sw = new-object system.diagnostics.stopwatch
+            $sw.start()
+            $rsrcList = Invoke-RestMethod -Method 'GET' -Uri $adoInfoInvokeURL -Headers $Header
+            $sw.stop()
+            $sw.Elapsed
+            $sw.Reset()
 
-        if ($this.ResourceTypeName -in ([ResourceTypeName]::ServiceConnection, [ResourceTypeName]::All, [ResourceTypeName]::Build_Release_SvcConn_AgentPool_User))
-        {
-            if (!$this.svcConnSTDetails) {
-                $this.svcConnSTDetails = [ConfigurationManager]::LoadServerConfigFile("ServiceConnectionSTData.json");
+            #TODO: Look at cleaning up these multiple "-in" checks across the API_call-v-Policy_Repo cases...
+            #TODO-PERF: For now we are erring on the side of avoiding multiple network calls...revisit based on observed pattern of -svcid <xyz> usage
+            if ($this.ResourceTypeName -in ([ResourceTypeName]::Build, [ResourceTypeName]::All, [ResourceTypeName]::Build_Release, [ResourceTypeName]::Build_Release_SvcConn_AgentPool_User))
+            {
+                if ($rsrcList.Builds.Count -gt 0)
+                {
+                    $this.BuildNames = $rsrcList.Builds.buildDefinitionName
+                } 
             }
-            
-            $svcConnData = $this.svcConnSTDetails.Data | Where-Object { ($_.serviceId -eq $stId) -and ($_.projectName -eq $projectName) }
-            if ($svcConnData) {
-                $this.ServiceConnections = $svcConnData.serviceConnectionName
+    
+            if ($this.ResourceTypeName -in ([ResourceTypeName]::Release, [ResourceTypeName]::All, [ResourceTypeName]::Build_Release, [ResourceTypeName]::Build_Release_SvcConn_AgentPool_User))
+            {
+                if ($rsrcList.Releases.Count -gt 0)
+                {
+                    $this.ReleaseNames = $rsrcList.Releases.releaseDefinitionName
+                }
             }
-        }
-        if ($this.ResourceTypeName -in ([ResourceTypeName]::AgentPool, [ResourceTypeName]::All, [ResourceTypeName]::Build_Release_SvcConn_AgentPool_User))
-        {
-            if (!$this.agtPoolSTDetails) {
-                $this.agtPoolSTDetails = [ConfigurationManager]::LoadServerConfigFile("AgentPoolSTData.json");
+    
+            if ($this.ResourceTypeName -in ([ResourceTypeName]::ServiceConnection, [ResourceTypeName]::All, [ResourceTypeName]::Build_Release_SvcConn_AgentPool_User))
+            {
+                if ($rsrcList.SvcConns.Count -gt 0)
+                {
+                    $this.ServiceConnections = $rsrcList.SvcConns.serviceConnectionName
+                }
             }
-            
-            $agtPoolData = $this.agtPoolSTDetails.Data | Where-Object { ($_.serviceId -eq $stId) -and ($_.projectName -eq $projectName) }
-            if ($agtPoolData) {
-                $this.AgentPools = $agtPoolData.agentPoolName
-            }
-        }
 
-        if ($this.ResourceTypeName -in ([ResourceTypeName]::VariableGroup, [ResourceTypeName]::All))
+            if ($this.ResourceTypeName -in ([ResourceTypeName]::AgentPool, [ResourceTypeName]::All, [ResourceTypeName]::Build_Release_SvcConn_AgentPool_User))
+            {
+                if ($rsrcList.AgentPools.Count -gt 0)
+                {
+                    $this.AgentPools = $rsrcList.AgentPools.agentPoolName
+                }
+            }
+    
+            if ($this.ResourceTypeName -in ([ResourceTypeName]::VariableGroup, [ResourceTypeName]::All))
+            {
+                if ($rsrcList.VarGroups.Count -gt 0)
+                {
+                    $this.VariableGroups = $rsrcList.VarGroups.variableGroupName
+                }
+            }
+        }
+        else 
         {
-            if (!$this.varGroupSTDetails) {
-                $this.varGroupSTDetails = [ConfigurationManager]::LoadServerConfigFile("VariableGroupSTData.json");
+            if ($this.ResourceTypeName -in ([ResourceTypeName]::Build, [ResourceTypeName]::All, [ResourceTypeName]::Build_Release, [ResourceTypeName]::Build_Release_SvcConn_AgentPool_User))
+            {
+               if (!$this.buildSTDetails) {
+                    $this.buildSTDetails = [ConfigurationManager]::LoadServerConfigFile("BuildSTData.json");
+                    #$buildstData = $buildSTDetails.Data | Where-Object {$_.serviceId -eq $STDataForRepo[0].serviceID}
+                }
+                
+                $buildstData = $this.buildSTDetails.Data | Where-Object { ($_.serviceId -eq $svcId) -and ($_.projectName -eq $projectName) }
+                if ($buildstData) {
+                    $this.BuildNames = $buildstData.buildDefinitionName
+                }
             }
-            
-            $varGrpData = $this.varGroupSTDetails.Data | Where-Object { ($_.serviceId -eq $stId) -and ($_.projectName -eq $projectName) }
-            if ($varGrpData) {
-                $this.VariableGroups = $varGrpData.variableGroupName
+    
+            if ($this.ResourceTypeName -in ([ResourceTypeName]::Release, [ResourceTypeName]::All, [ResourceTypeName]::Build_Release, [ResourceTypeName]::Build_Release_SvcConn_AgentPool_User))
+            {
+                if (!$this.releaseSTDetails) {
+                    $this.releaseSTDetails = [ConfigurationManager]::LoadServerConfigFile("ReleaseSTData.json");
+                }
+                
+                $relstData = $this.releaseSTDetails.Data | Where-Object { ($_.serviceId -eq $svcId) -and ($_.projectName -eq $projectName) }
+                if ($relstData) {
+                    $this.ReleaseNames = $relstData.releaseDefinitionName
+                }
             }
+    
+            if ($this.ResourceTypeName -in ([ResourceTypeName]::ServiceConnection, [ResourceTypeName]::All, [ResourceTypeName]::Build_Release_SvcConn_AgentPool_User))
+            {
+                if (!$this.svcConnSTDetails) {
+                    $this.svcConnSTDetails = [ConfigurationManager]::LoadServerConfigFile("ServiceConnectionSTData.json");
+                }
+                
+                $svcConnData = $this.svcConnSTDetails.Data | Where-Object { ($_.serviceId -eq $svcId) -and ($_.projectName -eq $projectName) }
+                if ($svcConnData) {
+                    $this.ServiceConnections = $svcConnData.serviceConnectionName
+                }
+            }
+            if ($this.ResourceTypeName -in ([ResourceTypeName]::AgentPool, [ResourceTypeName]::All, [ResourceTypeName]::Build_Release_SvcConn_AgentPool_User))
+            {
+                if (!$this.agtPoolSTDetails) {
+                    $this.agtPoolSTDetails = [ConfigurationManager]::LoadServerConfigFile("AgentPoolSTData.json");
+                }
+                
+                $agtPoolData = $this.agtPoolSTDetails.Data | Where-Object { ($_.serviceId -eq $svcId) -and ($_.projectName -eq $projectName) }
+                if ($agtPoolData) {
+                    $this.AgentPools = $agtPoolData.agentPoolName
+                }
+            }
+    
+            if ($this.ResourceTypeName -in ([ResourceTypeName]::VariableGroup, [ResourceTypeName]::All))
+            {
+                if (!$this.varGroupSTDetails) {
+                    $this.varGroupSTDetails = [ConfigurationManager]::LoadServerConfigFile("VariableGroupSTData.json");
+                }
+                
+                $varGrpData = $this.varGroupSTDetails.Data | Where-Object { ($_.serviceId -eq $svcId) -and ($_.projectName -eq $projectName) }
+                if ($varGrpData) {
+                    $this.VariableGroups = $varGrpData.variableGroupName
+                }
+            }            
         }
     }
 }
