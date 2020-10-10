@@ -35,9 +35,6 @@ function PublishEvent([string] $EventName, [hashtable] $Properties, [hashtable] 
 		#return if telemetry key is empty
 		if ([string]::IsNullOrWhiteSpace($telemetryKey)) { return; };
 
-		# disable telemetry in case automation account variable UsageTelelmetryLevel is set and Value is "None"
-		if($null -ne $UsageTelelmetryLevel -and $UsageTelelmetryLevel.Value.Trim() -eq "None") { return; }
-
         $eventObj = GetEventBaseObject -EventName $EventName
         SetCommonProperties -EventObj $eventObj
 
@@ -206,8 +203,6 @@ try
 	#This is the Run-As (SPN) account for the runbook. It is read from the CA Automation account.
 	$RunAsConnection = Get-AutomationConnection -Name "AzureRunAsConnection"
 
-	# Check if automation acccount variable UsageTelemetryLevel is set 
-	$UsageTelelmetryLevel = Get-AzAutomationVariable -Name "UsageTelemetryLevel" -AutomationAccountName $AutomationAccountName -ResourceGroupName $AutomationAccountRG -ErrorAction SilentlyContinue
 	#-----------------------------------Config end-------------------------------------------------------------------------
 
 	#-----------------------------------Telemetry script-------------------------------------------------------------------
