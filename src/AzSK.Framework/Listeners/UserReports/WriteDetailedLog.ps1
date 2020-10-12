@@ -206,6 +206,7 @@ class WriteDetailedLog: FileOutputBase
 		if($eventContext.ControlResults -and $eventContext.ControlResults.Count -ne 0)
 		{
 			$controlDesc = $eventContext.ControlItem.Description;
+			$isControlExcludedByOrgPolicy = $eventContext.ControlItem.IsControlExcluded;
 			$eventContext.ControlResults | Foreach-Object {
 				if(-not [string]::IsNullOrWhiteSpace($_.ChildResourceName))
 				{
@@ -219,7 +220,7 @@ class WriteDetailedLog: FileOutputBase
 				$_.Messages | ForEach-Object {
 					$this.AddOutputLog($_);
 				}
-			
+
 				# Add attestation data to log
 				if($_.StateManagement -and $_.StateManagement.AttestedStateData)
 				{
@@ -264,6 +265,11 @@ class WriteDetailedLog: FileOutputBase
 					}
 				}
 
+				# Add control exclusion message
+				if($isControlExcludedByOrgPolicy){
+					$this.AddOutputLog("Please note that this control is in excluded state which means scan event for these controls will not be considered for compliance. For more details, please refer: https://aka.ms/azsk/excludedcontrols");
+				}
+
 				#$this.AddOutputLog("`r`n");
 				if($_.VerificationResult -ne [VerificationResult]::NotScanned)
 				{
@@ -281,7 +287,7 @@ class WriteDetailedLog: FileOutputBase
 								$eventContext.FeatureName, 
 								$resourceName, 
 								$eventContext.ControlItem.Description, 
-								$_.VerificationResult.ToString()));      
+								$(if($isControlExcludedByOrgPolicy) { ([VerificationResult]::Excluded).ToString() } else { $_.VerificationResult.ToString()})));      
 					}
 					else
 					{		
@@ -289,7 +295,7 @@ class WriteDetailedLog: FileOutputBase
 								$eventContext.FeatureName, 
 								$eventContext.SubscriptionContext.SubscriptionName, 
 								$eventContext.ControlItem.Description, 
-								$_.VerificationResult.ToString()));     
+								$(if($isControlExcludedByOrgPolicy) { ([VerificationResult]::Excluded).ToString() } else { $_.VerificationResult.ToString()})));     
 					}
 				}
 			}

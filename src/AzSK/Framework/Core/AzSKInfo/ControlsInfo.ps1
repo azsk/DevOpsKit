@@ -7,6 +7,7 @@ class ControlsInfo: AzCommandBase
 	hidden [string] $ResourceType
 	hidden [bool] $BaslineControls
 	hidden [bool] $PreviewBaslineControls
+	hidden [bool] $ControlsExcludedByOrgPolicy
 	hidden [PSObject] $ControlSettings
 	hidden [string[]] $Tags = @();
 	hidden [string[]] $ControlIds = @();
@@ -38,6 +39,13 @@ class ControlsInfo: AzCommandBase
 		{
 			$this.DoNotOpenOutputFolder = $true;
 		}
+
+		if([FeatureFlightingManager]::GetFeatureStatus("EnableControlExclusionByOrgPolicy",$($this.SubscriptionContext.SubscriptionId))){
+			$this.ControlsExcludedByOrgPolicy = $true;
+		}else{
+			$this.ControlsExcludedByOrgPolicy = $false;
+		}
+
 	}
 	
 	GetControlDetails() 
@@ -115,8 +123,10 @@ class ControlsInfo: AzCommandBase
 		{
 			$previewBaselineControls += $this.ControlSettings.PreviewBaselineControls.SubscriptionControlIdList | ForEach-Object {  $_ }
 		}
+
 		$TenantId = ([ContextHelper]::GetCurrentRMContext()).Tenant.Id
-		if([Helpers]::CheckMember($this.ControlSettings, "ControlsToExcludeFromScan.TenantIds") `
+		if($this.ControlsExcludedByOrgPolicy `
+		                    -and [Helpers]::CheckMember($this.ControlSettings, "ControlsToExcludeFromScan.TenantIds") `
 							-and ($this.ControlSettings.ControlsToExcludeFromScan.TenantIds -contains $TenantId) `
 							-and [Helpers]::CheckMember($this.ControlSettings, "ControlsToExcludeFromScan.ControlIds") )
 		{
@@ -203,7 +213,7 @@ class ControlsInfo: AzCommandBase
 									$isPreviewBaselineControls = "No"
 								}
 
-								if($_.IsControlExcluded)
+								if($this.ControlsExcludedByOrgPolicy -and $_.IsControlExcluded)
 								{
 									$isControlExcluded = "Yes"
 								}

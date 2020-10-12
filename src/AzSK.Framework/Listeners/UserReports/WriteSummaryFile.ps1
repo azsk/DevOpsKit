@@ -199,11 +199,16 @@ class WriteSummaryFile: FileOutputBase
 			Where-Object { 
 				$null -ne ($_.ControlResults | Where-Object { $_.AttestationStatus -ne [AttestationStatus]::None } | Select-Object -First 1) 
 			} | Select-Object -First 1);
-		$anyExcludedControls = $null -ne ($arguments | 
+		$anyExcludedControls = $false
+		$subscriptionId = $arguments[0].SubscriptionContext.SubscriptionId
+		$controlExclusionByOrgPolicyEnabled = [FeatureFlightingManager]::GetFeatureStatus("EnableControlExclusionByOrgPolicy",$subscriptionId)
+		if($controlExclusionByOrgPolicyEnabled){
+			$anyExcludedControls = $null -ne ($arguments | 
 			Where-Object { 
 				$null -ne ($_.ControlItem | Where-Object { $_.IsControlExcluded -eq $true } | Select-Object -First 1) 
 			} | Select-Object -First 1);
-
+		}
+		
 		#$anyFixableControls = $null -ne ($arguments | Where-Object { $_.ControlItem.FixControl } | Select-Object -First 1);
 		#Validate if preview baseline control flag is passed to mark csv
 		$UsePreviewBaselineControls = $false

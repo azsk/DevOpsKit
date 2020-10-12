@@ -947,10 +947,10 @@ class SVTBase: AzSKRoot
 					if ($childResourceState)
 					{
 						# Skip passed ones (that are not marked excluded as per org policy) from State Management
-						if (($currentItem.ActualVerificationResult -ne [VerificationResult]::Passed) -or ($eventcontext.controlItem.IsControlExcluded -eq $true))
+						if (($currentItem.ActualVerificationResult -ne [VerificationResult]::Passed))
 						{
 							#compare the states if control is not marked excluded as per org policy
-							if (($childResourceState.ActualVerificationResult -eq $currentItem.ActualVerificationResult -or $eventcontext.controlItem.IsControlExcluded) -and $childResourceState.State)
+							if (($childResourceState.ActualVerificationResult -eq $currentItem.ActualVerificationResult) -and $childResourceState.State)
 							{
 								$currentItem.StateManagement.AttestedStateData = $childResourceState.State;
 
@@ -1126,7 +1126,7 @@ class SVTBase: AzSKRoot
 								#endregion: Prevent attestation drift due to dev changes
 
 								#region: Respect attestation for controls excluded by org policy
-								if($eventcontext.controlItem.IsControlExcluded){
+								if([FeatureFlightingManager]::GetFeatureStatus("EnableControlExclusionByOrgPolicy",$($this.SubscriptionContext.SubscriptionId)) -and $eventcontext.controlItem.IsControlExcluded){
 									$this.ModifyControlResult($currentItem, $childResourceState);
 								}
 								#endregion: Respect attestation for controls excluded by org policy

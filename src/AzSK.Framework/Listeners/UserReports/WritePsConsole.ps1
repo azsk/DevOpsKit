@@ -248,8 +248,9 @@ class WritePsConsole: FileOutputBase
 						
 					}
 					# TODO: We can put msg here for Excluded controls and get it from AzSK.json
+					$subscriptionId = $Event.SourceArgs[0].SubscriptionContext.SubscriptionId
 					$anyControlExcluded = ($Event.SourceArgs.ControlItem | Where-Object{ $_.IsControlExcluded -eq $true } | Measure-Object ).Count -gt 0
-					if($anyControlExcluded){
+					if([FeatureFlightingManager]::GetFeatureStatus("EnableControlExclusionByOrgPolicy",$subscriptionId) -and $anyControlExcluded){
 						$currentInstance.WriteMessage([Constants]::SingleDashLine, [MessageType]::Info)
 						if($controlsScanned)
 					    {
@@ -456,16 +457,22 @@ class WritePsConsole: FileOutputBase
 	{
 		[SVTSummary[]] $summary = @();
 		$optimizedScanSummaryGenerationEnabled = [FeatureFlightingManager]::GetFeatureStatus("EnableOptimizedScanSummaryGeneration","*")
+		$subscriptionId = $Event.SourceArgs[0].SubscriptionContext.SubscriptionId
+		$controlExclusionByOrgPolicyEnabled = [FeatureFlightingManager]::GetFeatureStatus("EnableControlExclusionByOrgPolicy",$subscriptionId)
 		
 		if($optimizedScanSummaryGenerationEnabled){
-			$summary += @($event.SourceArgs | select-object @{Name="VerificationResult"; Expression = { if($_.ControlItem.IsControlExcluded) { [VerificationResult]::Excluded } else { $_.ControlResults.VerificationResult} }},@{Name="ControlSeverity"; Expression = {$_.ControlItem.ControlSeverity}})
+			if($controlExclusionByOrgPolicyEnabled){
+				$summary += @($event.SourceArgs | select-object @{Name="VerificationResult"; Expression = { if($_.ControlItem.IsControlExcluded) { [VerificationResult]::Excluded } else { $_.ControlResults.VerificationResult} }},@{Name="ControlSeverity"; Expression = {$_.ControlItem.ControlSeverity}})
+			}else{
+				$summary += @($event.SourceArgs | select-object @{Name="VerificationResult"; Expression = { $_.ControlResults.VerificationResult }},@{Name="ControlSeverity"; Expression = {$_.ControlItem.ControlSeverity}})
+			}
 		}else{
 			$event.SourceArgs | ForEach-Object {
 				$item = $_
 				if ($item -and $item.ControlResults)
 				{
 					$item.ControlResults | ForEach-Object{
-						if($item.ControlItem.IsControlExcluded){
+						if($controlExclusionByOrgPolicyEnabled -and $item.ControlItem.IsControlExcluded){
 							$summary += [SVTSummary]@{
 								VerificationResult = [VerificationResult]::Excluded;
 								ControlSeverity = $item.ControlItem.ControlSeverity;

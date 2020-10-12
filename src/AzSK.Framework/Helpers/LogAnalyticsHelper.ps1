@@ -145,7 +145,7 @@ Class LogAnalyticsHelper{
 			}
 
 			$out.Reference=$eventContext.Metadata.Reference
-			if($eventContext.ControlItem.IsControlExcluded){
+			if([FeatureFlightingManager]::GetFeatureStatus("EnableControlExclusionByOrgPolicy",$($eventContext.SubscriptionContext.SubscriptionId)) -and $eventContext.ControlItem.IsControlExcluded){
 				$out.IsControlExcluded = $true
 				$out.HasRequiredAccess = $false
 			}

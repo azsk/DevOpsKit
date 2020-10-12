@@ -11,7 +11,8 @@ class SVTControlAttestation
 	[AttestationOptions] $attestOptions;
 	hidden [PSObject] $ControlSettings ; 
 	hidden [SubscriptionContext] $SubscriptionContext;
-    hidden [InvocationInfo] $InvocationContext;
+	hidden [InvocationInfo] $InvocationContext;
+	hidden [bool] $controlExclusionByOrgPolicyEnabled = $false;
 
 	SVTControlAttestation([SVTEventContext[]] $ctrlResults, [AttestationOptions] $attestationOptions, [SubscriptionContext] $subscriptionContext, [InvocationInfo] $invocationContext)
 	{
@@ -24,6 +25,7 @@ class SVTControlAttestation
 		$this.controlStateExtension.UniqueRunId = $(Get-Date -format "yyyyMMdd_HHmmss");
 		$this.controlStateExtension.Initialize($true)
 		$this.ControlSettings=$ControlSettingsJson = [ConfigurationManager]::LoadServerConfigFile("ControlSettings.json");
+		$this.controlExclusionByOrgPolicyEnabled = [FeatureFlightingManager]::GetFeatureStatus("EnableControlExclusionByOrgPolicy",$($this.SubscriptionContext.SubscriptionId));
 	}
 
 	[AttestationStatus] GetAttestationValue([string] $AttestationCode)
@@ -48,11 +50,11 @@ class SVTControlAttestation
 	[ControlState] ComputeEffectiveControlState([ControlState] $controlState, [string] $ControlSeverity, [bool] $isSubscriptionControl, [SVTEventContext] $controlItem, [ControlResult] $controlResult)
 	{
 		Write-Host "$([Constants]::SingleDashLine)" -ForegroundColor Cyan
-		if(-not $controlItem.ControlItem.IsControlExcluded){
-			Write-Host "ControlId            : $($controlState.ControlId)`nControlSeverity      : $ControlSeverity`nDescription          : $($controlItem.ControlItem.Description)`nCurrentControlStatus : $($controlState.ActualVerificationResult)`n"	
-		}else{
+		if($this.controlExclusionByOrgPolicyEnabled -and $controlItem.ControlItem.IsControlExcluded){
 			Write-Host "ControlId            : $($controlState.ControlId)`nControlSeverity      : $ControlSeverity`nDescription          : $($controlItem.ControlItem.Description)`n"	
 			Write-Host "`r`nPlease note that this control is in excluded state. For more details on excluded controls, please refer: https://aka.ms/azsk/excludedcontrols`n" -ForegroundColor Yellow
+		}else{
+			Write-Host "ControlId            : $($controlState.ControlId)`nControlSeverity      : $ControlSeverity`nDescription          : $($controlItem.ControlItem.Description)`nCurrentControlStatus : $($controlState.ActualVerificationResult)`n"	
 		}
 			
 		if(-not $controlResult.CurrentSessionContext.Permissions.HasRequiredAccess)
@@ -83,7 +85,7 @@ class SVTControlAttestation
 		}
 
 		#display the current state only if the state object is not empty and control is not excluded as per org policy
-		if($null -ne $tempCurrentStateObject -and $null -ne $tempCurrentStateObject.DataObject -and $controlItem.ControlItem.IsControlExcluded -eq $false)
+		if($null -ne $tempCurrentStateObject -and $null -ne $tempCurrentStateObject.DataObject -and (-not $this.controlExclusionByOrgPolicyEnabled -or $controlItem.ControlItem.IsControlExcluded -eq $false))
 		{
 			Write-Host "Configuration data to be attested:" -ForegroundColor Cyan
 			Write-Host "$([JsonHelper]::ConvertToPson($tempCurrentStateObject.DataObject))"
@@ -283,11 +285,11 @@ class SVTControlAttestation
 	[ControlState] ComputeEffectiveControlStateInBulkMode([ControlState] $controlState, [string] $ControlSeverity, [bool] $isSubscriptionControl, [SVTEventContext] $controlItem, [ControlResult] $controlResult)
 	{
 		Write-Host "$([Constants]::SingleDashLine)" -ForegroundColor Cyan		
-		if(-not $controlItem.ControlItem.IsControlExcluded){
-			Write-Host "ControlId            : $($controlState.ControlId)`nControlSeverity      : $ControlSeverity`nDescription          : $($controlItem.ControlItem.Description)`nCurrentControlStatus : $($controlState.ActualVerificationResult)`n"	
-		}else{
+		if($this.controlExclusionByOrgPolicyEnabled -and $controlItem.ControlItem.IsControlExcluded){
 			Write-Host "ControlId            : $($controlState.ControlId)`nControlSeverity      : $ControlSeverity`nDescription          : $($controlItem.ControlItem.Description)`n"
 			Write-Host "`r`nPlease note that this control is in excluded state. For more details on excluded controls, please refer: https://aka.ms/azsk/excludedcontrols`n" -ForegroundColor Yellow
+		}else{
+			Write-Host "ControlId            : $($controlState.ControlId)`nControlSeverity      : $ControlSeverity`nDescription          : $($controlItem.ControlItem.Description)`nCurrentControlStatus : $($controlState.ActualVerificationResult)`n"	
 		}
 		if(-not $controlResult.CurrentSessionContext.Permissions.HasRequiredAccess)
 		{
@@ -493,7 +495,7 @@ class SVTControlAttestation
 							[ControlResult[]] $matchedControlResults = @();
 							$controlItem.ControlResults | ForEach-Object {
 								$controlResult = $_
-								if(($controlResult.ActualVerificationResult -ne [VerificationResult]::Passed -and $controlResult.ActualVerificationResult -ne [VerificationResult]::Error) -or $controlItem.ControlItem.IsControlExcluded)
+								if(($controlResult.ActualVerificationResult -ne [VerificationResult]::Passed -and $controlResult.ActualVerificationResult -ne [VerificationResult]::Error) -or ($this.controlExclusionByOrgPolicyEnabled -and $controlItem.ControlItem.IsControlExcluded))
 								{
 									if($this.AttestControlsChoice -eq [AttestControls]::All)
 									{
@@ -522,7 +524,7 @@ class SVTControlAttestation
 							$filteredControlItems += $controlItem;
 						}
 					}
-					$excludedControlsByPolicy = @()
+					$excludedControlsByPolicy = $this.controlStateExtension.ControlsExcludedByOrgPolicy
 					if($count -gt 0)
 					{
 						Write-Host "No. of controls that need to be attested: $count" -ForegroundColor Cyan
@@ -533,9 +535,6 @@ class SVTControlAttestation
 							$controlResult = $null;
 							$controlStatus = "";
 							$isPrevAttested = $false;
-							if($controlItem.ControlItem.IsControlExcluded){
-								$excludedControlsByPolicy += $controlId
-							}
 							if(($controlItem.ControlResults | Measure-Object).Count -gt 0)
 							{								
 								foreach( $controlResult in $controlItem.ControlResults)
@@ -605,7 +604,7 @@ class SVTControlAttestation
 								$output += $out
 							}
 							$outputForExcludedControls += $output | Where-Object { $excludedControlsByPolicy -contains $_.ControlId }
-							if($outputForExcludedControls.Count -gt 0){
+							if($this.controlExclusionByOrgPolicyEnabled -and  $outputForExcludedControls.Count -gt 0){
 								$output = $output | Where-Object { $excludedControlsByPolicy -notcontains $_.ControlId }
 								Write-Host ($output | Format-Table ControlId, EvaluatedResult, EffectiveResult, AttestationChoice | Out-String) -ForegroundColor Cyan
 								Write-Host "Attestation summary for this resource (for excluded controls):" -ForegroundColor Cyan

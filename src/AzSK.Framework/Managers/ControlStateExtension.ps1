@@ -23,7 +23,7 @@ class ControlStateExtension
 	hidden [bool] $GetControlStateByResourceId = $false;
 	hidden [string[]] $ControlsExcludedByOrgPolicy = @();
 	hidden [SubscriptionContext] $SubscriptionContext;
-    hidden [InvocationInfo] $InvocationContext;
+	hidden [InvocationInfo] $InvocationContext;
 	ControlStateExtension([SubscriptionContext] $subscriptionContext, [InvocationInfo] $invocationContext)
 	{
 		$this.SubscriptionContext = $subscriptionContext;
@@ -39,7 +39,8 @@ class ControlStateExtension
 
 		$controlSettings = [ConfigurationManager]::LoadServerConfigFile("ControlSettings.json");
 		$TenantId = ([ContextHelper]::GetCurrentRMContext()).Tenant.Id
-		if([Helpers]::CheckMember($controlSettings, "ControlsToExcludeFromScan.TenantIds") `
+		if([FeatureFlightingManager]::GetFeatureStatus("EnableControlExclusionByOrgPolicy",$($this.SubscriptionContext.SubscriptionId)) `
+		                    -and[Helpers]::CheckMember($controlSettings, "ControlsToExcludeFromScan.TenantIds") `
 							-and ($controlSettings.ControlsToExcludeFromScan.TenantIds -contains $TenantId) `
 							-and [Helpers]::CheckMember($controlSettings, "ControlsToExcludeFromScan.ControlIds") )
 		{
@@ -421,7 +422,13 @@ class ControlStateExtension
 
 
 		#Filter out the "Passed" controls which are not excluded by org policy
-		$finalControlStates = $controlStates | Where-Object { $_.ActualVerificationResult -ne [VerificationResult]::Passed -or $this.ControlsExcludedByOrgPolicy -contains $_.ControlId};
+		$controlExclusionByOrgPolicyEnabled = [FeatureFlightingManager]::GetFeatureStatus("EnableControlExclusionByOrgPolicy",$($this.SubscriptionContext.SubscriptionId))
+		if($controlExclusionByOrgPolicyEnabled){
+			$finalControlStates = $controlStates | Where-Object { $_.ActualVerificationResult -ne [VerificationResult]::Passed -or $this.ControlsExcludedByOrgPolicy -contains $_.ControlId};
+		}else{
+			$finalControlStates = $controlStates | Where-Object { $_.ActualVerificationResult -ne [VerificationResult]::Passed };
+		}
+	
 		if(($finalControlStates | Measure-Object).Count -gt 0)
 		{
 			if($Override)

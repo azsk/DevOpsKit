@@ -204,6 +204,9 @@ class SVTStatusReport : AzSVTCommandBase
 	}
 	hidden [void] DisplayExcludedControlsCount([SVTEventContext[]] $Result)
 	{
+		if(-not [FeatureFlightingManager]::GetFeatureStatus("EnableControlExclusionByOrgPolicy",$($this.SubscriptionContext.SubscriptionId))){
+			return;
+		}
 		$excludedControls = $Result.ControlItem | Where-Object {$_.IsControlExcluded}
 		if($null -ne $excludedControls -and ($excludedControls | Measure-Object).Count -gt 0){
 			$this.PublishCustomMessage([Constants]::SingleDashLine+"`r`n`r`nCount of excluded controls: $(($excludedControls | Measure-Object).Count)`r`n");
