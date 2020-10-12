@@ -218,7 +218,12 @@ function Get-AzSKADOSecurityStatus
 		[Parameter(HelpMessage="Service id for which the security evaluation has to be performed.")]
 		[ValidateNotNullOrEmpty()]
 		[Alias("svcid")]
-		$ServiceId
+		$ServiceId,
+
+		[switch]
+		[Parameter(HelpMessage="Include admin controls in scan (organization and project).")]
+		[Alias("iac")]
+		$IncludeAdminControls
 
 	)
 	Begin
@@ -244,7 +249,7 @@ function Get-AzSKADOSecurityStatus
 				}
 			
 			}
-			$resolver = [SVTResourceResolver]::new($OrganizationName,$ProjectNames,$BuildNames,$ReleaseNames,$AgentPoolNames, $ServiceConnectionNames, $VariableGroupNames, $MaxObj, $ScanAllArtifacts, $PATToken,$ResourceTypeName, $AllowLongRunningScan, $ServiceId);
+			$resolver = [SVTResourceResolver]::new($OrganizationName,$ProjectNames,$BuildNames,$ReleaseNames,$AgentPoolNames, $ServiceConnectionNames, $VariableGroupNames, $MaxObj, $ScanAllArtifacts, $PATToken,$ResourceTypeName, $AllowLongRunningScan, $ServiceId, $IncludeAdminControls);
 			$secStatus = [ServicesSecurityStatus]::new($OrganizationName, $PSCmdlet.MyInvocation, $resolver);
 			if ($secStatus) 
 			{	
