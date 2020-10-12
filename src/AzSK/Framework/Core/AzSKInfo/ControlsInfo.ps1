@@ -278,7 +278,7 @@ class ControlsInfo: AzCommandBase
 									$isPreviewBaselineControls = "No"
 								}
 
-								if($excludedControls -contains $_.ControlID)
+								if($this.ControlsExcludedByOrgPolicy -and $excludedControls -contains $_.ControlID)
 								{
 									$isControlExcluded = "Yes"
 								}
@@ -378,7 +378,7 @@ class ControlsInfo: AzCommandBase
 			$controlSummary += $ctrlSummary
 			$this.PublishCustomMessage(($controlSummary | Format-Table | Out-String), [MessageType]::Default)
 			$excludedControls = @($allControls |  Where-Object {$_.IsControlExcluded -eq 'Yes'})
-			if($excludedControls.Count -gt 0){
+			if($this.ControlsExcludedByOrgPolicy -and $excludedControls.Count -gt 0){
 				$this.PublishCustomMessage([Constants]::DoubleDashLine, [MessageType]::Default);
 				$this.PublishCustomMessage("Total no. of excluded controls: " + $excludedControls.Count , [MessageType]::Default)
 				$this.PublishCustomMessage("** Attention **`r`nPlease note that one or more controls are in excluded state. For more details on excluded controls, please refer: https://aka.ms/azsk/excludedcontrols", [MessageType]::Warning);

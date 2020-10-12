@@ -87,7 +87,7 @@ class AzSVTBase: SVTBase
 	hidden [bool] CheckForControlExclusion($controlId)
     {
 		$TenantId = ([ContextHelper]::GetCurrentRMContext()).Tenant.Id
-		if ([FeatureFlightingManager]::GetFeatureStatus("EnableControlExclusionByOrgPolicy",$($this.SubscriptionContext.SubscriptionId)) -and ($null -ne $this.ControlSettings) `
+		if (($null -ne $this.ControlSettings) `
 			                                -and [Helpers]::CheckMember($this.ControlSettings, "ControlsToExcludeFromScan.TenantIds") `
 											-and ($this.ControlSettings.ControlsToExcludeFromScan.TenantIds -contains $TenantId) `
 											-and [Helpers]::CheckMember($this.ControlSettings, "ControlsToExcludeFromScan.ControlIds"))
