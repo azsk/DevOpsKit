@@ -82,15 +82,16 @@ class Release: ADOSVTBase
         }
        else
        {
-            try {      
-                if([Helpers]::CheckMember($this.ReleaseObj,"variables")) 
-                {
-                    $varList = @();
-                    $noOfCredFound = 0;     
-                    $patterns = $this.ControlSettings.Patterns | where {$_.RegexCode -eq "SecretsInRelease"} | Select-Object -Property RegexList;
-                    $exclusions = $this.ControlSettings.Release.ExcludeFromSecretsCheck;
-                    if(($patterns | Measure-Object).Count -gt 0)
-                    {        
+            try {    
+                $patterns = $this.ControlSettings.Patterns | where {$_.RegexCode -eq "SecretsInRelease"} | Select-Object -Property RegexList;
+                $exclusions = $this.ControlSettings.Release.ExcludeFromSecretsCheck;
+                $varList = @();
+                $varGrpList = @();
+                $noOfCredFound = 0;  
+                if(($patterns | Measure-Object).Count -gt 0)
+                {     
+                    if([Helpers]::CheckMember($this.ReleaseObj,"variables")) 
+                    {
                         Get-Member -InputObject $this.ReleaseObj.variables -MemberType Properties | ForEach-Object {
                             if([Helpers]::CheckMember($this.ReleaseObj.variables.$($_.Name),"value") -and  (-not [Helpers]::CheckMember($this.ReleaseObj.variables.$($_.Name),"isSecret")))
                             {
@@ -114,31 +115,100 @@ class Release: ADOSVTBase
                                         #If regex is in text form, the match will be case-sensitive.
                                         if ($releaseVarValue -cmatch $patterns.RegexList[$i]) { 
                                             $noOfCredFound +=1
-                                            $varList += " $releaseVarName";   
+                                            $varList += "$releaseVarName";   
                                             break;  
                                         }
                                     }
                                 }
                             } 
                         }
-                        if($noOfCredFound -gt 0)
-                        {
-                            $varList = $varList | select -Unique
-                            $controlResult.AddMessage([VerificationResult]::Failed, "Found secrets in release definition. Variables name: $varList" );
-                            $controlResult.SetStateData("List of variable name containing secret: ", $varList);
-                        }
-                        else {
-                            $controlResult.AddMessage([VerificationResult]::Passed, "No credentials found in release definition.");
-                        }
-                        $patterns = $null;
                     }
-                    else 
+
+                    if([Helpers]::CheckMember($this.ReleaseObj[0],"variableGroups") -and (($this.ReleaseObj[0].variableGroups) | Measure-Object).Count -gt 0) 
                     {
-                        $controlResult.AddMessage([VerificationResult]::Manual, "Regular expressions for detecting credentials in pipeline variables are not defined in your organization.");    
+                        $varGrps = @();
+                        $varGrps += $this.ReleaseObj[0].variableGroups
+                        $envCount = ($this.ReleaseObj[0].environments).Count
+
+                        if ($envCount -gt 0) 
+                        {
+                            # Each release pipeline has atleast 1 env.
+                            for($i=0; $i -lt $envCount; $i++)
+                            {
+                                if((($this.ReleaseObj[0].environments[$i].variableGroups) | Measure-Object).Count -gt 0)
+                                {
+                                    $varGrps += $this.ReleaseObj[0].environments[$i].variableGroups
+                                }
+                            }
+
+                            $varGrpObj = @();
+                            $varGrps | ForEach-Object {
+                                try
+                                {
+                                    $varGrpURL = ("https://{0}.visualstudio.com/{1}/_apis/distributedtask/variablegroups/{2}") -f $($this.SubscriptionContext.SubscriptionName), $this.ProjectId, $_;
+                                    $varGrpObj += [WebRequestHelper]::InvokeGetWebRequest($varGrpURL);
+                                }
+                                catch
+                                {
+                                    #eat exception if api failure occurs
+                                }
+                            }
+
+                            $varGrpObj| ForEach-Object {
+                            $varGrp = $_
+                                Get-Member -InputObject $_.variables -MemberType Properties | ForEach-Object {
+
+                                    if([Helpers]::CheckMember($varGrp.variables.$($_.Name) ,"value") -and  (-not [Helpers]::CheckMember($varGrp.variables.$($_.Name) ,"isSecret")))
+                                    {
+                                        $varName = $_.Name
+                                        $varValue = $varGrp.variables.$($_.Name).value 
+                                        if ($exclusions -notcontains $varName)
+                                        {
+                                            for ($i = 0; $i -lt $patterns.RegexList.Count; $i++) {
+                                                #Note: We are using '-cmatch' here. 
+                                                #When we compile the regex, we don't specify ignoreCase flag.
+                                                #If regex is in text form, the match will be case-sensitive.
+                                                if ($varValue -cmatch $patterns.RegexList[$i]) { 
+                                                    $noOfCredFound +=1
+                                                    $varGrpList += "[$($varGrp.Name)]:$varName";   
+                                                    break  
+                                                    }
+                                                }
+                                        }
+                                    } 
+                                }
+                            }
+                        }
                     }
+                    if($noOfCredFound -eq 0) 
+                    {
+                        $controlResult.AddMessage([VerificationResult]::Passed, "No variables found in release definition.");
+                    }
+                    else {
+                        $controlResult.AddMessage([VerificationResult]::Failed, "Found secrets in release definition.");
+                        $stateData = @{
+                            VariableList = @();
+                            VariableGroupList = @();
+                        };
+                        if(($varList | Measure-Object).Count -gt 0 )
+                        {
+                            $varList = $varList | select -Unique | Sort-object
+                            $stateData.VariableList += $varList
+                            $controlResult.AddMessage("`nList of variable(s) containing secret: ", $varList);
+                        }
+                        if(($varGrpList | Measure-Object).Count -gt 0 )
+                        {
+                            $varGrpList = $varGrpList | select -Unique | Sort-object
+                            $stateData.VariableGroupList += $varGrpList
+                            $controlResult.AddMessage("`nList of variable(s) containing secret in variable group(s): ", $varGrpList);
+                        }
+                        $controlResult.SetStateData("List of variable and variable group containing secret: ", $stateData );
+                    }
+                    $patterns = $null;
                 }
-                else {
-                    $controlResult.AddMessage([VerificationResult]::Passed, "No variables found in release definition.");
+                else 
+                {
+                    $controlResult.AddMessage([VerificationResult]::Manual, "Regular expressions for detecting credentials in pipeline variables are not defined in your organization.");    
                 }
             }
             catch {
