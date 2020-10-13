@@ -242,7 +242,8 @@ class SVTResourceResolver: AzSKRoot {
                     {
                         #First condition if 'includeAdminControls' switch is passed or user is PCA or User is PA.
                         #Second condition if explicitly -rtn flag passed to org or Org_Project_User 
-                        if ( ($this.includeAdminControls -or $this.isUserPCA -or $this.isUserPA($projectName)))  {
+                        #Adding $this.isAdminControlScan() check in the end in case $this.isUserPCA is not checked (this happens when u scan using -svcid flag and org controls are not resolved/scanned)
+                        if ( ($this.includeAdminControls -or $this.isUserPCA -or $this.isUserPA($projectName) -or $this.isAdminControlScan()))  {
                             $link = $thisProj.url.Replace('/_apis/projects', '') + '/_settings/'
                             $resourceId = "organization/$organizationId/project/$projectId" 
                             $this.AddSVTResource($thisProj.name, $this.organizationName,"ADO.Project", $resourceId, $thisProj, $link);
