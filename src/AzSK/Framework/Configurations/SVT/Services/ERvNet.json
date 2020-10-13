@@ -28,12 +28,7 @@
         "PublicIpAddress",
         "PrivateIpAddress"
       ],
-      "PolicyDefinitionGuid": "ERvNet110",
-      "IsAttestationDriftExpected": true,
-      "OnAttestationDrift": {
-        "ApplyToVersionsUpto": "4.10.0",
-        "ActionOnAttestationDrift": "CheckIfSubset"
-    }
+      "PolicyDefinitionGuid": "ERvNet110"
     },
     {
       "ControlID": "Azure_ERvNet_NetSec_Dont_Use_Multi_NIC_VMs",
@@ -74,12 +69,7 @@
         "NICName",
         "EnableIPForwarding"
       ],
-      "PolicyDefinitionGuid": "ERvNet130",
-      "IsAttestationDriftExpected": true,
-      "OnAttestationDrift": {
-        "ApplyToVersionsUpto": "4.10.0",
-        "ActionOnAttestationDrift": "CheckIfSubset"
-    }
+      "PolicyDefinitionGuid": "ERvNet130"
     },
     {
       "ControlID": "Azure_ERvNet_NetSec_Dont_Use_NSGs_on_GatewaySubnet",
