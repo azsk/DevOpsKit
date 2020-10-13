@@ -99,6 +99,11 @@
   "DockerImage":{
     "ImageName" : "azskado/adosecurityscan"
   },
+  "ADOInfoAPI":{
+    "Enabled" : false,
+    "Endpoint" : "",
+    "Code" : ""
+  },
   "AllowAdminControlScanForGroups": [
     {
       "ResourceType": "Organization",
