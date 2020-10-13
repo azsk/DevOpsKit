@@ -85,6 +85,8 @@ Class LogAnalyticsHelper{
 	{
 		[PSObject[]] $output = @();
 
+		[bool] $ControlExclusionByOrgPolicyEnabled = $false
+
 		# Here we are utilizing the RG tag mapping that is done while sending the ResourceInventory telemetry event.
 		# Hence, this works only when scan source is 'CA'
 		if (([FeatureFlightingManager]::GetFeatureStatus("EnableResourceGroupTagTelemetry", "*") -eq $true) `
@@ -105,6 +107,9 @@ Class LogAnalyticsHelper{
 			}
 		}
 		
+		if([FeatureFlightingManager]::GetFeatureStatus("EnableControlExclusionByOrgPolicy",$($eventContext.SubscriptionContext.SubscriptionId))){
+			$ControlExclusionByOrgPolicyEnabled = $true
+		}
 		
 		[array] $eventContext.ControlResults | ForEach-Object{
 			Set-Variable -Name ControlResult -Value $_ -Scope Local
@@ -145,7 +150,7 @@ Class LogAnalyticsHelper{
 			}
 
 			$out.Reference=$eventContext.Metadata.Reference
-			if([FeatureFlightingManager]::GetFeatureStatus("EnableControlExclusionByOrgPolicy",$($eventContext.SubscriptionContext.SubscriptionId)) -and $eventContext.ControlItem.IsControlExcluded){
+			if($ControlExclusionByOrgPolicyEnabled -and $eventContext.ControlItem.IsControlExcluded){
 				$out.IsControlExcluded = $true
 				$out.HasRequiredAccess = $false
 			}

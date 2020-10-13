@@ -1,7 +1,8 @@
 Set-StrictMode -Version Latest 
 class WriteDetailedLog: FileOutputBase
 {
-    hidden static [WriteDetailedLog] $Instance = $null;
+	hidden static [WriteDetailedLog] $Instance = $null;
+	hidden [bool] $ControlExclusionByOrgPolicyEnabled = $false
     static [WriteDetailedLog] GetInstance()
     {
         if ( $null -eq  [WriteDetailedLog]::Instance)
@@ -32,6 +33,8 @@ class WriteDetailedLog: FileOutputBase
             $currentInstance = [WriteDetailedLog]::GetInstance();
             try 
             {
+				$subscriptionId = $Event.SourceArgs[0].SubscriptionContext.SubscriptionId
+				$currentInstance.ControlExclusionByOrgPolicyEnabled = [FeatureFlightingManager]::GetFeatureStatus("EnableControlExclusionByOrgPolicy",$subscriptionId)
 				if($Event.SourceArgs.IsResource())
 				{
 					$currentInstance.SetFilePath($Event.SourceArgs.SubscriptionContext, $Event.SourceArgs.ResourceContext.ResourceGroupName, ($Event.SourceArgs.FeatureName + ".LOG"));            
@@ -54,6 +57,7 @@ class WriteDetailedLog: FileOutputBase
             $currentInstance = [WriteDetailedLog]::GetInstance();
             try 
             {
+				$currentInstance.ControlExclusionByOrgPolicyEnabled = $false
 				$props = $Event.SourceArgs[0];
 				if($props)
 				{
@@ -84,23 +88,29 @@ class WriteDetailedLog: FileOutputBase
             $currentInstance = [WriteDetailedLog]::GetInstance();
             try 
             {
-                $currentInstance.AddOutputLog([Constants]::DoubleDashLine);
-                $currentInstance.AddOutputLog("[$($Event.SourceArgs.ControlItem.ControlID)]: $($Event.SourceArgs.ControlItem.Description)");
-                $currentInstance.AddOutputLog([Constants]::SingleDashLine);
-                if($Event.SourceArgs.IsResource())
-				{
-					$currentInstance.AddOutputLog(("Checking: [{0}]-[$($Event.SourceArgs.ControlItem.Description)] for resource [{1}]" -f 
+				$isCurrControlExcludedByOrgPolicy = $Event.SourceArgs[0].ControlItem.IsControlExcluded;
+				if(-not ($currentInstance.ControlExclusionByOrgPolicyEnabled -and $isCurrControlExcludedByOrgPolicy)){
+					$currentInstance.AddOutputLog([Constants]::DoubleDashLine);
+					$currentInstance.AddOutputLog("[$($Event.SourceArgs.ControlItem.ControlID)]: $($Event.SourceArgs.ControlItem.Description)");
+					$currentInstance.AddOutputLog([Constants]::SingleDashLine);
+					if($Event.SourceArgs.IsResource())
+					{
+						$currentInstance.AddOutputLog(("Checking: [{0}]-[$($Event.SourceArgs.ControlItem.Description)] for resource [{1}]" -f 
+								$Event.SourceArgs.FeatureName, 
+								$Event.SourceArgs.ResourceContext.ResourceName), 
+							$true);  
+					}
+					else
+					{
+						$currentInstance.AddOutputLog(("Checking: [{0}]-[$($Event.SourceArgs.ControlItem.Description)] for subscription [{1}]" -f 
 							$Event.SourceArgs.FeatureName, 
-							$Event.SourceArgs.ResourceContext.ResourceName), 
+							$Event.SourceArgs.SubscriptionContext.SubscriptionName), 
 						$true);  
+					}
+				}else{
+					# For controls excluded by org policy don't add details to detailed log file
 				}
-				else
-				{
-					$currentInstance.AddOutputLog(("Checking: [{0}]-[$($Event.SourceArgs.ControlItem.Description)] for subscription [{1}]" -f 
-                        $Event.SourceArgs.FeatureName, 
-                        $Event.SourceArgs.SubscriptionContext.SubscriptionName), 
-                    $true);  
-				}
+                
             }
             catch 
             {
@@ -113,8 +123,13 @@ class WriteDetailedLog: FileOutputBase
             $currentInstance = [WriteDetailedLog]::GetInstance();     
             try 
             {
-                $currentInstance.WriteControlResult([SVTEventContext] ($Event.SourceArgs | Select-Object -First 1 ));
-                $currentInstance.AddOutputLog(([Constants]::DoubleDashLine + " `r`n"));
+				$isCurrControlExcludedByOrgPolicy = $Event.SourceArgs[0].ControlItem.IsControlExcluded;
+				if(-not ($currentInstance.ControlExclusionByOrgPolicyEnabled -and $isCurrControlExcludedByOrgPolicy)){
+					$currentInstance.WriteControlResult([SVTEventContext] ($Event.SourceArgs | Select-Object -First 1 ));
+					$currentInstance.AddOutputLog(([Constants]::DoubleDashLine + " `r`n"));
+				}else{
+					# For controls excluded by org policy don't add details to detailed log file
+				}
             }
             catch 
             {
@@ -206,7 +221,6 @@ class WriteDetailedLog: FileOutputBase
 		if($eventContext.ControlResults -and $eventContext.ControlResults.Count -ne 0)
 		{
 			$controlDesc = $eventContext.ControlItem.Description;
-			$isControlExcludedByOrgPolicy = $eventContext.ControlItem.IsControlExcluded;
 			$eventContext.ControlResults | Foreach-Object {
 				if(-not [string]::IsNullOrWhiteSpace($_.ChildResourceName))
 				{
@@ -265,11 +279,6 @@ class WriteDetailedLog: FileOutputBase
 					}
 				}
 
-				# Add control exclusion message
-				if($isControlExcludedByOrgPolicy){
-					$this.AddOutputLog("Please note that this control is in excluded state which means scan event for these controls will not be considered for compliance. For more details, please refer: https://aka.ms/azsk/excludedcontrols");
-				}
-
 				#$this.AddOutputLog("`r`n");
 				if($_.VerificationResult -ne [VerificationResult]::NotScanned)
 				{
@@ -287,7 +296,7 @@ class WriteDetailedLog: FileOutputBase
 								$eventContext.FeatureName, 
 								$resourceName, 
 								$eventContext.ControlItem.Description, 
-								$(if($isControlExcludedByOrgPolicy) { ([VerificationResult]::Excluded).ToString() } else { $_.VerificationResult.ToString()})));      
+								$_.VerificationResult.ToString()));      
 					}
 					else
 					{		
@@ -295,7 +304,7 @@ class WriteDetailedLog: FileOutputBase
 								$eventContext.FeatureName, 
 								$eventContext.SubscriptionContext.SubscriptionName, 
 								$eventContext.ControlItem.Description, 
-								$(if($isControlExcludedByOrgPolicy) { ([VerificationResult]::Excluded).ToString() } else { $_.VerificationResult.ToString()})));     
+								$_.VerificationResult.ToString()));    
 					}
 				}
 			}

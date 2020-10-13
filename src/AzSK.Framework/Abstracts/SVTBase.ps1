@@ -35,18 +35,22 @@ class SVTBase: AzSKRoot
 	[ComplianceStateTableEntity[]] $ComplianceStateData = @();
 	[PSObject[]] $ChildSvtObjects = @();
 	[bool] $IsLocalComplianceStoreEnabled = $false;
+	[bool] $IsControlExclusionByOrgPolicyEnabled = $false;
 	[bool] $IsResourceScan = $false; # To identify whether its resource scan or subscription scan
 	#EndRegion
 
 	SVTBase([string] $subscriptionId):
 	Base($subscriptionId)
  {		
+	 # Intialize control exclusion feature flag
+	 $this.IsControlExclusionByOrgPolicyEnabled = [FeatureFlightingManager]::GetFeatureStatus("EnableControlExclusionByOrgPolicy",$($this.SubscriptionContext.SubscriptionId));
 
 	}
 	SVTBase([string] $subscriptionId, [SVTResource] $svtResource):
 	Base($subscriptionId, [SVTResource] $svtResource)
  {		
 		$this.CreateInstance($svtResource);
+		$this.IsControlExclusionByOrgPolicyEnabled = [FeatureFlightingManager]::GetFeatureStatus("EnableControlExclusionByOrgPolicy",$($this.SubscriptionContext.SubscriptionId));
 	}
 
 	#Create instance for resource scan
@@ -946,7 +950,7 @@ class SVTBase: AzSKRoot
 					$childResourceState = $controlState | Where-Object { $_.ChildResourceName -eq $currentItem.ChildResourceName } | Select-Object -First 1;
 					if ($childResourceState)
 					{
-						$isControlExcludedByOrgPolicy = [FeatureFlightingManager]::GetFeatureStatus("EnableControlExclusionByOrgPolicy",$($this.SubscriptionContext.SubscriptionId)) -and $eventcontext.controlItem.IsControlExcluded
+						$isControlExcludedByOrgPolicy = $this.IsControlExclusionByOrgPolicyEnabled -and $eventcontext.controlItem.IsControlExcluded
 						# Skip passed ones (that are not marked excluded as per org policy) from State Management
 						if (($currentItem.ActualVerificationResult -ne [VerificationResult]::Passed) -or $isControlExcludedByOrgPolicy)
 						{

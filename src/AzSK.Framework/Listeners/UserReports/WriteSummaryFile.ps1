@@ -200,9 +200,11 @@ class WriteSummaryFile: FileOutputBase
 				$null -ne ($_.ControlResults | Where-Object { $_.AttestationStatus -ne [AttestationStatus]::None } | Select-Object -First 1) 
 			} | Select-Object -First 1);
 		$anyExcludedControls = $false
+		# Check if current subscription is enabled for control exclusion/migration
 		$subscriptionId = $arguments[0].SubscriptionContext.SubscriptionId
 		$controlExclusionByOrgPolicyEnabled = [FeatureFlightingManager]::GetFeatureStatus("EnableControlExclusionByOrgPolicy",$subscriptionId)
 		if($controlExclusionByOrgPolicyEnabled){
+			# Check if any control is in excluded state
 			$anyExcludedControls = $null -ne ($arguments | 
 			Where-Object { 
 				$null -ne ($_.ControlItem | Where-Object { $_.IsControlExcluded -eq $true } | Select-Object -First 1) 
