@@ -99,6 +99,20 @@
   "DockerImage":{
     "ImageName" : "azskado/adosecurityscan"
   },
+  "AllowAdminControlScanForGroups": [
+    {
+      "ResourceType": "Organization",
+      "GroupNames": [
+        "Project Collection Administrators"
+      ]
+    },
+    {
+      "ResourceType": "Project",
+      "GroupNames": [
+        "Project Administrators"
+      ]
+    }
+  ],
   "AllowAttestationResourceType": [
     "Organization",
     "Project",

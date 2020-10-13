@@ -37,15 +37,19 @@ class SVTResourceResolver: AzSKRoot {
     hidden [PSObject] $agtPoolSTDetails;
     hidden [PSObject] $varGroupSTDetails;
 
-    SVTResourceResolver([string]$organizationName, $ProjectNames, $BuildNames, $ReleaseNames, $AgentPools, $ServiceConnectionNames, $VariableGroupNames, $MaxObj, $ScanAllArtifacts, $PATToken, $ResourceTypeName, $AllowLongRunningScan, $ServiceId): Base($organizationName, $PATToken) {
+    [bool] $includeAdminControls = $false;
+    [bool] $isUserPCA = $false;
+
+    SVTResourceResolver([string]$organizationName, $ProjectNames, $BuildNames, $ReleaseNames, $AgentPools, $ServiceConnectionNames, $VariableGroupNames, $MaxObj, $ScanAllArtifacts, $PATToken, $ResourceTypeName, $AllowLongRunningScan, $ServiceId, $IncludeAdminControls): Base($organizationName, $PATToken) {
         $this.MaxObjectsToScan = $MaxObj #default = 0 => scan all if "*" specified...
-        $this.SetallTheParamValues($organizationName, $ProjectNames, $BuildNames, $ReleaseNames, $AgentPools, $ServiceConnectionNames, $VariableGroupNames, $ScanAllArtifacts, $PATToken, $ResourceTypeName, $AllowLongRunningScan, $ServiceId);            
+        $this.SetallTheParamValues($organizationName, $ProjectNames, $BuildNames, $ReleaseNames, $AgentPools, $ServiceConnectionNames, $VariableGroupNames, $ScanAllArtifacts, $PATToken, $ResourceTypeName, $AllowLongRunningScan, $ServiceId, $IncludeAdminControls);            
     }
 
-    [void] SetallTheParamValues([string]$organizationName, $ProjectNames, $BuildNames, $ReleaseNames, $AgentPools, $ServiceConnectionNames, $VariableGroupNames, $ScanAllArtifacts, $PATToken, $ResourceTypeName, $AllowLongRunningScan, $ServiceId) { 
+    [void] SetallTheParamValues([string]$organizationName, $ProjectNames, $BuildNames, $ReleaseNames, $AgentPools, $ServiceConnectionNames, $VariableGroupNames, $ScanAllArtifacts, $PATToken, $ResourceTypeName, $AllowLongRunningScan, $ServiceId, $IncludeAdminControls) { 
         $this.organizationName = $organizationName
         $this.ResourceTypeName = $ResourceTypeName
         $this.allowLongRunningScan = $AllowLongRunningScan
+        $this.includeAdminControls = $IncludeAdminControls
 
         if (-not [string]::IsNullOrEmpty($ProjectNames)) {
             $this.ProjectNames += $this.ConvertToStringArray($ProjectNames);
@@ -149,7 +153,6 @@ class SVTResourceResolver: AzSKRoot {
     }
 
     [void] LoadResourcesForScan() {
-        
         #Call APIS for Organization,User/Builds/Releases/ServiceConnections 
         $organizationId = "";
         
@@ -169,9 +172,18 @@ class SVTResourceResolver: AzSKRoot {
         }
         if ($this.ResourceTypeName -in ([ResourceTypeName]::Organization, [ResourceTypeName]::All, [ResourceTypeName]::Org_Project_User) -and ([string]::IsNullOrEmpty($this.serviceId)) ) 
         {
-            #Select Org/User by default...
-            $link = "https://dev.azure.com/$($this.organizationName)/_settings"
-            $this.AddSVTResource($this.organizationName, $null ,"ADO.Organization", "organization/$($organizationId)", $null, $link);
+            #First condition if 'includeAdminControls' switch is passed or user is admin(PCA).
+            #Second condition if explicitly -rtn flag passed to org or Org_Project_User 
+            #Third condition if 'gads' contains only admin scan parame, then no need to ask for includeAdminControls switch
+            if (($this.includeAdminControls -or $this.isAdminControlScan()))
+            {
+                #Select Org/User by default...
+                $link = "https://dev.azure.com/$($this.organizationName)/_settings"
+                $this.AddSVTResource($this.organizationName, $null ,"ADO.Organization", "organization/$($organizationId)", $null, $link);
+            }
+            elseif ( ($this.ResourceTypeName -in ([ResourceTypeName]::Organization, [ResourceTypeName]::Org_Project_User)) -or ( $this.BuildNames.Count -eq 0 -and $this.ReleaseNames.Count -eq 0 -and $this.ServiceConnections.Count -eq 0 -and $this.AgentPools.Count -eq 0 -and $this.VariableGroups.Count -eq 0) ) {
+                $this.PublishCustomMessage("You have requested scan for organization controls. However, you do not have admin permission. Use '-IncludeAdminControls' if you'd still like to scan them. (Some controls may not scan correctly due to access issues.)", [MessageType]::Info);
+            }
         }
 
         if ($this.ResourceTypeName -in ([ResourceTypeName]::User, [ResourceTypeName]::All, [ResourceTypeName]::Org_Project_User, [ResourceTypeName]::Build_Release_SvcConn_AgentPool_User)) {
@@ -227,10 +239,17 @@ class SVTResourceResolver: AzSKRoot {
                     $projectId = $thisProj.id;
                     if ($this.ResourceTypeName -in ([ResourceTypeName]::Project, [ResourceTypeName]::All, [ResourceTypeName]::Org_Project_User)) 
                     {
-                        $link = $thisProj.url.Replace('/_apis/projects', '') + '/_settings/'
-                        $resourceId = "organization/$organizationId/project/$projectId" 
-                        $this.AddSVTResource($thisProj.name, $this.organizationName,"ADO.Project", $resourceId, $thisProj, $link);
-                        
+                        #First condition if 'includeAdminControls' switch is passed or user is PCA or User is PA.
+                        #Second condition if explicitly -rtn flag passed to org or Org_Project_User 
+                        if ( ($this.includeAdminControls -or $this.isUserPCA -or $this.isUserPA($projectName)))  {
+                            $link = $thisProj.url.Replace('/_apis/projects', '') + '/_settings/'
+                            $resourceId = "organization/$organizationId/project/$projectId" 
+                            $this.AddSVTResource($thisProj.name, $this.organizationName,"ADO.Project", $resourceId, $thisProj, $link);
+                        }
+                        #Third condition if 'gads' contains only admin scan parame, then no need to ask for includeAdminControls switch
+                        elseif ( ($this.ResourceTypeName -in ([ResourceTypeName]::Project, [ResourceTypeName]::Org_Project_User)) -or ( $this.BuildNames.Count -eq 0 -and $this.ReleaseNames.Count -eq 0 -and $this.ServiceConnections.Count -eq 0 -and $this.AgentPools.Count -eq 0 -and $this.VariableGroups.Count -eq 0) ) {
+                            $this.PublishCustomMessage("You have requested scan for project controls. However, you do not have admin permission. Use '-IncludeAdminControls' if you'd still like to scan them. (Some controls may not scan correctly due to access issues.)", [MessageType]::Info);
+                        }
                     }
                     #check if long running scan allowed or not.
                     if(!$this.isAllowLongRunningScanCheck())
@@ -429,7 +448,7 @@ class SVTResourceResolver: AzSKRoot {
                                 else {
                                     $taskAgentQueues = $agentPoolsDefnsObj.fps.dataProviders.data."ms.vss-build-web.agent-queues-data-provider".taskAgentQueues | Where-Object {($_.pool.isLegacy -eq $false) -and ($this.AgentPools -contains $_.name) } 
                                 }
-                                
+
                                 #Filtering out "Azure Pipelines" agent pool from scan as it is created by ADO by default and some of its settings are not editable (grant access to all pipelines, auto-provisioning etc.)
                                 $taskAgentQueues = $taskAgentQueues | where-object{$_.name -ne "Azure Pipelines"};
                                 
@@ -719,5 +738,32 @@ class SVTResourceResolver: AzSKRoot {
                 }
             }            
         }
+    }
+    #check for PCA group members
+    [bool] isAdminControlScan()
+    {
+        $allowedAdminGrp = $null;
+        if (!$this.ControlSettings) {
+            $this.ControlSettings = [ConfigurationManager]::LoadServerConfigFile("ControlSettings.json");
+        }
+        if ([Helpers]::CheckMember($this.ControlSettings, "AllowAdminControlScanForGroups")) {
+            $allowedAdminGrp = $this.ControlSettings.AllowAdminControlScanForGroups | where { $_.ResourceType -eq "Organization" } | select-object -property GroupNames 
+        }
+        $this.isUserPCA = [AdministratorHelper]::isUserOrgAdminMember($this.organizationName, $allowedAdminGrp);
+        return $this.isUserPCA;
+    }
+
+    #check for PA group members
+    [bool] isUserPA($project)
+    {
+        $allowedAdminGrp = $null;
+        if (!$this.ControlSettings) {
+            $this.ControlSettings = [ConfigurationManager]::LoadServerConfigFile("ControlSettings.json");
+        }
+        if ([Helpers]::CheckMember($this.ControlSettings, "AllowAdminControlScanForGroups")) {
+            $allowedAdminGrp = $this.ControlSettings.AllowAdminControlScanForGroups | where { $_.ResourceType -eq "Project" } | select-object -property GroupNames 
+        }
+        
+        return [AdministratorHelper]::isUserProjectAdminMember($this.organizationName, $project, $allowedAdminGrp);
     }
 }
