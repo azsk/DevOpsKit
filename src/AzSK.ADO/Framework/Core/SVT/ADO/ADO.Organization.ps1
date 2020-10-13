@@ -167,7 +167,7 @@ class Organization: ADOSVTBase
                                 # Add the members of current group to this temp variable.
                                 $groupMembers += [AdministratorHelper]::AllPCAMembers
                                 # Create a custom object to append members of current group with the group name. Each of these custom object is added to the global variable $allAdminMembers for further analysis of SC-Alt detection.
-                                $groupMembers | ForEach-Object {$allAdminMembers += @( [PSCustomObject] @{ name = $_.displayName; mailAddress = $_.mailAddress; id = $_.identityId; groupName = $adminGroups[$i].displayName } )} 
+                                $groupMembers | ForEach-Object {$allAdminMembers += @( [PSCustomObject] @{ name = $_.displayName; mailAddress = $_.mailAddress; id = $_.originId; groupName = $adminGroups[$i].displayName } )} 
                             }
                             
                             if(($PCSAGroup | Measure-Object).Count -gt 0)
@@ -185,7 +185,7 @@ class Organization: ADOSVTBase
 
                                 # Preparing the list of members of PCSA which needs to be subtracted from $allAdminMembers
                                 #USE IDENTITY ID
-                                $groupMembers | ForEach-Object {$allPCSAMembers += @( [PSCustomObject] @{ name = $_.displayName; mailAddress = $_.mailAddress; id = $_.identityId; groupName = "Project Collection Administrators" } )} 
+                                $groupMembers | ForEach-Object {$allPCSAMembers += @( [PSCustomObject] @{ name = $_.displayName; mailAddress = $_.mailAddress; id = $_.originId; groupName = "Project Collection Administrators" } )} 
 
                             }
 
