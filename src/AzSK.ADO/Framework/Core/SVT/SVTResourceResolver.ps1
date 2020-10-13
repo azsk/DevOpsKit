@@ -430,6 +430,9 @@ class SVTResourceResolver: AzSKRoot {
                                     $taskAgentQueues = $agentPoolsDefnsObj.fps.dataProviders.data."ms.vss-build-web.agent-queues-data-provider".taskAgentQueues | Where-Object {($_.pool.isLegacy -eq $false) -and ($this.AgentPools -contains $_.name) } 
                                 }
                                 
+                                #Filtering out "Azure Pipelines" agent pool from scan as it is created by ADO by default and some of its settings are not editable (grant access to all pipelines, auto-provisioning etc.)
+                                $taskAgentQueues = $taskAgentQueues | where-object{$_.name -ne "Azure Pipelines"};
+                                
                                 foreach ($taq in $taskAgentQueues) {
                                     $resourceId = "https://{0}.visualstudio.com/_apis/securityroles/scopes/distributedtask.agentqueuerole/roleassignments/resources/{1}_{2}" -f $($this.SubscriptionContext.SubscriptionName), $($taq.projectId), $taq.id
                                     $agtpoolResourceId = "organization/$organizationId/project/$projectId/agentpool/$($taq.id)";
