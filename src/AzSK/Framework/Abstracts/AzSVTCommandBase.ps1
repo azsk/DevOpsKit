@@ -134,7 +134,7 @@ class AzSVTCommandBase: SVTCommandBase {
                         if($latestVersion -gt $moduleVersionInUse -and [ConfigurationManager]::GetAzSKSettings().IsSAW -eq $false)
                         {
                             [MessageData] $data = [MessageData]@{
-                            Message     = ([Constants]::DoubleDashLine +"`n`nAborting the attestation flow since you are using an older version of $($AzSKModuleName).Please install and use the latest version '$($latestVersion)' to ensure that you are always using the latest security controls.");
+                            Message     = ([Constants]::DoubleDashLine +"`n`nAborting attestation workflow because your module version $($moduleVersionInUse) is not current. Attestations are accepted only from the latest version of the module.Please install and use the latest version $($latestVersion) using your org-specific 'iwr' command. You can also enable auto-update by using: 'Set-AzSKPolicySettings -AutoUpdate On'");
                             MessageType = [MessageType]::Error;
                             };
                             $this.PublishCustomMessage($data)

@@ -81,7 +81,7 @@ function RunAzSKScan() {
 	if($null -ne $usageTelelmetryLevel -and (-not [string]::IsNullOrWhiteSpace($usageTelelmetryLevel.Value)))
 	{
 		Write-Output("SA: Setting telemetry usage to $($usageTelelmetryLevel.Value)")
-		Set-AzSKUsageTelemetryLevel -Level $usageTelelmetryLevel.Value.Trim()
+		Set-AzSKUsageTelemetryLevel -Level $usageTelelmetryLevel.Value
 	}
 
 	################################ End: Configure AzSK for the scan ######################################### 
