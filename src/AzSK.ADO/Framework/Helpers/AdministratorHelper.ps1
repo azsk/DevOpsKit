@@ -3,7 +3,85 @@ class AdministratorHelper{
     static [bool] $isCurrentUserPA=$false;
     static $AllPCAMembers = @()
     static $AllPAMembers = @()
-    
+
+
+    #Check whether uesr is PCA and subgroups member
+    static [bool] isUserOrgAdminMember($organizationName, [PSObject] $allowedAdminGrp)
+    {
+        try 
+        {
+            $rmContext = [ContextHelper]::GetCurrentContext();
+		    $user = "";
+            $base64AuthInfo = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(("{0}:{1}" -f $user,$rmContext.AccessToken)))
+
+            $url = "https://{0}.visualstudio.com/_apis/Contribution/HierarchyQuery?api-version=5.1-preview.1" -f $($organizationName);
+            $body=@'
+            {"contributionIds":["ms.vss-admin-web.org-admin-groups-data-provider"],"dataProviderContext":{"properties":{"sourcePage":{"url":"https://{0}.visualstudio.com/_settings/groups","routeId":"ms.vss-admin-web.collection-admin-hub-route","routeValues":{"adminPivot":"groups","controller":"ContributedPage","action":"Execute"}}}}}
+'@ 
+            $body = $body.Replace("{0}",$organizationName)
+            $groupsOrgObj = Invoke-RestMethod -Uri $url -Method Post -ContentType "application/json" -Headers @{Authorization=("Basic {0}" -f $base64AuthInfo)} -Body $body
+
+            if ($allowedAdminGrp) {
+                $groupsOrgObj = $groupsOrgObj.dataProviders.'ms.vss-admin-web.org-admin-groups-data-provider'.identities | where { $allowedAdminGrp.GroupNames -contains $_.displayName }
+            }
+            #else condition if 'AllowAdminControlScanForGroups' propertry not foud in orgpolicy. Then check using default group PA 
+            else {
+                $groupsOrgObj = $groupsOrgObj.dataProviders.'ms.vss-admin-web.org-admin-groups-data-provider'.identities | where { "Project Collection Administrators" -eq $_.displayName }
+            }
+            foreach ($group in $groupsOrgObj)
+	        {
+                #if user found in group return true
+                if ([AdministratorHelper]::GetIsCurrentUserPCA($group.descriptor, $organizationName)) {
+                    return $true;
+                }
+            }
+            return $false;
+        }
+        catch
+        {
+            return $false;
+        }
+    }
+
+    static [bool] isUserProjectAdminMember($organizationName, $project, [PSObject] $allowedAdminGrp)
+    {
+        try 
+        {
+            $rmContext = [ContextHelper]::GetCurrentContext();
+		    $user = "";
+            $base64AuthInfo = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(("{0}:{1}" -f $user,$rmContext.AccessToken)))
+            
+            $url= "https://{0}.visualstudio.com/_apis/Contribution/HierarchyQuery?api-version=5.1-preview.1" -f $($organizationName);
+            $body=@'
+            {"contributionIds":["ms.vss-admin-web.org-admin-groups-data-provider"],"dataProviderContext":{"properties":{"sourcePage":{"url":"https://{0}.visualstudio.com/{1}/_settings/permissions","routeId":"ms.vss-admin-web.project-admin-hub-route","routeValues":{"project":"{1}","adminPivot":"permissions","controller":"ContributedPage","action":"Execute"}}}}}
+'@     
+            $body=$body.Replace("{0}",$organizationName)
+            $body=$body.Replace("{1}",$project)
+            $groupsObj = Invoke-RestMethod -Uri $url -Method Post -ContentType "application/json" -Headers @{Authorization=("Basic {0}" -f $base64AuthInfo)} -Body $body
+            
+            if ($allowedAdminGrp) {
+                $groupsObj = $groupsObj.dataProviders."ms.vss-admin-web.org-admin-groups-data-provider".identities | where { $allowedAdminGrp.GroupNames -contains $_.displayName }
+            }
+            #else condition if 'AllowAdminControlScanForGroups' propertry not foud in orgpolicy. Then check using default group PA 
+            else {
+                $groupsObj = $groupsObj.dataProviders."ms.vss-admin-web.org-admin-groups-data-provider".identities | where { "Project Administrators" -eq $_.displayName }
+            }
+		    
+            foreach ($group in $groupsObj)
+	        { 
+                #if user found in group return true
+                if([AdministratorHelper]::GetIsCurrentUserPA($groupsObj.descriptor,$organizationName, $project))
+                {
+		    	    return $true;
+		        }	
+		    }
+            return $false;
+        }
+        catch
+        {
+            return $false;
+        }
+    }
 
     static [void] GetPCADescriptorAndMembers([string] $OrgName){
         

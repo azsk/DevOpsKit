@@ -660,8 +660,8 @@ class WritePsConsole: FileOutputBase
             $this.WriteMessage("Method Name: $methodName `r`nInput Parameters: $(($this.InvocationContext.BoundParameters | Out-String).TrimEnd()) `r`n" + [Constants]::DoubleDashLine , [MessageType]::Info);                           
         }
 		
-
-		$this.WriteMessage([ConfigurationManager]::GetAzSKConfigData().PolicyMessage,[MessageType]::Warning)
+		$user = [ContextHelper]::GetCurrentSessionUser();
+		$this.WriteMessage([ConfigurationManager]::GetAzSKConfigData().PolicyMessage + "`r`nUsing identity: " + $user,[MessageType]::Warning)
 		
 	}
 
