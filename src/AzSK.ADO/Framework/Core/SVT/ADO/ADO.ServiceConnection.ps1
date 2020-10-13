@@ -54,6 +54,7 @@ class ServiceConnection: ADOSVTBase
             try {
                 if($this.ServiceConnEndPointDetail -and [Helpers]::CheckMember($this.ServiceConnEndPointDetail, "serviceEndpoint") ) 
                 {
+                    $message = "Service connection has access at [{0}] {1} scope in the subscription [{2}] .";
                     $serviceEndPoint = $this.ServiceConnEndPointDetail.serviceEndpoint
                     # 'scopeLevel' and 'creationMode' properties are required to determine whether a svc conn is automatic or manual.
                     # irrespective of creationMode - pass the control for conn authorized at MLWorkspace and PublishProfile (app service) scope as such conn are granted access at resource level.
@@ -73,37 +74,25 @@ class ServiceConnection: ADOSVTBase
                             }
                             $controlResult.AddMessage([VerificationResult]::Failed, $controlFailedMsg);
                         }
-                        else{
-                            $message = "Service connection has access at [{0}] {1} scope in the subscription [$($serviceEndPoint.data.subscriptionName)] .";
-                            if ($serviceEndPoint.data.scopeLevel -eq "AzureMLWorkspace") 
-                            {
-                                $message =  $message -f $serviceEndPoint.data.mlWorkspaceName, 'ML workspace'
+                        else{ # else gets executed when svc is scoped at RG and not at sub or MG
+                            if ([Helpers]::CheckMember($serviceEndPoint.authorization.parameters, "scope")) {
+                                $message =  $message -f $serviceEndPoint.authorization.parameters.scope.split('/')[-1], 'resource group', $serviceEndPoint.data.subscriptionName
                             }
-                            elseif ([Helpers]::CheckMember($serviceEndPoint, "authorization.scheme") -and $serviceEndPoint.authorization.scheme -eq "PublishProfile") {
-                                $message =  $message -f $serviceEndPoint.data.resourceId.split('/')[-1], 'app service'
-                            }
-                            elseif ([Helpers]::CheckMember($serviceEndPoint.authorization.parameters, "scope")) {
-                                $message =  $message -f $serviceEndPoint.authorization.parameters.scope.split('/')[-1], 'resource group'
-                            }
-                            else {
+                            else { 
                                 $message = "Service connection is not configured at subscription scope."
                             }
                             $controlResult.AddMessage([VerificationResult]::Passed, $message);
                         }
                     }
-                    elseif( (([Helpers]::CheckMember($serviceEndPoint, "data.scopeLevel") -and $serviceEndPoint.data.scopeLevel -eq "AzureMLWorkspace")  -or ([Helpers]::CheckMember($serviceEndPoint, "authorization.scheme") -and $serviceEndPoint.authorization.scheme -eq "PublishProfile") ))
+                    #elseif gets executed when scoped at AzureMLWorkspace 
+                    elseif(([Helpers]::CheckMember($serviceEndPoint, "data.scopeLevel") -and $serviceEndPoint.data.scopeLevel -eq "AzureMLWorkspace"))
                     {
-                        $message = "Service connection has access at [{0}] {1} scope in the subscription [$($serviceEndPoint.data.subscriptionName)] .";
-                        if ([Helpers]::CheckMember($serviceEndPoint, "data.scopeLevel") -and $serviceEndPoint.data.scopeLevel -eq "AzureMLWorkspace") 
-                        {
-                            $message =  $message -f $serviceEndPoint.data.mlWorkspaceName, 'ML workspace'
-                        }
-                        elseif ([Helpers]::CheckMember($serviceEndPoint, "authorization.scheme") -and $serviceEndPoint.authorization.scheme -eq "PublishProfile") {
-                            $message =  $message -f $serviceEndPoint.data.resourceId.split('/')[-1], 'app service'
-                        }
-                        elseif ([Helpers]::CheckMember($serviceEndPoint.authorization.parameters, "scope")) {
-                            $message =  $message -f $serviceEndPoint.authorization.parameters.scope.split('/')[-1], 'resource group'
-                        }
+                        $message =  $message -f $serviceEndPoint.data.mlWorkspaceName, 'ML workspace', $serviceEndPoint.data.subscriptionName
+                    }
+                    #elseif gets executed when scoped at PublishProfile 
+                    elseif(([Helpers]::CheckMember($serviceEndPoint, "authorization.scheme") -and $serviceEndPoint.authorization.scheme -eq "PublishProfile"))
+                    {
+                        $message =  $message -f $serviceEndPoint.data.resourceId.split('/')[-1], 'app service', $serviceEndPoint.data.subscriptionName
                         $controlResult.AddMessage([VerificationResult]::Passed, $message);
                     }
                     else  # if creation mode is manual and type is other (eg. managed identity) then verify the control
