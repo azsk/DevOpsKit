@@ -552,7 +552,7 @@ function Update-AzSKContinuousAssurance
 			}
 			else {
 			$ccAccount = [CCAutomation]::new($SubscriptionId, $PSCmdlet.MyInvocation, $null, $AutomationAccountRGName, $AutomationAccountName, `
-			$ResourceGroupNames, $AzureADAppName, $ScanIntervalInHours, "");
+			$ResourceGroupNames, $AzureADAppName, $ScanIntervalInHours, $UsageTelemetryLevel);
 			if($PSCmdlet.ParameterSetName -eq "RemoveSettings")
 			{
 				switch($Remove)

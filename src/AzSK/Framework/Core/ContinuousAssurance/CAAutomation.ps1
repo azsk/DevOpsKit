@@ -57,7 +57,7 @@ class CCAutomation: AzCommandBase
 	[string] $AutomationAccountName, `
 	[string] $ResourceGroupNames, `
 	[string] $AzureADAppName, `
-	[int] $ScanIntervalInHours,`
+	[int] $ScanIntervalInHours, `
 	[string] $UsageTelemetryLevel
 	) : Base($subscriptionId, $invocationContext)
     {
@@ -104,7 +104,7 @@ class CCAutomation: AzCommandBase
 		}
 		if(-not [string]::IsNullOrWhiteSpace($UsageTelemetryLevel))
 		{
-			$this.UserConfig.UsageTelemetryLevel = $UsageTelemetryLevel			
+			$this.UserConfig.UsageTelemetryLevel = $UsageTelemetryLevel.Trim()		
 		}
 		$this.DoNotOpenOutputFolder = $true;
 	}
@@ -960,7 +960,7 @@ class CCAutomation: AzCommandBase
 			{
 				$telemetryLevel = [Variable]@{
 					Name = "UsageTelemetryLevel";
-					Value = $UsageTelemetryLevel;
+					Value = $UsageTelemetryLevel.Trim();
 					IsEncrypted = $false;
 					Description ="Telemetry settings"
 				}
