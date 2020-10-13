@@ -79,7 +79,7 @@ class ServiceConnection: ADOSVTBase
                             {
                                 $message =  $message -f $serviceEndPoint.data.mlWorkspaceName, 'ML workspace'
                             }
-                            elseif ($serviceEndPoint.authorization.scheme -eq "PublishProfile") {
+                            elseif ([Helpers]::CheckMember($serviceEndPoint, "authorization.scheme") -and $serviceEndPoint.authorization.scheme -eq "PublishProfile") {
                                 $message =  $message -f $serviceEndPoint.data.resourceId.split('/')[-1], 'app service'
                             }
                             elseif ([Helpers]::CheckMember($serviceEndPoint.authorization.parameters, "scope")) {
@@ -98,7 +98,7 @@ class ServiceConnection: ADOSVTBase
                         {
                             $message =  $message -f $serviceEndPoint.data.mlWorkspaceName, 'ML workspace'
                         }
-                        elseif ($serviceEndPoint.authorization.scheme -eq "PublishProfile") {
+                        elseif ([Helpers]::CheckMember($serviceEndPoint, "authorization.scheme") -and $serviceEndPoint.authorization.scheme -eq "PublishProfile") {
                             $message =  $message -f $serviceEndPoint.data.resourceId.split('/')[-1], 'app service'
                         }
                         elseif ([Helpers]::CheckMember($serviceEndPoint.authorization.parameters, "scope")) {
