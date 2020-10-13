@@ -13,6 +13,7 @@ class SVTControlAttestation
 	hidden [SubscriptionContext] $SubscriptionContext;
 	hidden [InvocationInfo] $InvocationContext;
 	hidden [bool] $controlExclusionByOrgPolicyEnabled = $false;
+	hidden [string] $ControlExclusionWarningMessage = ""
 
 	SVTControlAttestation([SVTEventContext[]] $ctrlResults, [AttestationOptions] $attestationOptions, [SubscriptionContext] $subscriptionContext, [InvocationInfo] $invocationContext)
 	{
@@ -26,6 +27,10 @@ class SVTControlAttestation
 		$this.controlStateExtension.Initialize($true)
 		$this.ControlSettings=$ControlSettingsJson = [ConfigurationManager]::LoadServerConfigFile("ControlSettings.json");
 		$this.controlExclusionByOrgPolicyEnabled = [FeatureFlightingManager]::GetFeatureStatus("EnableControlExclusionByOrgPolicy",$($this.SubscriptionContext.SubscriptionId));
+		if($this.ControlSettings -ne $null  -and [Helpers]::CheckMember($this.ControlSettings, "ControlsToExcludeFromScan.ExclusionWarningMessage")){
+			$this.ControlExclusionWarningMessage = $this.ControlSettings.ControlsToExcludeFromScan.ExclusionWarningMessage
+		}
+
 	}
 
 	[AttestationStatus] GetAttestationValue([string] $AttestationCode)
@@ -53,6 +58,7 @@ class SVTControlAttestation
 		if($this.controlExclusionByOrgPolicyEnabled -and $controlItem.ControlItem.IsControlExcluded){
 			Write-Host "ControlId            : $($controlState.ControlId)`nControlSeverity      : $ControlSeverity`nDescription          : $($controlItem.ControlItem.Description)`n"	
 			Write-Host "`r`nPlease note that this control is in excluded state. For more details on excluded controls, please refer: https://aka.ms/azsk/excludedcontrols`n" -ForegroundColor Yellow
+			Write-Host $this.ControlExclusionWarningMessage -ForegroundColor Yellow
 		}else{
 			Write-Host "ControlId            : $($controlState.ControlId)`nControlSeverity      : $ControlSeverity`nDescription          : $($controlItem.ControlItem.Description)`nCurrentControlStatus : $($controlState.ActualVerificationResult)`n"	
 		}
@@ -287,7 +293,7 @@ class SVTControlAttestation
 		Write-Host "$([Constants]::SingleDashLine)" -ForegroundColor Cyan		
 		if($this.controlExclusionByOrgPolicyEnabled -and $controlItem.ControlItem.IsControlExcluded){
 			Write-Host "ControlId            : $($controlState.ControlId)`nControlSeverity      : $ControlSeverity`nDescription          : $($controlItem.ControlItem.Description)`n"
-			Write-Host "`r`nPlease note that this control is in excluded state. For more details on excluded controls, please refer: https://aka.ms/azsk/excludedcontrols`n" -ForegroundColor Yellow
+			Write-Host $this.ControlExclusionWarningMessage -ForegroundColor Yellow
 		}else{
 			Write-Host "ControlId            : $($controlState.ControlId)`nControlSeverity      : $ControlSeverity`nDescription          : $($controlItem.ControlItem.Description)`nCurrentControlStatus : $($controlState.ActualVerificationResult)`n"	
 		}
@@ -592,7 +598,6 @@ class SVTControlAttestation
 						if(($resourceControlStates | Measure-Object).Count -gt 0)
 						{
 							$Global:AttestationValue = $true
-							Write-Host "Attestation summary for this resource:" -ForegroundColor Cyan
 							$output = @()
 							$outputForExcludedControls = @()
 							$resourceControlStates | ForEach-Object {
@@ -606,10 +611,14 @@ class SVTControlAttestation
 							$outputForExcludedControls += $output | Where-Object { $excludedControlsByPolicy -contains $_.ControlId }
 							if($this.controlExclusionByOrgPolicyEnabled -and  $outputForExcludedControls.Count -gt 0){
 								$output = $output | Where-Object { $excludedControlsByPolicy -notcontains $_.ControlId }
-								Write-Host ($output | Format-Table ControlId, EvaluatedResult, EffectiveResult, AttestationChoice | Out-String) -ForegroundColor Cyan
+								if($null -ne $output){
+									Write-Host "Attestation summary for this resource:" -ForegroundColor Cyan
+									Write-Host ($output | Format-Table ControlId, EvaluatedResult, EffectiveResult, AttestationChoice | Out-String) -ForegroundColor Cyan
+								}
 								Write-Host "Attestation summary for this resource (for excluded controls):" -ForegroundColor Cyan
 								Write-Host ($outputForExcludedControls | Format-Table ControlId, EffectiveResult, AttestationChoice | Out-String) -ForegroundColor Cyan
 							}else{
+								Write-Host "Attestation summary for this resource:" -ForegroundColor Cyan
 								Write-Host ($output | Format-Table ControlId, EvaluatedResult, EffectiveResult, AttestationChoice | Out-String) -ForegroundColor Cyan
 							}
 							

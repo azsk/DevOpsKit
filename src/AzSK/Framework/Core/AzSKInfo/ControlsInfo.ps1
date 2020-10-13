@@ -15,6 +15,7 @@ class ControlsInfo: AzCommandBase
 	hidden [string] $SummaryMarkerText = "------"
 	hidden [string] $ControlSeverity
 	hidden [string] $ControlIdContains
+	hidden [string] $ControlExclusionWarningMessage = ""
 
 	ControlsInfo([string] $subscriptionId, [InvocationInfo] $invocationContext, [string] $resourceTypeName, [string] $resourceType, [string] $controlIds, [bool] $baslineControls,[bool] $previewBaslineControls, [string] $tags, [bool] $full, 
 					[string] $controlSeverity, [string] $controlIdContains) :  Base($subscriptionId, $invocationContext)
@@ -131,6 +132,7 @@ class ControlsInfo: AzCommandBase
 							-and [Helpers]::CheckMember($this.ControlSettings, "ControlsToExcludeFromScan.ControlIds") )
 		{
 			$excludedControls += $this.ControlSettings.ControlsToExcludeFromScan.ControlIds
+			$this.ControlExclusionWarningMessage = $this.ControlSettings.ControlsToExcludeFromScan.ExclusionWarningMessage
 		}
 
 		if($this.PreviewBaslineControls)
@@ -381,7 +383,7 @@ class ControlsInfo: AzCommandBase
 			if($this.ControlsExcludedByOrgPolicy -and $excludedControls.Count -gt 0){
 				$this.PublishCustomMessage([Constants]::DoubleDashLine, [MessageType]::Default);
 				$this.PublishCustomMessage("Total no. of excluded controls: " + $excludedControls.Count , [MessageType]::Default)
-				$this.PublishCustomMessage("** Attention **`r`nPlease note that one or more controls are in excluded state. For more details on excluded controls, please refer: https://aka.ms/azsk/excludedcontrols", [MessageType]::Warning);
+				$this.PublishCustomMessage($this.ControlExclusionWarningMessage, [MessageType]::Warning);
 				$this.PublishCustomMessage([Constants]::DoubleDashLine, [MessageType]::Default);
 			}
 		}

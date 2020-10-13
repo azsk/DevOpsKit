@@ -247,17 +247,17 @@ class WritePsConsole: FileOutputBase
 						$currentInstance.WriteMessage([Constants]::AttestationReadMsg + [ConfigurationManager]::GetAzSKConfigData().AzSKRGName, [MessageType]::Info)
 						
 					}
-					# TODO: We can put msg here for Excluded controls and get it from AzSK.json
+					# Show control exclusion warning if subscription is enabled for control exclusion and atleast one control is in excluded state
 					$subscriptionId = $Event.SourceArgs[0].SubscriptionContext.SubscriptionId
 					$anyControlExcluded = ($Event.SourceArgs.ControlItem | Where-Object{ $_.IsControlExcluded -eq $true } | Measure-Object ).Count -gt 0
 					if([FeatureFlightingManager]::GetFeatureStatus("EnableControlExclusionByOrgPolicy",$subscriptionId) -and $anyControlExcluded){
 						$currentInstance.WriteMessage([Constants]::SingleDashLine, [MessageType]::Info)
-						if($controlsScanned)
-					    {
-							$currentInstance.WriteMessage("** Attention **`r`nPlease note that one or more controls are in excluded state which means scan event for these controls will not be considered for compliance. For more details, please refer: https://aka.ms/azsk/excludedcontrols", [MessageType]::Warning)
-						}else{
-							$currentInstance.WriteMessage("** Attention **`r`nPlease note that one or more controls are in excluded state. For more details on excluded controls, please refer: https://aka.ms/azsk/excludedcontrols", [MessageType]::Warning)
+						$ControlExclusionWarningMessage = ""
+						$ControlSettings = [ConfigurationManager]::LoadServerConfigFile("ControlSettings.json");
+						if($ControlSettings -ne $null  -and [Helpers]::CheckMember($ControlSettings, "ControlsToExcludeFromScan.ExclusionWarningMessage")){
+							$ControlExclusionWarningMessage = $ControlSettings.ControlsToExcludeFromScan.ExclusionWarningMessage
 						}
+						$currentInstance.WriteMessage($($ControlExclusionWarningMessage), [MessageType]::Warning)
 					}
 					$currentInstance.WriteMessage([Constants]::SingleDashLine, [MessageType]::Info)
 				}

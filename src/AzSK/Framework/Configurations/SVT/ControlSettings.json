@@ -490,10 +490,9 @@
     "SupportedSources": []
   },
   "ControlsToExcludeFromScan": {
-    "TenantIds": [
-    ],
-    "ControlIds" : [
-		]
+    "TenantIds": [],
+    "ControlIds" : [],
+    "ExclusionWarningMessage" : ""
   },
   "CloudService": {
     "LatestOSSKUIDs": [ "WA-GUEST-OS-4.44_201707-01" ]
