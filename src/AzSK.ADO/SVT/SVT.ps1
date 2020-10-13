@@ -221,7 +221,7 @@ function Get-AzSKADOSecurityStatus
 		$ServiceId,
 
 		[switch]
-		[Parameter(HelpMessage="Include admin controls in scan (organization and project).")]
+		[Parameter(HelpMessage="Include admin controls (organization and project specific controls) in scan.")]
 		[Alias("iac")]
 		$IncludeAdminControls
 
