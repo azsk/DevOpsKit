@@ -56,8 +56,7 @@ class SVTControlAttestation
 	{
 		Write-Host "$([Constants]::SingleDashLine)" -ForegroundColor Cyan
 		if($this.controlExclusionByOrgPolicyEnabled -and $controlItem.ControlItem.IsControlExcluded){
-			Write-Host "ControlId            : $($controlState.ControlId)`nControlSeverity      : $ControlSeverity`nDescription          : $($controlItem.ControlItem.Description)`n"	
-			Write-Host "`r`nPlease note that this control is in excluded state. For more details on excluded controls, please refer: https://aka.ms/azsk/excludedcontrols`n" -ForegroundColor Yellow
+			Write-Host "ControlId            : $($controlState.ControlId)`nControlSeverity      : $ControlSeverity`nDescription          : $($controlItem.ControlItem.Description)`n"
 			Write-Host $this.ControlExclusionWarningMessage -ForegroundColor Yellow
 		}else{
 			Write-Host "ControlId            : $($controlState.ControlId)`nControlSeverity      : $ControlSeverity`nDescription          : $($controlItem.ControlItem.Description)`nCurrentControlStatus : $($controlState.ActualVerificationResult)`n"	
