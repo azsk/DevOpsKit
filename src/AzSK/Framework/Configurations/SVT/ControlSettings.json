@@ -242,6 +242,9 @@
     "Subscription" : [ "Owner", "Contributor", "User Access Administrator" ],
     "ResourceGroup" : [ "Owner", "User Access Administrator" ]
   },
+  "ExemptedPIMGroups": { 
+    "DisplayName" : "JIT_*_ElevatedAccess"
+  },
   "CheckPIMCAPolicyTags": false,
   "PIMCAPolicyTags":[],
   "PIMAppId":"01fc33a7-78ba-4d2f-a4b7-768e336e890e",
@@ -485,6 +488,12 @@
     ],
     "ExpiryInDays": 2,
     "SupportedSources": []
+  },
+  "ControlsToExcludeFromScan": {
+    "TenantIds": [],
+    "ControlIds" : [],
+    "ExclusionWarningMessage" : "",
+    "ExclusionHelpLink": ""
   },
   "CloudService": {
     "LatestOSSKUIDs": [ "WA-GUEST-OS-4.44_201707-01" ]

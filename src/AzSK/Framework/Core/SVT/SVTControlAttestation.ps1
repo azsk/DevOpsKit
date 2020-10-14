@@ -11,7 +11,10 @@ class SVTControlAttestation
 	[AttestationOptions] $attestOptions;
 	hidden [PSObject] $ControlSettings ; 
 	hidden [SubscriptionContext] $SubscriptionContext;
-    hidden [InvocationInfo] $InvocationContext;
+	hidden [InvocationInfo] $InvocationContext;
+	hidden [bool] $controlExclusionByOrgPolicyEnabled = $false;
+	hidden [string] $ControlExclusionWarningMessage = ""
+	hidden [string] $ControlExclusionHelpLink = ""
 
 	SVTControlAttestation([SVTEventContext[]] $ctrlResults, [AttestationOptions] $attestationOptions, [SubscriptionContext] $subscriptionContext, [InvocationInfo] $invocationContext)
 	{
@@ -24,6 +27,12 @@ class SVTControlAttestation
 		$this.controlStateExtension.UniqueRunId = $(Get-Date -format "yyyyMMdd_HHmmss");
 		$this.controlStateExtension.Initialize($true)
 		$this.ControlSettings=$ControlSettingsJson = [ConfigurationManager]::LoadServerConfigFile("ControlSettings.json");
+		$this.controlExclusionByOrgPolicyEnabled = [FeatureFlightingManager]::GetFeatureStatus("EnableControlExclusionByOrgPolicy",$($this.SubscriptionContext.SubscriptionId));
+		if($this.ControlSettings -ne $null  -and [Helpers]::CheckMember($this.ControlSettings, "ControlsToExcludeFromScan.ExclusionWarningMessage")){
+			$this.ControlExclusionWarningMessage = $this.ControlSettings.ControlsToExcludeFromScan.ExclusionWarningMessage
+			$this.ControlExclusionHelpLink = $this.ControlSettings.ControlsToExcludeFromScan.ExclusionHelpLink
+		}
+
 	}
 
 	[AttestationStatus] GetAttestationValue([string] $AttestationCode)
@@ -48,7 +57,14 @@ class SVTControlAttestation
 	[ControlState] ComputeEffectiveControlState([ControlState] $controlState, [string] $ControlSeverity, [bool] $isSubscriptionControl, [SVTEventContext] $controlItem, [ControlResult] $controlResult)
 	{
 		Write-Host "$([Constants]::SingleDashLine)" -ForegroundColor Cyan
-		Write-Host "ControlId            : $($controlState.ControlId)`nControlSeverity      : $ControlSeverity`nDescription          : $($controlItem.ControlItem.Description)`nCurrentControlStatus : $($controlState.ActualVerificationResult)`n"		
+		if($this.controlExclusionByOrgPolicyEnabled -and $controlItem.ControlItem.IsControlExcluded){
+			Write-Host "ControlId            : $($controlState.ControlId)`nControlSeverity      : $ControlSeverity`nDescription          : $($controlItem.ControlItem.Description)`n"
+			Write-Host $this.ControlExclusionWarningMessage -ForegroundColor Yellow 
+			Write-Host $this.ControlExclusionHelpLink -ForegroundColor Yellow
+		}else{
+			Write-Host "ControlId            : $($controlState.ControlId)`nControlSeverity      : $ControlSeverity`nDescription          : $($controlItem.ControlItem.Description)`nCurrentControlStatus : $($controlState.ActualVerificationResult)`n"	
+		}
+			
 		if(-not $controlResult.CurrentSessionContext.Permissions.HasRequiredAccess)
 		{
 			Write-Host "Skipping attestation process for this control. You do not have required permissions to evaluate this control. `nNote: If your permissions were elevated recently, please run the 'Disconnect-AzAccount' command to clear the Azure cache and try again." -ForegroundColor Yellow
@@ -76,8 +92,8 @@ class SVTControlAttestation
 			$tempCurrentStateObject  = $controlResult.StateManagement.CurrentStateData;
 		}
 
-		#display the current state only if the state object is not empty
-		if($null -ne $tempCurrentStateObject -and $null -ne $tempCurrentStateObject.DataObject)
+		#display the current state only if the state object is not empty and control is not excluded as per org policy
+		if($null -ne $tempCurrentStateObject -and $null -ne $tempCurrentStateObject.DataObject -and (-not $this.controlExclusionByOrgPolicyEnabled -or $controlItem.ControlItem.IsControlExcluded -eq $false))
 		{
 			Write-Host "Configuration data to be attested:" -ForegroundColor Cyan
 			Write-Host "$([JsonHelper]::ConvertToPson($tempCurrentStateObject.DataObject))"
@@ -277,7 +293,13 @@ class SVTControlAttestation
 	[ControlState] ComputeEffectiveControlStateInBulkMode([ControlState] $controlState, [string] $ControlSeverity, [bool] $isSubscriptionControl, [SVTEventContext] $controlItem, [ControlResult] $controlResult)
 	{
 		Write-Host "$([Constants]::SingleDashLine)" -ForegroundColor Cyan		
-		Write-Host "ControlId            : $($controlState.ControlId)`nControlSeverity      : $ControlSeverity`nDescription          : $($controlItem.ControlItem.Description)`nCurrentControlStatus : $($controlState.ActualVerificationResult)`n"
+		if($this.controlExclusionByOrgPolicyEnabled -and $controlItem.ControlItem.IsControlExcluded){
+			Write-Host "ControlId            : $($controlState.ControlId)`nControlSeverity      : $ControlSeverity`nDescription          : $($controlItem.ControlItem.Description)`n"
+			Write-Host $this.ControlExclusionWarningMessage -ForegroundColor Yellow
+			Write-Host $this.ControlExclusionHelpLink -ForegroundColor Yellow
+		}else{
+			Write-Host "ControlId            : $($controlState.ControlId)`nControlSeverity      : $ControlSeverity`nDescription          : $($controlItem.ControlItem.Description)`nCurrentControlStatus : $($controlState.ActualVerificationResult)`n"	
+		}
 		if(-not $controlResult.CurrentSessionContext.Permissions.HasRequiredAccess)
 		{
 			Write-Host "Skipping attestation process for this control. You do not have required permissions to evaluate this control. `nNote: If your permissions were elevated recently, please run the 'Disconnect-AzAccount' command to clear the Azure cache and try again." -ForegroundColor Yellow
@@ -313,7 +335,8 @@ class SVTControlAttestation
 		#Checking if control is attestable 
        
 		if($this.isControlAttestable($controlItem, $controlResult))
-		{	# Checking if the attestation state provided in command parameter is valid for the control
+		{	
+			# Checking if the attestation state provided in command parameter is valid for the control
 			if( $this.attestOptions.AttestationStatus -in $ValidAttestationStatesHashTable.Name)
 			{
 			
@@ -481,7 +504,7 @@ class SVTControlAttestation
 							[ControlResult[]] $matchedControlResults = @();
 							$controlItem.ControlResults | ForEach-Object {
 								$controlResult = $_
-								if($controlResult.ActualVerificationResult -ne [VerificationResult]::Passed -and $controlResult.ActualVerificationResult -ne [VerificationResult]::Error)
+								if(($controlResult.ActualVerificationResult -ne [VerificationResult]::Passed -and $controlResult.ActualVerificationResult -ne [VerificationResult]::Error) -or ($this.controlExclusionByOrgPolicyEnabled -and $controlItem.ControlItem.IsControlExcluded))
 								{
 									if($this.AttestControlsChoice -eq [AttestControls]::All)
 									{
@@ -510,10 +533,10 @@ class SVTControlAttestation
 							$filteredControlItems += $controlItem;
 						}
 					}
+					$excludedControlsByPolicy = $this.controlStateExtension.ControlsExcludedByOrgPolicy
 					if($count -gt 0)
 					{
 						Write-Host "No. of controls that need to be attested: $count" -ForegroundColor Cyan
-
 						 foreach( $controlItem in $filteredControlItems)
 						 {
 							$controlId = $controlItem.ControlItem.ControlID
@@ -578,8 +601,8 @@ class SVTControlAttestation
 						if(($resourceControlStates | Measure-Object).Count -gt 0)
 						{
 							$Global:AttestationValue = $true
-							Write-Host "Attestation summary for this resource:" -ForegroundColor Cyan
 							$output = @()
+							$outputForExcludedControls = @()
 							$resourceControlStates | ForEach-Object {
 								$out = "" | Select-Object ControlId, EvaluatedResult, EffectiveResult, AttestationChoice
 								$out.ControlId = $_.ControlId
@@ -588,7 +611,20 @@ class SVTControlAttestation
 								$out.AttestationChoice = $_.AttestationStatus.ToString()
 								$output += $out
 							}
-							Write-Host ($output | Format-Table ControlId, EvaluatedResult, EffectiveResult, AttestationChoice | Out-String) -ForegroundColor Cyan
+							$outputForExcludedControls += $output | Where-Object { $excludedControlsByPolicy -contains $_.ControlId }
+							if($this.controlExclusionByOrgPolicyEnabled -and  $outputForExcludedControls.Count -gt 0){
+								$output = $output | Where-Object { $excludedControlsByPolicy -notcontains $_.ControlId }
+								if($null -ne $output){
+									Write-Host "Attestation summary for this resource:" -ForegroundColor Cyan
+									Write-Host ($output | Format-Table ControlId, EvaluatedResult, EffectiveResult, AttestationChoice | Out-String) -ForegroundColor Cyan
+								}
+								Write-Host "Attestation summary for this resource (for excluded controls):" -ForegroundColor Cyan
+								Write-Host ($outputForExcludedControls | Format-Table ControlId, EffectiveResult, AttestationChoice | Out-String) -ForegroundColor Cyan
+							}else{
+								Write-Host "Attestation summary for this resource:" -ForegroundColor Cyan
+								Write-Host ($output | Format-Table ControlId, EvaluatedResult, EffectiveResult, AttestationChoice | Out-String) -ForegroundColor Cyan
+							}
+							
 						}
 
 						Write-Host "Committing the attestation details for this resource..." -ForegroundColor Cyan

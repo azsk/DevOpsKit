@@ -103,7 +103,7 @@ class AzSKPDFExtension
 				$ReportRange = $selection.Range();
 
 				$reportCSVFilePath = @();
-				$reportCSVFilePath += Get-ChildItem -Path $reportFolderPath -Filter "*.CSV" -Recurse
+				$reportCSVFilePath += Get-ChildItem -Path $reportFolderPath -Filter "SecurityReport*.CSV" -Recurse
 				if($reportCSVFilePath.Length -le 0)
 				{
 					[AzSKPDFExtension]::WriteText($selection, 'Unable to find the required security report under the report folder.','No Spacing', $false, $true, $false)

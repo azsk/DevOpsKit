@@ -962,6 +962,7 @@ class SubscriptionCore: AzSVTBase
 	{
 		$message = '';
 		$whitelistedPermanentRoles = $null
+		$exemptedPIMGroups = $null
 
 		if(-not $this.IsSubAssignmentFetched)
 		{
@@ -977,6 +978,10 @@ class SubscriptionCore: AzSVTBase
 		else 
 		{
 			$criticalRoles = $this.ControlSettings.CriticalPIMRoles.Subscription;
+			if([Helpers]::CheckMember($this.ControlSettings,"ExemptedPIMGroups.DisplayName"))
+			{
+				$exemptedPIMGroups = $this.ControlSettings.ExemptedPIMGroups.DisplayName;
+			}
 			$permanentRoles = $this.permanentAssignments;
 			if([Helpers]::CheckMember($this.ControlSettings,"WhitelistedPermanentRoles"))
 			{
@@ -986,6 +991,10 @@ class SubscriptionCore: AzSVTBase
 			{
 				
 				$criticalPermanentRoles = $permanentRoles | Where-Object{$_.RoleDefinitionName -in $criticalRoles -and ($_.ObjectType -eq 'User' -or $_.ObjectType -eq 'Group')}
+				if($null -ne $exemptedPIMGroups)
+				{
+					$criticalPermanentRoles = $criticalPermanentRoles | Where-Object{-not ($_.DisplayName -like $exemptedPIMGroups -and $_.ObjectType -eq 'Group')}
+				}
 				if($null -ne $whitelistedPermanentRoles)
 				{
 					$criticalPermanentRoles = $criticalPermanentRoles | Where-Object{ $_.DisplayName -notin $whitelistedPermanentRoles.DisplayName}

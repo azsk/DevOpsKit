@@ -149,7 +149,8 @@ class SVTStatusReport : AzSVTCommandBase
 		$this.PublishCustomMessage("`r`n"+[Constants]::DoubleDashLine+"`r`nSummary of attestation details:`r`n`r`n");
 		$this.DisplayAttestationStatusWiseControlsCount($Result);
 		$this.DisplaySeverityWiseControlsCount($Result);
-		$this.DisplayControlIdWiseCount($Result)
+		$this.DisplayControlIdWiseCount($Result);
+		$this.DisplayExcludedControlsCount($Result);
 		$this.DisplayExpiryDateWiseControlsCount($Result);
 	}
 	hidden [void] DisplayAttestationStatusWiseControlsCount([SVTEventContext[]] $Result)
@@ -200,6 +201,17 @@ class SVTStatusReport : AzSVTCommandBase
 		$this.PublishCustomMessage("Distribution of controls that have been attested:`r`n"+($groupResult|out-string));
 		$this.PublishCustomMessage([Constants]::DoubleDashLine);
 
+	}
+	hidden [void] DisplayExcludedControlsCount([SVTEventContext[]] $Result)
+	{
+		if(-not [FeatureFlightingManager]::GetFeatureStatus("EnableControlExclusionByOrgPolicy",$($this.SubscriptionContext.SubscriptionId))){
+			return;
+		}
+		$excludedControls = $Result.ControlItem | Where-Object {$_.IsControlExcluded}
+		if($null -ne $excludedControls -and ($excludedControls | Measure-Object).Count -gt 0){
+			$this.PublishCustomMessage([Constants]::SingleDashLine+"`r`n`r`nCount of excluded controls: $(($excludedControls | Measure-Object).Count)`r`n");
+			$this.PublishCustomMessage([Constants]::SingleDashLine);
+		}
 	}
 	hidden [void] DisplayExpiryDateWiseControlsCount([SVTEventContext[]] $Result)
 	{

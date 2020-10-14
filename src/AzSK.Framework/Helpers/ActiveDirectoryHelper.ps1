@@ -377,6 +377,7 @@ class ActiveDirectoryHelper {
 				{
 					Write-Host "There are no old credentials associated with [$($ADApplication.displayname)]" -ForegroundColor Yellow
 					Write-Host "Skipping the process for deleting old certificates." -ForegroundColor Yellow
+					return 
 				}  
 			}
 		    $finalCredsObject = $ADApplication | Select-Object -Property keyCredentials

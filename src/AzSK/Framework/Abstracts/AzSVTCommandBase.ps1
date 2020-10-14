@@ -111,10 +111,37 @@ class AzSVTCommandBase: SVTCommandBase {
 
     [void] PostCommandCompletedAction([SVTEventContext[]] $arguments) {
         if ($this.AttestationOptions -ne $null -and $this.AttestationOptions.AttestControls -ne [AttestControls]::None) {
-            try {
+            try 
+            {
                 [SVTControlAttestation] $svtControlAttestation = [SVTControlAttestation]::new($arguments, $this.AttestationOptions, $this.SubscriptionContext, $this.InvocationContext);
                 #The current context user would be able to read the storage blob only if he has minimum of contributor access.
-                if ($svtControlAttestation.controlStateExtension.HasControlStateReadAccessPermissions()) {
+                if ($svtControlAttestation.controlStateExtension.HasControlStateReadAccessPermissions()) 
+                {
+                    # Check if latest version is being used for attestation,block attestation otherwise
+                    if([FeatureFlightingManager]::GetFeatureStatus("BlockAttestationFromOlderModuleVersion",$($this.SubscriptionContext.SubscriptionId)) -eq $true)
+                    {
+                        $BlockAttestationFromOlderModuleVersion = $true
+                    }
+                    else
+                    {
+                        $BlockAttestationFromOlderModuleVersion = $false
+                    }
+                    if($BlockAttestationFromOlderModuleVersion)
+                    {
+                        $AzSKModuleName= [Constants]::AzSKModuleName
+                        $moduleVersionInUse= [Constants]::AzSKCurrentModuleVersion                    
+                        $latestVersion = [System.Version] ([ConfigurationManager]::GetAzSKConfigData().GetLatestAzSKVersion($AzSKModuleName));
+                        if($latestVersion -gt $moduleVersionInUse -and [ConfigurationManager]::GetAzSKSettings().IsSAW -eq $false)
+                        {
+                            [MessageData] $data = [MessageData]@{
+                            Message     = ([Constants]::DoubleDashLine +"`n`nAborting attestation workflow because your module version $($moduleVersionInUse) is not current. Attestations are accepted only from the latest version of the module.Please install and use the latest version $($latestVersion) using your org-specific 'iwr' command. You can also enable auto-update by using: 'Set-AzSKPolicySettings -AutoUpdate On'");
+                            MessageType = [MessageType]::Error;
+                            };
+                            $this.PublishCustomMessage($data)
+                            return
+                        }   
+                    }
+                    
                     if (-not [string]::IsNullOrWhiteSpace($this.AttestationOptions.JustificationText) -or $this.AttestationOptions.IsBulkClearModeOn) {
                         $this.PublishCustomMessage([Constants]::HashLine + "`n`nStarting Control Attestation workflow in bulk mode...`n`n");
                     }
@@ -151,7 +178,8 @@ class AzSVTCommandBase: SVTCommandBase {
                     $this.PublishCustomMessage($data)
                 }
             }
-            catch {
+            catch 
+            {
                 $this.CommandError($_);
             }
         }

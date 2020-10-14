@@ -48,7 +48,7 @@
     ProcessorArchitecture  = 'None'
 
     # Modules that must be imported into the global environment prior to importing this module
-    # Az module version: 2.4.0
+    # Az module version: 3.4.0
     RequiredModules        = @(
         @{ModuleName = 'Az.Accounts'; RequiredVersion = '1.7.1'}
 		@{ModuleName = 'Az.Storage'; RequiredVersion = '1.12.0'}

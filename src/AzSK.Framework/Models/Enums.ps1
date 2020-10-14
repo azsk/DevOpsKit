@@ -12,6 +12,7 @@ enum VerificationResult
 	Remediate
 	Skipped
 	NotScanned
+	Excluded
 }
 
 enum PolicyVerificationResult

@@ -952,7 +952,7 @@ class CredHygiene : CommandBase{
 					
 					$body = [ConfigurationManager]::LoadServerConfigFile("CredentialHygieneAlert_CredentialGroup.json");
 					$dataSourceId = $body.properties.source.dataSourceId | ConvertTo-Json -Depth 10
-					$dataSourceId = $dataSourceId.Replace("{0}",$this.SubscriptionContext.SubscriptionId).Replace("{1}",$laWS.ResourceGroupName).Replace("{2}",$laWS.CustomerId) | ConvertFrom-Json
+					$dataSourceId = $dataSourceId.Replace("{0}",$this.SubscriptionContext.SubscriptionId).Replace("{1}",$laWS.ResourceGroupName).Replace("{2}",$laWS.Name) | ConvertFrom-Json
 					$body.properties.source.dataSourceId = $dataSourceId
 					
 					$ag = $body.properties.action.aznsAction.actionGroup[0] | ConvertTo-Json -Depth 10
