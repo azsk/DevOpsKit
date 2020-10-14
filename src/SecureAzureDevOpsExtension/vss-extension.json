@@ -3,7 +3,7 @@
     "id": "ADOSecurityScanner",
     "publisher": "ADOScanner",
     "public": false,
-    "version": "0.9.15",
+    "version": "0.9.192",
     "name": "ADO Security Scanner",
     "description": "ADO Security Scanner provide security guidelines for devops components like Org, Project, Build, Release etc.",
     "categories": ["Azure Boards","Azure Pipelines"],
