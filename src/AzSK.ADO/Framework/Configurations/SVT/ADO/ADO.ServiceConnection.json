@@ -215,7 +215,7 @@
       "Automated": "Yes",
       "MethodName": "CheckCrossPipelineSharing",
       "Rationale": "If a service connection is shared across multiple pipelines, then a vulnerability in components used by one pipeline can be leveraged by an attacker to attack other pipelines having access to critical resources. This is also in keeping with the principle of least privilege.",
-      "Recommendation": "To remediate this, navigate to the service connections settings page for your project -> select your service connection from the list -> click Security -> Under 'Pipeline Permissions', remove pipelines that service connection no more requires access to.",
+      "Recommendation": "To remediate this, navigate to the service connections settings page for your project -> select your service connection from the list -> click Security -> Under 'Pipeline Permissions', remove pipelines that service connection no more requires access to or click 'Restrict Permission' to avoid granting access to all pipelines.",
       "Tags": [
         "SDL",
         "TCP",

@@ -182,7 +182,7 @@ class Release: ADOSVTBase
                     }
                     if($noOfCredFound -eq 0) 
                     {
-                        $controlResult.AddMessage([VerificationResult]::Passed, "No variables found in release definition.");
+                        $controlResult.AddMessage([VerificationResult]::Passed, "No secrets found in release definition.");
                     }
                     else {
                         $controlResult.AddMessage([VerificationResult]::Failed, "Found secrets in release definition.");
