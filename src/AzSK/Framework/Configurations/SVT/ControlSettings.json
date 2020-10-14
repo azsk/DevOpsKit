@@ -489,6 +489,12 @@
     "ExpiryInDays": 2,
     "SupportedSources": []
   },
+  "ControlsToExcludeFromScan": {
+    "TenantIds": [],
+    "ControlIds" : [],
+    "ExclusionWarningMessage" : "",
+    "ExclusionHelpLink": ""
+  },
   "CloudService": {
     "LatestOSSKUIDs": [ "WA-GUEST-OS-4.44_201707-01" ]
   },

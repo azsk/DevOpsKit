@@ -35,18 +35,22 @@ class SVTBase: AzSKRoot
 	[ComplianceStateTableEntity[]] $ComplianceStateData = @();
 	[PSObject[]] $ChildSvtObjects = @();
 	[bool] $IsLocalComplianceStoreEnabled = $false;
+	[bool] $IsControlExclusionByOrgPolicyEnabled = $false;
 	[bool] $IsResourceScan = $false; # To identify whether its resource scan or subscription scan
 	#EndRegion
 
 	SVTBase([string] $subscriptionId):
 	Base($subscriptionId)
  {		
+	 # Intialize control exclusion feature flag
+	 $this.IsControlExclusionByOrgPolicyEnabled = [FeatureFlightingManager]::GetFeatureStatus("EnableControlExclusionByOrgPolicy",$($this.SubscriptionContext.SubscriptionId));
 
 	}
 	SVTBase([string] $subscriptionId, [SVTResource] $svtResource):
 	Base($subscriptionId, [SVTResource] $svtResource)
  {		
 		$this.CreateInstance($svtResource);
+		$this.IsControlExclusionByOrgPolicyEnabled = [FeatureFlightingManager]::GetFeatureStatus("EnableControlExclusionByOrgPolicy",$($this.SubscriptionContext.SubscriptionId));
 	}
 
 	#Create instance for resource scan
@@ -160,6 +164,11 @@ class SVTBase: AzSKRoot
 				if ($this.CheckPreviewBaselineControl($_.ControlID))
 				{
 					$_.IsPreviewBaselineControl = $true
+				}
+				# Check for control exclusion
+				if ($this.CheckForControlExclusion($_.ControlID))
+				{
+					$_.IsControlExcluded = $true
 				}
 			}
 			#Save the final SVTConfig in cache
@@ -941,11 +950,12 @@ class SVTBase: AzSKRoot
 					$childResourceState = $controlState | Where-Object { $_.ChildResourceName -eq $currentItem.ChildResourceName } | Select-Object -First 1;
 					if ($childResourceState)
 					{
-						# Skip passed ones from State Management
-						if ($currentItem.ActualVerificationResult -ne [VerificationResult]::Passed)
+						$isControlExcludedByOrgPolicy = $this.IsControlExclusionByOrgPolicyEnabled -and $eventcontext.controlItem.IsControlExcluded
+						# Skip passed ones (that are not marked excluded as per org policy) from State Management
+						if (($currentItem.ActualVerificationResult -ne [VerificationResult]::Passed) -or $isControlExcludedByOrgPolicy)
 						{
-							#compare the states
-							if (($childResourceState.ActualVerificationResult -eq $currentItem.ActualVerificationResult) -and $childResourceState.State)
+							#compare the states if control is not marked excluded as per org policy
+							if (($childResourceState.ActualVerificationResult -eq $currentItem.ActualVerificationResult -or $isControlExcludedByOrgPolicy) -and $childResourceState.State)
 							{
 								$currentItem.StateManagement.AttestedStateData = $childResourceState.State;
 
@@ -1119,6 +1129,12 @@ class SVTBase: AzSKRoot
 									}
 								}
 								#endregion: Prevent attestation drift due to dev changes
+
+								#region: Respect attestation for controls excluded by org policy
+								if($isControlExcludedByOrgPolicy){
+									$this.ModifyControlResult($currentItem, $childResourceState);
+								}
+								#endregion: Respect attestation for controls excluded by org policy
 
 							}
 						}

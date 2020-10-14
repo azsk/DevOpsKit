@@ -85,6 +85,8 @@ Class LogAnalyticsHelper{
 	{
 		[PSObject[]] $output = @();
 
+		[bool] $ControlExclusionByOrgPolicyEnabled = $false
+
 		# Here we are utilizing the RG tag mapping that is done while sending the ResourceInventory telemetry event.
 		# Hence, this works only when scan source is 'CA'
 		if (([FeatureFlightingManager]::GetFeatureStatus("EnableResourceGroupTagTelemetry", "*") -eq $true) `
@@ -104,7 +106,11 @@ Class LogAnalyticsHelper{
 				# Exception occurred during setting tag. This is kept blank intentionaly to avoid flow break
 			}
 		}
-				
+		
+		if([FeatureFlightingManager]::GetFeatureStatus("EnableControlExclusionByOrgPolicy",$($eventContext.SubscriptionContext.SubscriptionId))){
+			$ControlExclusionByOrgPolicyEnabled = $true
+		}
+		
 		[array] $eventContext.ControlResults | ForEach-Object{
 			Set-Variable -Name ControlResult -Value $_ -Scope Local
 			$out = [LAWSModel]::new() 
@@ -144,6 +150,15 @@ Class LogAnalyticsHelper{
 			}
 
 			$out.Reference=$eventContext.Metadata.Reference
+			if($ControlExclusionByOrgPolicyEnabled -and $eventContext.ControlItem.IsControlExcluded){
+				$out.IsControlExcluded = $true
+				$out.HasRequiredAccess = $false
+			}
+			else{
+				$out.IsControlExcluded = $false
+				$out.HasRequiredAccess = $ControlResult.CurrentSessionContext.Permissions.HasRequiredAccess 
+			}
+
 			$out.ControlStatus=$ControlResult.VerificationResult.ToString()
 			$out.ActualVerificationResult=$ControlResult.ActualVerificationResult.ToString()
 			$out.ControlId=$eventContext.ControlItem.ControlID
@@ -155,7 +170,6 @@ Class LogAnalyticsHelper{
 			$out.Source=$AzSKContext.Source
 			$out.Tags=$eventContext.ControlItem.Tags
 			$out.RunIdentifier = $AzSKContext.RunIdentifier
-			$out.HasRequiredAccess = $ControlResult.CurrentSessionContext.Permissions.HasRequiredAccess 
 			$out.ScannerVersion = $AzSKContext.Version
 			$out.IsBaselineControl = $eventContext.ControlItem.IsBaselineControl
 			#addPreviewBaselineControl Flag
@@ -463,6 +477,8 @@ Class LAWSModel {
 	[string] $ScannedBy
 	[string] $Env
 	[string] $ComponentId
+	# Added IsControlExcluded Tag
+	[bool] $IsControlExcluded
 }
 
 Class LAWSResourceInvModel{

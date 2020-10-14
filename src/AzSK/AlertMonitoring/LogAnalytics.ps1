@@ -151,6 +151,8 @@ function Install-AzSKMonitoringSolution
 		Provide this debug switch to validate the deployment. It is a predeployment check which validates all the provided params.
 	.PARAMETER DoNotOpenOutputFolder
 		Switch to specify whether to open output folder.
+	.PARAMETER Force
+		Switch to force deployment without further user consent.
 	.EXAMPLE
     
 	.NOTES
