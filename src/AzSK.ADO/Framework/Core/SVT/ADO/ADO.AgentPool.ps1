@@ -111,7 +111,7 @@ class AgentPool: ADOSVTBase
                 # $inactiveLimit denotes the upper limit on number of days of inactivity before the agent pool is deemed inactive.
                 $inactiveLimit = $this.ControlSettings.AgentPool.AgentPoolHistoryPeriodInDays
                 #Filtering agent pool jobs specific to the current project.
-                $agentPoolJobs = $agentPool[0].fps.dataProviders.data."ms.vss-build-web.agent-jobs-data-provider".jobs | Where-Object {$_.scopeId -eq $projectId};
+                $agentPoolJobs = $agentPool[0].fps.dataProviders.data."ms.vss-build-web.agent-jobs-data-provider".jobs | Where-Object {$_.scopeId -eq $this.ProjectId};
                 #If agent pool has been queued at least once
                 if (($agentPoolJobs | Measure-Object).Count -gt 0) 
                 {
