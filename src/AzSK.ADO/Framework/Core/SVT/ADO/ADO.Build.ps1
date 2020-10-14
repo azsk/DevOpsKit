@@ -152,7 +152,7 @@ class Build: ADOSVTBase
                 }
                 if($noOfCredFound -eq 0) 
                 {
-                    $controlResult.AddMessage([VerificationResult]::Passed, "No secret variables found in build definition.");
+                    $controlResult.AddMessage([VerificationResult]::Passed, "No secrets found in build definition.");
                 }
                 else {
                     $controlResult.AddMessage([VerificationResult]::Failed, "Found secrets in build definition.");
