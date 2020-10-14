@@ -41,6 +41,18 @@ function Get-AzSKADOInfo
 		[Parameter(Mandatory = $true)]
 		[Alias("oz")]
 		$OrganizationName,
+
+		[string]
+		[Parameter( HelpMessage="Project names for which the security evaluation has to be performed.")]
+		[ValidateNotNullOrEmpty()]
+		[Alias("pns", "ProjectName", "pn")]
+		$ProjectNames,
+
+		[string]
+		[Parameter(Mandatory = $false, HelpMessage="Name of the project hosting organization policy with which the scan should run.")]
+		[ValidateNotNullOrEmpty()]
+		[Alias("pp")]
+		$PolicyProject,
 		
 		[ResourceTypeName]
 		[Alias("rtn")]
@@ -72,13 +84,7 @@ function Get-AzSKADOInfo
 		[switch]
 		[Parameter(Mandatory = $false, HelpMessage = "Switch to specify whether to open output folder.")]
 		[Alias("dnof")]
-		$DoNotOpenOutputFolder,
-
-		[string]
-		[Parameter(Mandatory = $false, HelpMessage="Name of the project hosting organization policy with which the scan should run.")]
-		[ValidateNotNullOrEmpty()]
-		[Alias("pp")]
-		$PolicyProject
+		$DoNotOpenOutputFolder
     )
 	Begin
 	{

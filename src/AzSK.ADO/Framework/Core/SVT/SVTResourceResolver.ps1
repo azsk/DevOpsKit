@@ -126,7 +126,7 @@ class SVTResourceResolver: AzSKRoot {
         #    $this.ProjectNames = "*"
         #}
 
-        if ($ScanAllArtifacts) {
+        if ($ScanAllArtifacts -and [string]::IsNullOrEmpty($ServiceId)) {
             #ScanAllArtifacts should scan all artifacts within the targeted projects (if provided explicitly)
             if ([string]::IsNullOrEmpty($ProjectNames)) {
                 $this.ProjectNames = "*"
@@ -238,7 +238,7 @@ class SVTResourceResolver: AzSKRoot {
                 {
                     $projectName = $thisProj.name
                     $projectId = $thisProj.id;
-                    if ($this.ResourceTypeName -in ([ResourceTypeName]::Project, [ResourceTypeName]::All, [ResourceTypeName]::Org_Project_User)) 
+                    if ($this.ResourceTypeName -in ([ResourceTypeName]::Project, [ResourceTypeName]::All, [ResourceTypeName]::Org_Project_User)  -and ([string]::IsNullOrEmpty($this.serviceId))) 
                     {
                         #First condition if 'includeAdminControls' switch is passed or user is PCA or User is PA.
                         #Second condition if explicitly -rtn flag passed to org or Org_Project_User 
@@ -681,6 +681,7 @@ class SVTResourceResolver: AzSKRoot {
         }
         else 
         {
+            $bFoundSvcMappedObjects = $false
             if ($this.ResourceTypeName -in ([ResourceTypeName]::Build, [ResourceTypeName]::All, [ResourceTypeName]::Build_Release, [ResourceTypeName]::Build_Release_SvcConn_AgentPool_User))
             {
                if (!$this.buildSTDetails) {
@@ -691,6 +692,7 @@ class SVTResourceResolver: AzSKRoot {
                 $buildstData = $this.buildSTDetails.Data | Where-Object { ($_.serviceId -eq $svcId) -and ($_.projectName -eq $projectName) }
                 if ($buildstData) {
                     $this.BuildNames = $buildstData.buildDefinitionName
+                    $bFoundSvcMappedObjects = $true
                 }
             }
     
@@ -703,6 +705,7 @@ class SVTResourceResolver: AzSKRoot {
                 $relstData = $this.releaseSTDetails.Data | Where-Object { ($_.serviceId -eq $svcId) -and ($_.projectName -eq $projectName) }
                 if ($relstData) {
                     $this.ReleaseNames = $relstData.releaseDefinitionName
+                    $bFoundSvcMappedObjects = $true
                 }
             }
     
@@ -715,6 +718,7 @@ class SVTResourceResolver: AzSKRoot {
                 $svcConnData = $this.svcConnSTDetails.Data | Where-Object { ($_.serviceId -eq $svcId) -and ($_.projectName -eq $projectName) }
                 if ($svcConnData) {
                     $this.ServiceConnections = $svcConnData.serviceConnectionName
+                    $bFoundSvcMappedObjects = $true
                 }
             }
             if ($this.ResourceTypeName -in ([ResourceTypeName]::AgentPool, [ResourceTypeName]::All, [ResourceTypeName]::Build_Release_SvcConn_AgentPool_User))
@@ -726,6 +730,7 @@ class SVTResourceResolver: AzSKRoot {
                 $agtPoolData = $this.agtPoolSTDetails.Data | Where-Object { ($_.serviceId -eq $svcId) -and ($_.projectName -eq $projectName) }
                 if ($agtPoolData) {
                     $this.AgentPools = $agtPoolData.agentPoolName
+                    $bFoundSvcMappedObjects = $true
                 }
             }
     
@@ -738,8 +743,13 @@ class SVTResourceResolver: AzSKRoot {
                 $varGrpData = $this.varGroupSTDetails.Data | Where-Object { ($_.serviceId -eq $svcId) -and ($_.projectName -eq $projectName) }
                 if ($varGrpData) {
                     $this.VariableGroups = $varGrpData.variableGroupName
+                    $bFoundSvcMappedObjects = $true
                 }
-            }            
+            }      
+            if ($bFoundSvcMappedObjects -eq $false)
+            {
+                $this.PublishCustomMessage("Could not find any objects mapped to the provided service id.", [MessageType]::Warning);
+            }      
         }
     }
     #check for PCA group members
