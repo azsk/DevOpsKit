@@ -35,8 +35,8 @@ class BugMetaInfoProvider {
             switch -regex ($ResourceType) {
                 #get the last run svc pipeline based on pipeline get assignee, else fallback
                 'ServiceConnection' {
-                    try {
-                        $projectId = ($ControlResult.ResourceContext.ResourceDetails.ResourceLink -split $organizationName)[1].split("/")[1]; #$projectObj.id
+                    try {              
+                        $projectId = ($ControlResult.ResourceContext.ResourceId -split "project/")[-1].Split('/')[0]
                         $apiURL = "https://{0}.visualstudio.com/_apis/Contribution/HierarchyQuery?api-version=5.0-preview.1" -f $($organizationName)
                         $sourcePageUrl = "https://{0}.visualstudio.com/{1}/_settings/adminservices" -f $($organizationName), $ControlResult.ResourceContext.ResourceGroupName;
                         $inputbody = "{'contributionIds':['ms.vss-serviceEndpoints-web.service-endpoints-details-data-provider'],'dataProviderContext':{'properties':{'serviceEndpointId':'$($ControlResult.ResourceContext.ResourceDetails.id)','projectId':'$($projectId)','sourcePage':{'url':'$($sourcePageUrl)','routeId':'ms.vss-admin-web.project-admin-hub-route','routeValues':{'project':'$($ControlResult.ResourceContext.ResourceGroupName)','adminPivot':'adminservices','controller':'ContributedPage','action':'Execute'}}}}}" | ConvertFrom-Json
@@ -73,8 +73,9 @@ class BugMetaInfoProvider {
                 'AgentPool' {
                     $apiurl = "https://dev.azure.com/{0}/_apis/distributedtask/pools?poolName={1}&api-version=5.1" -f $organizationName, $ResourceName
                     try {
-                        $projectId = $ControlResult.ResourceContext.ResourceId.Split('/')[-1].Split('_')[0];
-                        $agtPoolId = $ControlResult.ResourceContext.ResourceId.Split('/')[-1].Split('_')[1];    
+                        $projectId = ($ControlResult.ResourceContext.ResourceId -split "project/")[-1].Split('/')[0]
+                        $agtPoolId =  ($ControlResult.ResourceContext.ResourceId -split "agentpool/")[-1]
+                                   
                         $agentPoolsURL = "https://{0}.visualstudio.com/{1}/_settings/agentqueues?queueId={2}&__rt=fps&__ver=2" -f $($ControlResult.SubscriptionContext.SubscriptionName), $projectId, $agtPoolId
                         $agentPool = [WebRequestHelper]::InvokeGetWebRequest($agentPoolsURL);
                         
@@ -105,12 +106,12 @@ class BugMetaInfoProvider {
                 }
                 #assign to the person who recently triggered the build pipeline, or if the pipeline is empty assign it to the creator
                 'Build' {
-                    $definitionId = $ControlResult.ResourceContext.ResourceId.Split("/")[-1];
+                    $definitionId = $ControlResult.ResourceContext.ResourceDetails.id;
                     return $this.CalculateAssigneeBuild($ControlResult, $definitionId);
                 }
                 #assign to the person who recently triggered the release pipeline, or if the pipeline is empty assign it to the creator
                 'Release' {
-                    $definitionId = ($ControlResult.ResourceContext.ResourceId -split "definitions/")[1];
+                    $definitionId = ($ControlResult.ResourceContext.ResourceId -split "release/")[-1];
                     return $this.CalculateAssigneeRelease($ControlResult, $definitionId) 
                 }
                 #assign to the person running the scan, as to reach at this point of code, it is ensured the user is PCA/PA and only they or other PCA
@@ -242,7 +243,7 @@ class BugMetaInfoProvider {
             }
             #assign to the person who recently triggered the build pipeline, or if the pipeline is empty assign it to the creator
             'Build' {
-                $definitionId = ($ControlResult.ResourceContext.ResourceDetails.ResourceLink -split "=")[1]
+                $definitionId = $ControlResult.ResourceContext.ResourceDetails.id;
     
                 try {
                     $apiurl = "https://dev.azure.com/{0}/{1}/_apis/build/builds?definitions={2}&api-version=5.1" -f $organizationName, $ControlResult.ResourceContext.ResourceGroupName , $definitionId;
@@ -266,7 +267,7 @@ class BugMetaInfoProvider {
             }
             #assign to the person who recently triggered the release pipeline, or if the pipeline is empty assign it to the creator
             'Release' {
-                $definitionId = ($ControlResult.ResourceContext.ResourceId -split "definitions/")[1]
+                $definitionId = ($ControlResult.ResourceContext.ResourceId -split "release/")[-1];
                 try {
                     $apiurl = "https://vsrm.dev.azure.com/{0}/{1}/_apis/release/releases?definitionId={2}&api-version=5.1" -f $organizationName, $ControlResult.ResourceContext.ResourceGroupName , $definitionId;
                     $response = [WebRequestHelper]::InvokeGetWebRequest($apiurl)
