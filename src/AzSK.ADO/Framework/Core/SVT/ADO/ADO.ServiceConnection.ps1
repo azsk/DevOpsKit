@@ -11,8 +11,7 @@ class ServiceConnection: ADOSVTBase
     ServiceConnection([string] $subscriptionId, [SVTResource] $svtResource): Base($subscriptionId,$svtResource)
     {
         # Get project id 
-        $this.ProjectId = ($this.ResourceContext.ResourceDetails.ResourceLink -split $this.SubscriptionContext.SubscriptionName)[1].split("/")[1];
-
+        $this.ProjectId = ($this.ResourceContext.ResourceId -split "project/")[-1].Split('/')[0]
         # Get security namespace identifier of service endpoints.
         if([string]::IsNullOrEmpty([ServiceConnection]::SecurityNamespaceId))
         {
