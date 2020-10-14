@@ -16,6 +16,7 @@ class ControlsInfo: AzCommandBase
 	hidden [string] $ControlSeverity
 	hidden [string] $ControlIdContains
 	hidden [string] $ControlExclusionWarningMessage = ""
+	hidden [string] $ControlExclusionHelpLink = ""
 
 	ControlsInfo([string] $subscriptionId, [InvocationInfo] $invocationContext, [string] $resourceTypeName, [string] $resourceType, [string] $controlIds, [bool] $baslineControls,[bool] $previewBaslineControls, [string] $tags, [bool] $full, 
 					[string] $controlSeverity, [string] $controlIdContains) :  Base($subscriptionId, $invocationContext)
@@ -133,6 +134,7 @@ class ControlsInfo: AzCommandBase
 		{
 			$excludedControls += $this.ControlSettings.ControlsToExcludeFromScan.ControlIds
 			$this.ControlExclusionWarningMessage = $this.ControlSettings.ControlsToExcludeFromScan.ExclusionWarningMessage
+			$this.ControlExclusionHelpLink = $this.ControlSettings.ControlsToExcludeFromScan.ExclusionHelpLink
 		}
 
 		if($this.PreviewBaslineControls)
@@ -384,6 +386,7 @@ class ControlsInfo: AzCommandBase
 				$this.PublishCustomMessage([Constants]::DoubleDashLine, [MessageType]::Default);
 				$this.PublishCustomMessage("Total no. of excluded controls: " + $excludedControls.Count , [MessageType]::Default)
 				$this.PublishCustomMessage($this.ControlExclusionWarningMessage, [MessageType]::Warning);
+				$this.PublishCustomMessage($this.ControlExclusionHelpLink, [MessageType]::Warning);
 				$this.PublishCustomMessage([Constants]::DoubleDashLine, [MessageType]::Default);
 			}
 		}

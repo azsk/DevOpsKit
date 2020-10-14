@@ -253,11 +253,14 @@ class WritePsConsole: FileOutputBase
 					if([FeatureFlightingManager]::GetFeatureStatus("EnableControlExclusionByOrgPolicy",$subscriptionId) -and $anyControlExcluded){
 						$currentInstance.WriteMessage([Constants]::SingleDashLine, [MessageType]::Info)
 						$ControlExclusionWarningMessage = ""
+						$ControlExclusionHelpLink = ""
 						$ControlSettings = [ConfigurationManager]::LoadServerConfigFile("ControlSettings.json");
 						if($ControlSettings -ne $null  -and [Helpers]::CheckMember($ControlSettings, "ControlsToExcludeFromScan.ExclusionWarningMessage")){
 							$ControlExclusionWarningMessage = $ControlSettings.ControlsToExcludeFromScan.ExclusionWarningMessage
+							$ControlExclusionHelpLink = $ControlSettings.ControlsToExcludeFromScan.ExclusionHelpLink
 						}
 						$currentInstance.WriteMessage($($ControlExclusionWarningMessage), [MessageType]::Warning)
+						$currentInstance.WriteMessage($ControlExclusionHelpLink, [MessageType]::Warning)
 					}
 					$currentInstance.WriteMessage([Constants]::SingleDashLine, [MessageType]::Info)
 				}

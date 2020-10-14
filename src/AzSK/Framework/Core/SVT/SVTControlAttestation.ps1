@@ -14,6 +14,7 @@ class SVTControlAttestation
 	hidden [InvocationInfo] $InvocationContext;
 	hidden [bool] $controlExclusionByOrgPolicyEnabled = $false;
 	hidden [string] $ControlExclusionWarningMessage = ""
+	hidden [string] $ControlExclusionHelpLink = ""
 
 	SVTControlAttestation([SVTEventContext[]] $ctrlResults, [AttestationOptions] $attestationOptions, [SubscriptionContext] $subscriptionContext, [InvocationInfo] $invocationContext)
 	{
@@ -29,6 +30,7 @@ class SVTControlAttestation
 		$this.controlExclusionByOrgPolicyEnabled = [FeatureFlightingManager]::GetFeatureStatus("EnableControlExclusionByOrgPolicy",$($this.SubscriptionContext.SubscriptionId));
 		if($this.ControlSettings -ne $null  -and [Helpers]::CheckMember($this.ControlSettings, "ControlsToExcludeFromScan.ExclusionWarningMessage")){
 			$this.ControlExclusionWarningMessage = $this.ControlSettings.ControlsToExcludeFromScan.ExclusionWarningMessage
+			$this.ControlExclusionHelpLink = $this.ControlSettings.ControlsToExcludeFromScan.ExclusionHelpLink
 		}
 
 	}
@@ -57,7 +59,8 @@ class SVTControlAttestation
 		Write-Host "$([Constants]::SingleDashLine)" -ForegroundColor Cyan
 		if($this.controlExclusionByOrgPolicyEnabled -and $controlItem.ControlItem.IsControlExcluded){
 			Write-Host "ControlId            : $($controlState.ControlId)`nControlSeverity      : $ControlSeverity`nDescription          : $($controlItem.ControlItem.Description)`n"
-			Write-Host $this.ControlExclusionWarningMessage -ForegroundColor Yellow
+			Write-Host $this.ControlExclusionWarningMessage -ForegroundColor Yellow 
+			Write-Host $this.ControlExclusionHelpLink -ForegroundColor Yellow
 		}else{
 			Write-Host "ControlId            : $($controlState.ControlId)`nControlSeverity      : $ControlSeverity`nDescription          : $($controlItem.ControlItem.Description)`nCurrentControlStatus : $($controlState.ActualVerificationResult)`n"	
 		}
@@ -293,6 +296,7 @@ class SVTControlAttestation
 		if($this.controlExclusionByOrgPolicyEnabled -and $controlItem.ControlItem.IsControlExcluded){
 			Write-Host "ControlId            : $($controlState.ControlId)`nControlSeverity      : $ControlSeverity`nDescription          : $($controlItem.ControlItem.Description)`n"
 			Write-Host $this.ControlExclusionWarningMessage -ForegroundColor Yellow
+			Write-Host $this.ControlExclusionHelpLink -ForegroundColor Yellow
 		}else{
 			Write-Host "ControlId            : $($controlState.ControlId)`nControlSeverity      : $ControlSeverity`nDescription          : $($controlItem.ControlItem.Description)`nCurrentControlStatus : $($controlState.ActualVerificationResult)`n"	
 		}
