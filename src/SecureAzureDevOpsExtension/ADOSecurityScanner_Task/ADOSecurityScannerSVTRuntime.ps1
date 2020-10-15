@@ -50,7 +50,7 @@ elseif($ResourceTypeName -eq "Org_Project_User" -or "All")
 	$IncludeAdminControls = $true;
 }
 if ($ResourceTypeName -eq "SVCBased") {
-	$ResourceTypeName = "ALL";
+	$ResourceTypeName = "All";
 }
 }
 
