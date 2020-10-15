@@ -9,6 +9,7 @@ $ReleaseNames = Get-VstsInput -Name ReleaseNames
 $ServiceConnectionNames = Get-VstsInput -Name ServiceConnectionNames
 $AgentPoolNames = Get-VstsInput -Name AgentPoolNames
 $BaseLine = Get-VstsInput -Name isBaseline
+$ServiceId = Get-VstsInput -Name ServiceId
 
 $EnableLAWSLoggingVal = Get-VstsInput -Name EnableOMSLogging
 $LAWSSharedKeyVal = Get-VstsTaskVariable -Name "LAWSSharedKey" -ErrorAction SilentlyContinue
@@ -34,12 +35,22 @@ $CollectionUri = Get-VstsTaskVariable -Name System.CollectionUri
 
 $AllowLongRunningScan = Get-VstsTaskVariable -Name AllowLongRunningScan;
 
+$PolicyProject = Get-VstsTaskVariable -Name "PolicyProject" -ErrorAction SilentlyContinue
+$IncludeAdminControls = $false;
+
 if(!$ResourceTypeName)
 {
 $ResourceTypeName = Get-VstsInput -Name ScanFilter
 if($ResourceTypeName -eq "BuildReleaseSvcConnAgentPoolUser")
 {
 	$ResourceTypeName = "Build_Release_SvcConn_AgentPool_User"
+}
+elseif($ResourceTypeName -eq "Org_Project_User" -or "All")
+{
+	$IncludeAdminControls = $true;
+}
+if ($ResourceTypeName -eq "SVCBased") {
+	$ResourceTypeName = "All";
 }
 }
 
@@ -195,7 +206,10 @@ try {
 
 	if($BaseLine -eq $true)
 	{
-		if($BuildNames)
+		if ($ServiceId -and $ResourceTypeName -eq "All") {
+			$scanCommand = "Get-AzSKADOSecurityStatus -OrganizationName $OrgName -DoNotOpenOutputFolder -PATToken `$token -ProjectNames ""$ProjectNames"" -ServiceId ""$ServiceId"" -ubc -ResourceTypeName $ResourceTypeName"	
+		}
+		elseif($BuildNames)
 		{
 		    if ($BuildNames -and $ReleaseNames -and $ServiceConnectionNames -and $AgentPoolNames) {
 		    	$scanCommand = "Get-AzSKADOSecurityStatus -OrganizationName $OrgName -DoNotOpenOutputFolder -PATToken `$token -ProjectNames ""$ProjectNames"" -BuildNames ""$BuildNames"" -ReleaseNames ""$ReleaseNames"" -ServiceConnectionNames ""$ServiceConnectionNames"" -AgentPoolNames ""$AgentPoolNames"" -ubc -ResourceTypeName $ResourceTypeName"	
@@ -238,7 +252,10 @@ try {
 	}
 	else
 	{
-		if($BuildNames)
+		if ($ServiceId -and $ResourceTypeName -eq "All") {
+			$scanCommand = "Get-AzSKADOSecurityStatus -OrganizationName $OrgName -DoNotOpenOutputFolder -PATToken `$token -ProjectNames ""$ProjectNames"" -ServiceId ""$ServiceId"" -ResourceTypeName $ResourceTypeName"	
+		}
+		elseif($BuildNames)
 		{
 		    if ($BuildNames -and $ReleaseNames -and $ServiceConnectionNames -and $AgentPoolNames) {
 		    	$scanCommand = "Get-AzSKADOSecurityStatus -OrganizationName $OrgName -DoNotOpenOutputFolder -PATToken `$token -ProjectNames ""$ProjectNames"" -BuildNames ""$BuildNames"" -ReleaseNames ""$ReleaseNames"" -ServiceConnectionNames ""$ServiceConnectionNames"" -AgentPoolNames ""$AgentPoolNames"" -ResourceTypeName $ResourceTypeName"
@@ -288,7 +305,14 @@ try {
 	{
 		$scanCommand += " -AllowLongRunningScan ";
 	}
-
+	if(-not [string]::IsNullOrEmpty($PolicyProject))
+	{
+		$scanCommand += " -PolicyProject ""$PolicyProject"" ";
+	}
+	if($IncludeAdminControls -eq $true)
+	{
+		$scanCommand += " -IncludeAdminControls ";
+	}
 	if(-not [string]::IsNullOrEmpty($AzSKExtendedCommand))
 	{
 		$scanCommand += " " + $AzSKExtendedCommand + " ";

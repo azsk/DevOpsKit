@@ -12,7 +12,7 @@
   "version": {
     "Major": 1,
     "Minor": 0,
-    "Patch": 41
+    "Patch": 50
   },
   "demands": [
   ],
@@ -46,14 +46,24 @@
     {
       "name": "ScanFilter",
       "type": "radio",
-      "label": "Select resources to scan",
+      "label": "Select scan option:",
       "required": true,
       "defaultValue": "Org_Project_User",
       "options": {
         "Org_Project_User": "Scan Organization and Project configuration controls only",
         "BuildReleaseSvcConnAgentPoolUser": "Scan build/release/service connection/agent pool controls only",
-        "All": "Scan both"
+        "All": "Scan both",
+        "SVCBased": "Service Id based scan"
       }
+    },
+    {
+      "name": "ServiceId",
+      "type": "string",
+      "label": "Service Id",
+      "defaultValue": "",
+      "required": false,
+      "helpMarkDown": "ServiceId for which scan should be performed.\n Use this if your org provides a mapping of services to ADO resources.",
+      "visibleRule": "ScanFilter = SVCBased"
     },
     {
       "name": "BuildNames",
