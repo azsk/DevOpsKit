@@ -27,7 +27,7 @@ $varPrjName = Get-VstsTaskVariable -Name system.teamProject;
 $JobId = Get-VstsTaskVariable -Name system.definitionId;
 
 $extensionName = "ADOSecurityScanner"
-$publisherName = "ADOScanner"
+$publisherName = "azsdktm"
 $AzSKModuleName = Get-VstsTaskVariable -Name ModuleName
 $AzSKExtendedCommand = Get-VstsTaskVariable -Name "ExtendedCommand"
 $AzSKPartialCommit = Get-VstsTaskVariable -Name "UsePartialCommits"

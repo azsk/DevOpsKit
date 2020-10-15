@@ -1,9 +1,9 @@
 {
     "manifestVersion": 1,
     "id": "ADOSecurityScanner",
-    "publisher": "ADOScanner",
-    "public": false,
-    "version": "0.9.192",
+    "publisher": "azsdktm",
+    "public": true,
+    "version": "1.0.0",
     "name": "ADO Security Scanner",
     "description": "ADO Security Scanner provide security guidelines for devops components like Org, Project, Build, Release etc.",
     "categories": ["Azure Boards","Azure Pipelines"],
