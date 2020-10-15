@@ -31,6 +31,7 @@ $publisherName = "azsdktm"
 $AzSKModuleName = Get-VstsTaskVariable -Name ModuleName
 $AzSKExtendedCommand = Get-VstsTaskVariable -Name "ExtendedCommand"
 $AzSKPartialCommit = Get-VstsTaskVariable -Name "UsePartialCommits"
+$AzSKUseTLS12 = Get-VstsTaskVariable -Name "AzSKUseTLS12"
 $CollectionUri = Get-VstsTaskVariable -Name System.CollectionUri
 
 $AllowLongRunningScan = Get-VstsTaskVariable -Name AllowLongRunningScan;
@@ -61,6 +62,11 @@ $Endpoint = Get-VstsEndpoint -Name $serviceName -Require
 $plaintoken =  $Endpoint.Auth.Parameters.apitoken
 $token =  ConvertTo-SecureString $plaintoken -AsPlainText -Force
 
+if ($AzSKUseTLS12 -eq $true)
+{
+	[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+	Write-Host "Configured TLS to use TLS 1.2 only for session..." -ForegroundColor Yellow
+}
 #Install NuGet Provider with minimum version 
 Install-PackageProvider -Name NuGet -MinimumVersion '2.8.5.201' -Scope CurrentUser -Force | Out-Null
 
