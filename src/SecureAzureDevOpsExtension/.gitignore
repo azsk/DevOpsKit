@@ -1,0 +1,9 @@
+#Ignore extension file when built
+*.vsix
+
+#Ignore vss-extension-sdk JSON files
+package-lock.json
+package.json
+
+#Ignore node modules
+node_modules
