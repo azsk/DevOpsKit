@@ -87,6 +87,7 @@ class ServiceConnection: ADOSVTBase
                     elseif(([Helpers]::CheckMember($serviceEndPoint, "data.scopeLevel") -and $serviceEndPoint.data.scopeLevel -eq "AzureMLWorkspace"))
                     {
                         $message =  $message -f $serviceEndPoint.data.mlWorkspaceName, 'ML workspace', $serviceEndPoint.data.subscriptionName
+                        $controlResult.AddMessage([VerificationResult]::Passed, $message);
                     }
                     #elseif gets executed when scoped at PublishProfile 
                     elseif(([Helpers]::CheckMember($serviceEndPoint, "authorization.scheme") -and $serviceEndPoint.authorization.scheme -eq "PublishProfile"))
