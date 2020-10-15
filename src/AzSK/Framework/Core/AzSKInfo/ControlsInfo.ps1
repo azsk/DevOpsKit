@@ -390,7 +390,8 @@ class ControlsInfo: AzCommandBase
 				$this.PublishCustomMessage([Constants]::DoubleDashLine, [MessageType]::Default);
 			}
 		}
-        
+		# Clear the cached state 
+		[ConfigOverride]::ClearConfigInstance() 
 	}
 	
 	[string] GetControlSeverity($ControlSeverityFromServer)
