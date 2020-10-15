@@ -5,7 +5,7 @@
     "public": true,
     "version": "1.0.0",
     "name": "ADO Security Scanner",
-    "description": "ADO Security Scanner provide security guidelines for devops components like Org, Project, Build, Release etc.",
+    "description": "ADO Security Scanner checks secure configuration settings for various ADO artifacts such as organization, projects, builds, releases, agent pools, etc.",
     "categories": ["Azure Boards","Azure Pipelines"],
     "icons": {
         "default": "images/Icon.png"
@@ -29,16 +29,16 @@
     },
     "links": {
         "getstarted": {
-          "uri": "https://github.com/azsk/DevOpsKit-docs/blob/master/03-Security-In-CICD/Readme.md#security-verification-tests-svts-in-VSTS-pipeline"
+          "uri": "https://aka.ms/adoscanner"
         },
         "repository": {
-          "uri": "https://github.com/azsk/DevOpsKit-docs/"
+          "uri": "https://github.com/azsk"
         },
         "license": {
           "uri": "https://github.com/azsk/DevOpsKit-docs/blob/master/LICENSE"
         },
         "support": {
-          "uri": "https://github.com/azsk/DevOpsKit-docs#references"
+          "uri": "https://aka.ms/adoscanner#Support"
         }
       },
     "contributions": [
