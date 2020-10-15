@@ -3,7 +3,7 @@
     "id": "ADOSecurityScanner",
     "publisher": "azsdktm",
     "public": true,
-    "version": "1.0.0",
+    "version": "1.0.1",
     "name": "ADO Security Scanner",
     "description": "ADO Security Scanner checks secure configuration settings for various ADO artifacts such as organization, projects, builds, releases, agent pools, etc.",
     "categories": ["Azure Boards","Azure Pipelines"],
