@@ -199,8 +199,13 @@ function Install-AzSKADOMonitoringSolution
 		[ValidateSet("View", "Workbook")] 
         [Parameter(Mandatory = $false, HelpMessage="Provide the type of dashboard to be created in Log Analytics.")]
 		[Alias("dt")]
-		$DashboardType = [DashboardType]::View
-		
+		$DashboardType = [DashboardType]::View,
+
+		[switch]
+		[Alias("f")]
+		[Parameter(Mandatory = $false, HelpMessage = "Switch to force deployment without further user consent.")]
+		$Force
+
     )
 	Begin
 	{
@@ -215,7 +220,7 @@ function Install-AzSKADOMonitoringSolution
 			if($DashboardType -eq [DashboardType]::Workbook){
 				$DeployWorkbook = $true
 			}
-			$monitoringInstance = [LogAnalyticsMonitoring]::new($LAWSSubscriptionId, $LAWSResourceGroup, $LAWSId, $PSCmdlet.MyInvocation, $ViewName, $DeployWorkbook);
+			$monitoringInstance = [LogAnalyticsMonitoring]::new($LAWSSubscriptionId, $LAWSResourceGroup, $LAWSId, $PSCmdlet.MyInvocation, $ViewName, $DeployWorkbook, $Force);
 		}
 		catch
 		{

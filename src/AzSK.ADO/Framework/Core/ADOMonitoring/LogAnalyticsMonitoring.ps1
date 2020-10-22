@@ -13,7 +13,7 @@ class LogAnalyticsMonitoring #: CommandBase
 	[string] $LAWSId;
 	[string] $ApplicationSubscriptionName
 
-	LogAnalyticsMonitoring([string] $_laWSSubscriptionId,[string] $_laWSResourceGroup,[string] $_laWSId, [InvocationInfo] $invocationContext, [string] $viewName, [bool] $isWorkbook = $false) #: Base([string] $_laWSSubscriptionId, $invocationContext) 
+	LogAnalyticsMonitoring([string] $_laWSSubscriptionId,[string] $_laWSResourceGroup,[string] $_laWSId, [InvocationInfo] $invocationContext, [string] $viewName, [bool] $isWorkbook = $false, $forceDeployment) #: Base([string] $_laWSSubscriptionId, $invocationContext) 
     { 	
 		$this.SetAzContext($_laWSSubscriptionId);
 
@@ -25,58 +25,65 @@ class LogAnalyticsMonitoring #: CommandBase
 			throw [SuppressedException] "Invalid Log Analytics Workspace."
 		}
 		$this.LAWSName = $laWSInstance.Name;
-		$locationInstance = Get-AzLocation | Where-Object { $_.DisplayName -eq $laWSInstance.Location -or  $_.Location -eq $laWSInstance.Location } 
-		$this.LAWSLocation = $locationInstance.Location
+		#$locationInstance = Get-AzLocation | Where-Object { $_.DisplayName -eq $laWSInstance.Location -or  $_.Location -eq $laWSInstance.Location } 
+		#$this.LAWSLocation = $locationInstance.Location
+		$this.LAWSLocation = $laWSInstance.Location
 	
-		$this.ConfigureLAWS($viewName, $false, $_laWSSubscriptionId, $isWorkbook);
+		$this.ConfigureLAWS($viewName, $false, $_laWSSubscriptionId, $isWorkbook, $forceDeployment);
 		
 	}
 
-	[void] ConfigureLAWS([string] $_viewName, [bool] $_validateOnly, [string] $_laWSSubscriptionId, [bool] $isWorkbook)	
-    {		
-	   Write-Host "WARNING: This command will overwrite the existing AzSK.ADO Security View that you may have installed using previous versions of AzSK.ADO if you are using the same view name as the one used earlier. In that case we recommend taking a backup using 'Edit -> Export' option available in the Log Analytics workspace.`n" -ForegroundColor Yellow
-	   $userInput = Read-Host "Enter 'Y' to continue and 'N' to skip installation (Y/N)"
-		while ($input -ne "y" -and $input -ne "n")
+	[void] ConfigureLAWS([string] $_viewName, [bool] $_validateOnly, [string] $_laWSSubscriptionId, [bool] $isWorkbook, $forceDeployment)	
+    {
+		# If force switch is passed don't prompt user for consent and deploy solution
+		if($forceDeployment)
+		{			
+			$userInput = "y"
+		}
+		else 
 		{
-        if (-not [string]::IsNullOrEmpty($input)) {
-			Write-Host "WARNING: Please select an appropriate option.`n" -ForegroundColor Yellow;
-                  
-        }
-        $userInput = Read-Host "Enter 'Y' to continue and 'N' to skip installation (Y/N)"
-        $userInput = $input.Trim()
-				
+	        Write-Host "WARNING: This command will overwrite the existing AzSK.ADO Security View that you may have installed using previous versions of AzSK.ADO if you are using the same view name as the one used earlier. In that case we recommend taking a backup using 'Edit -> Export' option available in the Log Analytics workspace.`n" -ForegroundColor Yellow
+	        $userInput = Read-Host "Enter 'Y' to continue and 'N' to skip installation (Y/N)"
+		    while ($userInput -ne "y" -and $userInput -ne "n")
+		    {
+				if (-not [string]::IsNullOrEmpty($userInput)) 
+				{
+		        	Write-Host "WARNING: Please select an appropriate option.`n" -ForegroundColor Yellow;  
+                }
+                $userInput = Read-Host "Enter 'Y' to continue and 'N' to skip installation (Y/N)"
+                $userInput = $userInput.Trim()
+			}
 		}
 		if ($userInput -eq "y") 
 		{
-			Write-Host "============================================================" -ForegroundColor Cyan
-			Write-Host "`rStarted setting up AzSK.ADO Monitoring solution pack`r" -ForegroundColor Cyan
-			Write-Host "============================================================" -ForegroundColor Cyan
-			$LAWSLogPath = Join-Path $([Constants]::AzSKTempFolderPath) "LogAnalytics";
-			if(-not (Test-Path -Path $LAWSLogPath))
-			{
-				New-Item -Path $LAWSLogPath -ItemType Directory -Force | Out-Null
-			}
-			$genericViewTemplateFilepath = "";
-			if ($isWorkbook) {
-				$genericViewTemplateFilepath = [ConfigurationHelper]::LoadOfflineConfigFile([Constants]::LogAnalyticsGenericViewWorkbook);
-				$workbookSerializedData = [ConfigurationHelper]::LoadOfflineConfigFile([Constants]::WorkbookData) | ConvertTo-Json -Depth 10;
-				$genericViewTemplateFilepath.resources[0].properties.serializedData = $workbookSerializedData;
-				$this.LAWSGenericTemplateFilepath = Join-Path $LAWSLogPath ([Constants]::LogAnalyticsGenericViewWorkbook); 				
-			}
-			else {
-				$genericViewTemplateFilepath = [ConfigurationHelper]::LoadOfflineConfigFile([Constants]::LogAnalyticsGenericView);
-				$this.LAWSGenericTemplateFilepath = Join-Path $LAWSLogPath ([Constants]::LogAnalyticsGenericView)
-			}
+			    Write-Host "============================================================" -ForegroundColor Cyan
+			    Write-Host "`rStarted setting up AzSK.ADO Monitoring solution pack`r" -ForegroundColor Cyan
+			    Write-Host "============================================================" -ForegroundColor Cyan
+			    $LAWSLogPath = Join-Path $([Constants]::AzSKTempFolderPath) "LogAnalytics";
+			    if(-not (Test-Path -Path $LAWSLogPath))
+			    {
+			    	New-Item -Path $LAWSLogPath -ItemType Directory -Force | Out-Null
+			    }
+			    $genericViewTemplateFilepath = "";
+			    if ($isWorkbook) {
+			    	$genericViewTemplateFilepath = [ConfigurationHelper]::LoadOfflineConfigFile([Constants]::LogAnalyticsGenericViewWorkbook);
+			    	$workbookSerializedData = [ConfigurationHelper]::LoadOfflineConfigFile([Constants]::WorkbookData) | ConvertTo-Json -Depth 10;
+			    	$genericViewTemplateFilepath.resources[0].properties.serializedData = $workbookSerializedData;
+			    	$this.LAWSGenericTemplateFilepath = Join-Path $LAWSLogPath ([Constants]::LogAnalyticsGenericViewWorkbook); 				
+			    }
+			    else {
+			    	$genericViewTemplateFilepath = [ConfigurationHelper]::LoadOfflineConfigFile([Constants]::LogAnalyticsGenericView);
+			    	$this.LAWSGenericTemplateFilepath = Join-Path $LAWSLogPath ([Constants]::LogAnalyticsGenericView)
+			    }
 			
-			$genericViewTemplateFilepath | ConvertTo-Json -Depth 100 | Out-File $this.LAWSGenericTemplateFilepath
-			Write-Host "`r`nSetting up AzSK.ADO Log Analytics generic view.`r" -ForegroundColor Cyan
-			$this.ConfigureGenericView($_viewName, $_validateOnly, $_laWSSubscriptionId);	
-			Write-Host "----------------------------------------------------------------" -ForegroundColor Green
-			Write-Host "`rCompleted setting up AzSK.ADO Monitoring solution pack.`r" -ForegroundColor Green
-			Write-Host "----------------------------------------------------------------" -ForegroundColor Green
-			Write-Host "WARNING: `r`nNote: `r`nThe blades of the Log Analytics view created by this command will start populating only after AzSK.ADO scan events become available in the corresponding Log Analytics workspace.`n" -ForegroundColor Yellow		
-			#Write-Host "WARNING: `r`n2) The Log Analytics view installed contains a basic set of queries over ADO security scanner kit scan events. Please feel free to customize them once you get familiar with the queries.`r`nWe also periodically publish updated/richer queries at: https://aka.ms/adoscanner/omsqueries. `r`n" -ForegroundColor Yellow
-		
+			    $genericViewTemplateFilepath | ConvertTo-Json -Depth 100 | Out-File $this.LAWSGenericTemplateFilepath
+			    Write-Host "`r`nSetting up AzSK.ADO Log Analytics generic view.`r" -ForegroundColor Cyan
+			    $this.ConfigureGenericView($_viewName, $_validateOnly, $_laWSSubscriptionId);	
+			    Write-Host "----------------------------------------------------------------" -ForegroundColor Green
+			    Write-Host "`rCompleted setting up AzSK.ADO Monitoring solution pack.`r" -ForegroundColor Green
+			    Write-Host "----------------------------------------------------------------" -ForegroundColor Green
+			    Write-Host "WARNING: `r`nNote: `r`nThe blades of the Log Analytics view created by this command will start populating only after AzSK.ADO scan events become available in the corresponding Log Analytics workspace.`n" -ForegroundColor Yellow		
+			    #Write-Host "WARNING: `r`n2) The Log Analytics view installed contains a basic set of queries over ADO security scanner kit scan events. Please feel free to customize them once you get familiar with the queries.`r`nWe also periodically publish updated/richer queries at: https://aka.ms/adoscanner/omsqueries. `r`n" -ForegroundColor Yellow
 		}
 		if ($userInput -eq "n")
 		{
