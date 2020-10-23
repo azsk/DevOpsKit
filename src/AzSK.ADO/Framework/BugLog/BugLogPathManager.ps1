@@ -6,6 +6,8 @@ class BugLogPathManager {
     hidden static [bool] $checkValidPathFlag = $true;
     #flag to check if the path that has been declared is valid
     hidden static [bool] $isPathValid = $false;
+    #variable to store the actual project where bug is supposed to log
+    hidden static [string] $BugLoggingProject = $null
     
     
     #function to find if the area and iteration path are valid
@@ -42,7 +44,9 @@ class BugLogPathManager {
             #sanitizing for JSON
             [BugLogPathManager]::AreaPath = [BugLogPathManager]::AreaPath.Replace("\", "\\")
             [BugLogPathManager]::IterationPath = [BugLogPathManager]::IterationPath.Replace("\", "\\")
-
+            # AreaPath always Starts with Project
+            [BugLogPathManager]::BugLoggingProject = [BugLogPathManager]::AreaPath.split("\")[0]
+            
             #copying the value for easy inputting to the query JSON
             $AreaPathForJSON = [BugLogPathManager]::AreaPath
             $IterationPathForJSON = [BugLogPathManager]::IterationPath
@@ -83,5 +87,8 @@ class BugLogPathManager {
     }
     static hidden [bool] GetIsPathValid(){
         return [BugLogPathManager]::isPathValid
+    }
+    static hidden [string] GetBugLoggingProject(){
+        return [BugLogPathManager]::BugLoggingProject
     }
 }
