@@ -236,16 +236,16 @@ class WritePsConsole: FileOutputBase
 		$this.RegisterEvent([SVTEvent]::EvaluationCompleted, {
 			$currentInstance = [WritePsConsole]::GetInstance();
 			try 
-            {
+			{
 				$currentInstance.CollateSummaryData($Event);
 				if($currentInstance.InvocationContext.BoundParameters["AutoBugLog"] -and [BugLogPathManager]::GetIsPathValid()){
 					$currentInstance.CollateBugSummaryData($Event);
 				}
 			}
 			catch 
-            {
+			{
                 $currentInstance.PublishException($_);
-            }
+			}
 		});
 
         $this.RegisterEvent([SVTEvent]::CommandCompleted, {
