@@ -41,7 +41,7 @@ class WriteSummaryFile: FileOutputBase
             }
         });
         
-        $this.RegisterEvent([SVTEvent]::CommandCompleted, {
+        $this.RegisterEvent([SVTEvent]::EvaluationCompleted, {
             $currentInstance = [WriteSummaryFile]::GetInstance();
 			
 			if(($Event.SourceArgs.ControlResults|Where-Object{$_.VerificationResult -ne[VerificationResult]::NotScanned}|Measure-Object).Count -gt 0)
@@ -315,7 +315,10 @@ class WriteSummaryFile: FileOutputBase
         if ($csvItems.Count -gt 0) {
 			# Remove Null properties
 			$nonNullProps = @();
-			
+			$nonNullProps = [CsvOutputItem].GetMembers() | Where-Object { $_.MemberType -eq [System.Reflection.MemberTypes]::Property }| Select-object -Property Name
+			#Commenting below block of code to get all required columns in csv by default so that in further resource scan all columns are available and no mismtach occurs
+
+			<#
 			[CsvOutputItem].GetMembers() | Where-Object { $_.MemberType -eq [System.Reflection.MemberTypes]::Property } | ForEach-Object {
 				$propName = $_.Name;
 				if(($csvItems | Where-object { -not [string]::IsNullOrWhiteSpace($_.$propName) } | Measure-object).Count -ne 0)
@@ -327,9 +330,10 @@ class WriteSummaryFile: FileOutputBase
 			{
 			  $nonNullProps += "UserComments";
 			}
-			#larg file was stucking becaes all are dumping in one slot
+			#>
+			#large file was stucking becaes all are dumping in one slot
 			#$csvItems | Select-Object -Property $nonNullProps | Export-Csv $this.FilePath -NoTypeInformation
-			($csvItems | Select-Object -Property $nonNullProps) | Group-Object -Property FeatureName | Foreach-Object {$_.Group | Export-Csv -Path $this.FilePath -append -NoTypeInformation}
+			($csvItems | Select-Object -Property $nonNullProps.Name -ExcludeProperty ChildResourceName,IsPreviewBaselineControl,UserComments ) | Group-Object -Property FeatureName | Foreach-Object {$_.Group | Export-Csv -Path $this.FilePath -append -NoTypeInformation}
         }
     }	
 

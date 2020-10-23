@@ -3,6 +3,10 @@ class WritePsConsole: FileOutputBase
 {
     hidden static [WritePsConsole] $Instance = $null;
 	hidden [string] $SummaryMarkerText = "------";
+	hidden static $CollatedSummaryResult = @();
+	hidden static $CollatedBugSummaryResult = @();
+	hidden static $ControlResultsWithBugSummary = @();
+
     static [WritePsConsole] GetInstance()
     {
         if ($null -eq  [WritePsConsole]::Instance)
@@ -22,7 +26,10 @@ class WritePsConsole: FileOutputBase
             $currentInstance = [WritePsConsole]::GetInstance();
             try 
             {
-                $currentInstance.SetRunIdentifier([AzSKRootEventArgument] ($Event.SourceArgs | Select-Object -First 1));                         
+				$currentInstance.SetRunIdentifier([AzSKRootEventArgument] ($Event.SourceArgs | Select-Object -First 1)); 
+				[WritePsConsole]::CollatedSummaryResult = @(); 
+				[WritePsConsole]::CollatedBugSummaryResult = @(); 
+				[WritePsConsole]::ControlResultsWithBugSummary = @(); 
             }
             catch 
             {
@@ -224,7 +231,22 @@ class WritePsConsole: FileOutputBase
             {
                 $currentInstance.PublishException($_);
             }
-        });
+		});
+		
+		$this.RegisterEvent([SVTEvent]::EvaluationCompleted, {
+			$currentInstance = [WritePsConsole]::GetInstance();
+			try 
+            {
+				$currentInstance.CollateSummaryData($Event);
+				if($currentInstance.InvocationContext.BoundParameters["AutoBugLog"] -and [BugLogPathManager]::GetIsPathValid()){
+					$currentInstance.CollateBugSummaryData($Event);
+				}
+			}
+			catch 
+            {
+                $currentInstance.PublishException($_);
+            }
+		});
 
         $this.RegisterEvent([SVTEvent]::CommandCompleted, {
 			$currentInstance = [WritePsConsole]::GetInstance();
@@ -237,7 +259,7 @@ class WritePsConsole: FileOutputBase
 					if($controlsScanned)
 					{
 						# Print summary
-						$currentInstance.PrintSummaryData($Event);
+						$currentInstance.PrintSummaryData();
 					}
 					
 					$AttestControlParamFound = $currentInstance.InvocationContext.BoundParameters["AttestControls"];
@@ -252,7 +274,7 @@ class WritePsConsole: FileOutputBase
 					#if bug logging is enabled and the path is valid, print a summary all all bugs encountered
 					if($currentInstance.InvocationContext.BoundParameters["AutoBugLog"] -and [BugLogPathManager]::GetIsPathValid()){
 						$currentInstance.WriteMessage([Constants]::SingleDashLine, [MessageType]::Info)
-						$currentInstance.PrintBugSummaryData($Event);
+						$currentInstance.PrintBugSummaryData();
 					}
 					$currentInstance.WriteMessage([Constants]::SingleDashLine, [MessageType]::Info)
 				}
@@ -448,13 +470,12 @@ class WritePsConsole: FileOutputBase
        $this.AddOutputLog($message, $false);  
     } 
 
-	hidden [void] PrintSummaryData($event)
+	hidden [void] CollateSummaryData($event)
 	{
 		$summary = @($event.SourceArgs | select-object @{Name="VerificationResult"; Expression = {$_.ControlResults.VerificationResult}},@{Name="ControlSeverity"; Expression = {$_.ControlItem.ControlSeverity}})
 
 		if(($summary | Measure-Object).Count -ne 0)
 		{
-			$summaryResult = @();
 
 			$severities = @();
 			$severities += $summary | Select-Object -Property ControlSeverity | Select-Object -ExpandProperty ControlSeverity -Unique;
@@ -472,23 +493,29 @@ class WritePsConsole: FileOutputBase
 				$rows += $MarkerText;
 				$rows += $totalText;
 				$rows += $MarkerText;
-				$rows | ForEach-Object {
-					$result = [PSObject]::new();
-					Add-Member -InputObject $result -Name "Summary" -MemberType NoteProperty -Value $_.ToString()
-					Add-Member -InputObject $result -Name $totalText -MemberType NoteProperty -Value 0
 
-					[Enum]::GetNames([VerificationResult]) | Where-Object { $verificationResults -contains $_ } |
-					ForEach-Object {
-						Add-Member -InputObject $result -Name $_.ToString() -MemberType NoteProperty -Value 0
+				#Execute below block only once (when first resource is scanned) 
+				if([WritePsConsole]::CollatedSummaryResult.Count -eq 0)
+				{
+					$rows | ForEach-Object {
+						$result = [PSObject]::new();
+						Add-Member -InputObject $result -Name "Summary" -MemberType NoteProperty -Value $_.ToString()
+						Add-Member -InputObject $result -Name $totalText -MemberType NoteProperty -Value 0
+
+						#Get all possible verificationResults initially
+						[Enum]::GetNames([VerificationResult]) | 
+						ForEach-Object {
+							Add-Member -InputObject $result -Name $_.ToString() -MemberType NoteProperty -Value 0
+						};
+						[WritePsConsole]::CollatedSummaryResult += $result;
 					};
-					$summaryResult += $result;
-				};
+				}
 
-				$totalRow = $summaryResult | Where-Object { $_.Summary -eq $totalText } | Select-Object -First 1;
+				$totalRow = [WritePsConsole]::CollatedSummaryResult | Where-Object { $_.Summary -eq $totalText } | Select-Object -First 1;
 
 				$summary | Group-Object -Property ControlSeverity | ForEach-Object {
 					$item = $_;
-					$summaryItem = $summaryResult | Where-Object { $_.Summary -eq $item.Name } | Select-Object -First 1;
+					$summaryItem = [WritePsConsole]::CollatedSummaryResult | Where-Object { $_.Summary -eq $item.Name } | Select-Object -First 1;
 					if($summaryItem)
 					{
 						$summaryItem.Total = $_.Count;
@@ -506,7 +533,7 @@ class WritePsConsole: FileOutputBase
 						};
 					}
 				};
-				$markerRows = $summaryResult | Where-Object { $_.Summary -eq $MarkerText } 
+				$markerRows = [WritePsConsole]::CollatedSummaryResult | Where-Object { $_.Summary -eq $MarkerText } 
 				$markerRows | ForEach-Object { 
 					$markerRow = $_
 					Get-Member -InputObject $markerRow -MemberType NoteProperty | ForEach-Object {
@@ -514,19 +541,28 @@ class WritePsConsole: FileOutputBase
 							$markerRow.$propName = $this.SummaryMarkerText;				
 						}
 					};
-				if($summaryResult.Count -ne 0)
-				{		
-					$this.WriteMessage(($summaryResult | Format-Table | Out-String), [MessageType]::Info)
-				}
 			}
 		}
 	}
 
+	#Function to print summary at the end of scan
+	hidden [void] PrintSummaryData()
+	{
+		if([WritePsConsole]::CollatedSummaryResult.Count -ne 0)
+		{	
+			$nonNullProps = @();
+
+			#get all verificationResults that are not 0 so that summary does not include null values
+			[WritePsConsole]::CollatedSummaryResult | foreach-object {
+				$nonNullProps += $_.PSObject.Properties | Where-Object {$_.Value -ne 0 -and $_.Value -ne $this.SummaryMarkerText} | Select-Object -ExpandProperty Name
+			} 	
+			$nonNullProps = $nonNullProps | Select -Unique
+			$this.WriteMessage(([WritePsConsole]::CollatedSummaryResult | Format-Table -Property $nonNullProps | Out-String), [MessageType]::Info)
+		}
+	}
+
 	#function to print metrics summary for all kinds of bugs encountered
-
-	hidden [void] PrintBugSummaryData($event){
-		[PSCustomObject[]] $summary = @();
-
+	hidden [void] CollateBugSummaryData($event){
 		#gather all control results that have failed/verify as their control result
 		#obtain their control severities
 		$event.SourceArgs | ForEach-Object {
@@ -536,27 +572,32 @@ class WritePsConsole: FileOutputBase
 				$item
 				$item.ControlResults[0].Messages | ForEach-Object{
 					if($_.Message -eq "New Bug" -or $_.Message -eq "Active Bug" -or $_.Message -eq "Resolved Bug"){
-					$summary += [PSCustomObject]@{
+					[WritePsConsole]::CollatedBugSummaryResult += [PSCustomObject]@{
 						BugStatus=$_.Message
 						ControlSeverity = $item.ControlItem.ControlSeverity;
 						
 					};
 				}
 				};
+				#Collecting control results where bug has been found (new/active/resolved). This is used to generate BugSummary at the end of scan
+				[WritePsConsole]::ControlResultsWithBugSummary += $item
 			}
 		};
 
+	}
+
+	hidden [void] PrintBugSummaryData(){
 		#if such bugs were found, print a summary table
 
-		if($summary.Count -ne 0)
+		if([WritePsConsole]::CollatedBugSummaryResult.Count -ne 0)
 		{
 			$summaryResult = @();
 
 			$severities = @();
-			$severities += $summary | Select-Object -Property ControlSeverity | Select-Object -ExpandProperty ControlSeverity -Unique;
+			$severities += [WritePsConsole]::CollatedBugSummaryResult | Select-Object -Property ControlSeverity | Select-Object -ExpandProperty ControlSeverity -Unique;
 
 			$bugStatusResult = @();
-			$bugStatusResult += $summary | Select-Object -Property BugStatus | Select-Object -ExpandProperty BugStatus -Unique;
+			$bugStatusResult += [WritePsConsole]::CollatedBugSummaryResult | Select-Object -Property BugStatus | Select-Object -ExpandProperty BugStatus -Unique;
 			$totalText = "Total";
 			$MarkerText = "MarkerText";
 			$rows = @();
@@ -577,7 +618,7 @@ class WritePsConsole: FileOutputBase
 			};
 			$totalRow = $summaryResult | Where-Object { $_.Summary -eq $totalText } | Select-Object -First 1;
 
-			$summary | Group-Object -Property ControlSeverity | ForEach-Object {
+			[WritePsConsole]::CollatedBugSummaryResult | Group-Object -Property ControlSeverity | ForEach-Object {
 				$item = $_;
 				$summaryItem = $summaryResult | Where-Object { $_.Summary -eq $item.Name } | Select-Object -First 1;
 				if($summaryItem)
