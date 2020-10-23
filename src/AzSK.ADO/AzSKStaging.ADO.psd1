@@ -11,7 +11,7 @@
     # Script module or binary module file associated with this manifest.
     RootModule             = '.\AzSK.ADO.psm1'
 
-    # Version number of this module.
+    # Version number of this module..
     ModuleVersion          = '1.0.0.0'
 
     # ID used to uniquely identify this module
