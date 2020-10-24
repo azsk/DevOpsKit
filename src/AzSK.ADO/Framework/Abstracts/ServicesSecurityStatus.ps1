@@ -215,7 +215,9 @@ class ServicesSecurityStatus: ADOSVTCommandBase
 					$this.SetSVTBaseProperties($svtObject);
 					$childResources += $svtObject.ChildSvtObjects;
 					$currentResourceResults += $svtObject.$methodNameToCall();
-					$result += $currentResourceResults;
+					#Commented line to handle accumulation of control results
+					#$result += $currentResourceResults;
+					$result = $currentResourceResults;
 				}
 				if(($result | Measure-Object).Count -gt 0)
 				{
