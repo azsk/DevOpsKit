@@ -1802,7 +1802,8 @@ class CCAutomation: AzCommandBase
 			$haveRGRBACAccess = $true;
 			$haveAARGAccess = $true;
 			$subRBACoutputs = @();	
-			$subStorageAccount = $null;		
+			$subStorageAccount = $null;
+			$skipCheckforNextSub = $false;
 			if($this.IsCentralScanModeOn -and $this.ExhaustiveCheck)
 			{			
 				try
@@ -1820,7 +1821,7 @@ class CCAutomation: AzCommandBase
 								#eat exception when storage is not present								
 							}
 							
-							if($null -ne $subStorageAccount)
+							if(($null -ne $subStorageAccount) -and ($skipCheckforNextSub -eq $false))
 							{
 								$subRBACoutput.HasRGCARBACAccess = $this.CheckServicePrincipalRGAccess($this.CAAADApplicationID);
 								$subRBACoutput.IsStoragePresent = $true;
@@ -1834,6 +1835,10 @@ class CCAutomation: AzCommandBase
 							$subRBACoutput.HasRequiredAccessPermissions = $true;
 							$haveSubscriptionRBACAccess = $haveSubscriptionRBACAccess -and $subRBACoutput.HasSubscriptionCARBACAccess
 							$haveRGRBACAccess = $haveRGRBACAccess -and $subRBACoutput.HasRGCARBACAccess
+							if($this.LoggingOption -eq 'CentralSub')
+							{
+								$skipCheckforNextSub = $true;
+							}
 						}
 						catch
 						{
