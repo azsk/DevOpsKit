@@ -652,6 +652,7 @@ class Alerts: AzCommandBase
 			$actionGroupId = $actionGroupResource.Outputs | Where-Object actionGroupId 
 			$actionGroupResourceId = $actionGroupId.Values | Select-Object -ExpandProperty Value                      
 			Remove-Item $armTemplatePath  -ErrorAction SilentlyContinue
+			[ConfigOverride]::ClearConfigInstance();
 		}
 		catch
 		{	
