@@ -187,7 +187,7 @@ class SVTResourceResolver: AzSKRoot
 				$svtResource = [SVTResource]::new();
 				$svtResource.ResourceId = $resource.ResourceId;
 				$svtResource.ResourceGroupName = $resource.ResourceGroupName;
-				$svtResource.ResourceName = $resource.Name;
+				$svtResource.ResourceName = $resource.ResourceName;
 				$svtResource.ResourceType = $resource.ResourceType;
 				$svtResource.Location = $resource.Location;
 				$svtResource.ResourceDetails = $_
