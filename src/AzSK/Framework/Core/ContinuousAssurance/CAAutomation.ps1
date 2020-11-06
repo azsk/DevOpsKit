@@ -1803,7 +1803,10 @@ class CCAutomation: AzCommandBase
 			$haveAARGAccess = $true;
 			$subRBACoutputs = @();	
 			$subStorageAccount = $null;
-			$skipCheckforNextSub = $false;
+
+			# Using an additional variable to skip the SPN RBAC check for target sub's AzSKRG when multi CA is configured as CentralSub logging option.
+			$checkRBAConTargetSubRG = $false;
+
 			if($this.IsCentralScanModeOn -and $this.ExhaustiveCheck)
 			{			
 				try
@@ -1821,7 +1824,7 @@ class CCAutomation: AzCommandBase
 								#eat exception when storage is not present								
 							}
 							
-							if(($null -ne $subStorageAccount) -and ($skipCheckforNextSub -eq $false))
+							if(($null -ne $subStorageAccount) -and ($checkRBAConTargetSubRG -eq $false))
 							{
 								$subRBACoutput.HasRGCARBACAccess = $this.CheckServicePrincipalRGAccess($this.CAAADApplicationID);
 								$subRBACoutput.IsStoragePresent = $true;
@@ -1835,9 +1838,11 @@ class CCAutomation: AzCommandBase
 							$subRBACoutput.HasRequiredAccessPermissions = $true;
 							$haveSubscriptionRBACAccess = $haveSubscriptionRBACAccess -and $subRBACoutput.HasSubscriptionCARBACAccess
 							$haveRGRBACAccess = $haveRGRBACAccess -and $subRBACoutput.HasRGCARBACAccess
+
+							# Skipping the check for SPN RBAC check for next target sub RG in case of CentralSub logging option
 							if($this.LoggingOption -eq 'CentralSub')
 							{
-								$skipCheckforNextSub = $true;
+								$checkRBAConTargetSubRG = $true;
 							}
 						}
 						catch
