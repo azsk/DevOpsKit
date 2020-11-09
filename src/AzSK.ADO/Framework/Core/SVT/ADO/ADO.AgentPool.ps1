@@ -206,31 +206,45 @@ class AgentPool: ADOSVTBase
             
             if (([Helpers]::CheckMember($agentPool[0], "fps.dataProviders.data") ) -and ($agentPool[0].fps.dataProviders.data."ms.vss-build-web.agent-jobs-data-provider")) {
                 $agentPoolJobs = $agentPool[0].fps.dataProviders.data."ms.vss-build-web.agent-jobs-data-provider".jobs | Where-Object { $_.scopeId -eq $projectId };
+
+                #Arranging in descending order of run time.
+                $agentPoolJobs = $agentPoolJobs | Sort-Object queueTime -Descending
+                #Taking last 10 runs
+                $agentPoolJobs = $agentPoolJobs | Select-Object -First 10
                 #If agent pool has been queued at least once
-                if (($agentPoolJobs | Measure-Object).Count -gt 0) {
-                    if ([Helpers]::CheckMember($agentPoolJobs[0], "planType") -and $agentPoolJobs[0].planType -eq "Build") {
-                        $definitionId = $agentPoolJobs[0].definition.id;
+
+                $jobCount = ($agentPoolJobs | Measure-Object).Count
+                $j = 0;
+                while ($j -lt $jobCount) {
+                    
+                    if ([Helpers]::CheckMember($agentPoolJobs[$j], "planType") -and $agentPoolJobs[$j].planType -eq "Build") {
+                        $definitionId = $agentPoolJobs[$j].definition.id;
                         $pipelineType = 'Build';
 
                         $buildSTData = $BuildSTDetails.Data | Where-Object { ($_.buildDefinitionID -eq $definitionId) -and ($_.projectName -eq $projectName) };
                         if($buildSTData){
                             $agentPoolSTMapping.data += @([PSCustomObject] @{ agentPoolName = $_.Name; agentPoolID = $_.id; serviceID = $buildSTData.serviceID; projectName = $buildSTData.projectName; projectID = $buildSTData.projectID; orgName = $buildSTData.orgName } )
+                            Write-Host "$i - Id = $definitionId - PipelineType = $pipelineType"
+                            break;
                         }
                     }
-                    elseif ([Helpers]::CheckMember($agentPoolJobs[0], "planType") -and $agentPoolJobs[0].planType -eq "Release") {
-                        $definitionId = $agentPoolJobs[0].definition.id;
+                    elseif ([Helpers]::CheckMember($agentPoolJobs[$j], "planType") -and $agentPoolJobs[$j].planType -eq "Release") {
+                        $definitionId = $agentPoolJobs[$j].definition.id;
                         $pipelineType = 'Release';
 
                         $releaseSTData = $ReleaseSTDetails.Data | Where-Object { ($_.releaseDefinitionID -eq $definitionId) -and ($_.projectName -eq $projectName) };
                         if($releaseSTData){
                             $agentPoolSTMapping.data += @([PSCustomObject] @{ agentPoolName = $_.Name; agentPoolID = $_.id; serviceID = $releaseSTData.serviceID; projectName = $releaseSTData.projectName; projectID = $releaseSTData.projectID; orgName = $releaseSTData.orgName } )
+                            Write-Host "$i - Id = $definitionId - PipelineType = $pipelineType"
+                            break;
                         }
                     }
+                    $j++;
                 }
                 
             }
 
-            Write-Host "$i - Id = $definitionId - PipelineType = $pipelineType"
+            
             $i++
         }
         $agentPoolSTMapping | ConvertTo-Json -Depth 10 | Out-File 'C:\Users\abdaga\Downloads\AgentPoolSTData.json' 

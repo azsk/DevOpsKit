@@ -477,35 +477,51 @@ class ServiceConnection: ADOSVTBase
             $pipelineType = '';
             $responseObj = [WebRequestHelper]::InvokePostWebRequest($apiURL, $inputbody); 
             
+            
             if ([Helpers]::CheckMember($responseObj, "dataProviders") -and $responseObj.dataProviders."ms.vss-serviceEndpoints-web.service-endpoints-details-data-provider") {
                 
                 $serviceConnEndPointDetail = $responseObj.dataProviders."ms.vss-serviceEndpoints-web.service-endpoints-details-data-provider"
                 if ($serviceConnEndPointDetail -and [Helpers]::CheckMember($serviceConnEndPointDetail, "serviceEndpointExecutionHistory") ) {
-                    if ([Helpers]::CheckMember($serviceConnEndPointDetail.serviceEndpointExecutionHistory[0].data, "planType") -and $serviceConnEndPointDetail.serviceEndpointExecutionHistory[0].data.planType -eq "Build") {
-                        
-                        $definitionId = $serviceConnEndPointDetail.serviceEndpointExecutionHistory[0].data.definition.id;
-                        $pipelineType = 'Build';
-                        
-                        $buildSTData = $BuildSTDetails.Data | Where-Object { ($_.buildDefinitionID -eq $definitionId) -and ($_.projectName -eq $projectName) };
-                        if($buildSTData){
-                            $svcConnSTMapping.data += @([PSCustomObject] @{ serviceConnectionName = $_.Name; serviceConnectionID = $_.id; serviceID = $buildSTData.serviceID; projectName = $buildSTData.projectName; projectID = $buildSTData.projectID; orgName = $buildSTData.orgName } )
+                    $svcConnJobs = $serviceConnEndPointDetail.serviceEndpointExecutionHistory.data #| Where-Object { $_.scopeId -eq $projectId };
+
+                    #Arranging in descending order of run time.
+                    $svcConnJobs = $svcConnJobs | Sort-Object startTime -Descending
+                    #Taking last 10 runs
+                    $svcConnJobs = $svcConnJobs | Select-Object -First 10
+                    
+                    $jobCount = ($svcConnJobs | Measure-Object).Count
+                    $j = 0;
+
+                    while ($j -lt $jobCount) {
+                        if ([Helpers]::CheckMember($svcConnJobs[$j], "planType") -and $svcConnJobs[$j].planType -eq "Build") {
+                            
+                            $definitionId = $svcConnJobs[$j].definition.id;
+                            $pipelineType = 'Build';
+                            
+                            $buildSTData = $BuildSTDetails.Data | Where-Object { ($_.buildDefinitionID -eq $definitionId) -and ($_.projectName -eq $projectName) };
+                            if($buildSTData){
+                                $svcConnSTMapping.data += @([PSCustomObject] @{ serviceConnectionName = $_.Name; serviceConnectionID = $_.id; serviceID = $buildSTData.serviceID; projectName = $buildSTData.projectName; projectID = $buildSTData.projectID; orgName = $buildSTData.orgName } )
+                                Write-Host "$i - Id = $definitionId - PipelineType = $pipelineType"
+                                break;
+                            }
+                            
                         }
-                        
-                    }
-                    elseif ([Helpers]::CheckMember($serviceConnEndPointDetail.serviceEndpointExecutionHistory[0].data, "planType") -and $serviceConnEndPointDetail.serviceEndpointExecutionHistory[0].data.planType -eq "Release") {
-                        $definitionId = $serviceConnEndPointDetail.serviceEndpointExecutionHistory[0].data.definition.id;
-                        $pipelineType = 'Release'; 
-                        
-                        $releaseSTData = $ReleaseSTDetails.Data | Where-Object { ($_.releaseDefinitionID -eq $definitionId) -and ($_.projectName -eq $projectName) };
-                        if($releaseSTData){
-                            $svcConnSTMapping.data += @([PSCustomObject] @{ serviceConnectionName = $_.Name; serviceConnectionID = $_.id; serviceID = $releaseSTData.serviceID; projectName = $releaseSTData.projectName; projectID = $releaseSTData.projectID; orgName = $releaseSTData.orgName } )
+                        elseif ([Helpers]::CheckMember($svcConnJobs[$j], "planType") -and $svcConnJobs[$j].planType -eq "Release") {
+                            $definitionId = $svcConnJobs[$j].definition.id;
+                            $pipelineType = 'Release'; 
+                            
+                            $releaseSTData = $ReleaseSTDetails.Data | Where-Object { ($_.releaseDefinitionID -eq $definitionId) -and ($_.projectName -eq $projectName) };
+                            if($releaseSTData){
+                                $svcConnSTMapping.data += @([PSCustomObject] @{ serviceConnectionName = $_.Name; serviceConnectionID = $_.id; serviceID = $releaseSTData.serviceID; projectName = $releaseSTData.projectName; projectID = $releaseSTData.projectID; orgName = $releaseSTData.orgName } )
+                                Write-Host "$i - Id = $definitionId - PipelineType = $pipelineType"
+                                break;
+                            }
                         }
+                        $j++;
                     }
                     
                 }
             }
-
-            Write-Host "$i - Id = $definitionId - PipelineType = $pipelineType"
             $i++
         }
         $svcConnSTMapping | ConvertTo-Json -Depth 10 | Out-File 'C:\Users\abdaga\Downloads\ServiceConnectionSTData.json' 
