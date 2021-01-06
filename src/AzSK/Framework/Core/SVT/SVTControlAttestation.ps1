@@ -13,8 +13,11 @@ class SVTControlAttestation
 	hidden [SubscriptionContext] $SubscriptionContext;
 	hidden [InvocationInfo] $InvocationContext;
 	hidden [bool] $controlExclusionByOrgPolicyEnabled = $false;
+	hidden [bool] $byDesignAttestationDisabledByOrgPolicy = $false;
+	hidden [bool] $approvedExceptionAttestationDisabledByOrgPolicy = $false;
 	hidden [string] $ControlExclusionWarningMessage = ""
 	hidden [string] $ControlExclusionHelpLink = ""
+	hidden [string] $BlockedAttestationWarningMessage = ""
 
 	SVTControlAttestation([SVTEventContext[]] $ctrlResults, [AttestationOptions] $attestationOptions, [SubscriptionContext] $subscriptionContext, [InvocationInfo] $invocationContext)
 	{
@@ -28,9 +31,12 @@ class SVTControlAttestation
 		$this.controlStateExtension.Initialize($true)
 		$this.ControlSettings=$ControlSettingsJson = [ConfigurationManager]::LoadServerConfigFile("ControlSettings.json");
 		$this.controlExclusionByOrgPolicyEnabled = [FeatureFlightingManager]::GetFeatureStatus("EnableControlExclusionByOrgPolicy",$($this.SubscriptionContext.SubscriptionId));
+		$this.byDesignAttestationDisabledByOrgPolicy = [FeatureFlightingManager]::GetFeatureStatus("DisableByDesignAttestation",$($this.SubscriptionContext.SubscriptionId));
+		$this.approvedExceptionAttestationDisabledByOrgPolicy = [FeatureFlightingManager]::GetFeatureStatus("DisableApprovedExceptionAttestation",$($this.SubscriptionContext.SubscriptionId));
 		if($this.ControlSettings -ne $null  -and [Helpers]::CheckMember($this.ControlSettings, "ControlsToExcludeFromScan.ExclusionWarningMessage")){
 			$this.ControlExclusionWarningMessage = $this.ControlSettings.ControlsToExcludeFromScan.ExclusionWarningMessage
 			$this.ControlExclusionHelpLink = $this.ControlSettings.ControlsToExcludeFromScan.ExclusionHelpLink
+			$this.BlockedAttestationWarningMessage = $this.ControlSettings.ControlsToExcludeFromScan.BlockedAttestationWarningMessage
 		}
 
 	}
@@ -57,6 +63,7 @@ class SVTControlAttestation
 	[ControlState] ComputeEffectiveControlState([ControlState] $controlState, [string] $ControlSeverity, [bool] $isSubscriptionControl, [SVTEventContext] $controlItem, [ControlResult] $controlResult)
 	{
 		Write-Host "$([Constants]::SingleDashLine)" -ForegroundColor Cyan
+	
 		if($this.controlExclusionByOrgPolicyEnabled -and $controlItem.ControlItem.IsControlExcluded){
 			Write-Host "ControlId            : $($controlState.ControlId)`nControlSeverity      : $ControlSeverity`nDescription          : $($controlItem.ControlItem.Description)`n"
 			Write-Host $this.ControlExclusionWarningMessage -ForegroundColor Yellow 
@@ -64,7 +71,21 @@ class SVTControlAttestation
 		}else{
 			Write-Host "ControlId            : $($controlState.ControlId)`nControlSeverity      : $ControlSeverity`nDescription          : $($controlItem.ControlItem.Description)`nCurrentControlStatus : $($controlState.ActualVerificationResult)`n"	
 		}
-			
+		
+		# If both attestation blocking feature flag is enabled return and block attestation 
+		# Or, if current mode is by design ('NotAnIssue','WillFixLater','WillNotFix') and its blocked return
+		# Or, if current mode is approved exception and its blocked return 
+		$currentControlExcluded = $this.controlExclusionByOrgPolicyEnabled -and $controlItem.ControlItem.IsControlExcluded
+		$attestationNotAllowedByOrgPolicy = ($this.byDesignAttestationDisabledByOrgPolicy -and $this.approvedExceptionAttestationDisabledByOrgPolicy) `
+											-or ($this.byDesignAttestationDisabledByOrgPolicy -and (-not $this.attestOptions.IsExemptModeOn)) `
+											-or ($this.approvedExceptionAttestationDisabledByOrgPolicy -and $this.attestOptions.IsExemptModeOn)
+		
+		if($currentControlExcluded -and $attestationNotAllowedByOrgPolicy)
+		{
+			Write-Host $this.BlockedAttestationWarningMessage -ForegroundColor Red
+			return $controlState;
+		}
+
 		if(-not $controlResult.CurrentSessionContext.Permissions.HasRequiredAccess)
 		{
 			Write-Host "Skipping attestation process for this control. You do not have required permissions to evaluate this control. `nNote: If your permissions were elevated recently, please run the 'Disconnect-AzAccount' command to clear the Azure cache and try again." -ForegroundColor Yellow
@@ -292,7 +313,7 @@ class SVTControlAttestation
 
 	[ControlState] ComputeEffectiveControlStateInBulkMode([ControlState] $controlState, [string] $ControlSeverity, [bool] $isSubscriptionControl, [SVTEventContext] $controlItem, [ControlResult] $controlResult)
 	{
-		Write-Host "$([Constants]::SingleDashLine)" -ForegroundColor Cyan		
+ 		Write-Host "$([Constants]::SingleDashLine)" -ForegroundColor Cyan		
 		if($this.controlExclusionByOrgPolicyEnabled -and $controlItem.ControlItem.IsControlExcluded){
 			Write-Host "ControlId            : $($controlState.ControlId)`nControlSeverity      : $ControlSeverity`nDescription          : $($controlItem.ControlItem.Description)`n"
 			Write-Host $this.ControlExclusionWarningMessage -ForegroundColor Yellow
@@ -310,6 +331,21 @@ class SVTControlAttestation
 			Write-Host ([Constants]::CoAdminElevatePermissionMsg) -ForegroundColor Yellow
 			return $controlState;
 		}
+
+		# If both attestation blocking feature flag is enabled return and block attestation 
+		# Or, if current mode is by design ('NotAnIssue','WillFixLater','WillNotFix') and its blocked return
+		# Or, if current mode is approved exception and its blocked return 
+		$currentControlExcluded = $this.controlExclusionByOrgPolicyEnabled -and $controlItem.ControlItem.IsControlExcluded
+		$attestationNotAllowedByOrgPolicy = ($this.byDesignAttestationDisabledByOrgPolicy -and $this.approvedExceptionAttestationDisabledByOrgPolicy) `
+											-or ($this.byDesignAttestationDisabledByOrgPolicy -and (-not $this.attestOptions.IsExemptModeOn)) `
+											-or ($this.approvedExceptionAttestationDisabledByOrgPolicy -and $this.attestOptions.IsExemptModeOn)
+		
+		if($currentControlExcluded -and $attestationNotAllowedByOrgPolicy)
+		{
+			Write-Host $this.BlockedAttestationWarningMessage -ForegroundColor Red
+			return $controlState;
+		}
+
 		$userChoice = ""
 		if($null -ne $this.attestOptions -and $this.attestOptions.IsBulkClearModeOn)
 		{
@@ -668,7 +704,19 @@ class SVTControlAttestation
 
 	[PSObject] ComputeEligibleAttestationStates([SVTEventContext] $controlItem, [ControlResult] $controlResult)
 	{
-	    [System.Collections.ArrayList] $ValidAttestationStates = $null
+		[System.Collections.ArrayList] $ValidAttestationStates = $null
+		
+		# If current mode is approved exception and ByDesign attestation is blocked
+		# and ApprovedException is allowed then just return 'ApprovedException' in ValidAttestationStatesHashTable
+		$currentControlExcluded = $this.controlExclusionByOrgPolicyEnabled -and $controlItem.ControlItem.IsControlExcluded
+		$onlyApprovedExceptionAllowedByOrgPolicy = $this.byDesignAttestationDisabledByOrgPolicy -and $this.attestOptions.IsExemptModeOn
+		if($currentControlExcluded -and $onlyApprovedExceptionAllowedByOrgPolicy)
+		{
+			$ValidAttestationStatesHashTable = @()
+			$ValidAttestationStatesHashTable += [Constants]::AttestationStatusHashMap.GetEnumerator() | Where-Object { $_.Name -eq [AttestationStatus]::ApprovedException }
+			return $ValidAttestationStatesHashTable;
+		}
+
 	    #Default attestation state
 	    if($null -ne $this.ControlSettings.DefaultValidAttestationStates){
 			$ValidAttestationStates = $this.ControlSettings.DefaultValidAttestationStates | Select-Object -Unique
