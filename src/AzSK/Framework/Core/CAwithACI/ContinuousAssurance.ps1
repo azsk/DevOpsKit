@@ -240,7 +240,7 @@ class ContinuousAssurance: AzCommandBase
         
         #Setting the TLSVersion to 1.2 and disabling public blob access
 		$subid = $ResourceId.split("/")[2]
-		$this.UpdateTLSandBlobAccessForAzSKStorage($subid,$resourceGroup,$storageName)
+		[StorageHelper]::UpdateTLSandBlobAccessForAzSKStorage($subid,$resourceGroup,$storageName)
     }
 
     #TBD
@@ -314,6 +314,8 @@ class ContinuousAssurance: AzCommandBase
         {
             $this.StorageAccountName = $ExistingStorage.Name
             $this.PublishCustomMessage("Preparing a storage account for storing reports from CA scans...`r`nFound existing AzSK storage account: ["+ $this.StorageAccountName +"]. This will be used to store reports from CA scans.")
+            #to update TLS and blob access settings for existing storage account
+			[StorageHelper]::UpdateTLSandBlobAccessForAzSKStorage($this.SubscriptionContext.SubscriptionId,$existingStorage.ResourceGroupName,$existingStorage.Name)
         }
         else
         {
@@ -336,13 +338,6 @@ class ContinuousAssurance: AzCommandBase
                 }
                 Set-AzStorageAccount -ResourceGroupName $newStorage.ResourceGroupName -Name $newStorage.StorageAccountName -Tag $this.reportStorageTags -Force -ErrorAction SilentlyContinue
             } 
-        }
-
-        #update TLS and blob access settings for new storage
-        $caStorageAccount = [UserSubscriptionDataHelper]::GetUserSubscriptionStorage()
-        if($null -ne $caStorageAccount)
-        { 
-            $this.UpdateTLSandBlobAccessForAzSKStorage($this.SubscriptionContext.SubscriptionId,$caStorageAccount.ResourceGroupName,$caStorageAccount.Name)
         }
 
         $this.EnvironmentVariables.Add('StorageAccountName', $this.StorageAccountName)
@@ -412,13 +407,6 @@ class ContinuousAssurance: AzCommandBase
                 "LastModified"=$timestamp
                 }
                 Set-AzStorageAccount -ResourceGroupName $newStorage.ResourceGroupName -Name $newStorage.StorageAccountName -Tag $this.reportStorageTags -Force -ErrorAction SilentlyContinue
-            }
-
-            #update TLS and blob access settings for new storage
-            $caStorageAccount = [UserSubscriptionDataHelper]::GetUserSubscriptionStorage()
-            if($null -ne $caStorageAccount)
-            { 
-                $this.UpdateTLSandBlobAccessForAzSKStorage($this.SubscriptionContext.SubscriptionId,$caStorageAccount.ResourceGroupName,$caStorageAccount.Name)
             }
 
         }
@@ -535,29 +523,4 @@ class ContinuousAssurance: AzCommandBase
         }
     }
 
-    #function to update TLS version and public blob access of AzSK storage account
-	[void] UpdateTLSandBlobAccessForAzSKStorage($subscriptionId,$resourceGroup,$storageName)
-	{
-        $body = $null;
-        $APIVersion = $null;
-		$controlSettings = [ConfigurationManager]::LoadServerConfigFile("ControlSettings.json");
-        $ResourceAppIdURI = [WebRequestHelper]::GetResourceManagerUrl()	
-        if([Helpers]::CheckMember($ControlSettings, 'APIVersionForTLSandBlobUpdate'))
-		{
-			$APIVersion = $controlSettings.APIVersionForTLSandBlobUpdate
-		}		
-		$uri = $ResourceAppIdURI + "subscriptions/$($subscriptionId)/resourceGroups/$($resourceGroup)/providers/Microsoft.Storage/storageAccounts/$($storageName)?api-version=$APIVersion"
-		if([Helpers]::CheckMember($ControlSettings, 'TLSandBlobAccessForAzSKStorage'))
-		{
-			$body = $controlSettings.TLSandBlobAccessForAzSKStorage
-		}
-		try
-		{
-			[WebRequestHelper]::InvokeWebRequest([Microsoft.PowerShell.Commands.WebRequestMethod]::Patch, $uri, $body);
-		}
-		catch
-		{
-			#eat exception (No need to break the execution)
-		}
-	}
 }

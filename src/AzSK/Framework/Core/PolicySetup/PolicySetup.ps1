@@ -446,7 +446,7 @@ class PolicySetup: AzCommandBase
 		#If new storage is created, value for TLS version will be null and if existing storage is updated its TLS value will not be equal to 1.2
 		if ($null -eq $TLSVersion -or $TLSVersion -ne "TLS1_2")
 		{
-			$this.UpdateTLSVerionForOrgPolicyStorage($this.SubscriptionContext.SubscriptionId,$this.StorageAccountInstance.ResourceGroupName,$this.StorageAccountInstance.StorageAccountName)
+			[StorageHelper]::UpdateTLSandBlobAccessForAzSKStorage($this.SubscriptionContext.SubscriptionId,$this.StorageAccountInstance.ResourceGroupName,$this.StorageAccountInstance.StorageAccountName)
 		}
 
 		$container = $this.StorageAccountInstance.CreateStorageContainerIfNotExists($this.ConfigContainerName);
@@ -1683,31 +1683,6 @@ class PolicySetup: AzCommandBase
 		# 	$returnMsg += $commonFailMsg
 		# }
 		return $returnMsg
-	}
-	#function to update TLS version of storage accounts for org policy setup
-	[void] UpdateTLSVerionForOrgPolicyStorage($subscriptionId,$resourceGroup,$storageName)
-	{
-		$body = $null;
-		$APIVersion = $null;
-		$controlSettings = [ConfigurationManager]::LoadServerConfigFile("ControlSettings.json");
-		$ResourceAppIdURI = [WebRequestHelper]::GetResourceManagerUrl()	
-		if([Helpers]::CheckMember($ControlSettings, 'APIVersionForTLSandBlobUpdate'))
-		{
-			$APIVersion = $controlSettings.APIVersionForTLSandBlobUpdate
-		}
-		$uri = $ResourceAppIdURI + "subscriptions/$($subscriptionId)/resourceGroups/$($resourceGroup)/providers/Microsoft.Storage/storageAccounts/$($storageName)?api-version=$APIVersion"
-		if([Helpers]::CheckMember($ControlSettings, 'TLSUpdateForOrgPolicy'))
-		{
-			$body = $controlSettings.TLSUpdateForOrgPolicy
-		}
-		try
-		{
-			[WebRequestHelper]::InvokeWebRequest([Microsoft.PowerShell.Commands.WebRequestMethod]::Patch, $uri, $body)
-		}
-		catch
-		{
-			#eat exception (No need to break the execution)
-		}
 	}
 
 }

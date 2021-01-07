@@ -79,7 +79,11 @@ class ControlStateExtension
 
 	hidden [void] GetAzSKStorageAccount($createIfNotExists)
 	{
-	    $azSKConfigData = [ConfigurationManager]::GetAzSKConfigData()
+		$azSKConfigData = [ConfigurationManager]::GetAzSKConfigData()
+		
+		#setting the global variable isAzSKStorage to true
+		$Global:isAzSKStorage = $true;
+
 		if($null -eq $this.AzSKResourceGroup)
 		{
 			$this.GetAzSKRG($createIfNotExists);
@@ -125,31 +129,6 @@ class ControlStateExtension
 					}					
 				}					
 			}
-
-			#update TLS and blob access settings for new AzSK storage for AzSKRG resource group
-			$body = $null;
-			$APIVersion = $null;
-			$subid = $StorageAccount.Id.split("/")[2]
-			$controlSettings = [ConfigurationManager]::LoadServerConfigFile("ControlSettings.json");
-			$ResourceAppIdURI = [WebRequestHelper]::GetResourceManagerUrl()	
-			if([Helpers]::CheckMember($ControlSettings, 'APIVersionForTLSandBlobUpdate'))
-			{
-				$APIVersion = $controlSettings.APIVersionForTLSandBlobUpdate
-			}		
-			$uri = $ResourceAppIdURI + "subscriptions/$($subid)/resourceGroups/$($StorageAccount.ResourceGroupName)/providers/Microsoft.Storage/storageAccounts/$($StorageAccount.StorageAccountName)?api-version=$APIVersion"
-			if([Helpers]::CheckMember($ControlSettings, 'TLSandBlobAccessForAzSKStorage'))
-			{
-				$body = $controlSettings.TLSandBlobAccessForAzSKStorage
-			}
-			try
-			{
-				[WebRequestHelper]::InvokeWebRequest([Microsoft.PowerShell.Commands.WebRequestMethod]::Patch, $uri, $body);
-			}
-			catch
-			{
-				#eat exception (No need to break the execution)
-			}
-
 			$this.AzSKStorageAccount = $StorageAccount;
 		}
 	}

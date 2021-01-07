@@ -6,7 +6,7 @@ class ResourceGroupHelper: EventBase
 {
 	[string] $ResourceGroupName;
 	[string] $ResourceGroupLocation = "EastUS2";
-
+	
 	[PSObject] $ResourceGroup;
 
 	ResourceGroupHelper([string] $subscriptionId, [string] $resourceGroupName):
@@ -372,7 +372,7 @@ class StorageHelper: ResourceGroupHelper
 	{
 		if(-not $this.StorageAccount)
 		{
-			$isAzSKStorage = $false;
+			$Global:isAzSKStorage = $false;
 			$this.CreateResourceGroupIfNotExists();
 			if($this.ResourceGroupName -eq [ConfigurationManager]::GetAzSKConfigData().AzSKRGName -and $this.StorageAccountName -like "$([Constants]::StorageAccountPreName)*")           
             {
@@ -382,7 +382,7 @@ class StorageHelper: ResourceGroupHelper
                     return;
                 }
                 else {
-                    $isAzSKStorage = $true
+                    $Global:isAzSKStorage = $true
                 }               
 			}   
             $existingResources = Get-AzResource -ResourceGroupName $this.ResourceGroupName -ResourceType $this.ResourceType
@@ -427,7 +427,7 @@ class StorageHelper: ResourceGroupHelper
 			
 			#precompute storage access permissions for the current scan account
 			$this.ComputePermissions();
-            if($isAzSKStorage)
+            if($Global:isAzSKStorage)
 			{
 				[StorageHelper]::AzSKStorageHelperInstance = $this
 			}
@@ -744,7 +744,7 @@ class StorageHelper: ResourceGroupHelper
 	
 	static [PSObject] NewAzskCompliantStorage([string]$StorageName, [string]$StorageKind,[string]$ResourceGroup,[string]$Location) {
         $storageSku = [Constants]::NewStorageSku
-        $storageObject = $null
+		$storageObject = $null
         try {
             #register resource providers
             [ResourceHelper]::RegisterResourceProviderIfNotRegistered("Microsoft.Storage");
@@ -792,7 +792,12 @@ class StorageHelper: ResourceGroupHelper
                 # Remove-AzureRmStorageAccount -ResourceGroupName $ResourceGroup -Name $StorageName -Force -ErrorAction SilentlyContinue
                 
             }
-        }
+		}
+		
+		#update TLS and blob access for newly created storage account
+		$subid = $storageObject.Id.split("/")[2]
+		[StorageHelper]::UpdateTLSandBlobAccessForAzSKStorage($subid,$storageObject.ResourceGroupName,$storageObject.StorageAccountName)
+
         return $storageObject
 	}
 	
@@ -810,7 +815,45 @@ class StorageHelper: ResourceGroupHelper
         $SignedString = [System.Convert]::ToBase64String($KeyHash)
         $sharedKey = $AccountName+":"+$SignedString
         return $sharedKey    	
-    }
+	}
+	
+	static [void] UpdateTLSandBlobAccessForAzSKStorage($subscriptionId,$resourceGroup,$storageName)
+	{
+        #$subid = $storageObject.Id.split("/")[2]
+		$body = $null;
+		$headerParams = $null;
+		$controlSettings = [ConfigurationManager]::LoadServerConfigFile("ControlSettings.json");
+		$ResourceAppIdURI = "https://management.azure.com/"
+		$AccessToken =  Get-AzSKAccessToken -ResourceAppIdURI $ResourceAppIdURI
+		if ($null -ne $AccessToken)
+		{
+			$headerParams = @{'Authorization' = "Bearer $($AccessToken)" }
+		}
+		$uri = $ResourceAppIdURI + "subscriptions/$($subscriptionId)/resourceGroups/$($resourceGroup)/providers/Microsoft.Storage/storageAccounts/$($storageName)?api-version=2019-06-01"
+		if (!$Global:isAzSKStorage) 
+		{
+			if([Helpers]::CheckMember($ControlSettings, 'TLSandBlobAccessForAzSKStorage'))
+			{
+				$body = $controlSettings.TLSUpdateForOrgPolicy | ConvertTo-Json -Depth 10
+			}
+		}
+		else
+		{
+			if([Helpers]::CheckMember($ControlSettings, 'TLSandBlobAccessForAzSKStorage'))
+			{
+				$body = $controlSettings.TLSandBlobAccessForAzSKStorage | ConvertTo-Json -Depth 10
+			}
+		}
+		
+		try
+		{
+			Invoke-WebRequest -Method Patch -Uri $uri -Headers $headerParams -Body $body -ContentType "application/json" -UseBasicParsing
+		}
+		catch
+		{
+			#eat exception
+		}
+	}
 }
 
 class AppInsightHelper: ResourceGroupHelper
