@@ -582,13 +582,15 @@ class Alerts: AzCommandBase
 			$actionGroupId = $actionGroupResource.Outputs | Where-Object actionGroupId 
 			$actionGroupResourceId = $actionGroupId.Values | Select-Object -ExpandProperty Value                      
 			Remove-Item $armTemplatePath  -ErrorAction SilentlyContinue
-
-			# clear local config to remove overridden files from cache
-			[ConfigOverride]::ClearConfigInstance();
 		}
 		catch
 		{			
 			$this.PublishException($_);
+		}
+		finally
+		{
+			# clear local config to remove overridden files from cache
+			[ConfigOverride]::ClearConfigInstance();
 		}
 		
 		return 	$actionGroupResourceId
@@ -654,14 +656,16 @@ class Alerts: AzCommandBase
 			$actionGroupId = $actionGroupResource.Outputs | Where-Object actionGroupId 
 			$actionGroupResourceId = $actionGroupId.Values | Select-Object -ExpandProperty Value                      
 			Remove-Item $armTemplatePath  -ErrorAction SilentlyContinue
-
-			#clear local config to remove overridden files from cache
-			[ConfigOverride]::ClearConfigInstance();
 		}
 		catch
 		{	
 			#Eating up this error while action group is not setup we are showing user friendly message
 			#$this.PublishException($_);
+		}
+		finally
+		{
+			# clear local config to remove overridden files from cache
+			[ConfigOverride]::ClearConfigInstance();
 		}
 		
 		return 	$actionGroupResourceId
