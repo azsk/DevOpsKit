@@ -832,7 +832,7 @@ class StorageHelper: ResourceGroupHelper
 		$uri = $ResourceAppIdURI + "subscriptions/$($subscriptionId)/resourceGroups/$($resourceGroup)/providers/Microsoft.Storage/storageAccounts/$($storageName)?api-version=2019-06-01"
 		if (!$Global:isAzSKStorage) 
 		{
-			if([Helpers]::CheckMember($ControlSettings, 'TLSandBlobAccessForAzSKStorage'))
+			if([Helpers]::CheckMember($ControlSettings, 'TLSUpdateForOrgPolicy'))
 			{
 				$body = $controlSettings.TLSUpdateForOrgPolicy | ConvertTo-Json -Depth 10
 			}
