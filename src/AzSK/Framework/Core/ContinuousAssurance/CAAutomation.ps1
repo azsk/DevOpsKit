@@ -820,13 +820,6 @@ class CCAutomation: AzCommandBase
 					Set-AzStorageAccount -ResourceGroupName $newStorage.ResourceGroupName -Name $newStorage.StorageAccountName -Tag $this.reportStorageTags -Force -ErrorAction SilentlyContinue
 				}
 
-				#update TLS and blob access settings for new storage
-				$caStorageAccount = [UserSubscriptionDataHelper]::GetUserSubscriptionStorage()
-				if ($null -ne $caStorageAccount)
-				{
-					$this.UpdateTLSandBlobAccessForAzSKStorage($this.SubscriptionContext.SubscriptionId,$caStorageAccount.ResourceGroupName,$caStorageAccount.Name)
-				}
-
 				#update storage account variable with new value
 				$varStorageName = [Variable]@{
 				Name = "ReportsStorageAccountName";
