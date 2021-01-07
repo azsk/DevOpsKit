@@ -795,7 +795,8 @@ class StorageHelper: ResourceGroupHelper
 		}
 		
 		#update TLS and blob access for newly created storage account
-		$subid = $storageObject.Id.split("/")[2]
+		$currentContext = Get-AzContext
+		$subid = $currentContext.Subscription.SubscriptionId
 		[StorageHelper]::UpdateTLSandBlobAccessForAzSKStorage($subid,$storageObject.ResourceGroupName,$storageObject.StorageAccountName)
 
         return $storageObject
