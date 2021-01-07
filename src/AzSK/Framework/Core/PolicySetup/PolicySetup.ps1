@@ -1706,7 +1706,7 @@ class PolicySetup: AzCommandBase
 		}
 		catch
 		{
-			#eat exception
+			#eat exception (No need to break the execution)
 		}
 	}
 

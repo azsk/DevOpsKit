@@ -147,7 +147,7 @@ class ControlStateExtension
 			}
 			catch
 			{
-				#eat exception
+				#eat exception (No need to break the execution)
 			}
 
 			$this.AzSKStorageAccount = $StorageAccount;
