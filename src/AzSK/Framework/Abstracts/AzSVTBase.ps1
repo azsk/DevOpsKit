@@ -27,7 +27,7 @@ class AzSVTBase: SVTBase
    
 	#Add PreviewBaselineControls
 	hidden [bool] CheckBaselineControl($controlId)
- {
+    {
 		if ($this.IsResourceScan)
 		{
 			#Resource Scan so check only for resource level base line controls
@@ -54,8 +54,9 @@ class AzSVTBase: SVTBase
 		}
 		return $false
 	}
+
 	hidden [bool] CheckPreviewBaselineControl($controlId)
- {
+    {
 		if ($this.IsResourceScan)
 		{
 			#Resource Scan so check only for resource level preview base line controls
@@ -83,8 +84,23 @@ class AzSVTBase: SVTBase
 		return $false
 	}
 
+	hidden [bool] CheckForControlExclusion($controlId)
+    {
+		$TenantId = ([ContextHelper]::GetCurrentRMContext()).Tenant.Id
+		if (($null -ne $this.ControlSettings) `
+			                                -and [Helpers]::CheckMember($this.ControlSettings, "ControlsToExcludeFromScan.TenantIds") `
+											-and ($this.ControlSettings.ControlsToExcludeFromScan.TenantIds -contains $TenantId) `
+											-and [Helpers]::CheckMember($this.ControlSettings, "ControlsToExcludeFromScan.ControlIds"))
+		{
+			if($this.ControlSettings.ControlsToExcludeFromScan.ControlIds -contains $controlId){
+				return $true
+			}
+		}
+		return $false
+	}
+
 	hidden [void] GetResourceId()
- {
+   {
 
 		try
 		{

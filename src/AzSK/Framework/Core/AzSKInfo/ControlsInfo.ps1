@@ -7,6 +7,7 @@ class ControlsInfo: AzCommandBase
 	hidden [string] $ResourceType
 	hidden [bool] $BaslineControls
 	hidden [bool] $PreviewBaslineControls
+	hidden [bool] $ControlsExcludedByOrgPolicy
 	hidden [PSObject] $ControlSettings
 	hidden [string[]] $Tags = @();
 	hidden [string[]] $ControlIds = @();
@@ -14,6 +15,8 @@ class ControlsInfo: AzCommandBase
 	hidden [string] $SummaryMarkerText = "------"
 	hidden [string] $ControlSeverity
 	hidden [string] $ControlIdContains
+	hidden [string] $ControlExclusionWarningMessage = ""
+	hidden [string] $ControlExclusionHelpLink = ""
 
 	ControlsInfo([string] $subscriptionId, [InvocationInfo] $invocationContext, [string] $resourceTypeName, [string] $resourceType, [string] $controlIds, [bool] $baslineControls,[bool] $previewBaslineControls, [string] $tags, [bool] $full, 
 					[string] $controlSeverity, [string] $controlIdContains) :  Base($subscriptionId, $invocationContext)
@@ -38,6 +41,13 @@ class ControlsInfo: AzCommandBase
 		{
 			$this.DoNotOpenOutputFolder = $true;
 		}
+
+		if([FeatureFlightingManager]::GetFeatureStatus("EnableControlExclusionByOrgPolicy",$($this.SubscriptionContext.SubscriptionId))){
+			$this.ControlsExcludedByOrgPolicy = $true;
+		}else{
+			$this.ControlsExcludedByOrgPolicy = $false;
+		}
+
 	}
 	
 	GetControlDetails() 
@@ -47,6 +57,9 @@ class ControlsInfo: AzCommandBase
 		$allControls = @()
 		$controlSummary = @()
 
+		# Fetch control Setting data
+		$this.ControlSettings = [ConfigurationManager]::LoadServerConfigFile("ControlSettings.json");
+
 		# Filter Control for Resource Type / Resource Type Name
 		if([string]::IsNullOrWhiteSpace($this.ResourceType) -and [string]::IsNullOrWhiteSpace($this.ResourceTypeName))
 		{
@@ -54,6 +67,17 @@ class ControlsInfo: AzCommandBase
 			$this.PublishCustomMessage([Constants]::DefaultControlInfoCmdMsg, [MessageType]::Default);
 			$this.DoNotOpenOutputFolder = $true;
 			return;
+		}
+
+		#Check if this org wants IPAddress to be treated as its own resource.
+		if([Helpers]::CheckMember($this.ControlSettings,"PublicIpAddress",$false) -and [Helpers]::CheckMember($this.ControlSettings.PublicIpAddress,"EnablePublicIpResource",$false))
+		{
+			#If not, let us remove the resource type entry from the mapping
+			$treatPublicIPasResource = $this.ControlSettings.PublicIpAddress.EnablePublicIpResource
+			if( -not $treatPublicIPasResource)
+			{
+				[SVTMapping]::Mapping = ([SVTMapping]::Mapping | Where-Object { $_.ResourceType -ne 'Microsoft.Network/publicIPAddresses'});
+			}
 		}
 
 		#throw if user has set params for ResourceTypeName and ResourceType
@@ -78,9 +102,6 @@ class ControlsInfo: AzCommandBase
 			$resourcetypes += ([SVTMapping]::Mapping | Sort-Object ResourceTypeName | Select-Object JsonFileName )
 		}
 
-		# Fetch control Setting data
-		$this.ControlSettings = [ConfigurationManager]::LoadServerConfigFile("ControlSettings.json");
-
 		# Filter control for baseline controls
 		$baselineControls = @();
 		$baselineControls += $this.ControlSettings.BaselineControls.ResourceTypeControlIdMappingList | Select-Object ControlIds | ForEach-Object {  $_.ControlIds }
@@ -94,6 +115,7 @@ class ControlsInfo: AzCommandBase
 		}
 
 		$previewBaselineControls = @();
+		$excludedControls = @();
 
 		if([Helpers]::CheckMember($this.ControlSettings,"PreviewBaselineControls.ResourceTypeControlIdMappingList") )
 		{
@@ -102,6 +124,17 @@ class ControlsInfo: AzCommandBase
 		if([Helpers]::CheckMember($this.ControlSettings,"PreviewBaselineControls.SubscriptionControlIdList") )
 		{
 			$previewBaselineControls += $this.ControlSettings.PreviewBaselineControls.SubscriptionControlIdList | ForEach-Object {  $_ }
+		}
+
+		$TenantId = ([ContextHelper]::GetCurrentRMContext()).Tenant.Id
+		if($this.ControlsExcludedByOrgPolicy `
+		                    -and [Helpers]::CheckMember($this.ControlSettings, "ControlsToExcludeFromScan.TenantIds") `
+							-and ($this.ControlSettings.ControlsToExcludeFromScan.TenantIds -contains $TenantId) `
+							-and [Helpers]::CheckMember($this.ControlSettings, "ControlsToExcludeFromScan.ControlIds") )
+		{
+			$excludedControls += $this.ControlSettings.ControlsToExcludeFromScan.ControlIds
+			$this.ControlExclusionWarningMessage = $this.ControlSettings.ControlsToExcludeFromScan.ExclusionWarningMessage
+			$this.ControlExclusionHelpLink = $this.ControlSettings.ControlsToExcludeFromScan.ExclusionHelpLink
 		}
 
 		if($this.PreviewBaslineControls)
@@ -128,30 +161,30 @@ class ControlsInfo: AzCommandBase
 					$controls.Controls = ($controls.Controls | Where-Object { $_.Enabled -eq $true })
 
 					# Filter control for ControlIds
-					if ($this.ControlIds.Count -gt 0) 
+					if ($controls.Controls -and $this.ControlIds.Count -gt 0) 
 					{
 						$controls.Controls = ($controls.Controls | Where-Object { $this.ControlIds -contains $_.ControlId })
 					}
 
 					# Filter control for ControlId Contains
-					if (-not [string]::IsNullOrEmpty($this.ControlIdContains)) 
+					if ($controls.Controls -and -not [string]::IsNullOrEmpty($this.ControlIdContains)) 
 					{
 						$controls.Controls = ($controls.Controls | Where-Object { $_.ControlId -Match $this.ControlIdContains })
 					}
 
 					# Filter control for Tags
-					if ($this.Tags.Count -gt 0) 
+					if ($controls.Controls -and $this.Tags.Count -gt 0) 
 					{
 						$controls.Controls = ($controls.Controls | Where-Object { ((Compare-Object $_.Tags $this.Tags -PassThru -IncludeEqual -ExcludeDifferent) | Measure-Object).Count -gt 0 })
 					}
 
 					# Filter control for ControlSeverity
-					if (-not [string]::IsNullOrEmpty($this.ControlSeverity)) 
+					if ($controls.Controls -and -not [string]::IsNullOrEmpty($this.ControlSeverity)) 
 					{
 						$controls.Controls = ($controls.Controls | Where-Object { $this.ControlSeverity -eq $_.ControlSeverity })
 					}
 
-					if ($controls.Controls.Count -gt 0)
+					if ($controls.Controls -and $controls.Controls.Count -gt 0)
 					{
 						if($PolicyExpandedFlag)
 						{
@@ -183,6 +216,15 @@ class ControlsInfo: AzCommandBase
 								{
 									$isPreviewBaselineControls = "No"
 								}
+
+								if($this.ControlsExcludedByOrgPolicy -and $_.IsControlExcluded)
+								{
+									$isControlExcluded = "Yes"
+								}
+								else
+								{
+									$isControlExcluded = "No"
+								}
 													
 								$ctrlObj = New-Object -TypeName PSObject
 								$ctrlObj | Add-Member -NotePropertyName FeatureName -NotePropertyValue $controls.FeatureName 
@@ -191,6 +233,7 @@ class ControlsInfo: AzCommandBase
 								$ctrlObj | Add-Member -NotePropertyName ControlSeverity -NotePropertyValue $_.ControlSeverity
 								$ctrlObj | Add-Member -NotePropertyName IsBaselineControl -NotePropertyValue $isBaselineControls
 								$ctrlObj | Add-Member -NotePropertyName IsPreviewBaselineControl -NotePropertyValue $isPreviewBaselineControls
+								$ctrlObj | Add-Member -NotePropertyName IsControlExcluded -NotePropertyValue $isControlExcluded
 								$ctrlObj | Add-Member -NotePropertyName Rationale -NotePropertyValue $_.Rationale
 								$ctrlObj | Add-Member -NotePropertyName Recommendation -NotePropertyValue $_.Recommendation
 								$ctrlObj | Add-Member -NotePropertyName Automated -NotePropertyValue $_.Automated
@@ -239,6 +282,16 @@ class ControlsInfo: AzCommandBase
 									$isPreviewBaselineControls = "No"
 								}
 
+								if($this.ControlsExcludedByOrgPolicy -and $excludedControls -contains $_.ControlID)
+								{
+									$isControlExcluded = "Yes"
+								}
+								else
+								{
+									$isControlExcluded = "No"
+								}
+								
+
 								$ControlSeverity = $_.ControlSeverity
 								if([Helpers]::CheckMember($this.ControlSettings,"ControlSeverity.$ControlSeverity"))
 								{
@@ -256,6 +309,7 @@ class ControlsInfo: AzCommandBase
 								$ctrlObj | Add-Member -NotePropertyName ControlSeverity -NotePropertyValue $_.ControlSeverity
 								$ctrlObj | Add-Member -NotePropertyName IsBaselineControl -NotePropertyValue $isBaselineControls
 								$ctrlObj | Add-Member -NotePropertyName IsPreviewBaselineControl -NotePropertyValue $isPreviewBaselineControls
+								$ctrlObj | Add-Member -NotePropertyName IsControlExcluded -NotePropertyValue $isControlExcluded
 								$ctrlObj | Add-Member -NotePropertyName Rationale -NotePropertyValue $_.Rationale
 								$ctrlObj | Add-Member -NotePropertyName Recommendation -NotePropertyValue $_.Recommendation
 								$ctrlObj | Add-Member -NotePropertyName Automated -NotePropertyValue $_.Automated
@@ -283,7 +337,7 @@ class ControlsInfo: AzCommandBase
 						$controlSummary += $ctrlSummary
 					} 
                 }
-
+	
 		if($controlSummary.Count -gt 0)
 		{
 			$controlCSV = New-Object -TypeName WriteCSVData
@@ -326,10 +380,18 @@ class ControlsInfo: AzCommandBase
 
 			$controlSummary += $totalSummaryMarker
 			$controlSummary += $ctrlSummary
-
 			$this.PublishCustomMessage(($controlSummary | Format-Table | Out-String), [MessageType]::Default)
+			$excludedControls = @($allControls |  Where-Object {$_.IsControlExcluded -eq 'Yes'})
+			if($this.ControlsExcludedByOrgPolicy -and $excludedControls.Count -gt 0){
+				$this.PublishCustomMessage([Constants]::DoubleDashLine, [MessageType]::Default);
+				$this.PublishCustomMessage("Total no. of excluded controls: " + $excludedControls.Count , [MessageType]::Default)
+				$this.PublishCustomMessage($this.ControlExclusionWarningMessage, [MessageType]::Warning);
+				$this.PublishCustomMessage($this.ControlExclusionHelpLink, [MessageType]::Warning);
+				$this.PublishCustomMessage([Constants]::DoubleDashLine, [MessageType]::Default);
+			}
 		}
-        
+		# Clear the cached state 
+		[ConfigOverride]::ClearConfigInstance() 
 	}
 	
 	[string] GetControlSeverity($ControlSeverityFromServer)

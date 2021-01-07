@@ -252,7 +252,8 @@ class SubscriptionSecurity: AzCommandBase
 		if ($caAccount) 
 		{
 			#Passing parameter FixRuntimeAccount, RenewCertificate and FixModules as false by default
-			$messages += $caAccount.UpdateAzSKContinuousAssurance($false, $false, $false, $false,$true);
+			#Passing parameter UsageTelemetryLevel as "" default, to avoid overriding current usage telemetry level
+			$messages += $caAccount.UpdateAzSKContinuousAssurance($false, $false, $false, $false,$true, $false,"");
 		}
 		return $messages;
     }

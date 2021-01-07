@@ -12,6 +12,7 @@ class CsvOutputItem
     [string] $ControlSeverity = ""
     [string] $IsBaselineControl = ""
     [string] $IsPreviewBaselineControl = ""
+    [string] $IsControlExcluded = ""
     #Changes for compliance table dependency removal
     #removing IsControlInGrace from csv output
 	[string] $IsControlInGrace=""
@@ -26,5 +27,5 @@ class CsvOutputItem
     [string] $Recommendation = ""
 	[string] $ResourceId = ""
     [string] $DetailedLogFile = ""
-	[string] $UserComments = ""
+    [string] $UserComments = ""
 }

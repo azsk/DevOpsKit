@@ -48,6 +48,8 @@ class ControlItem
     # Parameters to prevent attestation drift 
     [bool] $IsAttestationDriftExpected = $false
     [OnAttestationDrift] $OnAttestationDrift = $null
+    # Property for control exclusion
+    [bool] $IsControlExcluded;
 }
 
 class FixControl

@@ -338,6 +338,8 @@ function Set-AzSKUsageTelemetryLevel {
             $azskSettings.UsageTelemetryLevel = $Level
             [ConfigurationManager]::UpdateAzSKSettings($azskSettings);
             [EventBase]::PublishGenericCustomMessage("Successfully set usage telemetry level");
+            # clearing session state so that telemetry setting will be immediately effective 
+            [ConfigOverride]::ClearConfigInstance()           
         }
         catch {
             [EventBase]::PublishGenericException($_);

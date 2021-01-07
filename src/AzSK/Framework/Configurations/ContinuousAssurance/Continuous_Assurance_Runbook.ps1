@@ -33,7 +33,7 @@ function GetEventBaseObject([string] $EventName) {
 function PublishEvent([string] $EventName, [hashtable] $Properties, [hashtable] $Metrics) {
     try {
 		#return if telemetry key is empty
-        if ([string]::IsNullOrWhiteSpace($telemetryKey)) { return; };
+		if ([string]::IsNullOrWhiteSpace($telemetryKey)) { return; };
 
         $eventObj = GetEventBaseObject -EventName $EventName
         SetCommonProperties -EventObj $eventObj

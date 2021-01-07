@@ -247,6 +247,21 @@ class WritePsConsole: FileOutputBase
 						$currentInstance.WriteMessage([Constants]::AttestationReadMsg + [ConfigurationManager]::GetAzSKConfigData().AzSKRGName, [MessageType]::Info)
 						
 					}
+					# Show control exclusion warning if subscription is enabled for control exclusion and atleast one control is in excluded state
+					$subscriptionId = $Event.SourceArgs[0].SubscriptionContext.SubscriptionId
+					$anyControlExcluded = ($Event.SourceArgs.ControlItem | Where-Object{ $_.IsControlExcluded -eq $true } | Measure-Object ).Count -gt 0
+					if([FeatureFlightingManager]::GetFeatureStatus("EnableControlExclusionByOrgPolicy",$subscriptionId) -and $anyControlExcluded){
+						$currentInstance.WriteMessage([Constants]::SingleDashLine, [MessageType]::Info)
+						$ControlExclusionWarningMessage = ""
+						$ControlExclusionHelpLink = ""
+						$ControlSettings = [ConfigurationManager]::LoadServerConfigFile("ControlSettings.json");
+						if($ControlSettings -ne $null  -and [Helpers]::CheckMember($ControlSettings, "ControlsToExcludeFromScan.ExclusionWarningMessage")){
+							$ControlExclusionWarningMessage = $ControlSettings.ControlsToExcludeFromScan.ExclusionWarningMessage
+							$ControlExclusionHelpLink = $ControlSettings.ControlsToExcludeFromScan.ExclusionHelpLink
+						}
+						$currentInstance.WriteMessage($($ControlExclusionWarningMessage), [MessageType]::Warning)
+						$currentInstance.WriteMessage($ControlExclusionHelpLink, [MessageType]::Warning)
+					}
 					$currentInstance.WriteMessage([Constants]::SingleDashLine, [MessageType]::Info)
 				}
 
@@ -444,18 +459,40 @@ class WritePsConsole: FileOutputBase
 	hidden [void] PrintSummaryData($event)
 	{
 		[SVTSummary[]] $summary = @();
-		$event.SourceArgs | ForEach-Object {
-			$item = $_
-			if ($item -and $item.ControlResults)
-			{
-				$item.ControlResults | ForEach-Object{
-					$summary += [SVTSummary]@{
-						VerificationResult = $_.VerificationResult;
-						ControlSeverity = $item.ControlItem.ControlSeverity;
-					};
-				};
+		$optimizedScanSummaryGenerationEnabled = [FeatureFlightingManager]::GetFeatureStatus("EnableOptimizedScanSummaryGeneration","*")
+		$subscriptionId = $Event.SourceArgs[0].SubscriptionContext.SubscriptionId
+		$controlExclusionByOrgPolicyEnabled = [FeatureFlightingManager]::GetFeatureStatus("EnableControlExclusionByOrgPolicy",$subscriptionId)
+		
+		if($optimizedScanSummaryGenerationEnabled){
+			if($controlExclusionByOrgPolicyEnabled){
+				$summary += @($event.SourceArgs | select-object @{Name="VerificationResult"; Expression = { if($_.ControlItem.IsControlExcluded) { [VerificationResult]::Excluded } else { $_.ControlResults.VerificationResult} }},@{Name="ControlSeverity"; Expression = {$_.ControlItem.ControlSeverity}})
+			}else{
+				$summary += @($event.SourceArgs | select-object @{Name="VerificationResult"; Expression = { $_.ControlResults.VerificationResult }},@{Name="ControlSeverity"; Expression = {$_.ControlItem.ControlSeverity}})
 			}
-		};
+		}else{
+			$event.SourceArgs | ForEach-Object {
+				$item = $_
+				if ($item -and $item.ControlResults)
+				{
+					$item.ControlResults | ForEach-Object{
+						if($controlExclusionByOrgPolicyEnabled -and $item.ControlItem.IsControlExcluded){
+							$summary += [SVTSummary]@{
+								VerificationResult = [VerificationResult]::Excluded;
+								ControlSeverity = $item.ControlItem.ControlSeverity;
+							};
+						}else{
+							$summary += [SVTSummary]@{
+								VerificationResult = $_.VerificationResult;
+								ControlSeverity = $item.ControlItem.ControlSeverity;
+							};
+						}
+					};
+				}
+			};
+		}
+		
+
+		
 
 		if($summary.Count -ne 0)
 		{
