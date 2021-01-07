@@ -1591,7 +1591,7 @@ class SubscriptionCore: AzSVTBase
 					if(($nonCompliantPIMCAPolicyTagRoles | Measure-Object).Count -gt 0 )
 					{
 						$controlResult.VerificationResult = [VerificationResult]::Failed
-						$controlResult.AddMessage("Roles that do not have required CA policy tags $($this.ControlSetting,"PIMCAPolicyTags" -join ',') `n $($nonCompliantPIMCAPolicyTagRoles | Format-List)  ");
+						$controlResult.AddMessage("Roles that do not have required CA policy tags $($this.ControlSetting,"PIMCAPolicyTags" -join ',') `n $($nonCompliantPIMCAPolicyTagRoles | Format-List) ");
 					}
 					elseif(($missingCAPolicyOnRoles | Measure-Object).Count -gt 0 )
 					{
