@@ -584,6 +584,7 @@
       "minimumTlsVersion": "TLS1_2"
     }
   },
+  "APIVersionForTLSandBlobUpdate": "2019-06-01",
   "ExtendedAttestationExpiry" : 180,
   "SeverityForSecContactAlerts": ["Medium","Low"],
   "MaxResourceInventoryObjectsCount": 20000,

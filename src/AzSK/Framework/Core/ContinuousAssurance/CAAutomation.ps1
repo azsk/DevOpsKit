@@ -785,7 +785,7 @@ class CCAutomation: AzCommandBase
 				$this.UserConfig.StorageAccountName = $existingStorage.Name
 				#make storage compliant to azsk
 				$this.ResolveStorageCompliance($existingStorage.Name,$existingStorage.ResourceId,$this.AutomationAccount.CoreResourceGroup,$this.CAScanOutputLogsContainerName)
-				
+
 				#update storage account variable
 				$storageVariable = $this.GetReportsStorageAccountNameVariable()
 				if($null -eq $storageVariable -or ($null -ne $storageVariable -and $storageVariable.Value.Trim() -ne $existingStorage.Name))
@@ -4491,9 +4491,14 @@ class CCAutomation: AzCommandBase
 	[void] UpdateTLSandBlobAccessForAzSKStorage($subscriptionId,$resourceGroup,$storageName)
 	{
 		$body = $null;
+		$APIVersion = $null;
 		$controlSettings = [ConfigurationManager]::LoadServerConfigFile("ControlSettings.json");
-		$ResourceAppIdURI = [WebRequestHelper]::GetResourceManagerUrl()		
-		$uri = $ResourceAppIdURI + "subscriptions/$($subscriptionId)/resourceGroups/$($resourceGroup)/providers/Microsoft.Storage/storageAccounts/$($storageName)?api-version=2019-06-01"
+		$ResourceAppIdURI = [WebRequestHelper]::GetResourceManagerUrl()	
+		if([Helpers]::CheckMember($ControlSettings, 'APIVersionForTLSandBlobUpdate'))
+		{
+			$APIVersion = $controlSettings.APIVersionForTLSandBlobUpdate
+		}	
+		$uri = $ResourceAppIdURI + "subscriptions/$($subscriptionId)/resourceGroups/$($resourceGroup)/providers/Microsoft.Storage/storageAccounts/$($storageName)?api-version=$APIVersion"
 		if([Helpers]::CheckMember($ControlSettings, 'TLSandBlobAccessForAzSKStorage'))
 		{
 			$body = $controlSettings.TLSandBlobAccessForAzSKStorage

@@ -538,10 +538,15 @@ class ContinuousAssurance: AzCommandBase
     #function to update TLS version and public blob access of AzSK storage account
 	[void] UpdateTLSandBlobAccessForAzSKStorage($subscriptionId,$resourceGroup,$storageName)
 	{
-		$body = $null;
+        $body = $null;
+        $APIVersion = $null;
 		$controlSettings = [ConfigurationManager]::LoadServerConfigFile("ControlSettings.json");
-		$ResourceAppIdURI = [WebRequestHelper]::GetResourceManagerUrl()		
-		$uri = $ResourceAppIdURI + "subscriptions/$($subscriptionId)/resourceGroups/$($resourceGroup)/providers/Microsoft.Storage/storageAccounts/$($storageName)?api-version=2019-06-01"
+        $ResourceAppIdURI = [WebRequestHelper]::GetResourceManagerUrl()	
+        if([Helpers]::CheckMember($ControlSettings, 'APIVersionForTLSandBlobUpdate'))
+		{
+			$APIVersion = $controlSettings.APIVersionForTLSandBlobUpdate
+		}		
+		$uri = $ResourceAppIdURI + "subscriptions/$($subscriptionId)/resourceGroups/$($resourceGroup)/providers/Microsoft.Storage/storageAccounts/$($storageName)?api-version=$APIVersion"
 		if([Helpers]::CheckMember($ControlSettings, 'TLSandBlobAccessForAzSKStorage'))
 		{
 			$body = $controlSettings.TLSandBlobAccessForAzSKStorage

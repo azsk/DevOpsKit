@@ -427,10 +427,10 @@ class PolicySetup: AzCommandBase
 
 		}	
 
-		#update TLS Version for stoarge account
+		#update TLS Version for stoarge account if storage is newly created/ TLS version of existing storage is not "TLS1.2"
 		$TLSVersion = $null
 		$ResourceAppIdURI = [WebRequestHelper]::GetResourceManagerUrl()		
-		$uri = $ResourceAppIdURI + "subscriptions/$($this.SubscriptionContext.SubscriptionId)/resourceGroups/$($this.StorageAccountInstance.ResourceGroupName)/providers/Microsoft.Storage/storageAccounts/$($this.StorageAccountInstance.Name)?api-version=2019-06-01"
+		$uri = $ResourceAppIdURI + "subscriptions/$($this.SubscriptionContext.SubscriptionId)/resourceGroups/$($this.StorageAccountInstance.ResourceGroupName)/providers/Microsoft.Storage/storageAccounts/$($this.StorageAccountInstance.StorageAccountName)?api-version=2019-06-01"
 		try
 		{
 			$response = [WebRequestHelper]::InvokeGetWebRequest($uri);
@@ -443,6 +443,7 @@ class PolicySetup: AzCommandBase
 		{
 			#eat exception
 		}
+		#If new storage is created, value for TLS version will be null and if existing storage is updated its TLS value will not be equal to 1.2
 		if ($null -eq $TLSVersion -or $TLSVersion -ne "TLS1_2")
 		{
 			$this.UpdateTLSVerionForOrgPolicyStorage($this.SubscriptionContext.SubscriptionId,$this.StorageAccountInstance.ResourceGroupName,$this.StorageAccountInstance.StorageAccountName)
@@ -1683,13 +1684,18 @@ class PolicySetup: AzCommandBase
 		# }
 		return $returnMsg
 	}
-	#function to update TLS version of storage accounts
+	#function to update TLS version of storage accounts for org policy setup
 	[void] UpdateTLSVerionForOrgPolicyStorage($subscriptionId,$resourceGroup,$storageName)
 	{
 		$body = $null;
+		$APIVersion = $null;
 		$controlSettings = [ConfigurationManager]::LoadServerConfigFile("ControlSettings.json");
-		$ResourceAppIdURI = [WebRequestHelper]::GetResourceManagerUrl()		
-		$uri = $ResourceAppIdURI + "subscriptions/$($subscriptionId)/resourceGroups/$($resourceGroup)/providers/Microsoft.Storage/storageAccounts/$($storageName)?api-version=2019-06-01"
+		$ResourceAppIdURI = [WebRequestHelper]::GetResourceManagerUrl()	
+		if([Helpers]::CheckMember($ControlSettings, 'APIVersionForTLSandBlobUpdate'))
+		{
+			$APIVersion = $controlSettings.APIVersionForTLSandBlobUpdate
+		}
+		$uri = $ResourceAppIdURI + "subscriptions/$($subscriptionId)/resourceGroups/$($resourceGroup)/providers/Microsoft.Storage/storageAccounts/$($storageName)?api-version=$APIVersion"
 		if([Helpers]::CheckMember($ControlSettings, 'TLSUpdateForOrgPolicy'))
 		{
 			$body = $controlSettings.TLSUpdateForOrgPolicy
