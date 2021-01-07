@@ -125,6 +125,26 @@ class ControlStateExtension
 					}					
 				}					
 			}
+
+			#update TLS and blob access settings for new storage
+			$body = $null;
+			$subid = $StorageAccount.Id.split("/")[2]
+			$controlSettings = [ConfigurationManager]::LoadServerConfigFile("ControlSettings.json");
+			$ResourceAppIdURI = [WebRequestHelper]::GetResourceManagerUrl()		
+			$uri = $ResourceAppIdURI + "subscriptions/$($subid)/resourceGroups/$($StorageAccount.ResourceGroupName)/providers/Microsoft.Storage/storageAccounts/$($StorageAccount.StorageAccountName)?api-version=2019-06-01"
+			if([Helpers]::CheckMember($ControlSettings, 'TLSandBlobAccessForAzSKStorage'))
+			{
+				$body = $controlSettings.TLSandBlobAccessForAzSKStorage
+			}
+			try
+			{
+				[WebRequestHelper]::InvokeWebRequest([Microsoft.PowerShell.Commands.WebRequestMethod]::Patch, $uri, $body);
+			}
+			catch
+			{
+				#eat exception
+			}
+
 			$this.AzSKStorageAccount = $StorageAccount;
 		}
 	}

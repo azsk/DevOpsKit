@@ -427,6 +427,27 @@ class PolicySetup: AzCommandBase
 
 		}	
 
+		#update TLS Version for stoarge account
+		$TLSVersion = $null
+		$ResourceAppIdURI = [WebRequestHelper]::GetResourceManagerUrl()		
+		$uri = $ResourceAppIdURI + "subscriptions/$($this.SubscriptionContext.SubscriptionId)/resourceGroups/$($this.StorageAccountInstance.ResourceGroupName)/providers/Microsoft.Storage/storageAccounts/$($this.StorageAccountInstance.Name)?api-version=2019-06-01"
+		try
+		{
+			$response = [WebRequestHelper]::InvokeGetWebRequest($uri);
+			if([Helpers]::CheckMember($response.properties, 'minimumTlsVersion'))
+			{
+				$TLSVersion = $response.properties.minimumTlsVersion
+			}
+		}
+		catch
+		{
+			#eat exception
+		}
+		if ($null -eq $TLSVersion -or $TLSVersion -ne "TLS1_2")
+		{
+			$this.UpdateTLSVerionForOrgPolicyStorage($this.SubscriptionContext.SubscriptionId,$this.StorageAccountInstance.ResourceGroupName,$this.StorageAccountInstance.StorageAccountName)
+		}
+
 		$container = $this.StorageAccountInstance.CreateStorageContainerIfNotExists($this.ConfigContainerName);
 		if($container -and $container.CloudBlobContainer)
 		{
@@ -1662,5 +1683,26 @@ class PolicySetup: AzCommandBase
 		# }
 		return $returnMsg
 	}
+	#function to update TLS version of storage accounts
+	[void] UpdateTLSVerionForOrgPolicyStorage($subscriptionId,$resourceGroup,$storageName)
+	{
+		$body = $null;
+		$controlSettings = [ConfigurationManager]::LoadServerConfigFile("ControlSettings.json");
+		$ResourceAppIdURI = [WebRequestHelper]::GetResourceManagerUrl()		
+		$uri = $ResourceAppIdURI + "subscriptions/$($subscriptionId)/resourceGroups/$($resourceGroup)/providers/Microsoft.Storage/storageAccounts/$($storageName)?api-version=2019-06-01"
+		if([Helpers]::CheckMember($ControlSettings, 'TLSUpdateForOrgPolicy'))
+		{
+			$body = $controlSettings.TLSUpdateForOrgPolicy
+		}
+		try
+		{
+			[WebRequestHelper]::InvokeWebRequest([Microsoft.PowerShell.Commands.WebRequestMethod]::Patch, $uri, $body)
+		}
+		catch
+		{
+			#eat exception
+		}
+	}
+
 }
 

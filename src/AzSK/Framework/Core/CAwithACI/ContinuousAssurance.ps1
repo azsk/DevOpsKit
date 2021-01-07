@@ -236,7 +236,11 @@ class ContinuousAssurance: AzCommandBase
 	    Set-AzStorageServiceMetricsProperty -MetricsType Hour -ServiceType Blob -Context $currentContext -MetricsLevel ServiceAndApi -RetentionDays 365 -PassThru
 	    
 		#Azure_Storage_DP_Encrypt_In_Transit
-	    Set-AzStorageAccount -ResourceGroupName $resourceGroup -Name $storageName -EnableHttpsTrafficOnly $true
+        Set-AzStorageAccount -ResourceGroupName $resourceGroup -Name $storageName -EnableHttpsTrafficOnly $true
+        
+        #Setting the TLSVersion to 1.2 and disabling public blob access
+		$subid = $ResourceId.split("/")[2]
+		$this.UpdateTLSandBlobAccessForAzSKStorage($subid,$resourceGroup,$storageName)
     }
 
     #TBD
@@ -333,6 +337,14 @@ class ContinuousAssurance: AzCommandBase
                 Set-AzStorageAccount -ResourceGroupName $newStorage.ResourceGroupName -Name $newStorage.StorageAccountName -Tag $this.reportStorageTags -Force -ErrorAction SilentlyContinue
             } 
         }
+
+        #update TLS and blob access settings for new storage
+        $caStorageAccount = [UserSubscriptionDataHelper]::GetUserSubscriptionStorage()
+        if($null -ne $caStorageAccount)
+        { 
+            $this.UpdateTLSandBlobAccessForAzSKStorage($this.SubscriptionContext.SubscriptionId,$caStorageAccount.ResourceGroupName,$caStorageAccount.Name)
+        }
+
         $this.EnvironmentVariables.Add('StorageAccountName', $this.StorageAccountName)
         $ContainerIntstance = $this.GetCAContainerInstance()
         if($ContainerIntstance)
@@ -401,6 +413,14 @@ class ContinuousAssurance: AzCommandBase
                 }
                 Set-AzStorageAccount -ResourceGroupName $newStorage.ResourceGroupName -Name $newStorage.StorageAccountName -Tag $this.reportStorageTags -Force -ErrorAction SilentlyContinue
             }
+
+            #update TLS and blob access settings for new storage
+            $caStorageAccount = [UserSubscriptionDataHelper]::GetUserSubscriptionStorage()
+            if($null -ne $caStorageAccount)
+            { 
+                $this.UpdateTLSandBlobAccessForAzSKStorage($this.SubscriptionContext.SubscriptionId,$caStorageAccount.ResourceGroupName,$caStorageAccount.Name)
+            }
+
         }
         $this.EnvironmentVariables.Add('StorageAccountName', $this.StorageAccountName)
         $this.PublishCustomMessage("Updating Azure container instance: [" + $this.ContainerName + "]")
@@ -514,4 +534,25 @@ class ContinuousAssurance: AzCommandBase
             $this.PublishCustomMessage("Removed Function app : [$($this.FunctionAppName)] from resource group: [$($this.ResourceGroup)]")
         }
     }
+
+    #function to update TLS version and public blob access of AzSK storage account
+	[void] UpdateTLSandBlobAccessForAzSKStorage($subscriptionId,$resourceGroup,$storageName)
+	{
+		$body = $null;
+		$controlSettings = [ConfigurationManager]::LoadServerConfigFile("ControlSettings.json");
+		$ResourceAppIdURI = [WebRequestHelper]::GetResourceManagerUrl()		
+		$uri = $ResourceAppIdURI + "subscriptions/$($subscriptionId)/resourceGroups/$($resourceGroup)/providers/Microsoft.Storage/storageAccounts/$($storageName)?api-version=2019-06-01"
+		if([Helpers]::CheckMember($ControlSettings, 'TLSandBlobAccessForAzSKStorage'))
+		{
+			$body = $controlSettings.TLSandBlobAccessForAzSKStorage
+		}
+		try
+		{
+			[WebRequestHelper]::InvokeWebRequest([Microsoft.PowerShell.Commands.WebRequestMethod]::Patch, $uri, $body);
+		}
+		catch
+		{
+			#eat exception
+		}
+	}
 }

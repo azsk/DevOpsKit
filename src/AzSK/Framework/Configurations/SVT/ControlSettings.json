@@ -573,6 +573,17 @@
   "PublicIpAddress": {
     "EnablePublicIpResource": false
    },
+   "TLSandBlobAccessForAzSKStorage":{
+     "properties":{
+       "allowBlobPublicAccess" : false,
+       "minimumTlsVersion": "TLS1_2"
+     }
+   },
+   "TLSUpdateForOrgPolicy":{
+    "properties":{
+      "minimumTlsVersion": "TLS1_2"
+    }
+  },
   "ExtendedAttestationExpiry" : 180,
   "SeverityForSecContactAlerts": ["Medium","Low"],
   "MaxResourceInventoryObjectsCount": 20000,
