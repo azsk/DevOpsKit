@@ -247,7 +247,7 @@ class SQLDatabase: AzSVTBase
 
 						$isCompliant =  (($serverThreat.ThreatDetectionState -eq [ThreatDetectionStateType]::Enabled) `
 									-and ($excludedTypeCount -eq 0) `
-									-and (($serverThreat.EmailAdmins  -eq $True) -or ($null -ne $serverThreat.NotificationRecipientsEmails)))
+									-and (($serverThreat.EmailAdmins  -eq $True) -or (-not [string]::IsNullOrEmpty($serverThreat.NotificationRecipientsEmails))))
 						if ($isCompliant) {
 							$controlResult.VerificationResult = [VerificationResult]::Passed
 						}
