@@ -339,6 +339,7 @@ class ServicesSecurityStatus: AzSVTCommandBase
 
 	hidden [SVTEventContext[]] ScanAttestedControls()
 	{
+		$Global:AttestationValue = $false
 		[ControlStateExtension] $ControlStateExt = [ControlStateExtension]::new($this.SubscriptionContext, $this.InvocationContext);
 		$ControlStateExt.UniqueRunId = $this.ControlStateExt.UniqueRunId;
 		$ControlStateExt.Initialize($false);
