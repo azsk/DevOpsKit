@@ -832,16 +832,16 @@ class StorageHelper: ResourceGroupHelper
 		$uri = $ResourceAppIdURI + "subscriptions/$($subscriptionId)/resourceGroups/$($resourceGroup)/providers/Microsoft.Storage/storageAccounts/$($storageName)?api-version=2019-06-01"
 		if (!$Global:isAzSKStorage) 
 		{
-			if([Helpers]::CheckMember($ControlSettings, 'TLSUpdateForOrgPolicy'))
+			if([Helpers]::CheckMember($ControlSettings.UpdateAzSKStorageSettings, 'TLSUpdateForOrgPolicy'))
 			{
-				$body = $controlSettings.TLSUpdateForOrgPolicy | ConvertTo-Json -Depth 10
+				$body = $controlSettings.UpdateAzSKStorageSettings.TLSUpdateForOrgPolicy | ConvertTo-Json -Depth 10
 			}
 		}
 		else
 		{
-			if([Helpers]::CheckMember($ControlSettings, 'TLSandBlobAccessForAzSKStorage'))
+			if([Helpers]::CheckMember($ControlSettings.UpdateAzSKStorageSettings, 'UpdateTLSandBlobAccessForAzSKStorage'))
 			{
-				$body = $controlSettings.TLSandBlobAccessForAzSKStorage | ConvertTo-Json -Depth 10
+				$body = $controlSettings.UpdateAzSKStorageSettings.UpdateTLSandBlobAccessForAzSKStorage | ConvertTo-Json -Depth 10
 			}
 		}
 		
