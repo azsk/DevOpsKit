@@ -428,7 +428,7 @@ class SubscriptionCore: AzSVTBase
 		$this.GetRoleAssignments()
         Set-Variable -Name classicCoAdmins -Scope Local
 
-        $classicCoAdmins = $this.RoleAssignments | Where-Object { $_.RoleDefinitionName -eq 'CoAdministrator' `
+        $classicCoAdmins = $this.RoleAssignments | Where-Object { $_.RoleDefinitionName -match 'CoAdministrator' `
 																				-or $_.RoleDefinitionName -like '*ServiceAdministrator*' }
 		$count = ($classicCoAdmins | Measure-Object).Count
         #$controlResult.AddMessage("No. of CoAdministrators found: $count",  ($classicCoAdmins | Select-Object DisplayName, Scope, ObjectType, ObjectId), $true, "CoAdminsList")
@@ -1471,10 +1471,10 @@ class SubscriptionCore: AzSVTBase
 			}	
 			if([Helpers]::CheckMember($this.ControlSettings,"CheckPIMCAPolicyTags"))
 			{
-				if($missingCAPolicyOnRoles.Count -gt 0)
+				if($nonCompliantPIMCAPolicyTagRoles.Count -gt 0)
 				{
 					$controlResult.VerificationResult = [VerificationResult]::Failed
-					$controlResult.AddMessage("Roles that donot have required CA policy tags $($this.ControlSetting,"PIMCAPolicyTags" -join ',') `n $($missingCAPolicyOnRoles | Format-List) ");
+					$controlResult.AddMessage("Roles that donot have required CA policy tags $($this.ControlSettings.PIMCAPolicyTags -join ',') `n $($nonCompliantPIMCAPolicyTagRoles | Format-List | Out-String) ");
 				}
 				elseif($invalidRoles.Count -gt 0)
 				{
@@ -1591,7 +1591,7 @@ class SubscriptionCore: AzSVTBase
 					if(($nonCompliantPIMCAPolicyTagRoles | Measure-Object).Count -gt 0 )
 					{
 						$controlResult.VerificationResult = [VerificationResult]::Failed
-						$controlResult.AddMessage("Roles that do not have required CA policy tags $($this.ControlSetting,"PIMCAPolicyTags" -join ',') `n $($nonCompliantPIMCAPolicyTagRoles | Format-List) ");
+						$controlResult.AddMessage("Roles that do not have required CA policy tags $($this.ControlSetting.PIMCAPolicyTags -join ',') `n $($nonCompliantPIMCAPolicyTagRoles | Format-List| Out-String) ");
 					}
 					elseif(($missingCAPolicyOnRoles | Measure-Object).Count -gt 0 )
 					{
