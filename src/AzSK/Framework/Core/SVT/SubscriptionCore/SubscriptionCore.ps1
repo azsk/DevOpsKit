@@ -104,7 +104,7 @@ class SubscriptionCore: AzSVTBase
 		$scope = $this.SubscriptionContext.Scope;
 
 		$SubAdmins = @();
-		$SubAdmins += $this.RoleAssignments | Where-Object { ($_.RoleDefinitionName -eq 'CoAdministrator' `
+		$SubAdmins += $this.RoleAssignments | Where-Object { ($_.RoleDefinitionName -match 'CoAdministrator' `
 			-or $_.RoleDefinitionName -like '*ServiceAdministrator*' `
 			-or $_.RoleDefinitionName -eq 'Owner') -and $_.Scope -eq $scope}
 
@@ -227,7 +227,7 @@ class SubscriptionCore: AzSVTBase
 		$scope = $this.SubscriptionContext.Scope;
 
 		$SubAdmins = @();
-		$SubAdmins += $this.RoleAssignments | Where-Object { $_.RoleDefinitionName -eq 'CoAdministrator' `
+		$SubAdmins += $this.RoleAssignments | Where-Object { $_.RoleDefinitionName -match 'CoAdministrator' `
 																				-or $_.RoleDefinitionName -like '*ServiceAdministrator*' `
 																				-or ($_.RoleDefinitionName -eq 'Owner' -and $_.Scope -eq $scope)}
 		if($this.HasGraphAPIAccess -eq $false)
@@ -271,8 +271,8 @@ class SubscriptionCore: AzSVTBase
 			CoAdmins = @();
 		};
 
-		$stateData.Owners += $ClientSubAdmins | Where-Object { -not ($_.RoleDefinitionName -eq 'CoAdministrator' -or $_.RoleDefinitionName -like '*ServiceAdministrator*') };
-		$stateData.CoAdmins += $ClientSubAdmins | Where-Object { $_.RoleDefinitionName -eq 'CoAdministrator' -or $_.RoleDefinitionName -like '*ServiceAdministrator*' };
+		$stateData.Owners += $ClientSubAdmins | Where-Object { -not ($_.RoleDefinitionName -match 'CoAdministrator' -or $_.RoleDefinitionName -like '*ServiceAdministrator*') };
+		$stateData.CoAdmins += $ClientSubAdmins | Where-Object { $_.RoleDefinitionName -match 'CoAdministrator' -or $_.RoleDefinitionName -like '*ServiceAdministrator*' };
 
 		$controlResult.SetStateData("All Subscription Owners/CoAdministrators/ServiceAdministrators (excludes accounts from central team)", $stateData);
 
@@ -428,7 +428,7 @@ class SubscriptionCore: AzSVTBase
 		$this.GetRoleAssignments()
         Set-Variable -Name classicCoAdmins -Scope Local
 
-        $classicCoAdmins = $this.RoleAssignments | Where-Object { $_.RoleDefinitionName -eq 'CoAdministrator' `
+        $classicCoAdmins = $this.RoleAssignments | Where-Object { $_.RoleDefinitionName -match 'CoAdministrator' `
 																				-or $_.RoleDefinitionName -like '*ServiceAdministrator*' }
 		$count = ($classicCoAdmins | Measure-Object).Count
         #$controlResult.AddMessage("No. of CoAdministrators found: $count",  ($classicCoAdmins | Select-Object DisplayName, Scope, ObjectType, ObjectId), $true, "CoAdminsList")
@@ -1471,10 +1471,10 @@ class SubscriptionCore: AzSVTBase
 			}	
 			if([Helpers]::CheckMember($this.ControlSettings,"CheckPIMCAPolicyTags"))
 			{
-				if($missingCAPolicyOnRoles.Count -gt 0)
+				if($nonCompliantPIMCAPolicyTagRoles.Count -gt 0)
 				{
 					$controlResult.VerificationResult = [VerificationResult]::Failed
-					$controlResult.AddMessage("Roles that donot have required CA policy tags $($this.ControlSetting,"PIMCAPolicyTags" -join ',') `n $($missingCAPolicyOnRoles | Format-List) ");
+					$controlResult.AddMessage("Roles that donot have required CA policy tags $($this.ControlSettings.PIMCAPolicyTags -join ',') `n $($nonCompliantPIMCAPolicyTagRoles | Format-List | Out-String) ");
 				}
 				elseif($invalidRoles.Count -gt 0)
 				{
