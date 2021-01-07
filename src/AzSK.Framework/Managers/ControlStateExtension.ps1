@@ -80,9 +80,6 @@ class ControlStateExtension
 	hidden [void] GetAzSKStorageAccount($createIfNotExists)
 	{
 		$azSKConfigData = [ConfigurationManager]::GetAzSKConfigData()
-		
-		#setting the global variable isAzSKStorage to true
-		$Global:isAzSKStorage = $true;
 
 		if($null -eq $this.AzSKResourceGroup)
 		{

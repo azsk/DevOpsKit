@@ -427,23 +427,10 @@ class PolicySetup: AzCommandBase
 
 		}	
 
+		#getting TLS properties if the storage is already present
+		$TLSVersion = $this.GetStoargeAccountProperties($this.SubscriptionContext.SubscriptionId,$this.StorageAccountInstance.ResourceGroupName,$this.StorageAccountInstance.StorageAccountName)
+
 		#update TLS Version for stoarge account if storage is newly created/ TLS version of existing storage is not "TLS1.2"
-		$TLSVersion = $null
-		$ResourceAppIdURI = [WebRequestHelper]::GetResourceManagerUrl()		
-		$uri = $ResourceAppIdURI + "subscriptions/$($this.SubscriptionContext.SubscriptionId)/resourceGroups/$($this.StorageAccountInstance.ResourceGroupName)/providers/Microsoft.Storage/storageAccounts/$($this.StorageAccountInstance.StorageAccountName)?api-version=2019-06-01"
-		try
-		{
-			$response = [WebRequestHelper]::InvokeGetWebRequest($uri);
-			if([Helpers]::CheckMember($response.properties, 'minimumTlsVersion'))
-			{
-				$TLSVersion = $response.properties.minimumTlsVersion
-			}
-		}
-		catch
-		{
-			#eat exception
-		}
-		#If new storage is created, value for TLS version will be null and if existing storage is updated its TLS value will not be equal to 1.2
 		if ($null -eq $TLSVersion -or $TLSVersion -ne "TLS1_2")
 		{
 			[StorageHelper]::UpdateTLSandBlobAccessForAzSKStorage($this.SubscriptionContext.SubscriptionId,$this.StorageAccountInstance.ResourceGroupName,$this.StorageAccountInstance.StorageAccountName)
@@ -1683,6 +1670,27 @@ class PolicySetup: AzCommandBase
 		# 	$returnMsg += $commonFailMsg
 		# }
 		return $returnMsg
+	}
+
+	#function to get storage account properties
+	[String] GetStoargeAccountProperties($subscriptionId,$ResourceGroupName,$storageName)
+	{
+		$TLSVersion = $null
+		$ResourceAppIdURI = [WebRequestHelper]::GetResourceManagerUrl()		
+		$uri = $ResourceAppIdURI + "subscriptions/$($subscriptionId)/resourceGroups/$($ResourceGroupName)/providers/Microsoft.Storage/storageAccounts/$($storageName)?api-version=2019-06-01"
+		try
+		{
+			$response = [WebRequestHelper]::InvokeGetWebRequest($uri);
+			if([Helpers]::CheckMember($response.properties, 'minimumTlsVersion'))
+			{
+				$TLSVersion = $response.properties.minimumTlsVersion
+			}
+		}
+		catch
+		{
+			#eat exception
+		}
+		return $TLSVersion
 	}
 
 }

@@ -573,14 +573,14 @@
   "PublicIpAddress": {
     "EnablePublicIpResource": false
    },
-   "UpdateAzSKStorageSettings":{
-     "UpdateTLSandBlobAccessForAzSKStorage":{
+   "AzSKStorageSettings":{
+     "TLSandBlobAccessForAzSKStorage":{
        "properties":{
        "allowBlobPublicAccess" : false,
        "minimumTlsVersion": "TLS1_2"
        }
      },
-     "TLSUpdateForOrgPolicy":{
+     "TLSSettingForOrgPolicy":{
       "properties":{
         "minimumTlsVersion": "TLS1_2"
       }

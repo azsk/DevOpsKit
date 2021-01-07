@@ -285,15 +285,12 @@ class CCAutomation: AzCommandBase
 			#region: Create/reuse existing storage account (Added this before creating variables since it's value is used in it)
 			$existingStorage = [UserSubscriptionDataHelper]::GetUserSubscriptionStorage()
 
-			#setting the global variable isAzSKStorage to true
-			$Global:isAzSKStorage = $true;
-
 			if(($existingStorage|Measure-Object).Count -gt 0)
 			{
 				$this.UserConfig.StorageAccountName = $existingStorage.Name
 				#to update TLS and blob access settings for existing storage account
-				[StorageHelper]::UpdateTLSandBlobAccessForAzSKStorage($this.SubscriptionContext.SubscriptionId,$existingStorage.ResourceGroupName,$existingStorage.Name)
 				$this.PublishCustomMessage("Preparing a storage account for storing reports from CA scans...`r`nFound existing AzSK storage account: ["+ $this.UserConfig.StorageAccountName +"]. This will be used to store reports from CA scans.")
+				[StorageHelper]::UpdateTLSandBlobAccessForAzSKStorage($this.SubscriptionContext.SubscriptionId,$existingStorage.ResourceGroupName,$existingStorage.Name)
 			}
 			else
 			{
@@ -774,9 +771,6 @@ class CCAutomation: AzCommandBase
 		
 			#Check if storage exists
 			$existingStorage = [UserSubscriptionDataHelper]::GetUserSubscriptionStorage()
-
-			#setting the global variable isAzSKStorage to true
-			$Global:isAzSKStorage = $true;
 
 			if(($existingStorage|Measure-Object).Count -gt 0)
 			{
@@ -3910,7 +3904,8 @@ class CCAutomation: AzCommandBase
 		Set-AzStorageAccount -ResourceGroupName $resourceGroup -Name $storageName -EnableHttpsTrafficOnly $true
 		
 		#Setting the TLSVersion to 1.2 and disabling public blob access
-		$subid = $ResourceId.split("/")[2]
+		$currentContext = Get-AzContext
+		$subid = $currentContext.Subscription.SubscriptionId
 		[StorageHelper]::UpdateTLSandBlobAccessForAzSKStorage($subid,$resourceGroup,$storageName)
 
 	}

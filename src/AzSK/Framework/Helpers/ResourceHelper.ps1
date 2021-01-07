@@ -372,7 +372,7 @@ class StorageHelper: ResourceGroupHelper
 	{
 		if(-not $this.StorageAccount)
 		{
-			$Global:isAzSKStorage = $false;
+			$isAzSKStorage = $false;
 			$this.CreateResourceGroupIfNotExists();
 			if($this.ResourceGroupName -eq [ConfigurationManager]::GetAzSKConfigData().AzSKRGName -and $this.StorageAccountName -like "$([Constants]::StorageAccountPreName)*")           
             {
@@ -382,7 +382,7 @@ class StorageHelper: ResourceGroupHelper
                     return;
                 }
                 else {
-                    $Global:isAzSKStorage = $true
+                    $isAzSKStorage = $true
                 }               
 			}   
             $existingResources = Get-AzResource -ResourceGroupName $this.ResourceGroupName -ResourceType $this.ResourceType
@@ -427,7 +427,7 @@ class StorageHelper: ResourceGroupHelper
 			
 			#precompute storage access permissions for the current scan account
 			$this.ComputePermissions();
-            if($Global:isAzSKStorage)
+            if($isAzSKStorage)
 			{
 				[StorageHelper]::AzSKStorageHelperInstance = $this
 			}
@@ -819,7 +819,6 @@ class StorageHelper: ResourceGroupHelper
 	
 	static [void] UpdateTLSandBlobAccessForAzSKStorage($subscriptionId,$resourceGroup,$storageName)
 	{
-        #$subid = $storageObject.Id.split("/")[2]
 		$body = $null;
 		$headerParams = $null;
 		$controlSettings = [ConfigurationManager]::LoadServerConfigFile("ControlSettings.json");
@@ -828,31 +827,33 @@ class StorageHelper: ResourceGroupHelper
 		if ($null -ne $AccessToken)
 		{
 			$headerParams = @{'Authorization' = "Bearer $($AccessToken)" }
-		}
-		$uri = $ResourceAppIdURI + "subscriptions/$($subscriptionId)/resourceGroups/$($resourceGroup)/providers/Microsoft.Storage/storageAccounts/$($storageName)?api-version=2019-06-01"
-		if (!$Global:isAzSKStorage) 
-		{
-			if([Helpers]::CheckMember($ControlSettings.UpdateAzSKStorageSettings, 'TLSUpdateForOrgPolicy'))
+
+			$uri = $ResourceAppIdURI + "subscriptions/$($subscriptionId)/resourceGroups/$($resourceGroup)/providers/Microsoft.Storage/storageAccounts/$($storageName)?api-version=2019-06-01"
+			if($resourceGroup -ne [ConfigurationManager]::GetAzSKConfigData().AzSKRGName) 
 			{
-				$body = $controlSettings.UpdateAzSKStorageSettings.TLSUpdateForOrgPolicy | ConvertTo-Json -Depth 10
+				if([Helpers]::CheckMember($ControlSettings.AzSKStorageSettings, 'TLSSettingForOrgPolicy'))
+				{
+					$body = $controlSettings.AzSKStorageSettings.TLSSettingForOrgPolicy | ConvertTo-Json -Depth 10
+				}
 			}
-		}
-		else
-		{
-			if([Helpers]::CheckMember($ControlSettings.UpdateAzSKStorageSettings, 'UpdateTLSandBlobAccessForAzSKStorage'))
+			else
 			{
-				$body = $controlSettings.UpdateAzSKStorageSettings.UpdateTLSandBlobAccessForAzSKStorage | ConvertTo-Json -Depth 10
+				if([Helpers]::CheckMember($ControlSettings.AzSKStorageSettings, 'TLSandBlobAccessForAzSKStorage'))
+				{
+					$body = $controlSettings.AzSKStorageSettings.TLSandBlobAccessForAzSKStorage | ConvertTo-Json -Depth 10
+				}
+			}
+		
+			try
+			{
+				Invoke-WebRequest -Method Patch -Uri $uri -Headers $headerParams -Body $body -ContentType "application/json" -UseBasicParsing
+			}
+			catch
+			{
+				#eat exception
 			}
 		}
 		
-		try
-		{
-			Invoke-WebRequest -Method Patch -Uri $uri -Headers $headerParams -Body $body -ContentType "application/json" -UseBasicParsing
-		}
-		catch
-		{
-			#eat exception
-		}
 	}
 }
 

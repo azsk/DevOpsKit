@@ -239,7 +239,8 @@ class ContinuousAssurance: AzCommandBase
         Set-AzStorageAccount -ResourceGroupName $resourceGroup -Name $storageName -EnableHttpsTrafficOnly $true
         
         #Setting the TLSVersion to 1.2 and disabling public blob access
-		$subid = $ResourceId.split("/")[2]
+		$currentContext = Get-AzContext
+		$subid = $currentContext.Subscription.SubscriptionId
 		[StorageHelper]::UpdateTLSandBlobAccessForAzSKStorage($subid,$resourceGroup,$storageName)
     }
 
