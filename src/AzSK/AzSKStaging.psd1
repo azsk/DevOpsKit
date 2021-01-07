@@ -179,10 +179,10 @@
             Tags         = 'Azure', 'AzSK', 'Azure_Security'
 
             # A URL to the license for this module.
-            LicenseUri   = 'https://github.com/azsk/azsk-docs/blob/master/LICENSE'
+            LicenseUri   = 'https://github.com/azsk/DevOpsKit-docs/blob/master/LICENSE'
 
             # A URL to the main website for this project.
-            ProjectUri   = 'https://github.com/azsk/azsk-docs'
+            ProjectUri   = 'https://github.com/azsk/DevOpsKit-docs'
 
             # A URL to an icon representing this module.
             # IconUri = ''
