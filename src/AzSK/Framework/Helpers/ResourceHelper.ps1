@@ -795,9 +795,12 @@ class StorageHelper: ResourceGroupHelper
 		}
 		
 		#update TLS and blob access for newly created storage account
-		$currentContext = Get-AzContext
-		$subid = $currentContext.Subscription.SubscriptionId
-		[StorageHelper]::UpdateTLSandBlobAccessForAzSKStorage($subid,$storageObject.ResourceGroupName,$storageObject.StorageAccountName)
+		if ($null -ne $storageObject)
+		{
+			$currentContext = Get-AzContext
+			$subid = $currentContext.Subscription.SubscriptionId
+			[StorageHelper]::UpdateTLSandBlobAccessForAzSKStorage($subid,$storageObject.ResourceGroupName,$storageObject.StorageAccountName)
+		}
 
         return $storageObject
 	}
@@ -822,6 +825,7 @@ class StorageHelper: ResourceGroupHelper
 	{
 		$body = $null;
 		$headerParams = $null;
+		$AccessToken = $null;
 		$controlSettings = [ConfigurationManager]::LoadServerConfigFile("ControlSettings.json");
 		$ResourceAppIdURI = "https://management.azure.com/"
 		$AccessToken =  Get-AzSKAccessToken -ResourceAppIdURI $ResourceAppIdURI
@@ -832,14 +836,14 @@ class StorageHelper: ResourceGroupHelper
 			$uri = $ResourceAppIdURI + "subscriptions/$($subscriptionId)/resourceGroups/$($resourceGroup)/providers/Microsoft.Storage/storageAccounts/$($storageName)?api-version=2019-06-01"
 			if($resourceGroup -ne [ConfigurationManager]::GetAzSKConfigData().AzSKRGName) 
 			{
-				if([Helpers]::CheckMember($ControlSettings.AzSKStorageSettings, 'TLSSettingForOrgPolicy'))
+				if([Helpers]::CheckMember($ControlSettings, 'AzSKStorageSettings.TLSSettingForOrgPolicy'))
 				{
 					$body = $controlSettings.AzSKStorageSettings.TLSSettingForOrgPolicy | ConvertTo-Json -Depth 10
 				}
 			}
 			else
 			{
-				if([Helpers]::CheckMember($ControlSettings.AzSKStorageSettings, 'TLSandBlobAccessForAzSKStorage'))
+				if([Helpers]::CheckMember($ControlSettings, 'AzSKStorageSettings.TLSandBlobAccessForAzSKStorage'))
 				{
 					$body = $controlSettings.AzSKStorageSettings.TLSandBlobAccessForAzSKStorage | ConvertTo-Json -Depth 10
 				}

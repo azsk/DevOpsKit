@@ -423,7 +423,7 @@ class CCAutomation: AzCommandBase
 									$this.PublishCustomMessage("Preparing a storage account for storing reports from CA scans...`r`nFound existing AzSK storage account: [$caStorageAccountName]. This will be used to store reports from CA scans.")
 									$out.StorageAccountName = $caStorageAccountName;
 									#make storage compliant to azsk
-									$this.ResolveStorageCompliance($existingStorage.Name,$existingStorage.ResourceId,$this.AutomationAccount.CoreResourceGroup,$this.CAScanOutputLogsContainerName)
+									[StorageHelper]::UpdateTLSandBlobAccessForAzSKStorage($caSubId,$existingStorage.ResourceGroupName,$existingStorage.Name)
 									$this.SetCASPNPermissions($this.CAAADApplicationID)
 								}
 								else
