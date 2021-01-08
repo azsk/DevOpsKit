@@ -849,13 +849,16 @@ class StorageHelper: ResourceGroupHelper
 				}
 			}
 		
-			try
+			if($null -ne $body)
 			{
-				Invoke-WebRequest -Method Patch -Uri $uri -Headers $headerParams -Body $body -ContentType "application/json" -UseBasicParsing
-			}
-			catch
-			{
-				#eat exception
+				try
+				{
+					Invoke-WebRequest -Method Patch -Uri $uri -Headers $headerParams -Body $body -ContentType "application/json" -UseBasicParsing
+				}
+				catch
+				{
+					#eat exception
+				}
 			}
 		}
 		
