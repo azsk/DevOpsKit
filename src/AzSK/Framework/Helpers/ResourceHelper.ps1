@@ -827,7 +827,7 @@ class StorageHelper: ResourceGroupHelper
 		$headerParams = $null;
 		$AccessToken = $null;
 		$controlSettings = [ConfigurationManager]::LoadServerConfigFile("ControlSettings.json");
-		$ResourceAppIdURI = "https://management.azure.com/"
+		$ResourceAppIdURI = [Constants]::ARMManagementUri
 		$AccessToken =  Get-AzSKAccessToken -ResourceAppIdURI $ResourceAppIdURI
 		if ($null -ne $AccessToken)
 		{
