@@ -492,6 +492,7 @@
   "ControlsToExcludeFromScan": {
     "TenantIds": [],
     "ControlIds" : [],
+    "ExtendedControlIds": [],
     "ExclusionWarningMessage" : "",
     "ExclusionHelpLink": "",
     "BlockedAttestationWarningMessage": ""

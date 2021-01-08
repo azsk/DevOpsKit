@@ -291,6 +291,15 @@
       "DisabledForSubs": [],
       "UnderPreview": false,
       "IsEnabled": false
+    },
+    {
+      "Name": "EnableExtendedControlExclusionByOrgPolicy",
+      "Description": "",
+      "Sources": ["*"],
+      "EnabledForSubs": [],
+      "DisabledForSubs": [],
+      "UnderPreview": false,
+      "IsEnabled": false
     }
   ]
 }
