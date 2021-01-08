@@ -427,6 +427,15 @@ class PolicySetup: AzCommandBase
 
 		}	
 
+		#getting TLS properties if the storage is already present
+		$TLSVersion = $this.GetStoargeAccountProperties($this.SubscriptionContext.SubscriptionId,$this.StorageAccountInstance.ResourceGroupName,$this.StorageAccountInstance.StorageAccountName)
+
+		#update TLS Version for stoarge account if storage is newly created/ TLS version of existing storage is not "TLS1.2"
+		if ($null -eq $TLSVersion -or $TLSVersion -ne "TLS1_2")
+		{
+			[StorageHelper]::UpdateTLSandBlobAccessForAzSKStorage($this.SubscriptionContext.SubscriptionId,$this.StorageAccountInstance.ResourceGroupName,$this.StorageAccountInstance.StorageAccountName)
+		}
+
 		$container = $this.StorageAccountInstance.CreateStorageContainerIfNotExists($this.ConfigContainerName);
 		if($container -and $container.CloudBlobContainer)
 		{
@@ -1662,5 +1671,27 @@ class PolicySetup: AzCommandBase
 		# }
 		return $returnMsg
 	}
+
+	#function to get storage account properties
+	[String] GetStoargeAccountProperties($subscriptionId,$ResourceGroupName,$storageName)
+	{
+		$TLSVersion = $null
+		$ResourceAppIdURI = [WebRequestHelper]::GetResourceManagerUrl()		
+		$uri = $ResourceAppIdURI + "subscriptions/$($subscriptionId)/resourceGroups/$($ResourceGroupName)/providers/Microsoft.Storage/storageAccounts/$($storageName)?api-version=2019-06-01"
+		try
+		{
+			$response = [WebRequestHelper]::InvokeGetWebRequest($uri);
+			if([Helpers]::CheckMember($response.properties, 'minimumTlsVersion'))
+			{
+				$TLSVersion = $response.properties.minimumTlsVersion
+			}
+		}
+		catch
+		{
+			#eat exception
+		}
+		return $TLSVersion
+	}
+
 }
 
