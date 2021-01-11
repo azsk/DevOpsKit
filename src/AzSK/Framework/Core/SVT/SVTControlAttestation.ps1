@@ -39,7 +39,7 @@ class SVTControlAttestation
 			$this.ControlExclusionHelpLink = $this.ControlSettings.ControlsToExcludeFromScan.ExclusionHelpLink
 			$this.BlockedAttestationWarningMessage = $this.ControlSettings.ControlsToExcludeFromScan.BlockedAttestationWarningMessage
 			$TenantId = ([ContextHelper]::GetCurrentRMContext()).Tenant.Id
-			if([FeatureFlightingManager]::GetFeatureStatus("EnableExtendedControlExclusionByOrgPolicy",$($this.SubscriptionContext.SubscriptionId)) `
+			if(($this.byDesignAttestationDisabledByOrgPolicy -eq $true -or $this.approvedExceptionAttestationDisabledByOrgPolicy -eq $true) `
 				-and ($this.ControlSettings.ControlsToExcludeFromScan.TenantIds -contains $TenantId)){
 				$this.ExtendedExcludedControlIds += $this.ControlSettings.ControlsToExcludeFromScan.ExtendedControlIds
 			}
@@ -79,15 +79,9 @@ class SVTControlAttestation
 			Write-Host "ControlId            : $($controlState.ControlId)`nControlSeverity      : $ControlSeverity`nDescription          : $($controlItem.ControlItem.Description)`nCurrentControlStatus : $($controlState.ActualVerificationResult)`n"	
 		}
 		
-		# If both attestation blocking feature flag is enabled return and block attestation 
-		# Or, if current mode is by design ('NotAnIssue','WillFixLater','WillNotFix') and its blocked return
-		# Or, if current mode is approved exception and its blocked return 
-		$currentControlExcluded = $this.controlExclusionByOrgPolicyEnabled -and ($controlItem.ControlItem.IsControlExcluded -or ($this.ExtendedExcludedControlIds -contains $controlState.ControlId))
-		$attestationNotAllowedByOrgPolicy = ($this.byDesignAttestationDisabledByOrgPolicy -and $this.approvedExceptionAttestationDisabledByOrgPolicy) `
-											-or ($this.byDesignAttestationDisabledByOrgPolicy -and (-not $this.attestOptions.IsExemptModeOn)) `
-											-or ($this.approvedExceptionAttestationDisabledByOrgPolicy -and $this.attestOptions.IsExemptModeOn)
 		
-		if($currentControlExcluded -and $attestationNotAllowedByOrgPolicy)
+		
+		if($this.isControlAttestationBlocked($controlItem, $controlState))
 		{
 			Write-Host $this.BlockedAttestationWarningMessage -ForegroundColor Red
 			return $controlState;
@@ -339,15 +333,7 @@ class SVTControlAttestation
 			return $controlState;
 		}
 
-		# If both attestation blocking feature flag is enabled return and block attestation 
-		# Or, if current mode is by design ('NotAnIssue','WillFixLater','WillNotFix') and its blocked return
-		# Or, if current mode is approved exception and its blocked return 
-		$currentControlExcluded = $this.controlExclusionByOrgPolicyEnabled -and ($controlItem.ControlItem.IsControlExcluded -or ($this.ExtendedExcludedControlIds -contains $controlState.ControlId))
-		$attestationNotAllowedByOrgPolicy = ($this.byDesignAttestationDisabledByOrgPolicy -and $this.approvedExceptionAttestationDisabledByOrgPolicy) `
-											-or ($this.byDesignAttestationDisabledByOrgPolicy -and (-not $this.attestOptions.IsExemptModeOn)) `
-											-or ($this.approvedExceptionAttestationDisabledByOrgPolicy -and $this.attestOptions.IsExemptModeOn)
-		
-		if($currentControlExcluded -and $attestationNotAllowedByOrgPolicy)
+		if($this.isControlAttestationBlocked($controlItem, $controlState))
 		{
 			Write-Host $this.BlockedAttestationWarningMessage -ForegroundColor Red
 			return $controlState;
@@ -706,6 +692,26 @@ class SVTControlAttestation
         else
         {
             return $true
+        }
+	}
+
+	[bool] isControlAttestationBlocked([SVTEventContext] $controlItem, [ControlState] $controlState)
+	{
+		# If both attestation blocking feature flag is enabled return and block attestation 
+		# Or, if current mode is by design ('NotAnIssue','WillFixLater','WillNotFix') and its blocked return
+		# Or, if current mode is approved exception and its blocked return 
+		$currentControlExcluded = $this.controlExclusionByOrgPolicyEnabled -and ($controlItem.ControlItem.IsControlExcluded -or ($this.ExtendedExcludedControlIds -contains $controlState.ControlId))
+		$attestationNotAllowedByOrgPolicy = ($this.byDesignAttestationDisabledByOrgPolicy -and $this.approvedExceptionAttestationDisabledByOrgPolicy) `
+											-or ($this.byDesignAttestationDisabledByOrgPolicy -and (-not $this.attestOptions.IsExemptModeOn)) `
+											-or ($this.approvedExceptionAttestationDisabledByOrgPolicy -and $this.attestOptions.IsExemptModeOn)
+
+		if($currentControlExcluded -and $attestationNotAllowedByOrgPolicy)
+	    { 
+            return $true
+        }
+        else
+        {
+            return $false
         }
 	}
 
