@@ -492,8 +492,10 @@
   "ControlsToExcludeFromScan": {
     "TenantIds": [],
     "ControlIds" : [],
+    "ExtendedControlIds": [],
     "ExclusionWarningMessage" : "",
-    "ExclusionHelpLink": ""
+    "ExclusionHelpLink": "",
+    "BlockedAttestationWarningMessage": ""
   },
   "CloudService": {
     "LatestOSSKUIDs": [ "WA-GUEST-OS-4.44_201707-01" ]

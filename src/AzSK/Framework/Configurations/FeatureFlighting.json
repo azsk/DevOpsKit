@@ -273,6 +273,24 @@
       "DisabledForSubs": [],
       "UnderPreview": false,
       "IsEnabled": false
+    },
+    {
+      "Name": "DisableByDesignAttestation",
+      "Description": "",
+      "Sources": ["*"],
+      "EnabledForSubs": [],
+      "DisabledForSubs": [],
+      "UnderPreview": false,
+      "IsEnabled": false
+    },
+    {
+      "Name": "DisableApprovedExceptionAttestation",
+      "Description": "",
+      "Sources": ["*"],
+      "EnabledForSubs": [],
+      "DisabledForSubs": [],
+      "UnderPreview": false,
+      "IsEnabled": false
     }
   ]
 }
