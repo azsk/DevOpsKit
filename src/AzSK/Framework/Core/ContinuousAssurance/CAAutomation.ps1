@@ -284,10 +284,13 @@ class CCAutomation: AzCommandBase
 
 			#region: Create/reuse existing storage account (Added this before creating variables since it's value is used in it)
 			$existingStorage = [UserSubscriptionDataHelper]::GetUserSubscriptionStorage()
+
 			if(($existingStorage|Measure-Object).Count -gt 0)
 			{
 				$this.UserConfig.StorageAccountName = $existingStorage.Name
+				#to update TLS and blob access settings for existing storage account
 				$this.PublishCustomMessage("Preparing a storage account for storing reports from CA scans...`r`nFound existing AzSK storage account: ["+ $this.UserConfig.StorageAccountName +"]. This will be used to store reports from CA scans.")
+				[StorageHelper]::UpdateTLSandBlobAccessForAzSKStorage($this.SubscriptionContext.SubscriptionId,$existingStorage.ResourceGroupName,$existingStorage.Name)
 			}
 			else
 			{
@@ -313,7 +316,6 @@ class CCAutomation: AzCommandBase
 			}
 			
 			$this.OutputObject.StorageAccount = [UserSubscriptionDataHelper]::GetUserSubscriptionStorage() | Select-Object Name,ResourceGroupName,Sku,Tags
-			
 			#endregion			
 
 			#region: Deploy Automation account items (runbooks, variables, schedules)
@@ -386,6 +388,8 @@ class CCAutomation: AzCommandBase
 								{
 									$caStorageAccountName = $existingStorage.Name
 									$this.PublishCustomMessage("Preparing a storage account for storing reports from CA scans...`r`nFound existing AzSK storage account: [$caStorageAccountName]. This will be used to store reports from CA scans.")
+									#to update TLS and blob access settings for existing storage account
+									[StorageHelper]::UpdateTLSandBlobAccessForAzSKStorage($caSubId,$existingStorage.ResourceGroupName,$existingStorage.Name)
 									$out.StorageAccountName = $caStorageAccountName;
 								}
 								else
@@ -418,6 +422,8 @@ class CCAutomation: AzCommandBase
 									$caStorageAccountName = $existingStorage.Name
 									$this.PublishCustomMessage("Preparing a storage account for storing reports from CA scans...`r`nFound existing AzSK storage account: [$caStorageAccountName]. This will be used to store reports from CA scans.")
 									$out.StorageAccountName = $caStorageAccountName;
+									#make storage compliant to azsk
+									[StorageHelper]::UpdateTLSandBlobAccessForAzSKStorage($caSubId,$existingStorage.ResourceGroupName,$existingStorage.Name)
 									$this.SetCASPNPermissions($this.CAAADApplicationID)
 								}
 								else
@@ -765,13 +771,14 @@ class CCAutomation: AzCommandBase
 		
 			#Check if storage exists
 			$existingStorage = [UserSubscriptionDataHelper]::GetUserSubscriptionStorage()
+
 			if(($existingStorage|Measure-Object).Count -gt 0)
 			{
 				$this.PublishCustomMessage("Found existing AzSK storage account: ["+ $existingStorage.Name +"]")
 				$this.UserConfig.StorageAccountName = $existingStorage.Name
 				#make storage compliant to azsk
 				$this.ResolveStorageCompliance($existingStorage.Name,$existingStorage.ResourceId,$this.AutomationAccount.CoreResourceGroup,$this.CAScanOutputLogsContainerName)
-			
+
 				#update storage account variable
 				$storageVariable = $this.GetReportsStorageAccountNameVariable()
 				if($null -eq $storageVariable -or ($null -ne $storageVariable -and $storageVariable.Value.Trim() -ne $existingStorage.Name))
@@ -806,7 +813,7 @@ class CCAutomation: AzCommandBase
 					}
 					Set-AzStorageAccount -ResourceGroupName $newStorage.ResourceGroupName -Name $newStorage.StorageAccountName -Tag $this.reportStorageTags -Force -ErrorAction SilentlyContinue
 				}
-			
+
 				#update storage account variable with new value
 				$varStorageName = [Variable]@{
 				Name = "ReportsStorageAccountName";
@@ -1083,6 +1090,7 @@ class CCAutomation: AzCommandBase
 											Set-AzStorageAccount -ResourceGroupName $newStorage.ResourceGroupName -Name $newStorage.StorageAccountName -Tag $this.reportStorageTags -Force -ErrorAction SilentlyContinue
 										}
 										$out.StorageAccountName = $newStorageName;
+
 									}	
 									try {
 										$targetStorageAccount =[UserSubscriptionDataHelper]::GetUserSubscriptionStorage()
@@ -3893,8 +3901,15 @@ class CCAutomation: AzCommandBase
 	    Set-AzStorageServiceMetricsProperty -MetricsType Hour -ServiceType Blob -Context $currentContext -MetricsLevel ServiceAndApi -RetentionDays 365 -PassThru
 	    
 		#Azure_Storage_DP_Encrypt_In_Transit
-	    Set-AzStorageAccount -ResourceGroupName $resourceGroup -Name $storageName -EnableHttpsTrafficOnly $true
+		Set-AzStorageAccount -ResourceGroupName $resourceGroup -Name $storageName -EnableHttpsTrafficOnly $true
+		
+		#Setting the TLSVersion to 1.2 and disabling public blob access
+		$currentContext = Get-AzContext
+		$subid = $currentContext.Subscription.SubscriptionId
+		[StorageHelper]::UpdateTLSandBlobAccessForAzSKStorage($subid,$resourceGroup,$storageName)
+
 	}
+
 	hidden [bool] CheckStorageMetricAlertConfiguration([PSObject[]] $metricSettings,[string] $resourceGroup, [string] $extendedResourceName)
 	{
 		$result = $false;
@@ -4452,6 +4467,7 @@ class CCAutomation: AzCommandBase
 			$this.PublishCustomMessage("There was an error while deleting Certificate.")
 		}
 	}
+
 }
 
 
