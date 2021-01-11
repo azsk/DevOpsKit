@@ -587,6 +587,11 @@ class Alerts: AzCommandBase
 		{			
 			$this.PublishException($_);
 		}
+		finally
+		{
+			# clear local config to remove overridden files from cache
+			[ConfigOverride]::ClearConfigInstance();
+		}
 		
 		return 	$actionGroupResourceId
 	}
@@ -656,6 +661,11 @@ class Alerts: AzCommandBase
 		{	
 			#Eating up this error while action group is not setup we are showing user friendly message
 			#$this.PublishException($_);
+		}
+		finally
+		{
+			# clear local config to remove overridden files from cache
+			[ConfigOverride]::ClearConfigInstance();
 		}
 		
 		return 	$actionGroupResourceId

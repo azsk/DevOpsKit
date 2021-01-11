@@ -906,6 +906,10 @@ class CredHygiene : CommandBase{
 						$ag = $body.properties.action.aznsAction.actionGroup[0] | ConvertTo-Json -Depth 10
 						$ag = $ag.Replace("{3}",$actionGroup.Id) | ConvertFrom-Json
 						$body.properties.action.aznsAction.actionGroup[0] = $ag
+
+						$location = $body.location | ConvertTo-Json -Depth 10
+						$location = $location.Replace("{4}",$laWS.Location) | ConvertFrom-Json
+						$body.location = $location
 							
 						$ResourceAppIdURI = [WebRequestHelper]::GetResourceManagerUrl()	
 						$uri = $ResourceAppIdURI + "subscriptions/$($this.SubscriptionContext.SubscriptionId)/resourcegroups/$($laWS.ResourceGroupName)/providers/microsoft.insights/scheduledQueryRules/AzSK_CredHygiene_Alert?api-version=2018-04-16"
@@ -962,6 +966,10 @@ class CredHygiene : CommandBase{
 					$cg = $body.properties.source.query | ConvertTo-Json -Depth 10
 					$cg = $cg.Replace("{4}",$actionGroup.Name) | ConvertFrom-Json
 					$body.properties.source.query = $cg
+
+					$location = $body.location | ConvertTo-Json -Depth 10
+					$location = $location.Replace("{5}",$laWS.Location) | ConvertFrom-Json
+					$body.location = $location
 						
 					$ResourceAppIdURI = [WebRequestHelper]::GetResourceManagerUrl()	
 					$uri = $ResourceAppIdURI + "subscriptions/$($this.SubscriptionContext.SubscriptionId)/resourcegroups/$($laWS.ResourceGroupName)/providers/microsoft.insights/scheduledQueryRules/AzSK_CredHygiene_Alert_$($actionGroup.GroupShortName)?api-version=2018-04-16"

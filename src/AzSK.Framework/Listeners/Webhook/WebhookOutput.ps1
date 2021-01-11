@@ -153,7 +153,7 @@ function PostWebhookData($webHookUrl, $authZHeaderName, $authZHeaderValue, $even
 			$AllowSelfSignedWebhookCertificate = [TertiaryBool]::False;
 		}
 
-		if($AllowSelfSignedWebhookCertificate -eq [TertiaryBool]::False)
+		if($AllowSelfSignedWebhookCertificate -ne [TertiaryBool]::False)
 		{
 			[System.Net.ServicePointManager]::ServerCertificateValidationCallback = { $true }
 		}

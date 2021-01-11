@@ -492,8 +492,10 @@
   "ControlsToExcludeFromScan": {
     "TenantIds": [],
     "ControlIds" : [],
+    "ExtendedControlIds": [],
     "ExclusionWarningMessage" : "",
-    "ExclusionHelpLink": ""
+    "ExclusionHelpLink": "",
+    "BlockedAttestationWarningMessage": ""
   },
   "CloudService": {
     "LatestOSSKUIDs": [ "WA-GUEST-OS-4.44_201707-01" ]
@@ -572,6 +574,19 @@
   },
   "PublicIpAddress": {
     "EnablePublicIpResource": false
+   },
+   "AzSKStorageSettings":{
+     "TLSandBlobAccessForAzSKStorage":{
+       "properties":{
+       "allowBlobPublicAccess" : false,
+       "minimumTlsVersion": "TLS1_2"
+       }
+     },
+     "TLSSettingForOrgPolicy":{
+      "properties":{
+        "minimumTlsVersion": "TLS1_2"
+      }
+    }
    },
   "ExtendedAttestationExpiry" : 180,
   "SeverityForSecContactAlerts": ["Medium","Low"],

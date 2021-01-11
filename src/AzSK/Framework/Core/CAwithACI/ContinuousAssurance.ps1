@@ -236,7 +236,12 @@ class ContinuousAssurance: AzCommandBase
 	    Set-AzStorageServiceMetricsProperty -MetricsType Hour -ServiceType Blob -Context $currentContext -MetricsLevel ServiceAndApi -RetentionDays 365 -PassThru
 	    
 		#Azure_Storage_DP_Encrypt_In_Transit
-	    Set-AzStorageAccount -ResourceGroupName $resourceGroup -Name $storageName -EnableHttpsTrafficOnly $true
+        Set-AzStorageAccount -ResourceGroupName $resourceGroup -Name $storageName -EnableHttpsTrafficOnly $true
+        
+        #Setting the TLSVersion to 1.2 and disabling public blob access
+		$currentContext = Get-AzContext
+		$subid = $currentContext.Subscription.SubscriptionId
+		[StorageHelper]::UpdateTLSandBlobAccessForAzSKStorage($subid,$resourceGroup,$storageName)
     }
 
     #TBD
@@ -310,6 +315,8 @@ class ContinuousAssurance: AzCommandBase
         {
             $this.StorageAccountName = $ExistingStorage.Name
             $this.PublishCustomMessage("Preparing a storage account for storing reports from CA scans...`r`nFound existing AzSK storage account: ["+ $this.StorageAccountName +"]. This will be used to store reports from CA scans.")
+            #to update TLS and blob access settings for existing storage account
+			[StorageHelper]::UpdateTLSandBlobAccessForAzSKStorage($this.SubscriptionContext.SubscriptionId,$existingStorage.ResourceGroupName,$existingStorage.Name)
         }
         else
         {
@@ -333,6 +340,7 @@ class ContinuousAssurance: AzCommandBase
                 Set-AzStorageAccount -ResourceGroupName $newStorage.ResourceGroupName -Name $newStorage.StorageAccountName -Tag $this.reportStorageTags -Force -ErrorAction SilentlyContinue
             } 
         }
+
         $this.EnvironmentVariables.Add('StorageAccountName', $this.StorageAccountName)
         $ContainerIntstance = $this.GetCAContainerInstance()
         if($ContainerIntstance)
@@ -401,6 +409,7 @@ class ContinuousAssurance: AzCommandBase
                 }
                 Set-AzStorageAccount -ResourceGroupName $newStorage.ResourceGroupName -Name $newStorage.StorageAccountName -Tag $this.reportStorageTags -Force -ErrorAction SilentlyContinue
             }
+
         }
         $this.EnvironmentVariables.Add('StorageAccountName', $this.StorageAccountName)
         $this.PublishCustomMessage("Updating Azure container instance: [" + $this.ContainerName + "]")
@@ -514,4 +523,5 @@ class ContinuousAssurance: AzCommandBase
             $this.PublishCustomMessage("Removed Function app : [$($this.FunctionAppName)] from resource group: [$($this.ResourceGroup)]")
         }
     }
+
 }
