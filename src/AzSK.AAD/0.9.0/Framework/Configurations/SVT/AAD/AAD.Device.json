@@ -1,0 +1,23 @@
+{
+    "FeatureName":  "Device",
+    "Reference":  "aka.ms/azsktcp/device",
+    "IsMaintenanceMode":  false,
+  "Controls": [
+    {
+      "ControlID": "AAD_Device_Review_Stale_Devices",
+      "Description": "Review and remove stale devices from the directory",
+      "Id": "Device110",
+      "ControlSeverity": "Medium",
+      "Automated": "Yes",
+      "MethodName": "CheckStaleDevices",
+      "Rationale": "Devices that have not been active for long are likely to also be out of compliance in terms of patches and security configuration. Such devices should be regularly reviewed and removed from the tenant (or forced to become compliant) as appropriate.",
+      "Recommendation": "Refer: TODO",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Manual"
+      ],
+      "Enabled": true
+    }
+    ]
+}
