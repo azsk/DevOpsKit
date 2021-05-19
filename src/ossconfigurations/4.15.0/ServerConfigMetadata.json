@@ -1,13 +1,15 @@
 ﻿{
-  "OnlinePolicyList": [
-    {
-      "Name": "RunbookCoreSetup.ps1"
-    },
-    {
-      "Name": "RunbookScanAgent.ps1"
-    },
-    {
-      "Name": "ControlSettings.json"
-    }
-  ]
+  "Temp" :{
+    "OnlinePolicyList": [
+      {
+        "Name": "RunbookCoreSetup.ps1"
+      },
+      {
+        "Name": "RunbookScanAgent.ps1"
+      },
+      {
+        "Name": "ControlSettings.json"
+      }
+    ]
+  }
 }
