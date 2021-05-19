@@ -530,6 +530,7 @@ $Global:isAzAvailable = $true
 $setupTimer = [System.Diagnostics.Stopwatch]::StartNew();
 PublishEvent -EventName "CA Setup Started"
 Write-Output("CS: Starting core setup...")
+Write-Output("CS: Running from Github policy server...")
 
 ###Config start--------------------------------------------------
 $AzSKModuleName = "AzSK"
