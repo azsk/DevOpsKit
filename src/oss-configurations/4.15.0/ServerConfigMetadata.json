@@ -8,6 +8,12 @@
     },
     {
       "Name": "ControlSettings.json"
+    },
+    {
+      "Name": "AzSK.json"
+    },
+    {
+      "Name": "ARMControls.json"
     }
   ]
 }
