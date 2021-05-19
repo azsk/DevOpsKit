@@ -1,19 +1,13 @@
 ﻿{
-  "OnlinePolicyList":  [
-                           {
-                               "Name":  "ARMControls.json"
-                           },
-                           {
-                               "Name":  "AzSK.json"
-                           },
-                           {
-                               "Name":  "ControlSettings.json"
-                           },
-                           {
-                               "Name":  "RunbookCoreSetup.ps1"
-                           },
-                           {
-                               "Name":  "RunbookScanAgent.ps1"
-                           }
-                       ]
+  "OnlinePolicyList": [
+    {
+      "Name": "RunbookCoreSetup.ps1"
+    },
+    {
+      "Name": "RunbookScanAgent.ps1"
+    },
+    {
+      "Name": "ControlSettings.json"
+    }
+  ]
 }
