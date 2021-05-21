@@ -1,0 +1,17 @@
+{
+    "OnlinePolicyList":
+    [
+          {
+            "Name": "RunbookCoreSetup.ps1"
+          },
+          {
+            "Name": "AzSK.json"
+          },
+          {
+            "Name": "RunbookScanAgent.ps1"
+          },
+          {
+            "Name": "ControlSettings.json"
+          }
+    ]
+}
