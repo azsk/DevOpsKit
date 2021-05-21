@@ -5,6 +5,9 @@
             "Name": "RunbookCoreSetup.ps1"
           },
           {
+            "Name": "AzSK.json"
+          },
+          {
             "Name": "RunbookScanAgent.ps1"
           },
           {
