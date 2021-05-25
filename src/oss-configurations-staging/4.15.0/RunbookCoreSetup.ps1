@@ -62,11 +62,11 @@ function DownloadAzModuleWithRM
 
         # Find the actual blob storage location of the Module
         do {
-            $ActualUrl = $ModuleContentUrl
+            $ActualUrl = "https://psgalleryintdb.blob.core.windows.net/packages/$($ModuleName.ToLower()).$ModuleVersion.nupkg"
             $ModuleContentUrl = (Invoke-WebRequest -Uri $ModuleContentUrl -MaximumRedirection 0 -UseBasicParsing -ErrorAction Ignore).Headers.Location
         } while(!$ModuleContentUrl.Contains(".nupkg"))
 
-		$ActualUrl = $ModuleContentUrl
+		$ActualUrl = "https://psgalleryintdb.blob.core.windows.net/packages/$($ModuleName.ToLower()).$ModuleVersion.nupkg"
 
 		$retryCount = 0
 		do{
@@ -132,11 +132,11 @@ function DownloadModule
 
         # Find the actual blob storage location of the Module
         do {
-            $ActualUrl = $ModuleContentUrl
+            $ActualUrl = "https://psgalleryintdb.blob.core.windows.net/packages/$($ModuleName.ToLower()).$ModuleVersion.nupkg"
             $ModuleContentUrl = (Invoke-WebRequest -Uri $ModuleContentUrl -MaximumRedirection 0 -UseBasicParsing -ErrorAction Ignore).Headers.Location
         } while(!$ModuleContentUrl.Contains(".nupkg"))
 
-		$ActualUrl = $ModuleContentUrl
+		$ActualUrl = "https://psgalleryintdb.blob.core.windows.net/packages/$($ModuleName.ToLower()).$ModuleVersion.nupkg"
 
 		$retryCount = 0
 		do{
@@ -532,18 +532,18 @@ PublishEvent -EventName "CA Setup Started"
 Write-Output("CS: Starting core setup...")
 
 ###Config start--------------------------------------------------
-$AzSKModuleName = "AzSK"
+$AzSKModuleName = "AzSKStaging"
 $RunbookName = "Continuous_Assurance_Runbook"
 
 #These get set as constants during the build process (e.g., AzSKStaging will have a diff URL)
 #PublicPSGalleryUrl is always same.
-$AzSKPSGalleryUrl = "https://www.powershellgallery.com"
+$AzSKPSGalleryUrl = "https://www.poshtestgallery.com"
 $PublicPSGalleryUrl = "https://www.powershellgallery.com"
 $retryDownloadIntervalMins = 10
 $monitorjobIntervalMins = 45
 #This gets replaced when org-policy is created/updated. This is the org-specific
 #url that helps bootstrap which module version to use within an org setup
-$azskVersionForOrg = "https://azsdkossep.azureedge.net/1.0.0/AzSK.Pre.json"
+$azskVersionForOrg =  "https://azsdkossepstaging.azureedge.net/1.0.0/AzSK.Pre.json"
 
 #We use this to check if another job is running...
 $Global:FoundExistingJob = $false;

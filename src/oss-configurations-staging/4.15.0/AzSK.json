@@ -1,4 +1,4 @@
-{  
-  "IsAlertMonitoringEnabled": false,
-  "PolicyMessage": "Running AzSK cmdlet using a generic ***(org-neutral-github)*** policy...."
+{
+    "IsAlertMonitoringEnabled":  false,
+    "PolicyMessage": "Running AzSK cmdlet using a generic ***(org-neutral-github)*** policy...."
 }
