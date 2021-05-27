@@ -45,6 +45,7 @@ class AzSKConfig
 	[bool] $EnableAzurePolicyBasedScan;
 	[string] $AzSKInitiativeName;
 	[string] $AzSKSecurityCenterInitiativeName;
+	[string] $DefaultOrgNeutralPolicyServerURL;
 	hidden static [AzSKConfig] $Instance = $null;
 	
     static [AzSKConfig] GetInstance([bool] $useOnlinePolicyStore, [string] $onlineStoreUri, [bool] $enableAADAuthForOnlinePolicyStore)

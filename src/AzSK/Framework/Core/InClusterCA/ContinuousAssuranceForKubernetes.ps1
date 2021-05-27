@@ -37,7 +37,8 @@ class KubernetesClusterCA : AzCommandBase {
             $this.CheckPrerequisites();
             $this.GetResourceObject();
             $this.SetKubernetesContext();
-            $this.deploymentFileBaseUrl = [Constants]::AKSBaseConfigurationUrl
+            $defaultOrgNeutralPolicyServerURL = [ConfigurationManager]::GetAzSKConfigData().DefaultOrgNeutralPolicyServerURL;
+            $this.deploymentFileBaseUrl = [String]::Format([constants]::AKSBaseConfigurationUrl, $defaultOrgNeutralPolicyServerURL); 
         }
 
         hidden [bool] CheckPrerequisites()

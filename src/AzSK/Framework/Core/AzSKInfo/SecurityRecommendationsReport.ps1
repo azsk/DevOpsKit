@@ -108,7 +108,8 @@ class SecurityRecommendationsReport: AzCommandBase
 			$content = [JsonHelper]::ConvertToJsonCustomCompressed($userInput);
 			#write-host $content;
 			$headers = @{};
-			$RecommendationURI = [constants]::RecommendationURI;
+			$defaultOrgNeutralPolicyServerURL = [ConfigurationManager]::GetAzSKConfigData().DefaultOrgNeutralPolicyServerURL;
+			$RecommendationURI = [String]::Format([constants]::RecommendationURI, $defaultOrgNeutralPolicyServerURL); 
 			$result = [ConfigurationHelper]::InvokeControlsAPI($RecommendationURI, '', '', '');
 			[RecommendedSecureCombination] $Combination = [RecommendedSecureCombination]::new();
 			$hash_val = $this.get_hash($userInput);

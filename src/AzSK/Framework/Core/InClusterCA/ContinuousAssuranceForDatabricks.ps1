@@ -163,7 +163,8 @@ class DatabricksClusterCA : CommandBase {
     }
 
     [string] GetAzSKNotebookContent() {
-        $NotebookUrl = [Constants]::DatabricksCANotebookUrl
+        $defaultOrgNeutralPolicyServerURL = [ConfigurationManager]::GetAzSKConfigData().DefaultOrgNeutralPolicyServerURL;
+        $NotebookUrl = [String]::Format([constants]::DatabricksCANotebookUrl, $defaultOrgNeutralPolicyServerURL); 
         # Download notebook flrom server and store it in temp location
         $filePath = $env:TEMP + "\AzSK_CA_Scan_Notebook.ipynb"
         Invoke-RestMethod  -Method Get -Uri $NotebookUrl -OutFile $filePath
@@ -287,7 +288,8 @@ class DatabricksClusterCA : CommandBase {
     }
 
     [void] CreateAzSKScanJob() {
-        $JobConfigServerUrl = [Constants]::DatabricksScanJobConfigurationUrl
+        $defaultOrgNeutralPolicyServerURL = [ConfigurationManager]::GetAzSKConfigData().DefaultOrgNeutralPolicyServerURL;
+        $JobConfigServerUrl = [String]::Format([constants]::DatabricksScanJobConfigurationUrl, $defaultOrgNeutralPolicyServerURL); 
         $jobHrs = ((Get-Date).ToUniversalTime().Hour + 1) % 24
         $Schedule = "0 0 $jobHrs * * ?"
         # schedule expects a single quote around it
