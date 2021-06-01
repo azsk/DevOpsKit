@@ -2627,11 +2627,12 @@ class CCAutomation: AzCommandBase
 		$this.PublishCustomMessage("This command will delete resources in your subscription [$($this.SubscriptionContext.SubscriptionId)] which were installed by AzSK",[MessageType]::Warning);
 		$messages += [MessageData]::new("This command will delete resources in your subscription [$($this.SubscriptionContext.SubscriptionId)] which were installed by AzSK",[MessageType]::Warning);
 		$azureContext = [ContextHelper]::GetCurrentRMContext()
-		Write-Host "`nStep 1 of 3: Validating whether the current user [$($azureContext.Account.Id)] have the required permissions to run the script for Subscription [$($this.SubscriptionContext.SubscriptionId)]..."
+		$this.PublishCustomMessage("Step 1 of 3: Validating whether the current user [$($azureContext.Account.Id)] have the required permissions to run the script for Subscription [$($this.SubscriptionContext.SubscriptionId)]...");
 		# Safe Check: Checking whether the current account is of type User
 		if($azureContext.Account.Type -ne "User")
 		{
 			$this.PublishCustomMessage("WARNING: This script can only be run by user account type.",[MessageType]::Warning);
+			$messages += [MessageData]::new("WARNING: This script can only be run by user account type.",[MessageType]::Warning);
 			return $messages;
 		}
 		# Safe Check: Current user need to have Owner role for the subscription
@@ -2640,6 +2641,7 @@ class CCAutomation: AzCommandBase
 		if(($currentLoginRoleAssignments | Where-Object { $_.RoleDefinitionName -eq "Owner" -or $_.RoleDefinitionName -match 'CoAdministrator' -or $_.RoleDefinitionName -like '*ServiceAdministrator*'} | Measure-Object).Count -le 0)
 		{
 			$this.PublishCustomMessage("WARNING: This script can only be run by an Owner of subscription.",[MessageType]::Warning);
+			$messages += [MessageData]::new("WARNING: This script can only be run by an Owner of subscription.",[MessageType]::Warning);
 			return $messages;
 		}
 		else{
@@ -2647,13 +2649,14 @@ class CCAutomation: AzCommandBase
 		}
 
 		$azskRGName = $this.AutomationAccount.CoreResourceGroup
-		Write-Host "`nStep 2 of 3: Listing resources present under resource group [$($azskRGName)] in Subscription [$($this.SubscriptionContext.SubscriptionId)]..."
+		$this.PublishCustomMessage("`nStep 2 of 3: Listing resources present under resource group [$($azskRGName)] in Subscription [$($this.SubscriptionContext.SubscriptionId)]...");
 
 		# Get AzSK RG
 		$azskRG = Get-AzResourceGroup $azskRGName -ErrorAction SilentlyContinue
 		if(-not $azskRG)
 		{
 			$this.PublishCustomMessage("Resource group [$($azskRGName)] is not present in subscription [$($this.SubscriptionContext.SubscriptionId)]",[MessageType]::Error);
+			$messages += [MessageData]::new("Resource group [$($azskRGName)] is not present in subscription [$($this.SubscriptionContext.SubscriptionId)]",[MessageType]::Error);
 			return $messages;
 		}
 
@@ -2723,8 +2726,8 @@ class CCAutomation: AzCommandBase
 				  $aadAPP = Get-AzADApplication -ApplicationId $appID -ErrorAction SilentlyContinue
 				  # Safe check: SPN display name should match AzSK specified name pattern
 				  $azskspnformatstring = $this.AzSKLocalSPNFormatString
-				  $azskcentralspnformatstring  = $this.AzSKCentralSPNFormatString
-				  if(-not ($caSPN.DisplayName -like "$($azskspnformatstring)*" -or $caSPN.DisplayName -like "$($azskcentralspnformatstring)*"))
+				  $centralazskspnformatstring  = $this.AzSKCentralSPNFormatString
+				  if(-not ($caSPN.DisplayName -like "$($azskspnformatstring)*" -or $caSPN.DisplayName -like "$($centralazskspnformatstring)*"))
 				  {
 					$caSPN = $null
 					$aadAPP = $null
@@ -2808,7 +2811,7 @@ class CCAutomation: AzCommandBase
 				$this.PublishCustomMessage("No such resources found.");
 			}
 			
-			Write-Host "`nStep 3 of 3: Cleaning resources present under resource group [$($azskRGName)] in Subscription..."
+			$this.PublishCustomMessage("`nStep 3 of 3: Cleaning resources present under resource group [$($azskRGName)] in Subscription...");
 
 			if($azskResources)
 			{
@@ -2821,7 +2824,7 @@ class CCAutomation: AzCommandBase
 				else
 				{
 	
-					Write-Host "Please select an action from below: `n[A]: Delete all AzSK deployed resources & AAD application `n[N]: Delete none`n[S]: Delete selected" -ForegroundColor Cyan 
+					$this.PublishCustomMessage("Please select an action from below: `n[A]: Delete all AzSK deployed resources & AAD application `n[N]: Delete none`n[S]: Delete selected", [MessageType]::Info);
 					while($userChoice -ne 'A' -and $userChoice -ne 'N' -and $userChoice -ne 'S')
 					{
 						$userChoice = Read-Host "User choice"
@@ -2865,8 +2868,7 @@ class CCAutomation: AzCommandBase
 							$userChoice="Y" # No further user consent required as 'Force' switch is enabled
 						}else
 						{
-							Write-Host "`nPlease confirm deletion of all above listed resources: `n[Y]: Yes`n[N]: No" -ForegroundColor Cyan 
-						
+							$this.PublishCustomMessage("`nPlease confirm deletion of all above listed resources: `n[Y]: Yes`n[N]: No", [MessageType]::Info); 
 							$userChoice = $this.ReadUserChoice()
 						}
 					   
@@ -3002,7 +3004,8 @@ class CCAutomation: AzCommandBase
 					"N" #None
 					{
 						$this.PublishCustomMessage("Process aborted. No resources were deleted.", [MessageType]::Warning); 
-						$userSkippedResources = $azskResources   
+						$userSkippedResources = $azskResources 
+						$messages += [MessageData]::new("Process aborted. No resources were deleted.");  
 						return $messages;               
 					}
 					"S" #Select
@@ -3012,7 +3015,7 @@ class CCAutomation: AzCommandBase
 						if($storageAccount)
 						{
 							$this.PublishCustomMessage([Constants]::SingleDashLine)
-							Write-Host "`nDo you want to delete AzSK storage account: `n[Y]: Yes`n[N]: No" -ForegroundColor Cyan 
+							$this.PublishCustomMessage("`nDo you want to delete AzSK storage account: `n[Y]: Yes`n[N]: No", [MessageType]::Info); 
 							$this.PublishCustomMessage(($storageAccount | Select-Object Name, ResourceType | Format-Table | Out-String))
 							$userChoice=""
 							$userChoice = $this.ReadUserChoice()
@@ -3042,7 +3045,7 @@ class CCAutomation: AzCommandBase
 						if($existingAutomationAccount)
 						{
 							$this.PublishCustomMessage([Constants]::SingleDashLine);
-							Write-Host "`nDo you want to delete AzSK automation account and all associated runbooks: `n[Y]: Yes`n[N]: No" -ForegroundColor Cyan 
+							$this.PublishCustomMessage("`nDo you want to delete AzSK automation account and all associated runbooks: `n[Y]: Yes`n[N]: No", [MessageType]::Info); 
 							$this.PublishCustomMessage(((@($existingAutomationAccount) + $existingAzSKRunbooks) | Select-Object Name, ResourceType | Format-Table | Out-String))
 							
 	
@@ -3082,7 +3085,7 @@ class CCAutomation: AzCommandBase
 						if($configuredAlerts)
 						{
 							$this.PublishCustomMessage([Constants]::SingleDashLine);
-							Write-Host "`nDo you want to delete AzSK alerts: `n[Y]: Yes`n[N]: No" -ForegroundColor Cyan 
+							$this.PublishCustomMessage("`nDo you want to delete AzSK alerts: `n[Y]: Yes`n[N]: No", [MessageType]::Info);  
 							$this.PublishCustomMessage(($configuredAlerts | Select-Object Name, ResourceType | Format-Table | Out-String));
 							$userChoice=""
 							$userChoice = $this.ReadUserChoice()
@@ -3129,7 +3132,7 @@ class CCAutomation: AzCommandBase
 						if($actionGrps)
 						{
 							$this.PublishCustomMessage([Constants]::SingleDashLine);
-							Write-Host "`nDo you want to delete AzSK alert action groups: `n[Y]: Yes`n[N]: No" -ForegroundColor Cyan 
+							$this.PublishCustomMessage("`nDo you want to delete AzSK alert action groups: `n[Y]: Yes`n[N]: No", [MessageType]::Info); 
 							$this.PublishCustomMessage(($actionGrps | Select-Object Name, ResourceType | Format-Table | Out-String))
 							$userChoice=""
 							$userChoice = $this.ReadUserChoice()
@@ -3178,7 +3181,7 @@ class CCAutomation: AzCommandBase
 						if($azskRoleAssignments)
 						{
 							$this.PublishCustomMessage([Constants]::SingleDashLine);
-							Write-Host "`nDo you want to delete AzSK SPN role assignments: `n[Y]: Yes`n[N]: No" -ForegroundColor Cyan 
+							$this.PublishCustomMessage("`nDo you want to delete AzSK SPN role assignments: `n[Y]: Yes`n[N]: No", [MessageType]::Info); 
 							$this.PublishCustomMessage(($azskRoleAssignments | Select-Object "RoleDefinitionName", "Scope" | Format-Table | Out-String))
 							$userChoice=""
 							$userChoice = $this.ReadUserChoice()
@@ -3206,8 +3209,8 @@ class CCAutomation: AzCommandBase
 						if($aadApp)
 						{
 							$this.PublishCustomMessage([Constants]::SingleDashLine);
-							Write-Host "`nDo you want to delete AzSK CA SPN/Application: `n[Y]: Yes`n[N]: No" -ForegroundColor Cyan 
-							$aadApp | Select-Object DisplayName, ApplicationId | Format-Table
+							$this.PublishCustomMessage("`nDo you want to delete AzSK CA SPN/Application: `n[Y]: Yes`n[N]: No", [MessageType]::Info);
+							$this.PublishCustomMessage(($aadApp | Select-Object DisplayName, ApplicationId | Format-Table | Out-String));
 							$this.PublishCustomMessage("WARNING: Before deleting SPN & AAD Application [$($caSPN.DisplayName)], please make sure that this AAD application & SPN is not used anywhere else.", [MessageType]::Warning);
 							
 							$userChoice=""
@@ -3278,7 +3281,8 @@ class CCAutomation: AzCommandBase
 		else
 		{
 			$deleteAzSKRG = $true
-			$this.PublishCustomMessage("No resources found in AzSKRG.", [MessageType]::Warning);
+			$this.PublishCustomMessage("No resources found in $($azskRGName).", [MessageType]::Warning);
+			$messages += [MessageData]::new("No resources found in $($azskRGName).",[MessageType]::Warning);
 		}
 
 		# Delete AzSKRG
@@ -3295,53 +3299,64 @@ class CCAutomation: AzCommandBase
 				}
 				$azskRGDeleted = $true
 				$this.PublishCustomMessage("Successfully deleted AzSK resource group [$($azskRGName)] from subscription.", [MessageType]::Update);
+				$messages += [MessageData]::new("Successfully deleted AzSK resource group [$($azskRGName)] from subscription.",[MessageType]::Update);
 			}
 			catch
 			{
 				$this.PublishCustomMessage("ERROR: Error occurred while deleting resource group [$($azskRGName)], please contact support team.", [MessageType]::Error);
+				$messages += [MessageData]::new("ERROR: Error occurred while deleting resource group [$($azskRGName)], please contact support team.",[MessageType]::Error);
 			}
 			
 		}
 		else
 		{
 			$this.PublishCustomMessage("WARNING: Deletion of AzSK resource group [$($azskRGName)] skipped.", [MessageType]::Warning);
+			$messages += [MessageData]::new("WARNING: Deletion of AzSK resource group [$($azskRGName)] skipped.",[MessageType]::Warning);
 		}
 		$this.PublishCustomMessage([Constants]::DoubleDashLine, [MessageType]::Info);
 	
 		# Summary
 		$this.PublishCustomMessage("*** Summary ***", [MessageType]::Info);
 		$this.PublishCustomMessage([Constants]::SingleDashLine + "`nFollowing Azure resources were deleted:");
+		$messages += [MessageData]::new([Constants]::SingleDashLine + "`nFollowing Azure resources were deleted:");
 		$resourcesNotRemoved = $errorCollection + $userSkippedResources
 		$deletedResources = Compare-Object -ReferenceObject $azskResources -DifferenceObject $resourcesNotRemoved -Property ReourceId -PassThru
 		if($deletedResources)
 		{
 			$this.PublishCustomMessage(($deletedResources | Select-Object Name, ResourceType | Format-Table | Out-String));
+			$messages += [MessageData]::new(($deletedResources | Select-Object Name, ResourceType | Format-Table | Out-String));
 		}
 		else
 		{
-			$this.PublishCustomMessage("`n`tNo resources were deleted.");
+			$this.PublishCustomMessage("`n`n`tNo resources were deleted.");
+			$messages += [MessageData]::new("`n`tNo resources were deleted.");
 		}
 	
 		$this.PublishCustomMessage([Constants]::SingleDashLine + "`nFollowing role assignments were removed:");
-		
+		$messages += [MessageData]::new([Constants]::SingleDashLine + "`nFollowing role assignments were removed:");
 		if($roleAssignmentRemoved)
 		{
 			$this.PublishCustomMessage(($azskRoleAssignments | Select-Object "RoleDefinitionName", "Scope" | Format-Table | Out-String))
+			$messages += [MessageData]::new(($azskRoleAssignments | Select-Object "RoleDefinitionName", "Scope" | Format-Table | Out-String));
 		}
 		else
 		{
 			$this.PublishCustomMessage("`n`tNo role assignment removed.");
+			$messages += [MessageData]::new("`n`tNo role assignment removed.");
 		}
 	
 		$this.PublishCustomMessage([Constants]::SingleDashLine + "`nFollowing AAD App & SPN were deleted:");
+		$messages += [MessageData]::new([Constants]::SingleDashLine + "`nFollowing AAD App & SPN were deleted:");
 
 		if($aadAppDeleted)
 		{
 			$this.PublishCustomMessage(($aadApp | Select-Object DisplayName, ApplicationId | Format-Table | Out-String))
+			$messages += [MessageData]::new(($aadApp | Select-Object DisplayName, ApplicationId | Format-Table | Out-String));
 		}
 		else
 		{
 			$this.PublishCustomMessage("`n`tNo AAD App & SPN deleted.");
+			$messages += [MessageData]::new("`n`tNo AAD App & SPN deleted.");
 		}
 		$this.PublishCustomMessage([Constants]::SingleDashLine);
 		# Next Steps
