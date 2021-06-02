@@ -2462,9 +2462,9 @@ class CCAutomation: AzCommandBase
 		return $isHealthy;
 	}
 
-	[MessageData[]] RemoveAzSKContinuousAssurance($DeleteStorageReports, $RemoveDeployedResources, $Force)
+	[MessageData[]] RemoveAzSKContinuousAssurance($DeleteStorageReports, $CleanUpAllAzSKResources, $Force)
 	{
-		if(-not $RemoveDeployedResources)
+		if(-not $CleanUpAllAzSKResources -or $this.IsMultiCAModeOn)
 		{
 			[MessageData[]] $messages = @();
 			$isCentralScanModeEnabled = $false;
@@ -2616,18 +2616,18 @@ class CCAutomation: AzCommandBase
 		}
 		else
 		{
-			return $this.RemoveAllAzSKDeployedResources($RemoveDeployedResources, $Force)
+			return $this.RemoveAllAzSKDeployedResources($Force)
 		}
 		
 	}	
 	
-	[MessageData[]] RemoveAllAzSKDeployedResources($RemoveDeployedResources, $Force)
+	[MessageData[]] RemoveAllAzSKDeployedResources($Force)
 	{
 		[MessageData[]] $messages = @();
 		$this.PublishCustomMessage("This command will delete resources in your subscription [$($this.SubscriptionContext.SubscriptionId)] which were installed by AzSK",[MessageType]::Warning);
 		$messages += [MessageData]::new("This command will delete resources in your subscription [$($this.SubscriptionContext.SubscriptionId)] which were installed by AzSK",[MessageType]::Warning);
 		$azureContext = [ContextHelper]::GetCurrentRMContext()
-		$this.PublishCustomMessage("`r`nStep 1 of 3: Validating whether the current user [$($azureContext.Account.Id)] have the required permissions to run the command for Subscription [$($this.SubscriptionContext.SubscriptionId)]...");
+		$this.PublishCustomMessage(" `r`n"+"Step 1 of 3: Validating whether the current user [$($azureContext.Account.Id)] have the required permissions to run the command for Subscription [$($this.SubscriptionContext.SubscriptionId)]..."+" `r`n",[MessageType]::Default);
 		# Safe Check: Checking whether the current account is of type User
 		if($azureContext.Account.Type -ne "User")
 		{
@@ -2649,7 +2649,7 @@ class CCAutomation: AzCommandBase
 		}
 
 		$azskRGName = $this.AutomationAccount.CoreResourceGroup
-		$this.PublishCustomMessage("`r`nStep 2 of 3: Listing resources present under resource group [$($azskRGName)] in Subscription [$($this.SubscriptionContext.SubscriptionId)]...");
+		$this.PublishCustomMessage(" `r`n"+"Step 2 of 3: Listing resources present under resource group [$($azskRGName)] in Subscription [$($this.SubscriptionContext.SubscriptionId)]..." + " `r`n",[MessageType]::Default);
 
 		# Get AzSK RG
 		$azskRG = Get-AzResourceGroup $azskRGName -ErrorAction SilentlyContinue
@@ -2689,7 +2689,6 @@ class CCAutomation: AzCommandBase
 			}
 
 			# Check AzSK continuous assurance automation accounts
-			# TBD: Check for MultiCA
 			$automationAccountName = [UserSubscriptionDataHelper]::GetCAName()
 			$azskRunbookNames = @(
 								 $($automationAccountName +"/"+ [Constants]::RunbookName), 
@@ -2778,14 +2777,14 @@ class CCAutomation: AzCommandBase
 				$nonAzSKResources += $allResources
 			}
 
-			$this.PublishCustomMessage("`r`nA) Listing details of SPN associated with current AzSK automation account:");
+			$this.PublishCustomMessage(" `r`n"+"A) Listing details of SPN associated with current AzSK automation account:");
 			if($caSPN)
 			{
-				$this.PublishCustomMessage(($caSPN | Select-Object "DisplayName", "ApplicationId" | Format-Table | Out-String), [MessageType]::Default)
+				$this.PublishCustomMessage("`tAAD Application:" + "`r`t" +($caSPN | Select-Object "DisplayName", "ApplicationId" | Format-Table | Out-String))
 
 				if($azskRoleAssignments)
 				{
-					$this.PublishCustomMessage("`tRole assignments for SPN:`n" + "$($azskRoleAssignments | Select-Object "RoleDefinitionName", "Scope" | Format-Table | Out-String)")
+					$this.PublishCustomMessage("`tRole assignments for SPN:" + "`r`t" + "$($azskRoleAssignments | Select-Object "RoleDefinitionName", "Scope" | Format-Table | Out-String)")
 				}
 			}
 			else
@@ -2793,7 +2792,7 @@ class CCAutomation: AzCommandBase
 				$this.PublishCustomMessage("No SPN found.`n");
 			}
 
-			$this.PublishCustomMessage("`r`nB) Listing AzSK resources present in AzSKRG:");
+			$this.PublishCustomMessage(" `r`n"+"B) Listing AzSK resources present in AzSKRG:");
 			if($azskResources)
 			{
 				$this.PublishCustomMessage(($azskResources | Select-Object Name, ResourceType | Format-Table | Out-String));
@@ -2802,7 +2801,7 @@ class CCAutomation: AzCommandBase
 				$this.PublishCustomMessage("No such resources found.`n");
 			}
 
-			$this.PublishCustomMessage("`r`nC) Listing Non-AzSK resources are present in AzSKRG:");
+			$this.PublishCustomMessage(" `r`n"+"C) Listing Non-AzSK resources are present in AzSKRG:");
 			if($nonAzSKResources)
 			{   
 				$this.PublishCustomMessage(($nonAzSKResources | Select-Object Name, ResourceType | Format-Table | Out-String));
@@ -2811,7 +2810,7 @@ class CCAutomation: AzCommandBase
 				$this.PublishCustomMessage("No such resources found.");
 			}
 			
-			$this.PublishCustomMessage("`r`nStep 3 of 3: Cleaning resources present under resource group [$($azskRGName)] in Subscription...");
+			$this.PublishCustomMessage(" `r`n"+"Step 3 of 3: Cleaning resources present under resource group [$($azskRGName)] in Subscription...",[MessageType]::Default);
 
 			if($azskResources)
 			{
@@ -2819,7 +2818,7 @@ class CCAutomation: AzCommandBase
 				if($Force)
 				{
 					$userChoice="A"
-					$this.PublishCustomMessage("`nForce parameter is set to 'True', no further consent required.", [MessageType]::Warning);
+					$this.PublishCustomMessage("Force parameter is set to 'True', no further consent required.", [MessageType]::Warning);
 				}
 				else
 				{
@@ -2840,7 +2839,7 @@ class CCAutomation: AzCommandBase
 				{                    
 					"A" #DeleteAll
 					{	
-						$this.PublishCustomMessage([Constants]::DoubleDashLine + "`r`n`nFollowing resources will be deleted:`r`n"+ [Constants]::SingleDashLine);
+						$this.PublishCustomMessage([Constants]::DoubleDashLine+ "`r`n" + "Following resources will be deleted:"+ "`r`n" + [Constants]::SingleDashLine);
 						$this.PublishCustomMessage("`rAzure resources:", [MessageType]::Info); 
 						$this.PublishCustomMessage(($azskResources | Select-Object Name, ResourceType | Format-Table | Out-String));
 	
@@ -2849,11 +2848,11 @@ class CCAutomation: AzCommandBase
 							$this.PublishCustomMessage([Constants]::SingleDashLine)
 							if($azskRoleAssignments)
 							{
-								$this.PublishCustomMessage("`rRole assignments:", [MessageType]::Info);
+								$this.PublishCustomMessage("Role assignments:", [MessageType]::Info);
 								$this.PublishCustomMessage(($azskRoleAssignments | Select-Object "RoleDefinitionName", "Scope" | Format-Table| Out-String));
 							}
 							
-							$this.PublishCustomMessage("`rAzure AD application:", [MessageType]::Info); 
+							$this.PublishCustomMessage(" `r`n"+"Azure AD application:", [MessageType]::Info); 
 							$this.PublishCustomMessage(($caSPN | Select-Object DisplayName, ApplicationId | Format-Table | Out-String));
 	
 							$this.PublishCustomMessage("WARNING: Before deleting SPN & AAD Application [$($caSPN.DisplayName)], please make sure that this AAD application & SPN is not used anywhere else.", [MessageType]::Warning);
@@ -3382,8 +3381,8 @@ class CCAutomation: AzCommandBase
 		if($azskRoleAssignments -and -not($roleAssignmentRemoved))
 		{
 			$this.PublishCustomMessage("Role assignment of AzSK CA SPN is not successfully removed." `
-			+ "`ta) Please look at the error details above for more details or you can also remove role assignment using Azure portal." `
-			+ "`tb) If you choose to skip deletion of CA SPN's role assignments then no further action needed.");
+			+ "`n`ta) Please look at the error details above for more details or you can also remove role assignment using Azure portal." `
+			+ "`n`tb) If you choose to skip deletion of CA SPN's role assignments then no further action needed.");
 			$success = $success -and $false
 		}
 	
