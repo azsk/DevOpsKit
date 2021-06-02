@@ -2627,12 +2627,12 @@ class CCAutomation: AzCommandBase
 		$this.PublishCustomMessage("This command will delete resources in your subscription [$($this.SubscriptionContext.SubscriptionId)] which were installed by AzSK",[MessageType]::Warning);
 		$messages += [MessageData]::new("This command will delete resources in your subscription [$($this.SubscriptionContext.SubscriptionId)] which were installed by AzSK",[MessageType]::Warning);
 		$azureContext = [ContextHelper]::GetCurrentRMContext()
-		$this.PublishCustomMessage("Step 1 of 3: Validating whether the current user [$($azureContext.Account.Id)] have the required permissions to run the script for Subscription [$($this.SubscriptionContext.SubscriptionId)]...");
+		$this.PublishCustomMessage("`r`nStep 1 of 3: Validating whether the current user [$($azureContext.Account.Id)] have the required permissions to run the command for Subscription [$($this.SubscriptionContext.SubscriptionId)]...");
 		# Safe Check: Checking whether the current account is of type User
 		if($azureContext.Account.Type -ne "User")
 		{
-			$this.PublishCustomMessage("WARNING: This script can only be run by user account type.",[MessageType]::Warning);
-			$messages += [MessageData]::new("WARNING: This script can only be run by user account type.",[MessageType]::Warning);
+			$this.PublishCustomMessage("WARNING: This command can only be run by user account type.",[MessageType]::Warning);
+			$messages += [MessageData]::new("WARNING: This command can only be run by user account type.",[MessageType]::Warning);
 			return $messages;
 		}
 		# Safe Check: Current user need to have Owner role for the subscription
@@ -2640,8 +2640,8 @@ class CCAutomation: AzCommandBase
 	
 		if(($currentLoginRoleAssignments | Where-Object { $_.RoleDefinitionName -eq "Owner" -or $_.RoleDefinitionName -match 'CoAdministrator' -or $_.RoleDefinitionName -like '*ServiceAdministrator*'} | Measure-Object).Count -le 0)
 		{
-			$this.PublishCustomMessage("WARNING: This script can only be run by an Owner of subscription.",[MessageType]::Warning);
-			$messages += [MessageData]::new("WARNING: This script can only be run by an Owner of subscription.",[MessageType]::Warning);
+			$this.PublishCustomMessage("WARNING: This command can only be run by an Owner of subscription.",[MessageType]::Warning);
+			$messages += [MessageData]::new("WARNING: This command can only be run by an Owner of subscription.",[MessageType]::Warning);
 			return $messages;
 		}
 		else{
@@ -2649,7 +2649,7 @@ class CCAutomation: AzCommandBase
 		}
 
 		$azskRGName = $this.AutomationAccount.CoreResourceGroup
-		$this.PublishCustomMessage("`nStep 2 of 3: Listing resources present under resource group [$($azskRGName)] in Subscription [$($this.SubscriptionContext.SubscriptionId)]...");
+		$this.PublishCustomMessage("`r`nStep 2 of 3: Listing resources present under resource group [$($azskRGName)] in Subscription [$($this.SubscriptionContext.SubscriptionId)]...");
 
 		# Get AzSK RG
 		$azskRG = Get-AzResourceGroup $azskRGName -ErrorAction SilentlyContinue
@@ -2778,7 +2778,7 @@ class CCAutomation: AzCommandBase
 				$nonAzSKResources += $allResources
 			}
 
-			$this.PublishCustomMessage("`nA) Listing details of SPN associated with current AzSK automation account:");
+			$this.PublishCustomMessage("`r`nA) Listing details of SPN associated with current AzSK automation account:");
 			if($caSPN)
 			{
 				$this.PublishCustomMessage(($caSPN | Select-Object "DisplayName", "ApplicationId" | Format-Table | Out-String), [MessageType]::Default)
@@ -2793,7 +2793,7 @@ class CCAutomation: AzCommandBase
 				$this.PublishCustomMessage("No SPN found.`n");
 			}
 
-			$this.PublishCustomMessage("B) Listing AzSK resources present in AzSKRG:");
+			$this.PublishCustomMessage("`r`nB) Listing AzSK resources present in AzSKRG:");
 			if($azskResources)
 			{
 				$this.PublishCustomMessage(($azskResources | Select-Object Name, ResourceType | Format-Table | Out-String));
@@ -2802,7 +2802,7 @@ class CCAutomation: AzCommandBase
 				$this.PublishCustomMessage("No such resources found.`n");
 			}
 
-			$this.PublishCustomMessage("C) Listing Non-AzSK resources are present in AzSKRG:");
+			$this.PublishCustomMessage("`r`nC) Listing Non-AzSK resources are present in AzSKRG:");
 			if($nonAzSKResources)
 			{   
 				$this.PublishCustomMessage(($nonAzSKResources | Select-Object Name, ResourceType | Format-Table | Out-String));
@@ -2811,7 +2811,7 @@ class CCAutomation: AzCommandBase
 				$this.PublishCustomMessage("No such resources found.");
 			}
 			
-			$this.PublishCustomMessage("`nStep 3 of 3: Cleaning resources present under resource group [$($azskRGName)] in Subscription...");
+			$this.PublishCustomMessage("`r`nStep 3 of 3: Cleaning resources present under resource group [$($azskRGName)] in Subscription...");
 
 			if($azskResources)
 			{
