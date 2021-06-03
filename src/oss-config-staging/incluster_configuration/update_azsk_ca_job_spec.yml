@@ -1,0 +1,67 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: azsk-scanner
+
+---
+
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: azsk-ca-job
+  namespace: azsk-scanner
+spec:
+  schedule: #Schedule#
+  successfulJobsHistoryLimit: #JobHistoryLimit#
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: azsk-ca-job
+            image: #ImagePath#
+            imagePullPolicy: Always
+            securityContext:
+               allowPrivilegeEscalation: false
+            env:
+            - name: APP_INSIGHT_KEY
+              valueFrom:
+                configMapKeyRef:
+                  name: azsk-config
+                  key: APP_INSIGHT_KEY
+
+            - name: SUBSCRIPTION_ID
+              valueFrom:
+                configMapKeyRef:
+                  name: azsk-config
+                  key: SUBSCRIPTION_ID
+
+            - name: RG_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: azsk-config
+                  key: RG_NAME
+
+            - name: RESOURCE_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: azsk-config
+                  key: RESOURCE_NAME
+            
+            - name: LA_WS_ID
+              valueFrom:
+                configMapKeyRef:
+                  name: azsk-config
+                  key: LA_WS_ID
+            
+            - name: LA_WS_SHAREDKEY
+              valueFrom:
+                configMapKeyRef:
+                  name: azsk-config
+                  key: LA_WS_SHAREDKEY
+
+          serviceAccount: azsk-scanner-account
+          serviceAccountName: azsk-scanner-account
+          restartPolicy: Never
+  concurrencyPolicy: Replace

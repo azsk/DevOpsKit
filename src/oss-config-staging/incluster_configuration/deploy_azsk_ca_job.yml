@@ -1,0 +1,116 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: azsk-scanner
+
+---
+
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: azsk-scanner-clusterrole
+  namespace: azsk-scanner
+rules:
+- apiGroups: ["*"]
+  resources: ["pods","deployments","nodes","serviceaccounts","configmaps","clusterrolebindings"]
+  verbs: ["get", "watch", "list"]
+
+---
+
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: azsk-scanner-account
+  namespace: azsk-scanner
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: azsk-scanner-rolebinding
+  namespace: azsk-scanner
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: azsk-scanner-clusterrole
+subjects:
+- kind: ServiceAccount
+  name: azsk-scanner-account
+  namespace: azsk-scanner
+
+---
+kind: ConfigMap  
+apiVersion: v1  
+metadata:  
+  name: azsk-config    
+  namespace: azsk-scanner
+data:  
+  APP_INSIGHT_KEY: #AppInsightKey#
+  RG_NAME: #RGName#
+  RESOURCE_NAME: #ResourceName#
+  SUBSCRIPTION_ID: #SubscriptionID#
+  LA_WS_ID: #LAWSId#
+  LA_WS_SHAREDKEY: #LAWSSharedKey#
+
+---
+
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: azsk-ca-job
+  namespace: azsk-scanner
+spec:
+  schedule: #Schedule#
+  successfulJobsHistoryLimit: 7
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: azsk-ca-job
+            image: azskteam/azsk-aks:latest
+            imagePullPolicy: IfNotPresent
+            securityContext:
+               allowPrivilegeEscalation: false
+            env:
+            - name: APP_INSIGHT_KEY
+              valueFrom:
+                configMapKeyRef:
+                  name: azsk-config
+                  key: APP_INSIGHT_KEY
+
+            - name: SUBSCRIPTION_ID
+              valueFrom:
+                configMapKeyRef:
+                  name: azsk-config
+                  key: SUBSCRIPTION_ID
+
+            - name: RG_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: azsk-config
+                  key: RG_NAME
+
+            - name: RESOURCE_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: azsk-config
+                  key: RESOURCE_NAME
+
+            - name: LA_WS_ID
+              valueFrom:
+                configMapKeyRef:
+                  name: azsk-config
+                  key: LA_WS_ID
+            
+            - name: LA_WS_SHAREDKEY
+              valueFrom:
+                configMapKeyRef:
+                  name: azsk-config
+                  key: LA_WS_SHAREDKEY
+
+          serviceAccount: azsk-scanner-account
+          serviceAccountName: azsk-scanner-account
+          restartPolicy: Never
+  concurrencyPolicy: Replace
