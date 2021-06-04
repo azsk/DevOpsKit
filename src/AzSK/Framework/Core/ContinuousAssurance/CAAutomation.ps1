@@ -2462,156 +2462,938 @@ class CCAutomation: AzCommandBase
 		return $isHealthy;
 	}
 
-	[MessageData[]] RemoveAzSKContinuousAssurance($DeleteStorageReports,$Force)
+	[MessageData[]] RemoveAzSKContinuousAssurance($DeleteStorageReports, $CleanUpAllAzSKResources, $Force)
 	{
-		[MessageData[]] $messages = @();
-		$isCentralScanModeEnabled = $false;
-		$this.PublishCustomMessage("This command will delete resources in your subscription which were installed by AzSK Continuous Assurance",[MessageType]::Warning);
-		$messages += [MessageData]::new("This command will delete resources in your subscription which were installed by AzSK Continuous Assurance",[MessageType]::Warning);
-		$runAsConnection = $null;
-				
-		#filter accounts with old/new name
-		$existingAutomationAccount = $this.GetCADetailedResourceInstance()
-
-		#region: check if central scanning mode is enabled on this subscription
-		$CAScanDataBlobContent = $null;
-		$reportsStorageAccount = [UserSubscriptionDataHelper]::GetUserSubscriptionStorage();
-		[CAScanModel[]] $scanobjects = @()
-		$caSubs = @();
-		
-		if(($reportsStorageAccount | Measure-Object).Count -eq 1)
+		if(-not $CleanUpAllAzSKResources -or $this.IsMultiCAModeOn)
 		{
-			$filename = Join-Path $($this.AzSKCATempFolderPath) $($this.CATargetSubsBlobName)
+			[MessageData[]] $messages = @();
+			$isCentralScanModeEnabled = $false;
+			$this.PublishCustomMessage("This command will delete resources in your subscription which were installed by AzSK Continuous Assurance",[MessageType]::Warning);
+			$messages += [MessageData]::new("This command will delete resources in your subscription which were installed by AzSK Continuous Assurance",[MessageType]::Warning);
+			$runAsConnection = $null;
+					
+			#filter accounts with old/new name
+			$existingAutomationAccount = $this.GetCADetailedResourceInstance()
 
-			if(-not (Split-Path -Parent $filename | Test-Path))
+			#region: check if central scanning mode is enabled on this subscription
+			$CAScanDataBlobContent = $null;
+			$reportsStorageAccount = [UserSubscriptionDataHelper]::GetUserSubscriptionStorage();
+			[CAScanModel[]] $scanobjects = @()
+			$caSubs = @();
+			
+			if(($reportsStorageAccount | Measure-Object).Count -eq 1)
 			{
-				New-Item -ItemType Directory -Path $(Split-Path -Parent $filename) -Force
-			}
-			$keys = Get-AzStorageAccountKey -ResourceGroupName $this.AutomationAccount.CoreResourceGroup -Name $reportsStorageAccount.Name
-			$currentContext = New-AzStorageContext -StorageAccountName $reportsStorageAccount.Name -StorageAccountKey $keys[0].Value -Protocol Https
-			$CAScanDataBlobObject = Get-AzStorageBlob -Container $this.CAMultiSubScanConfigContainerName -Blob $this.CATargetSubsBlobName -Context $currentContext -ErrorAction SilentlyContinue 
-			if($null -ne $CAScanDataBlobObject)
-			{
-				$CAScanDataBlobContentObject = [AzHelper]::GetStorageBlobContent($($this.AzSKCATempFolderPath), $this.CATargetSubsBlobName ,$this.CATargetSubsBlobName , $this.CAMultiSubScanConfigContainerName ,$currentContext)
-				#$CAScanDataBlobContentObject = Get-AzStorageBlobContent -Container $this.CAMultiSubScanConfigContainerName -Blob $this.CATargetSubsBlobName -Context $currentContext -Destination $($this.AzSKCATempFolderPath) -Force
-				$CAScanDataBlobContent = Get-ChildItem -Path (Join-Path $($this.AzSKCATempFolderPath) $($this.CATargetSubsBlobName)) -Force | Get-Content | ConvertFrom-Json
-			}
-		}
-		if(($CAScanDataBlobContent | Measure-Object).Count -gt 0)
-		{
-			$isCentralScanModeEnabled = $true;
-			#if user has passed the targetsubscriptionIds then we need to just remove the stuff from the target subs only.
-			$CAScanDataBlobContent | ForEach-Object {
-				$CAScanDataInstance = $_;							
-				$scanobject = [CAScanModel]::new($CAScanDataInstance.SubscriptionId, $CAScanDataInstance.LoggingOption);
-				$scanobjects += $scanobject;
-			}
-		}
-		#endregion
+				$filename = Join-Path $($this.AzSKCATempFolderPath) $($this.CATargetSubsBlobName)
 
-		#throw error if perview switch is not passed are not passed and central mode is on
-		if(-not $this.IsCentralScanModeOn -and $isCentralScanModeEnabled)
-		{
-			throw ([SuppressedException]::new("Central mode is on for this subscription. You need to pass 'CentralScanMode' switch to perform any modifications.", [SuppressedExceptionType]::InvalidArgument))
-		}
-
-		$IsAutomationAccountRemoved = $false;
-		
-		if(-not $this.IsCentralScanModeOn -or [string]::IsNullOrWhiteSpace($this.TargetSubscriptionIds))
-		{			
-			if($existingAutomationAccount)
+				if(-not (Split-Path -Parent $filename | Test-Path))
+				{
+					New-Item -ItemType Directory -Path $(Split-Path -Parent $filename) -Force
+				}
+				$keys = Get-AzStorageAccountKey -ResourceGroupName $this.AutomationAccount.CoreResourceGroup -Name $reportsStorageAccount.Name
+				$currentContext = New-AzStorageContext -StorageAccountName $reportsStorageAccount.Name -StorageAccountKey $keys[0].Value -Protocol Https
+				$CAScanDataBlobObject = Get-AzStorageBlob -Container $this.CAMultiSubScanConfigContainerName -Blob $this.CATargetSubsBlobName -Context $currentContext -ErrorAction SilentlyContinue 
+				if($null -ne $CAScanDataBlobObject)
+				{
+					$CAScanDataBlobContentObject = [AzHelper]::GetStorageBlobContent($($this.AzSKCATempFolderPath), $this.CATargetSubsBlobName ,$this.CATargetSubsBlobName , $this.CAMultiSubScanConfigContainerName ,$currentContext)
+					#$CAScanDataBlobContentObject = Get-AzStorageBlobContent -Container $this.CAMultiSubScanConfigContainerName -Blob $this.CATargetSubsBlobName -Context $currentContext -Destination $($this.AzSKCATempFolderPath) -Force
+					$CAScanDataBlobContent = Get-ChildItem -Path (Join-Path $($this.AzSKCATempFolderPath) $($this.CATargetSubsBlobName)) -Force | Get-Content | ConvertFrom-Json
+				}
+			}
+			if(($CAScanDataBlobContent | Measure-Object).Count -gt 0)
 			{
-				$existingAutomationAccount | ForEach-Object{
-					#Initialize variables for confirmation pop ups
-					$title = "Confirm"
-					$yes = New-Object System.Management.Automation.Host.ChoiceDescription "&Yes", "This means Yes"
-					$no = New-Object System.Management.Automation.Host.ChoiceDescription "&No", "This means No"
-					$options = [System.Management.Automation.Host.ChoiceDescription[]]($yes, $no)
-					#below is hack for removing error due to strict mode - host variable is not assigned in the method 
-					$host = $host
-					# Ask for confirmation only if force switch is not present
-					# Set the default value as false
-					$result = 1
-					if(!$Force)
-					{
-						$accountConfirmMsg = "Are you sure you want to delete Continuous Assurance Automation Account '$($_.AutomationAccountName)'"
-						# user confirmation 
-						$result = $host.ui.PromptForChoice($title, $accountConfirmMsg, $options, 1)
+				$isCentralScanModeEnabled = $true;
+				#if user has passed the targetsubscriptionIds then we need to just remove the stuff from the target subs only.
+				$CAScanDataBlobContent | ForEach-Object {
+					$CAScanDataInstance = $_;							
+					$scanobject = [CAScanModel]::new($CAScanDataInstance.SubscriptionId, $CAScanDataInstance.LoggingOption);
+					$scanobjects += $scanobject;
+				}
+			}
+			#endregion
+
+			#throw error if perview switch is not passed are not passed and central mode is on
+			if(-not $this.IsCentralScanModeOn -and $isCentralScanModeEnabled)
+			{
+				throw ([SuppressedException]::new("Central mode is on for this subscription. You need to pass 'CentralScanMode' switch to perform any modifications.", [SuppressedExceptionType]::InvalidArgument))
+			}
+
+			$IsAutomationAccountRemoved = $false;
+			
+			if(-not $this.IsCentralScanModeOn -or [string]::IsNullOrWhiteSpace($this.TargetSubscriptionIds))
+			{			
+				if($existingAutomationAccount)
+				{
+					$existingAutomationAccount | ForEach-Object{
+						#Initialize variables for confirmation pop ups
+						$title = "Confirm"
+						$yes = New-Object System.Management.Automation.Host.ChoiceDescription "&Yes", "This means Yes"
+						$no = New-Object System.Management.Automation.Host.ChoiceDescription "&No", "This means No"
+						$options = [System.Management.Automation.Host.ChoiceDescription[]]($yes, $no)
+						#below is hack for removing error due to strict mode - host variable is not assigned in the method 
+						$host = $host
+						# Ask for confirmation only if force switch is not present
+						# Set the default value as false
+						$result = 1
+						if(!$Force)
+						{
+							$accountConfirmMsg = "Are you sure you want to delete Continuous Assurance Automation Account '$($_.AutomationAccountName)'"
+							# user confirmation 
+							$result = $host.ui.PromptForChoice($title, $accountConfirmMsg, $options, 1)
+						}
+						if($result -eq 0 -or $Force)
+						{
+							$runAsConnection = $this.GetRunAsConnection()
+							#user selected yes
+							Remove-AzAutomationAccount -ResourceGroupName $_.ResourceGroupName -name $_.AutomationAccountName -Force -ErrorAction stop
+							$messages += [MessageData]::new("Removed Automation Account: [$($_.AutomationAccountName)] from resource group: [$($this.AutomationAccount.ResourceGroup)]")
+							$this.PublishCustomMessage("Removed Automation Account: [$($_.AutomationAccountName)] from resource group: [$($this.AutomationAccount.ResourceGroup)]")
+							$IsAutomationAccountRemoved = $true;
+							#remove version in AzSKRG
+							$this.RemoveRunbookVersionTag()
+						}
+						else
+						{
+							#user selected no
+							$messages += [MessageData]::new("You have chosen not to delete Automation Account: [$($_.AutomationAccountName)]")
+							$this.PublishCustomMessage("You have chosen not to delete Automation Account: [$($_.AutomationAccountName)]")
+						}
 					}
-					if($result -eq 0 -or $Force)
+				}
+			}		
+
+			if($this.IsCentralScanModeOn)
+			{
+				#user has passed the 'CentralScanMode' switch. This would clean up the logs storage containers across all the target subscriptions.
+				if(($scanobjects | Measure-Object).Count -gt 0)
+				{
+					if($null -eq $runAsConnection)
 					{
 						$runAsConnection = $this.GetRunAsConnection()
-						#user selected yes
-						Remove-AzAutomationAccount -ResourceGroupName $_.ResourceGroupName -name $_.AutomationAccountName -Force -ErrorAction stop
-						$messages += [MessageData]::new("Removed Automation Account: [$($_.AutomationAccountName)] from resource group: [$($this.AutomationAccount.ResourceGroup)]")
-						$this.PublishCustomMessage("Removed Automation Account: [$($_.AutomationAccountName)] from resource group: [$($this.AutomationAccount.ResourceGroup)]")
-						$IsAutomationAccountRemoved = $true;
-						#remove version in AzSKRG
-						$this.RemoveRunbookVersionTag()
+					}
+					if($runAsConnection)
+					{			
+						$this.CAAADApplicationID = $runAsConnection.FieldDefinitionValues.ApplicationId
+					}
+					if([string]::IsNullOrWhiteSpace($this.TargetSubscriptionIds))
+					{
+						$finalTargetSubs = $null;
+						$toBeDeletedTargetSubs = $scanobjects;
 					}
 					else
 					{
-						#user selected no
-						$messages += [MessageData]::new("You have chosen not to delete Automation Account: [$($_.AutomationAccountName)]")
-						$this.PublishCustomMessage("You have chosen not to delete Automation Account: [$($_.AutomationAccountName)]")
+						$caSubs = @();
+						$tempCASubs = $this.ConvertToStringArray($this.TargetSubscriptionIds);
+						$tempCASubs | ForEach-Object{
+							if($_ -ne $this.SubscriptionContext.SubscriptionId -and $caSubs -notcontains $_)
+							{
+								$caSubs += $_;
+							}
+						}			
+						$finalTargetSubs = $scanobjects | Where-Object {$caSubs -notcontains $_.SubscriptionId} ;
+						$toBeDeletedTargetSubs = $scanobjects | Where-Object {$caSubs -contains $_.SubscriptionId} ;
 					}
-				}
-			}
-		}		
-
-		if($this.IsCentralScanModeOn)
-		{
-			#user has passed the 'CentralScanMode' switch. This would clean up the logs storage containers across all the target subscriptions.
-			if(($scanobjects | Measure-Object).Count -gt 0)
-			{
-				if($null -eq $runAsConnection)
-				{
-					$runAsConnection = $this.GetRunAsConnection()
-				}
-				if($runAsConnection)
-				{			
-					$this.CAAADApplicationID = $runAsConnection.FieldDefinitionValues.ApplicationId
-				}
-				if([string]::IsNullOrWhiteSpace($this.TargetSubscriptionIds))
-				{
-					$finalTargetSubs = $null;
-					$toBeDeletedTargetSubs = $scanobjects;
+					$this.DeleteResourcesFromTargetSubs($finalTargetSubs, $toBeDeletedTargetSubs, $this.CAAADApplicationID, $DeleteStorageReports)
 				}
 				else
 				{
-					$caSubs = @();
-					$tempCASubs = $this.ConvertToStringArray($this.TargetSubscriptionIds);
-					$tempCASubs | ForEach-Object{
-						if($_ -ne $this.SubscriptionContext.SubscriptionId -and $caSubs -notcontains $_)
-						{
-							$caSubs += $_;
-						}
-					}			
-					$finalTargetSubs = $scanobjects | Where-Object {$caSubs -notcontains $_.SubscriptionId} ;
-					$toBeDeletedTargetSubs = $scanobjects | Where-Object {$caSubs -contains $_.SubscriptionId} ;
+					$this.PublishCustomMessage("No central scanning configuration found")
 				}
-				$this.DeleteResourcesFromTargetSubs($finalTargetSubs, $toBeDeletedTargetSubs, $this.CAAADApplicationID, $DeleteStorageReports)
+			}
+			elseif($DeleteStorageReports)
+			{
+				$this.RemoveStorageReports($Force);
+			}
+				
+				
+			#DeleteStorageReports switch is present but no storage account found
+			if($null -eq $existingAutomationAccount)
+			{
+				$messages += [MessageData]::new("Continuous Assurance (CA) is not configured in this subscription")
+				$this.PublishCustomMessage("Continuous Assurance (CA) is not configured in this subscription")
+			}		
+			
+			return $messages
+		}
+		else
+		{
+			return $this.RemoveAllAzSKDeployedResources($Force)
+		}
+		
+	}	
+	
+	[MessageData[]] RemoveAllAzSKDeployedResources($Force)
+	{
+		[MessageData[]] $messages = @();
+		$this.PublishCustomMessage("This command will delete resources in your subscription [$($this.SubscriptionContext.SubscriptionId)] which were installed by AzSK",[MessageType]::Warning);
+		$messages += [MessageData]::new("This command will delete resources in your subscription [$($this.SubscriptionContext.SubscriptionId)] which were installed by AzSK",[MessageType]::Warning);
+		$azureContext = [ContextHelper]::GetCurrentRMContext()
+		$this.PublishCustomMessage(" `r`n"+"Step 1 of 3: Validating whether the current user [$($azureContext.Account.Id)] have the required permissions to run the command for Subscription [$($this.SubscriptionContext.SubscriptionId)]..."+" `r`n",[MessageType]::Default);
+		# Safe Check: Checking whether the current account is of type User
+		if($azureContext.Account.Type -ne "User")
+		{
+			$this.PublishCustomMessage("WARNING: This command can only be run by user account type.",[MessageType]::Warning);
+			$messages += [MessageData]::new("WARNING: This command can only be run by user account type.",[MessageType]::Warning);
+			return $messages;
+		}
+		# Safe Check: Current user need to have Owner role for the subscription
+		$currentLoginRoleAssignments = Get-AzRoleAssignment -SignInName $azureContext.Account.Id -Scope "/subscriptions/$($this.SubscriptionContext.SubscriptionId)" -IncludeClassicAdministrators;
+	
+		if(($currentLoginRoleAssignments | Where-Object { $_.RoleDefinitionName -eq "Owner" -or $_.RoleDefinitionName -match 'CoAdministrator' -or $_.RoleDefinitionName -like '*ServiceAdministrator*'} | Measure-Object).Count -le 0)
+		{
+			$this.PublishCustomMessage("WARNING: This command can only be run by an Owner of subscription.",[MessageType]::Warning);
+			$messages += [MessageData]::new("WARNING: This command can only be run by an Owner of subscription.",[MessageType]::Warning);
+			return $messages;
+		}
+		else{
+			$this.PublishCustomMessage("User has all required permissions.",[MessageType]::Update);
+		}
+
+		$azskRGName = $this.AutomationAccount.CoreResourceGroup
+		$this.PublishCustomMessage(" `r`n"+"Step 2 of 3: Listing resources present under resource group [$($azskRGName)] in Subscription [$($this.SubscriptionContext.SubscriptionId)]..." + " `r`n",[MessageType]::Default);
+
+		# Get AzSK RG
+		$azskRG = Get-AzResourceGroup $azskRGName -ErrorAction SilentlyContinue
+		if(-not $azskRG)
+		{
+			$this.PublishCustomMessage("Resource group [$($azskRGName)] is not present in subscription [$($this.SubscriptionContext.SubscriptionId)]",[MessageType]::Error);
+			$messages += [MessageData]::new("Resource group [$($azskRGName)] is not present in subscription [$($this.SubscriptionContext.SubscriptionId)]",[MessageType]::Error);
+			return $messages;
+		}
+
+		# declare all required variables
+		$allResources  = @()
+		$azskResources = @()
+		$nonAzSKResources = @()
+		$errorCollection = @()
+		$userSkippedResources = @()
+		$existingAzSKRunbooks = @()
+		$nonAzSKRunbooks = @()
+		$azskRoleAssignments = @()
+		$deleteAzSKRG = $false
+		$caSPN = $null
+		$aadApp = $null
+		$aadAppDeleted = $false
+		$roleAssignmentRemoved = $false
+		$azskRGDeleted = $false
+	
+		# Get All resource in AzSKRG 
+		$allResources += Get-AzResource -ResourceGroupName $azskRGName -ErrorAction Stop
+
+		if(($allResources | Measure-Object).Count -gt 0)
+		{
+			# Check AzSK Stoarge account
+			$storageAccount = $allResources | Where-Object { $_.Name -match '^azsk\d{14}$' -and $_.ResourceType -eq $([UserSubscriptionDataHelper]::StorageResourceType) }
+			if(($storageAccount|Measure-Object).Count -gt 0)
+			{
+				$azskResources += $storageAccount
+			}
+
+			# Check AzSK continuous assurance automation accounts
+			$automationAccountName = [UserSubscriptionDataHelper]::GetCAName()
+			$azskRunbookNames = @(
+								 $($automationAccountName +"/"+ [Constants]::RunbookName), 
+								 $($automationAccountName +"/"+ [Constants]::AlertRunbookName), 
+								 $($automationAccountName +"/"+ [Constants]::Alert_ResourceCreation_Runbook)
+								);
+			$existingAutomationAccount = $allResources | Where-Object { $_.Name -eq $automationAccountName -and $_.ResourceType -eq "Microsoft.Automation/automationAccounts" }
+			if(($existingAutomationAccount|Measure-Object).Count -gt 0)
+			{
+
+				$azskResources += $existingAutomationAccount
+	
+				# Check AzSK runbooks
+				$existingAzSKRunbooks += $allResources | Where-Object { $_.ResourceType -eq "Microsoft.Automation/automationAccounts/runbooks" -and $_.Name -in $azskRunbookNames}
+				if(($existingAzSKRunbooks  |Measure-Object).Count -gt 0)
+				{
+					$azskResources += $existingAzSKRunbooks	
+				}
+				
+				# Check non AzSK runbooks present in AzSK Automation account
+				$nonAzSKRunbooks += $allResources | Where-Object { $_.ResourceType -eq "Microsoft.Automation/automationAccounts/runbooks" -and  $_.Name -like "$($automationAccountName)/*" -and $_.Name -notin $azskRunbookNames} 
+				if($nonAzSKRunbooks)
+				{
+					$azskResources += $nonAzSKRunbooks
+				}
+	
+	
+				# Fetching appID of CA SPN 
+				$connection = Get-AzAutomationConnection -AutomationAccountName $automationAccountName -ResourceGroupName  $azskRGName -Name $this.connectionAssetName -ErrorAction SilentlyContinue			
+				if($connection)
+				{
+				  $appID = $connection.FieldDefinitionValues.ApplicationId
+				  $caSPN = Get-AzADServicePrincipal -ServicePrincipalName $appID -ErrorAction SilentlyContinue
+				  $aadAPP = Get-AzADApplication -ApplicationId $appID -ErrorAction SilentlyContinue
+				  # Safe check: SPN display name should match AzSK specified name pattern
+				  $azskspnformatstring = $this.AzSKLocalSPNFormatString
+				  $centralazskspnformatstring  = $this.AzSKCentralSPNFormatString
+				  if(-not ($caSPN.DisplayName -like "$($azskspnformatstring)*" -or $caSPN.DisplayName -like "$($centralazskspnformatstring)*"))
+				  {
+					$caSPN = $null
+					$aadAPP = $null
+				  }
+				}
+	
+				# Get role assignment of current SPN
+				if($caSPN)
+				{
+					$subscriptionScope = "/subscriptions/{0}" -f $this.SubscriptionContext.SubscriptionId
+					$rgScope = "/subscriptions/{0}/resourcegroups/{1}" -f $this.SubscriptionContext.SubscriptionId, $azskRGName
+					$spnObjectId = $caSPN.Id
+	
+					# check subscription scope 'reader' role assignment
+					$azskRoleAssignments += Get-AzRoleAssignment -Scope $subscriptionScope -RoleDefinitionName Reader | Where-Object { $_.ObjectId -eq $spnObjectId }
+					# check resource group scope 'contributor' role assignment
+					$azskRoleAssignments += Get-AzRoleAssignment -Scope $rgScope -RoleDefinitionName Contributor | Where-Object { $_.ObjectId -eq $spnObjectId }
+	
+				}
+
+				
+			}
+
+			# Get the alerts
+			$azskAlerts = @()
+			$alertConfig =  $this.LoadServerConfigFile("Subscription.InsARMAlerts.json");
+			$azskAlerts += $alertConfig.AlertList.Name
+			$configuredAlerts = $allResources | Where-Object {$_.ResourceType -eq "Microsoft.Insights/activityLogAlerts"-and $_.Name -in $azskAlerts }
+			if($configuredAlerts)
+			{
+				$azskResources += $configuredAlerts	
+			}
+	
+			# Get the Action Group
+			$azskActionGroupNames = @([Constants]::AlertActionGroupName,[Constants]::CriticalAlertActionGroupName,[Constants]::ResourceDeploymentActionGroupName)
+			$actionGrps = $allResources | Where-Object { $_.ResourceType  -eq "microsoft.insights/actiongroups" -and $_.Name -in $azskActionGroupNames}
+			if($actionGrps)
+			{
+				$azskResources += $actionGrps	
+			}
+			
+			if($azskResources)
+			{
+				$nonAzSKResources += $allResources | Where-Object {$_.Id -inotin $azskResources.Id }
 			}
 			else
 			{
-				$this.PublishCustomMessage("No central scanning configuration found")
+				$nonAzSKResources += $allResources
 			}
-		}
-		elseif($DeleteStorageReports)
-		{
-			$this.RemoveStorageReports($Force);
-		}
+
+			$this.PublishCustomMessage(" `r`n"+"A) Listing details of SPN associated with current AzSK automation account:");
+			if($caSPN)
+			{
+				$this.PublishCustomMessage("`tAAD Application:" + "`r`t" +($caSPN | Select-Object "DisplayName", "ApplicationId" | Format-Table | Out-String))
+
+				if($azskRoleAssignments)
+				{
+					$this.PublishCustomMessage("`tRole assignments for SPN:" + "`r`t" + "$($azskRoleAssignments | Select-Object "RoleDefinitionName", "Scope" | Format-Table | Out-String)")
+				}
+			}
+			else
+			{
+				$this.PublishCustomMessage("No SPN found.`n");
+			}
+
+			$this.PublishCustomMessage(" `r`n"+"B) Listing AzSK resources present in AzSKRG:");
+			if($azskResources)
+			{
+				$this.PublishCustomMessage(($azskResources | Select-Object Name, ResourceType | Format-Table | Out-String));
+			}
+			else{
+				$this.PublishCustomMessage("No such resources found.`n");
+			}
+
+			$this.PublishCustomMessage(" `r`n"+"C) Listing Non-AzSK resources are present in AzSKRG:");
+			if($nonAzSKResources)
+			{   
+				$this.PublishCustomMessage(($nonAzSKResources | Select-Object Name, ResourceType | Format-Table | Out-String));
+			}
+			else{
+				$this.PublishCustomMessage("No such resources found.");
+			}
 			
+			$this.PublishCustomMessage(" `r`n"+"Step 3 of 3: Cleaning resources present under resource group [$($azskRGName)] in Subscription...",[MessageType]::Default);
+
+			if($azskResources)
+			{
+				$userChoice="" 
+				if($Force)
+				{
+					$userChoice="A"
+					$this.PublishCustomMessage("Force parameter is set to 'True', no further consent required.", [MessageType]::Warning);
+				}
+				else
+				{
+	
+					$this.PublishCustomMessage("Please select an action from below: `n[A]: Delete all AzSK deployed resources & AAD application `n[N]: Delete none`n[S]: Delete selected", [MessageType]::Info);
+					while($userChoice -ne 'A' -and $userChoice -ne 'N' -and $userChoice -ne 'S')
+					{
+						$userChoice = Read-Host "User choice"
+						if(-not [string]::IsNullOrWhiteSpace($userChoice))
+						{
+							$userChoice = $userChoice.Trim();
+						}
+					}
+				}
+	
+	
+				switch ($userChoice.ToUpper())
+				{                    
+					"A" #DeleteAll
+					{	
+						$this.PublishCustomMessage([Constants]::DoubleDashLine+ "`r`n" + "Following resources will be deleted:"+ "`r`n" + [Constants]::SingleDashLine);
+						$this.PublishCustomMessage("`rAzure resources:", [MessageType]::Info); 
+						$this.PublishCustomMessage(($azskResources | Select-Object Name, ResourceType | Format-Table | Out-String));
+	
+						if($caSPN)
+						{
+							$this.PublishCustomMessage([Constants]::SingleDashLine)
+							if($azskRoleAssignments)
+							{
+								$this.PublishCustomMessage("Role assignments:", [MessageType]::Info);
+								$this.PublishCustomMessage(($azskRoleAssignments | Select-Object "RoleDefinitionName", "Scope" | Format-Table| Out-String));
+							}
+							
+							$this.PublishCustomMessage(" `r`n"+"Azure AD application:", [MessageType]::Info); 
+							$this.PublishCustomMessage(($caSPN | Select-Object DisplayName, ApplicationId | Format-Table | Out-String));
+	
+							$this.PublishCustomMessage("WARNING: Before deleting SPN & AAD Application [$($caSPN.DisplayName)], please make sure that this AAD application & SPN is not used anywhere else.", [MessageType]::Warning);
+							$this.PublishCustomMessage([Constants]::SingleDashLine)
+	
+						}
+						$this.PublishCustomMessage([Constants]::DoubleDashLine)
+	
+						$userChoice = ""
+						if($Force)
+						{
+							$userChoice="Y" # No further user consent required as 'Force' switch is enabled
+						}else
+						{
+							$this.PublishCustomMessage("`nPlease confirm deletion of all above listed resources: `n[Y]: Yes`n[N]: No", [MessageType]::Info); 
+							$userChoice = $this.ReadUserChoice()
+						}
+					   
+						if($userChoice -ne "Y")
+						{
+							$this.PublishCustomMessage("No resources were deleted.", [MessageType]::Warning) 
+							$userSkippedResources = $azskResources                  
+							break;
+						}
+	
+						# Delete storage account if exists
+						if($storageAccount)
+						{
+							try
+							{
+								$this.DeleteStorageAccount($storageAccount)
+							}
+							catch
+							{
+								$errorCollection += $storageAccount
+								$this.PublishCustomMessage("Error occurred while deleting AzSK storage account [$($storageAccount.Name)].", [MessageType]::Warning);
+							}
+						}
+	
+						# Delete automation account and all associated runbooks if exists
+						if($existingAutomationAccount)
+						{
+							try
+							{   
+								$this.DeleteAutomationAccount($existingAutomationAccount)
+							}
+							catch
+							{
+								$errorCollection += $existingAutomationAccount
+								$errorCollection += $existingAzSKRunbooks 
+								$this.PublishCustomMessage("Error occurred while deleting AzSK automation account [$($existingAutomationAccount.Name)].", [MessageType]::Warning);
+							}
+						}
+	
+						# Delete the alerts if exist
+						if($configuredAlerts)
+						{
+							$errorCount = 0 
+							$this.PublishCustomMessage("Deleting AzSK alerts..."); 
+							$configuredAlerts | ForEach-Object {
+								$alertName = $_.Name;
+								$alert = $_;
+								# Remove alert
+								try
+								{
+									$success = Remove-AzResource -ResourceType "Microsoft.Insights/activityLogAlerts" -ResourceGroupName  $azskRGName -Name $alertName -Force  
+									if(-not $success)
+									{
+										throw;
+									}  
+								}
+								catch
+								{
+									$errorCount += 1;
+									$errorCollection += $alert
+								}
+							}
+	
+							if($errorCount -gt 0)
+							{
+								$this.PublishCustomMessage("Error occurred while deleting AzSK alerts.", [MessageType]::Warning);
+							}else{
+								$this.PublishCustomMessage("Successfully deleted AzSK alerts.", [MessageType]::Update);
+							}
+						}
+					
+						# Delete the action groups if exist
+						if($actionGrps)
+						{
+							$this.PublishCustomMessage("Deleting AzSK action groups..."); 
+							$errorCount = 0
+							$actionGrps | ForEach-Object {
+								$actionGroupName = $_.Name;
+								$actionGroup = $_;
+								try
+								{
+									$success = Remove-AzResource -ResourceType "Microsoft.Insights/actiongroups" -ResourceGroupName  $azskRGName -Name $actionGroupName -Force  
+									if(-not $success)
+									{
+										throw;
+									}   
+								}
+								catch
+								{
+									$errorCount += 1;
+									$errorCollection += $actionGroup
+								}
+							}
+	
+							if($errorCount -gt 0)
+							{
+								$this.PublishCustomMessage("Error occurred while deleting AzSK action groups.", [MessageType]::Warning);
+							}else{
+								$this.PublishCustomMessage("Successfully deleted AzSK action groups.", [MessageType]::Update);
+							}
+						}    
+	
+						# Delete role assignments
+						if($azskRoleAssignments)
+						{
+							try
+							{
+								$this.DeleteRoleAssignments($azskRoleAssignments)
+								$roleAssignmentRemoved = $true
+							}
+							catch
+							{
+								$this.PublishCustomMessage("ERROR: There was some error while removing role assignment for AzSK SPN.", [MessageType]::Warning);
+							}
+						}
+	
+						# Delete the AAD Application
+						if($aadApp)
+						{
+							try
+							{
+								$this.DeleteAADApplication($aadApp)
+								$aadAppDeleted = $true
+							}
+							catch
+							{
+								$this.PublishCustomMessage("ERROR: There was an error while deleting the AAD application. You may not have 'Owner' permission on it.", [MessageType]::Warning);
+							}
+						}
+					
+						break  				
+					}
+					"N" #None
+					{
+						$this.PublishCustomMessage("Process aborted. No resources were deleted.", [MessageType]::Warning); 
+						$userSkippedResources = $azskResources 
+						$messages += [MessageData]::new("Process aborted. No resources were deleted.");  
+						return $messages;               
+					}
+					"S" #Select
+					{
+						$this.PublishCustomMessage([Constants]::DoubleDashLine)
+						# Delete storage account if exists and user confirms
+						if($storageAccount)
+						{
+							$this.PublishCustomMessage([Constants]::SingleDashLine)
+							$this.PublishCustomMessage("`nDo you want to delete AzSK storage account: `n[Y]: Yes`n[N]: No", [MessageType]::Info); 
+							$this.PublishCustomMessage(($storageAccount | Select-Object Name, ResourceType | Format-Table | Out-String))
+							$userChoice=""
+							$userChoice = $this.ReadUserChoice()
+						
+							if($userChoice -eq 'Y')
+							{
+								try
+								{
+									$this.DeleteStorageAccount($storageAccount)
+								}
+								catch
+								{
+									$errorCollection += $storageAccount
+									$this.PublishCustomMessage("Error occurred while deleting AzSK storage account [$($storageAccount.Name)].", [MessageType]::Warning);
+								}
+							}
+							else
+							{
+								$userSkippedResources += $storageAccount
+								$this.PublishCustomMessage("Skipped deletion of AzSK storage account [$($storageAccount.Name)].", [MessageType]::Warning);
+							}
+							$this.PublishCustomMessage([Constants]::SingleDashLine);
+							
+						}
+	
+						# Delete automation account and all associated runbooks if exists
+						if($existingAutomationAccount)
+						{
+							$this.PublishCustomMessage([Constants]::SingleDashLine);
+							$this.PublishCustomMessage("`nDo you want to delete AzSK automation account and all associated runbooks: `n[Y]: Yes`n[N]: No", [MessageType]::Info); 
+							$this.PublishCustomMessage(((@($existingAutomationAccount) + $existingAzSKRunbooks) | Select-Object Name, ResourceType | Format-Table | Out-String))
+							
+	
+							if($nonAzSKRunbooks)
+							{
+								$this.PublishCustomMessage("WARNING: Following Non-AzSK deployed runbooks are also present in AzSK automation account, if you choose to delete AzSK automation account these runbooks will also be deleted.", [MessageType]::Warning);
+								$this.PublishCustomMessage(($nonAzSKRunbooks | Select-Object Name, ResourceType | Format-Table | Out-String));
+							}
+	
+							$userChoice=""
+							$userChoice = $this.ReadUserChoice()
+	
+							if($userChoice -eq 'Y')
+							{
+	
+								try
+								{   
+									$this.DeleteAutomationAccount($existingAutomationAccount)
+								}
+								catch
+								{
+									$errorCollection += $existingAutomationAccount
+									$errorCollection += $existingAzSKRunbooks 
+									$this.PublishCustomMessage("Error occurred while deleting AzSK automation account [$($existingAutomationAccount.Name)].", [MessageType]::Warning);
+								}
+							}
+							else
+							{
+								$userSkippedResources += $existingAutomationAccount
+								$userSkippedResources += $existingAzSKRunbooks
+								$this.PublishCustomMessage("Skipped deletion of AzSK automation account [$($existingAutomationAccount.Name)].", [MessageType]::Warning);
+							}
+							$this.PublishCustomMessage([Constants]::SingleDashLine);
+						}
+	
+						# Delete the alerts if exist
+						if($configuredAlerts)
+						{
+							$this.PublishCustomMessage([Constants]::SingleDashLine);
+							$this.PublishCustomMessage("`nDo you want to delete AzSK alerts: `n[Y]: Yes`n[N]: No", [MessageType]::Info);  
+							$this.PublishCustomMessage(($configuredAlerts | Select-Object Name, ResourceType | Format-Table | Out-String));
+							$userChoice=""
+							$userChoice = $this.ReadUserChoice()
+	
+							if($userChoice -eq 'Y')
+							{
+								$errorCount = 0 
+								$this.PublishCustomMessage("Deleting AzSK alerts..."); 
+								$configuredAlerts | ForEach-Object {
+									$alertName = $_.Name;
+									$alert = $_;
+									# Remove alert
+									try
+									{
+										$success = Remove-AzResource -ResourceType "Microsoft.Insights/activityLogAlerts" -ResourceGroupName  $azskRGName -Name $alertName -Force    
+										if(-not $success)
+										{
+											throw;
+										}
+									}
+									catch
+									{
+										$errorCount += 1;
+										$errorCollection += $alert
+									}
+								}
+	
+								if($errorCount -gt 0)
+								{
+									$this.PublishCustomMessage("Error occurred while deleting AzSK alerts.", [MessageType]::Warning);
+								}else{
+									$this.PublishCustomMessage("Successfully deleted AzSK alerts.", [MessageType]::Update);
+								}
+							}
+							else
+							{
+								$userSkippedResources += $configuredAlerts
+								$this.PublishCustomMessage("Skipped deletion of AzSK alerts.", [MessageType]::Warning);
+							}
+							$this.PublishCustomMessage([Constants]::SingleDashLine);
+						}
+					
+						# Delete the action groups if exist
+						if($actionGrps)
+						{
+							$this.PublishCustomMessage([Constants]::SingleDashLine);
+							$this.PublishCustomMessage("`nDo you want to delete AzSK alert action groups: `n[Y]: Yes`n[N]: No", [MessageType]::Info); 
+							$this.PublishCustomMessage(($actionGrps | Select-Object Name, ResourceType | Format-Table | Out-String))
+							$userChoice=""
+							$userChoice = $this.ReadUserChoice()
+	
+							if($userChoice -eq 'Y')
+							{
+	
+								$this.PublishCustomMessage("Deleting AzSK action groups..."); 
+								$errorCount = 0
+								$actionGrps | ForEach-Object {
+									$actionGroupName = $_.Name;
+									$actionGroup = $_;
+									try
+									{
+										$success = Remove-AzResource -ResourceType "Microsoft.Insights/actiongroups" -ResourceGroupName  $azskRGName -Name $actionGroupName -Force    
+										if(-not $success)
+										{
+											throw;
+										}
+									}
+									catch
+									{
+										$errorCount += 1;
+										$errorCollection += $actionGroup
+									}
+								}
+	
+								if($errorCount -gt 0)
+								{
+									$this.PublishCustomMessage("Error occurred while deleting AzSK action groups.", [MessageType]::Warning);
+								}else{
+									$this.PublishCustomMessage("Successfully deleted AzSK action groups.", [MessageType]::Update);
+								}
+							}
+							else
+							{
+								 $userSkippedResources += $actionGrps
+								 $this.PublishCustomMessage("Skipped deletion of AzSK alert action groups.", [MessageType]::Warning);
+							}
+							$this.PublishCustomMessage([Constants]::SingleDashLine);
+						}    
+	
+						$this.PublishCustomMessage([Constants]::DoubleDashLine);
+	
+						# Delete the SPN role assignment
+						if($azskRoleAssignments)
+						{
+							$this.PublishCustomMessage([Constants]::SingleDashLine);
+							$this.PublishCustomMessage("`nDo you want to delete AzSK SPN role assignments: `n[Y]: Yes`n[N]: No", [MessageType]::Info); 
+							$this.PublishCustomMessage(($azskRoleAssignments | Select-Object "RoleDefinitionName", "Scope" | Format-Table | Out-String))
+							$userChoice=""
+							$userChoice = $this.ReadUserChoice()
+	
+							if($userChoice -eq 'Y')
+							{
+								try
+								{
+									$this.DeleteRoleAssignments($azskRoleAssignments)
+									$roleAssignmentRemoved = $true
+								}
+								catch
+								{
+									$this.PublishCustomMessage("ERROR: There was some error while removing role assignment for AzSK SPN.", [MessageType]::Warning);
+								}
+							}
+							else
+							{
+								$this.PublishCustomMessage("Skipped deletion of role assignments.", [MessageType]::Warning);
+							}
+							$this.PublishCustomMessage([Constants]::SingleDashLine);
+						}
+	
+						# Delete the AAD Application
+						if($aadApp)
+						{
+							$this.PublishCustomMessage([Constants]::SingleDashLine);
+							$this.PublishCustomMessage("`nDo you want to delete AzSK CA SPN/Application: `n[Y]: Yes`n[N]: No", [MessageType]::Info);
+							$this.PublishCustomMessage(($aadApp | Select-Object DisplayName, ApplicationId | Format-Table | Out-String));
+							$this.PublishCustomMessage("WARNING: Before deleting SPN & AAD Application [$($caSPN.DisplayName)], please make sure that this AAD application & SPN is not used anywhere else.", [MessageType]::Warning);
+							
+							$userChoice=""
+							$userChoice = $this.ReadUserChoice()
+	
+							if($userChoice -eq 'Y')
+							{
+								try
+								{
+									$this.DeleteAADApplication($aadApp)
+									$aadAppDeleted = $true
+								}
+								catch
+								{
+									$this.PublishCustomMessage("ERROR: There was an error while deleting the AAD application. You may not have 'Owner' permission on it.", [MessageType]::Warning);
+								}
+							}
+							else
+							{
+								$this.PublishCustomMessage("Skipped deletion of AzSK CA SPN/Application.", [MessageType]::Warning);
+							}
+							$this.PublishCustomMessage([Constants]::SingleDashLine);
+						}
+						$this.PublishCustomMessage([Constants]::DoubleDashLine);
+									  
+						break
+					}
+	
+				}
 			
-		#DeleteStorageReports switch is present but no storage account found
-		if($null -eq $existingAutomationAccount)
+			}
+	
+			try
+			{
+				$allResources = Get-AzResource -ResourceGroupName $azskRGName
+	
+				if(($allResources | Measure-Object).Count -gt 0)
+				{
+					$this.PublishCustomMessage([Constants]::DoubleDashLine);
+					$deleteAzSKRG = $false
+					if($nonAzSKResources)
+					{
+					   $this.PublishCustomMessage("`nFollowing Non-AzSK resources are present in AzSKRG, please move/delete these resources before deleting AzSKRG.", [MessageType]::Warning);
+					   $this.PublishCustomMessage(($nonAzSKResources | Select-Object Name, ResourceType | Format-Table | Out-String));
+					}
+	
+					if($errorCollection){
+						$this.PublishCustomMessage("`nError occurred while deleting following resources, please delete these resources manually from portal or contact support team.", [MessageType]::Error);
+						$this.PublishCustomMessage(($errorCollection | Select-Object Name, ResourceType | Format-Table | Out-String));
+					}
+	
+					if($userSkippedResources){
+						$this.PublishCustomMessage("`nFollowing AzSK resources were skipped from deletion based on your selection, AzSKRG will not be deleted.", [MessageType]::Warning);
+						$this.PublishCustomMessage(($userSkippedResources | Select-Object Name, ResourceType | Format-Table| Out-String));
+					}
+	
+				}
+				else
+				{
+					$deleteAzSKRG = $true
+				}
+			}
+			catch{
+				$deleteAzSKRG = $false
+			}
+
+		}
+		else
 		{
-			$messages += [MessageData]::new("Continuous Assurance (CA) is not configured in this subscription")
-			$this.PublishCustomMessage("Continuous Assurance (CA) is not configured in this subscription")
-		}		
+			$deleteAzSKRG = $true
+			$this.PublishCustomMessage("No resources found in $($azskRGName).", [MessageType]::Warning);
+			$messages += [MessageData]::new("No resources found in $($azskRGName).",[MessageType]::Warning);
+		}
+
+		# Delete AzSKRG
+		$this.PublishCustomMessage([Constants]::SingleDashLine);
+		if($deleteAzSKRG)
+		{
+			try
+			{
+				$this.PublishCustomMessage("Deleting AzSK resource group [$($azskRGName)] from subscription...");
+				$success = Remove-AzResourceGroup -Name $azskRGName -Force
+				if(-not $success)
+				{
+					throw;
+				}
+				$azskRGDeleted = $true
+				$this.PublishCustomMessage("Successfully deleted AzSK resource group [$($azskRGName)] from subscription.", [MessageType]::Update);
+				$messages += [MessageData]::new("Successfully deleted AzSK resource group [$($azskRGName)] from subscription.",[MessageType]::Update);
+			}
+			catch
+			{
+				$this.PublishCustomMessage("ERROR: Error occurred while deleting resource group [$($azskRGName)], please contact support team.", [MessageType]::Error);
+				$messages += [MessageData]::new("ERROR: Error occurred while deleting resource group [$($azskRGName)], please contact support team.",[MessageType]::Error);
+			}
+			
+		}
+		else
+		{
+			$this.PublishCustomMessage("WARNING: Deletion of AzSK resource group [$($azskRGName)] skipped.", [MessageType]::Warning);
+			$messages += [MessageData]::new("WARNING: Deletion of AzSK resource group [$($azskRGName)] skipped.",[MessageType]::Warning);
+		}
+		$this.PublishCustomMessage([Constants]::DoubleDashLine, [MessageType]::Info);
+	
+		# Summary
+		$this.PublishCustomMessage("*** Summary ***", [MessageType]::Info);
+		$this.PublishCustomMessage([Constants]::SingleDashLine + "`nFollowing Azure resources were deleted:");
+		$messages += [MessageData]::new([Constants]::SingleDashLine + "`nFollowing Azure resources were deleted:");
+		$resourcesNotRemoved = $errorCollection + $userSkippedResources
+		$deletedResources = Compare-Object -ReferenceObject $azskResources -DifferenceObject $resourcesNotRemoved -Property ReourceId -PassThru
+		if($deletedResources)
+		{
+			$this.PublishCustomMessage(($deletedResources | Select-Object Name, ResourceType | Format-Table | Out-String));
+			$messages += [MessageData]::new(($deletedResources | Select-Object Name, ResourceType | Format-Table | Out-String));
+		}
+		else
+		{
+			$this.PublishCustomMessage("`n`n`tNo resources were deleted.");
+			$messages += [MessageData]::new("`n`tNo resources were deleted.");
+		}
+	
+		$this.PublishCustomMessage([Constants]::SingleDashLine + "`nFollowing role assignments were removed:");
+		$messages += [MessageData]::new([Constants]::SingleDashLine + "`nFollowing role assignments were removed:");
+		if($roleAssignmentRemoved)
+		{
+			$this.PublishCustomMessage(($azskRoleAssignments | Select-Object "RoleDefinitionName", "Scope" | Format-Table | Out-String))
+			$messages += [MessageData]::new(($azskRoleAssignments | Select-Object "RoleDefinitionName", "Scope" | Format-Table | Out-String));
+		}
+		else
+		{
+			$this.PublishCustomMessage("`n`tNo role assignment removed.");
+			$messages += [MessageData]::new("`n`tNo role assignment removed.");
+		}
+	
+		$this.PublishCustomMessage([Constants]::SingleDashLine + "`nFollowing AAD App & SPN were deleted:");
+		$messages += [MessageData]::new([Constants]::SingleDashLine + "`nFollowing AAD App & SPN were deleted:");
+
+		if($aadAppDeleted)
+		{
+			$this.PublishCustomMessage(($aadApp | Select-Object DisplayName, ApplicationId | Format-Table | Out-String))
+			$messages += [MessageData]::new(($aadApp | Select-Object DisplayName, ApplicationId | Format-Table | Out-String));
+		}
+		else
+		{
+			$this.PublishCustomMessage("`n`tNo AAD App & SPN deleted.");
+			$messages += [MessageData]::new("`n`tNo AAD App & SPN deleted.");
+		}
+		$this.PublishCustomMessage([Constants]::SingleDashLine);
+		# Next Steps
+		$this.PublishCustomMessage([Constants]::DoubleDashLine + "`n*** Next steps ***", [MessageType]::Info);
+		$success = $true
+		if(-not $azskRGDeleted)
+		{
+			$this.PublishCustomMessage("[$($azskRGName)] is not removed from subscription, please look at the wanrings/errors listed above after step #3." `
+			+ "`n`ta) If there is any Non-AzSK resources present in $($azskRGName), please remove/delete those resources using Azure portal." `
+			+ "`n`tb) If there is any error occurred while deleting AzSK resources, please look at the error details to resolve or try deleting such resources from Azure portal." `
+			+ "`n`tc) If you choose to skip deletion of selected resourecs then no further action needed.");
+			$success = $success -and $false
+		}
 		
+		if($aadApp -and -not($aadAppDeleted))
+		{
+			$this.PublishCustomMessage("AAD application [$($aadApp.DisplayName)] is not deleted." `
+			+ "`n`ta) You may not have owner permission on the application, please request owner of the application to delete using Azure portal." `
+			+ "`n`tb) If you choose to skip deletion of AAD Application then no further action needed.");
+			$success = $success -and $false
+		}
+	
+		if($azskRoleAssignments -and -not($roleAssignmentRemoved))
+		{
+			$this.PublishCustomMessage("Role assignment of AzSK CA SPN is not successfully removed." `
+			+ "`n`ta) Please look at the error details above for more details or you can also remove role assignment using Azure portal." `
+			+ "`n`tb) If you choose to skip deletion of CA SPN's role assignments then no further action needed.");
+			$success = $success -and $false
+		}
+	
+		if($success)
+		{
+			$this.PublishCustomMessage("No further action needed.",[MessageType]::Update);
+		}
+	
+		$this.PublishCustomMessage([Constants]::DoubleDashLine, [MessageType]::Info);
 		return $messages
-	}	
+	}
 
 	[void] SetResourceCreationScan()
 	{
@@ -4466,6 +5248,62 @@ class CCAutomation: AzCommandBase
 		{
 			$this.PublishCustomMessage("There was an error while deleting Certificate.")
 		}
+	}
+
+	hidden [string] ReadUserChoice()
+	{
+		$userSelection = ""
+		while($userSelection -ne 'Y' -and $userSelection -ne 'N')
+		{
+			$userSelection = Read-Host "User choice"
+			if(-not [string]::IsNullOrWhiteSpace($userSelection))
+			{
+				$userSelection = $userSelection.Trim();
+			}
+		}
+		return $userSelection;
+	}
+
+	hidden [void] DeleteStorageAccount($StorageAccount)
+	{
+		$this.PublishCustomMessage("Deleting AzSK storage account [$($storageAccount.Name)]...");  
+		$success = Remove-AzResource -ResourceGroupName $storageAccount.ResourceGroupName -ResourceName $storageAccount.Name -ResourceType 'Microsoft.Storage/storageAccounts' -Force
+		if(-not $success)
+		{
+			throw;
+		}
+		$this.PublishCustomMessage("Successfully deleted AzSK storage account.", [MessageType]::Update);
+	}
+
+	hidden [void] DeleteAutomationAccount($ExistingAutomationAccount)
+	{
+		$this.PublishCustomMessage("Deleting AzSK automation account [$($existingAutomationAccount.Name)]..."); 
+		$success = Remove-AzResource -ResourceGroupName $existingAutomationAccount.ResourceGroupName -ResourceName $existingAutomationAccount.Name -ResourceType 'Microsoft.Automation/automationAccounts' -Force
+		if(-not $success)
+		{
+			throw;
+		}
+		$this.PublishCustomMessage("Successfully deleted AzSK automation account.", [MessageType]::Update);
+	}
+
+	hidden [void] DeleteRoleAssignments($AzskRoleAssignments)
+	{
+		$this.PublishCustomMessage("Deleting role assignments of AzSK CA SPN..."); 
+		$azskRoleAssignments | Remove-AzRoleAssignment
+		$this.PublishCustomMessage("Successfully deleted role assignment of AzSK CA SPN.", [MessageType]::Update);
+	}
+
+	hidden [void] DeleteAADApplication($AadApp)
+	{
+		$this.PublishCustomMessage("Deleting AAD application of AzSK CA SPN..."); 
+		$success = Remove-AzADApplication -ApplicationId $aadApp.ApplicationId -Force
+		# Added this check as remove-azadapplication not returing success true/false properly
+		$appStillExist = Get-AzADApplication -ApplicationId $aadApp.ApplicationId -ErrorAction SilentlyContinue
+		if($appStillExist)
+		{
+			throw;
+		}
+		$this.PublishCustomMessage("Successfully deleted AAD application of AzSK CA SPN.", [MessageType]::Update);
 	}
 
 }

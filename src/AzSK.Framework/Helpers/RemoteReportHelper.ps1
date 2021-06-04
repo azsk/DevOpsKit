@@ -7,7 +7,7 @@ class RemoteReportHelper
 	hidden static [string[]] $AllowedSubscriptionScanParamList = "SubscriptionId";
 	hidden static [int] $MaxServiceParamCount = [RemoteReportHelper]::IgnoreScanParamList.Count + [RemoteReportHelper]::AllowedServiceScanParamList.Count;
 	hidden static [int] $MaxSubscriptionParamCount = [RemoteReportHelper]::IgnoreScanParamList.Count + [RemoteReportHelper]::AllowedSubscriptionScanParamList.Count;
-	hidden static [System.Security.Cryptography.SHA384Managed] $sha384AlgForMasking = [System.Security.Cryptography.SHA384Managed]::new();
+	hidden static [System.Security.Cryptography.SHA384CryptoServiceProvider] $sha384AlgForMasking = [System.Security.Cryptography.SHA384CryptoServiceProvider]::new();
 	hidden static [AIOrgTelemetryStatus] $AIOrgTelemetryState = [AIOrgTelemetryStatus]::Undefined;
 	hidden static [string] $TelemetryKey = "";
 
