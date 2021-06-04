@@ -605,6 +605,12 @@ class WritePsConsole: FileOutputBase
 		
 
 		$this.WriteMessage([ConfigurationManager]::GetAzSKConfigData().PolicyMessage,[MessageType]::Warning)
+		# Show sunset/warning message if present in org policy
+		$SunsetMessage = [ConfigurationManager]::GetAzSKConfigData().SunsetMessage
+		if(-not [string]::IsNullOrWhiteSpace($SunsetMessage))
+		{
+			$this.WriteMessage($SunsetMessage,[MessageType]::Warning)
+		}
 		
 	}
 

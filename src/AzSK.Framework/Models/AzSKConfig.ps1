@@ -46,6 +46,7 @@ class AzSKConfig
 	[string] $AzSKInitiativeName;
 	[string] $AzSKSecurityCenterInitiativeName;
 	[string] $DefaultOrgNeutralPolicyServerURL;
+	[string] $SunsetMessage;
 	hidden static [AzSKConfig] $Instance = $null;
 	
     static [AzSKConfig] GetInstance([bool] $useOnlinePolicyStore, [string] $onlineStoreUri, [bool] $enableAADAuthForOnlinePolicyStore)

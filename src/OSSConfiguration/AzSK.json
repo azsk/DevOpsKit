@@ -1,3 +1,4 @@
 {  
-  "IsAlertMonitoringEnabled": false
+  "IsAlertMonitoringEnabled": false,
+  "SunsetMessage": "Currently used policy url will be deprectaed soon. For more information, please refer: https://aka.ms/tbd"
 }
