@@ -2793,7 +2793,7 @@ class CCAutomation: AzCommandBase
 				$this.PublishCustomMessage("No SPN found.`n");
 			}
 
-			$this.PublishCustomMessage(" `r`n"+"B) Listing AzSK resources present in AzSKRG:");
+			$this.PublishCustomMessage(" `r`n"+"B) Listing AzSK resources present in resource group [$($azskRGName)]:");
 			if($azskResources)
 			{
 				$this.PublishCustomMessage(($azskResources | Select-Object Name, ResourceType | Format-Table | Out-String));
@@ -2802,7 +2802,7 @@ class CCAutomation: AzCommandBase
 				$this.PublishCustomMessage("No such resources found.`n");
 			}
 
-			$this.PublishCustomMessage(" `r`n"+"C) Listing Non-AzSK resources are present in AzSKRG:");
+			$this.PublishCustomMessage(" `r`n"+"C) Listing Non-AzSK resources present in resource group [$($azskRGName)]:");
 			if($nonAzSKResources)
 			{   
 				$this.PublishCustomMessage(($nonAzSKResources | Select-Object Name, ResourceType | Format-Table | Out-String));
