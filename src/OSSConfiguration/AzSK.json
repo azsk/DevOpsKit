@@ -1,4 +1,4 @@
 {  
   "IsAlertMonitoringEnabled": false,
-  "SunsetMessage": "Currently used policy url will be deprectaed soon. For more information, please refer: https://aka.ms/tbd"
+  "SunsetMessage": "Currently used policy server url will be deprecated soon. Follow the steps mentioned here (https://aka.ms/ossupgrade) to upgarde to latest policies."
 }
