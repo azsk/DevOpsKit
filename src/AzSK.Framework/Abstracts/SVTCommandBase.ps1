@@ -123,6 +123,10 @@ class SVTCommandBase: AzCommandBase {
     }
 
     hidden [SVTEventContext[]] ScanAttestedControls() {
+
+        # Making this variable as $false for auto-opening of scan result folder after scan completion
+        $Global:AttestationValue = $false
+        
         return @();
     }
     hidden [void] SetSVTBaseProperties([PSObject] $svtObject) {
