@@ -1,0 +1,20 @@
+{
+  "name": "AzSK_CA_Scan_Job",
+  "new_cluster": {
+    "spark_version": "5.5.x-scala2.11",
+    "node_type_id": "Standard_D3_v2",
+    "num_workers": 1,
+    "spark_env_vars":{  
+      "PYSPARK_PYTHON":"/databricks/python3/bin/python3"
+    }
+  },
+  "timeout_seconds": 3600,
+  "max_retries": 3,
+  "schedule": {
+    "quartz_cron_expression": #Schedule#,
+    "timezone_id": "UTC"
+  },
+  "notebook_task": {
+    "notebook_path": "/AzSK/AzSK_CA_Scan_Notebook"
+  }
+}
