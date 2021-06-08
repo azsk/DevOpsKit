@@ -126,6 +126,9 @@ class SubscriptionSecurityStatus: AzSVTCommandBase
 	}
 	hidden [SVTEventContext[]] ScanAttestedControls()
 	{
+		# Making this variable as $false for auto-opening of scan result folder after scan completion
+		$Global:AttestationValue = $false
+
 		return $this.RunForSubscription("RescanAndPostAttestationData")
 	}
 	#BaseLineControlFilter Function
