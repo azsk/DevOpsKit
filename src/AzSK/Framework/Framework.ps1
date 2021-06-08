@@ -163,7 +163,6 @@ $FrameworkPath =  ((Get-Item $PSScriptRoot).Parent.Parent).FullName +"\AzSK.Fram
 . $FrameworkPath\Abstracts\ServicesSecurityStatus.ps1
 . $PSScriptRoot\Core\SVT\SubscriptionSecurityStatus.ps1
 . $PSScriptRoot\Core\SVT\SVTStatusReport.ps1
-. $PSScriptRoot\Core\AzSKInfo\SecurityRecommendationsReport.ps1
 . $PSScriptRoot\Core\AzSKInfo\BasicInfo.ps1
 . $PSScriptRoot\Core\AzSKInfo\ControlsInfo.ps1
 . $PSScriptRoot\Core\AzSKInfo\EnvironmentInfo.ps1

@@ -718,6 +718,8 @@ function Remove-AzSKContinuousAssurance
 		Name of AutomationAccount. Default value is AzSKContinuousAssurance.
 	.PARAMETER DeleteStorageReports
 		Switch to specify whether security scan logs/reports stored in storage account also should be removed permanently.
+	.PARAMETER CleanUpAllAzSKResources
+		Switch to specify whether all AzSK deployed resources in subscription also should be deleted permanently.
 	.PARAMETER TargetSubscriptionIds
 		Comma separated values of subscriptionIds which would de-registered from the central scanning mode. Use this switch along with CentralScanMode switch.
 	.PARAMETER Force
@@ -760,6 +762,12 @@ function Remove-AzSKContinuousAssurance
 		[Alias("dsr")]
 		$DeleteStorageReports,
 
+		[Parameter(Mandatory = $false, ParameterSetName = "Default")]		
+		[Parameter(Mandatory = $false, ParameterSetName = "CentralScanMode")]
+        [switch]
+		[Alias("car")]
+		$CleanUpAllAzSKResources,
+
 		[Parameter(Mandatory = $true, ParameterSetName = "CentralScanMode", HelpMessage="This switch is required if AzSK CA is running in central scanning mode.")]
 		[switch]
 		[Alias("csm")]
@@ -790,6 +798,7 @@ function Remove-AzSKContinuousAssurance
 	{
 	try 
 		{
+			
 			if($UseContainers)
 			{
 				$CAwithACI = [ContinuousAssurance]::new($SubscriptionId, $PSCmdlet.MyInvocation);
@@ -808,7 +817,7 @@ function Remove-AzSKContinuousAssurance
 						$ccAccount.TargetSubscriptionIds = $TargetSubscriptionIds;
 					}
 					
-					return $ccAccount.InvokeFunction($ccAccount.RemoveAzSKContinuousAssurance,@($DeleteStorageReports, $Force));
+					return $ccAccount.InvokeFunction($ccAccount.RemoveAzSKContinuousAssurance,@($DeleteStorageReports, $CleanUpAllAzSKResources, $Force));
 				}
 			}
 			

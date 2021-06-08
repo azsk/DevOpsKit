@@ -628,7 +628,9 @@ class ARMCheckerStatus: EventBase
 	hidden [string] LoadARMControlsFile()
 	{ 	
 	   $serverFileContent=$null;
-	   $ARMControlsFileURI = [Constants]::ARMControlsFileURI
+	   $defaultOrgNeutralPolicyServerURL = [ConfigurationManager]::GetAzSKConfigData().DefaultOrgNeutralPolicyServerURL;
+	   $ARMControlsFileURI = [String]::Format([Constants]::ARMControlsFileURI, $defaultOrgNeutralPolicyServerURL); 
+	   
 	   $checkExtensionFile = $false
 	   try
 	   {

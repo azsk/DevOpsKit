@@ -519,6 +519,17 @@ class UsageTelemetry: ListenerBase {
 					# Eat the current exception which typically happens when the property already exist in the object and try to add the same property again
 					# No need to break execution
 				}
+				try{
+					if([ConfigurationManager]::GetAzSKConfigData().PolicyOrgName -eq [Constants]::OrgNameOSS)
+					{
+						$onlinePolicyStoreUrl = [ConfigurationManager]::GetAzSKSettings().OnlinePolicyStoreUrl
+						$Properties.Add("OnlinePolicyStoreUrl", [RemoteReportHelper]::Mask($onlinePolicyStoreUrl))
+					}
+				}
+				catch {
+					# Eat the current exception which typically happens when the property already exist in the object and try to add the same property again
+					# No need to break execution
+				}
 			}
 			catch{
 				# Eat the current exception which typically happens when the property already exist in the object and try to add the same property again

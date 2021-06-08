@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: azsk-scanner
+
+---
+
+kind: ConfigMap  
+apiVersion: v1  
+metadata:  
+  name: azsk-config    
+  namespace: azsk-scanner
+data:  
+  APP_INSIGHT_KEY: #AppInsightKey#
+  RG_NAME: #RGName#
+  RESOURCE_NAME: #ResourceName#
+  SUBSCRIPTION_ID: #SubscriptionID#
+  LA_WS_ID: #LAWSId#
+  LA_WS_SHAREDKEY: #LAWSSharedKey#
+

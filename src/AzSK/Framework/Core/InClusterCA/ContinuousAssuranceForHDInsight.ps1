@@ -50,7 +50,8 @@ class HDInsightClusterCA : CommandBase {
 
 
     [void] UploadAzSKNotebookToCluster() {
-        $NotebookUrl = [Constants]::HDInsightCANotebookUrl
+        $defaultOrgNeutralPolicyServerURL = [ConfigurationManager]::GetAzSKConfigData().DefaultOrgNeutralPolicyServerURL;
+        $NotebookUrl= [String]::Format([constants]::HDInsightCANotebookUrl, $defaultOrgNeutralPolicyServerURL); 
         $FilePath = $env:TEMP + "\AzSK_CA_Scan_Notebook.ipynb"
         Invoke-RestMethod  -Method Get -Uri $NotebookUrl -OutFile $filePath
         (Get-Content $FilePath) -replace '\#AI_KEY\#', $this.ResourceContext.InstrumentationKey | Set-Content $FilePath -Force
@@ -70,7 +71,8 @@ class HDInsightClusterCA : CommandBase {
     }
 
     [void] InstallAzSKPy() {
-        $ScriptActionUri = [Constants]::AzSKPyInstallUrl
+        $defaultOrgNeutralPolicyServerURL = [ConfigurationManager]::GetAzSKConfigData().DefaultOrgNeutralPolicyServerURL;
+        $ScriptActionUri = [String]::Format([constants]::AzSKPyInstallUrl, $defaultOrgNeutralPolicyServerURL); 
         # Install on both head, and worker nodes
         $NodeTypes = "headnode", "workernode"
         $ScriptActionName = "AzSKInstaller-" + (Get-Date -f MM-dd-yyyy-HH-mm-ss)
@@ -83,7 +85,8 @@ class HDInsightClusterCA : CommandBase {
     }
 
     [void] UninstallAzSKPy() {
-        $uninstallScript = [Constants]::AzSKPyUninstallUrl
+        $defaultOrgNeutralPolicyServerURL = [ConfigurationManager]::GetAzSKConfigData().DefaultOrgNeutralPolicyServerURL;
+        $uninstallScript = [String]::Format([constants]::AzSKPyUninstallUrl, $defaultOrgNeutralPolicyServerURL); 
         # Uninstall on both head, and worker nodes
         $nodeTypes = "headnode", "workernode"
         $uninstallActionName = "AzSKUnInstaller-" + (Get-Date -f MM-dd-yyyy-HH-mm-ss)

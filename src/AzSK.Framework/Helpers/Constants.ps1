@@ -108,8 +108,6 @@ class Constants
 	static [string] $LAWSRequestURI = "https://management.azure.com/{0}?api-version=2015-03-20";
 	static [string] $NewStorageSku = "Standard_LRS";
 	static [string] $NewStorageKind = "BlobStorage";
-	static [string] $ARMControlsFileURI = "https://azsdkossep.azureedge.net/1.0.0/ARMControls.json";
-	static [string] $RecommendationURI = "https://azsdkossep.azureedge.net/recmnds/r.json ";
 	static [string] $AttestationReadMsg = "`r`nControl results may not reflect attestation if you do not have permissions to read attestation data from "
 	static [string] $OrgNameCSEO= "CSE"
 	static [string] $OrgNameOSS= "org-neutral"
@@ -215,11 +213,15 @@ class Constants
 
 	# LogAnalytics view file name
 	static [string] $LogAnalyticsGenericView = "AZSK.AM.LogAnalytics.GenericView.V6.lawsview"
+	# Constant for ARMChecker
+	static [string] $ARMControlsFileURI = "{0}/1.0.0/ARMControls.json";
+	# Constant for Security Recommendation Report
+	static [string] $RecommendationURI = "{0}/recmnds/r.json ";
 	# Constants for in cluster CA scanning
-	static [string] $DatabricksScanJobConfigurationUrl = "https://azsdkossep.azureedge.net/incluster_configuration/DatabricksConfiguration.json"
-	static [string] $DatabricksCANotebookUrl = "https://azsdkossep.azureedge.net/incluster_configuration/AzSK_DB.ipynb"
-	static [string] $HDInsightCANotebookUrl = "https://azsdkossep.azureedge.net/incluster_configuration/AzSK_HDI.ipynb"
-	static [string] $AzSKPyInstallUrl = "https://azsdkossep.azureedge.net/incluster_configuration/pipinstall.sh"
-	static [string] $AzSKPyUninstallUrl = "https://azsdkossep.azureedge.net/incluster_configuration/uninstall.sh"
-	static [string] $AKSBaseConfigurationUrl = "https://azsdkossep.azureedge.net/incluster_configuration/"
+	static [string] $DatabricksScanJobConfigurationUrl = "{0}/incluster_configuration/DatabricksConfiguration.json"
+	static [string] $DatabricksCANotebookUrl = "{0}/incluster_configuration/AzSK_DB.ipynb"
+	static [string] $HDInsightCANotebookUrl = "{0}/incluster_configuration/AzSK_HDI.ipynb"
+	static [string] $AzSKPyInstallUrl = "{0}/incluster_configuration/pipinstall.sh"
+	static [string] $AzSKPyUninstallUrl = "{0}/incluster_configuration/uninstall.sh"
+	static [string] $AKSBaseConfigurationUrl = "{0}/incluster_configuration/"
 }

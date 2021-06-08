@@ -2375,7 +2375,18 @@ class SubscriptionCore: AzSVTBase
 				
 				if ([Helpers]::CheckMember($response,"displayName") -and ([Helpers]::CheckMember($response,"objectId")))
 				{
-					$allPrivSPNOwners+= [PSCustomObject]@{"SPNOwnerObjectId"= $response.objectId;"DisplayName" = $response.displayName;"SPNObjectId" = $spnOid; "UserPrincipalName" = $response.userPrincipalName; "SPNScope" = $_.Scope; "SPNRole" = $_.RoleDefinitionName}
+					$spnOwner = [PSCustomObject]@{"SPNOwnerObjectId"= $response.objectId;"DisplayName" = $response.displayName;"SPNObjectId" = $spnOid; "SPNScope" = $_.Scope; "SPNRole" = $_.RoleDefinitionName}
+
+					if ([Helpers]::CheckMember($response, "userPrincipalName"))
+					{
+						Add-Member -InputObject $spnOwner -Name "UserPrincipalName" -MemberType NoteProperty -Value $response.userPrincipalName
+					}
+					else
+					{
+						Add-Member -InputObject $spnOwner -Name "UserPrincipalName" -MemberType NoteProperty -Value "User Principal Name Not Found"
+					}
+
+					$allPrivSPNOwners += $spnOwner
 				}
 			}
 		
