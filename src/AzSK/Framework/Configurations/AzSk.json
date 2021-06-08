@@ -32,15 +32,15 @@
    "AzSKLocation": "eastus2",
    "PrivacyAcceptedSources": [],
    "UpdateToLatestVersion": false,
-   "AzSKConfigURL": "https://azsdkossep.azureedge.net/1.0.0/AzSK.Pre.json",
+   "AzSKConfigURL": "https://raw.githubusercontent.com/azsk/DevOpsKit/master/src/oss-config/1.0.0/AzSK.Pre.json",
    "IsAlertMonitoringEnabled": false,
    "SupportDL": "azsksupext@microsoft.com",
   "PolicyOrgName": "org-neutral",
   "StoreComplianceSummaryInUserSubscriptions": false,
-  "SchemaTemplateURL": "https://azsdkossep.azureedge.net/schemas/3.1803.0/",
+  "SchemaTemplateURL": "https://raw.githubusercontent.com/azsk/DevOpsKit/master/src/oss-config/schemas/3.1803.0/",
   "AzSKInitiativeName":"AzSKInitiative-Preview",
   "AzSKSecurityCenterInitiativeName": "1f3afdf9-d0c9-4c3d-847f-89da613e70a8",
   "EnableAzurePolicyBasedScan" : false,
-  "DefaultOrgNeutralPolicyServerURL" : "#DefaultOrgNeutralPolicyServerURL#",
+  "DefaultOrgNeutralPolicyServerURL" : "https://raw.githubusercontent.com/azsk/DevOpsKit/master/src/oss-config",
   "SunsetMessage": ""
 }
