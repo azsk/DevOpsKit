@@ -6,7 +6,7 @@ class KeyVault: AzSVTBase
     hidden [PSObject[]] $AllEnabledKeys = $null;
     hidden [PSObject[]] $AllEnabledSecrets = $null;
 	hidden [boolean] $HasFetchKeysPermissions=$false;
-	hidden [boolean] $HasFetchSecretsPermissions=$true;
+	hidden [boolean] $HasFetchSecretsPermissions=$false;
 	hidden [PSObject[]] $AllApplicationsList = $null;
 	hidden [PSObject[]] $AADApplicationsList = $null;
 	hidden [boolean] $ErrorWhileFetchingApplicationDetails = $false;
@@ -717,14 +717,25 @@ class KeyVault: AzSVTBase
 				try 
 				{
 					$keysResult = @();
-					$keysResult += Get-AzKeyVaultKey -VaultName $this.ResourceContext.ResourceName -ErrorAction Stop | 
-									Where-Object { $_.Enabled -eq $true };
-					
+					if ($this.HasFetchKeysPermissions -eq $true)
+					{
+						$keysResult += Get-AzKeyVaultKey -VaultName $this.ResourceContext.ResourceName -ErrorAction Stop | 
+						Where-Object { $_.Enabled -eq $true };
+					}
+
 					$secretsResult = @();
-					$secretsResult += Get-AzKeyVaultSecret -VaultName $this.ResourceContext.ResourceName -ErrorAction Stop | 
-									Where-Object { $_.Enabled -eq $true };
-				
-					if ($keysResult.Count -eq 0 -and $secretsResult.Count -eq 0) 
+					if ($this.HasFetchSecretsPermissions -eq $true)
+					{
+						$secretsResult += Get-AzKeyVaultSecret -VaultName $this.ResourceContext.ResourceName -ErrorAction Stop | 
+						Where-Object { $_.Enabled -eq $true };
+					}
+
+					if (($this.HasFetchKeysPermissions -eq $false) -or ($this.HasFetchSecretsPermissions -eq $false))
+					{
+						$controlResult.AddMessage([VerificationResult]::Manual,
+							[MessageData]::new("Read access is required on Key Vault Secrets and Keys to validate the number of secrets and keys."));
+					}
+					elseif ($keysResult.Count -eq 0 -and $secretsResult.Count -eq 0) 
 					{
 						$controlResult.AddMessage( [VerificationResult]::Passed,
 						[MessageData]::new("No Keys and Secrets are enabled for Key Vault - ["+ $this.ResourceContext.ResourceName +"]"));   

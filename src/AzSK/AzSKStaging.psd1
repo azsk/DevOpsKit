@@ -142,7 +142,6 @@
         'Get-AzSKARMTemplateSecurityStatus',
         'Clear-AzSKSessionState',
 		'Update-AzSKPersistedState'
-        'Get-AzSKSecurityRecommendationReport',
         'Set-AzSKPIMConfiguration',
         'Get-AzSKPIMConfiguration',
         'Get-AzSKContinuousAssuranceForCluster',
