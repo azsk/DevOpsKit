@@ -2627,7 +2627,7 @@ class CCAutomation: AzCommandBase
 		$this.PublishCustomMessage("This command will delete resources in your subscription [$($this.SubscriptionContext.SubscriptionId)] which were installed by AzSK",[MessageType]::Warning);
 		$messages += [MessageData]::new("This command will delete resources in your subscription [$($this.SubscriptionContext.SubscriptionId)] which were installed by AzSK",[MessageType]::Warning);
 		$azureContext = [ContextHelper]::GetCurrentRMContext()
-		$this.PublishCustomMessage(" `r`n"+"Step 1 of 3: Validating whether user [$($azureContext.Account.Id)] has the required permissions..."+" `r`n",[MessageType]::Default);
+		$this.PublishCustomMessage(" `r`n"+"Step 1 of 3: Validating whether user [$($azureContext.Account.Id)] has owner or admin permissions..."+" `r`n",[MessageType]::Default);
 		# Safe Check: Checking whether the current account is of type User
 		if($azureContext.Account.Type -ne "User")
 		{
@@ -3381,31 +3381,36 @@ class CCAutomation: AzCommandBase
 		}
 		$this.PublishCustomMessage([Constants]::SingleDashLine);
 		# Next Steps
-		$this.PublishCustomMessage([Constants]::DoubleDashLine + "`n*** Next steps ***", [MessageType]::Info);
+		$this.PublishCustomMessage( [Constants]::DoubleDashLine + "`nHere are some follow-up steps you may need to take:", [MessageType]::Info);
+		
 		$success = $true
+		$index = 1
 		if(-not $azskRGDeleted)
 		{
-			$this.PublishCustomMessage("[$($azskRGName)] is not removed from subscription, please look at the wanrings/errors listed above after step #3." `
+			$this.PublishCustomMessage("`r`n$($index).[$($azskRGName)] is not removed from subscription, please look at the warings/errors listed above after step #3." `
 			+ "`n`ta) If there is any Non-AzSK resources present in $($azskRGName), please remove/delete those resources using Azure portal." `
 			+ "`n`tb) If there is any error occurred while deleting AzSK resources, please look at the error details to resolve or try deleting such resources from Azure portal." `
 			+ "`n`tc) If you choose to skip deletion of selected resourecs then no further action needed.");
 			$success = $success -and $false
+			$index= $index + 1
 		}
 		
 		if($aadApp -and -not($aadAppDeleted))
 		{
-			$this.PublishCustomMessage("AAD application [$($aadApp.DisplayName)] is not deleted." `
+			$this.PublishCustomMessage("`r`n`r`n$($index).AAD application [$($aadApp.DisplayName)] is not deleted." `
 			+ "`n`ta) You may not have owner permission on the application, please request owner of the application to delete using Azure portal." `
 			+ "`n`tb) If you choose to skip deletion of AAD Application then no further action needed.");
 			$success = $success -and $false
+			$index= $index + 1
 		}
 	
 		if($azskRoleAssignments -and -not($roleAssignmentRemoved))
 		{
-			$this.PublishCustomMessage("Role assignment of AzSK CA SPN is not successfully removed." `
+			$this.PublishCustomMessage("`r`n`r`n$($index).Role assignment of AzSK CA SPN is not successfully removed." `
 			+ "`n`ta) Please look at the error details above for more details or you can also remove role assignment using Azure portal." `
 			+ "`n`tb) If you choose to skip deletion of CA SPN's role assignments then no further action needed.");
 			$success = $success -and $false
+			$index= $index + 1
 		}
 	
 		if($success)

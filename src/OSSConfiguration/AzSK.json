@@ -1,4 +1,4 @@
 {  
   "IsAlertMonitoringEnabled": false,
-  "SunsetMessage": "Your AzSK setup is using a policy endpoint that may be deprecated soon as part of AzSK sunset. Please use steps here: https://aka.ms/devopskit/sunset/osspolicy to use a stable policy store location."
+  "SunsetMessage": "**Important**: Your AzSK setup is using a policy endpoint that may be deprecated soon as part of AzSK sunset. Please use steps here: https://aka.ms/devopskit/sunset/osspolicy to use a stable policy store location."
 }

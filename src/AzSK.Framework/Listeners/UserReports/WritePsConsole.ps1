@@ -603,15 +603,28 @@ class WritePsConsole: FileOutputBase
             $this.WriteMessage("Method Name: $methodName `r`nInput Parameters: $(($this.InvocationContext.BoundParameters | Out-String).TrimEnd()) `r`n" + [Constants]::DoubleDashLine , [MessageType]::Info);                           
         }
 		
-
-		$this.WriteMessage([ConfigurationManager]::GetAzSKConfigData().PolicyMessage,[MessageType]::Warning)
-		# Show sunset/warning message if present in org policy
-		$SunsetMessage = [ConfigurationManager]::GetAzSKConfigData().SunsetMessage
-		if(-not [string]::IsNullOrWhiteSpace($SunsetMessage))
+		$showSunsetMessage= $false;
+		if([ConfigurationManager]::GetAzSKConfigData().PolicyOrgName -eq [Constants]::OrgNameCSEO)
 		{
-			$this.WriteMessage($SunsetMessage,[MessageType]::Warning)
+			if(($methodName -and $methodName -ne 'rca') -or ($aliasName -and $aliasName -ne 'RCA'))
+			{
+				$showSunsetMessage =$true
+			}
 		}
 		
+
+		$this.WriteMessage([ConfigurationManager]::GetAzSKConfigData().PolicyMessage,[MessageType]::Warning)
+		
+		if($showSunsetMessage)
+		{
+			# Show sunset/warning message if present in org policy
+			$SunsetMessage = [ConfigurationManager]::GetAzSKConfigData().SunsetMessage
+			if(-not [string]::IsNullOrWhiteSpace($SunsetMessage))
+			{
+				$this.WriteMessage("`r`n`r`n$($SunsetMessage)",[MessageType]::Warning)
+			}
+		}
+				
 	}
 
 	hidden [string] GetShortCommand($aliasName,$paramlist)
