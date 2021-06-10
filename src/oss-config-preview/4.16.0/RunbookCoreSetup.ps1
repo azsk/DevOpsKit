@@ -532,7 +532,7 @@ PublishEvent -EventName "CA Setup Started"
 Write-Output("CS: Starting core setup...")
 
 ###Config start--------------------------------------------------
-$AzSKModuleName = "AzSK"
+$AzSKModuleName = "AzSKPreview"
 $RunbookName = "Continuous_Assurance_Runbook"
 
 #These get set as constants during the build process (e.g., AzSKStaging will have a diff URL)
@@ -543,7 +543,7 @@ $retryDownloadIntervalMins = 10
 $monitorjobIntervalMins = 45
 #This gets replaced when org-policy is created/updated. This is the org-specific
 #url that helps bootstrap which module version to use within an org setup
-$azskVersionForOrg = "https://azsdkossep.azureedge.net/1.0.0/AzSK.Pre.json"
+$azskVersionForOrg = "https://raw.githubusercontent.com/azsk/DevOpsKit/master/src/oss-config-preview/1.0.0/AzSK.Pre.json"
 
 #We use this to check if another job is running...
 $Global:FoundExistingJob = $false;
