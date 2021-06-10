@@ -3387,7 +3387,7 @@ class CCAutomation: AzCommandBase
 		$index = 1
 		if(-not $azskRGDeleted)
 		{
-			$this.PublishCustomMessage("`r`n$($index).[$($azskRGName)] is not removed from subscription, please look at the warings/errors listed above after step #3." `
+			$this.PublishCustomMessage(" `r`n"+"$($index).[$($azskRGName)] is not removed from subscription, please look at the warings/errors listed above after step #3." `
 			+ "`n`ta) If there is any Non-AzSK resources present in $($azskRGName), please remove/delete those resources using Azure portal." `
 			+ "`n`tb) If there is any error occurred while deleting AzSK resources, please look at the error details to resolve or try deleting such resources from Azure portal." `
 			+ "`n`tc) If you choose to skip deletion of selected resourecs then no further action needed.");
@@ -3397,7 +3397,7 @@ class CCAutomation: AzCommandBase
 		
 		if($aadApp -and -not($aadAppDeleted))
 		{
-			$this.PublishCustomMessage("`r`n`r`n$($index).AAD application [$($aadApp.DisplayName)] is not deleted." `
+			$this.PublishCustomMessage(" `r`n"+"$($index).AAD application [$($aadApp.DisplayName)] is not deleted." `
 			+ "`n`ta) You may not have owner permission on the application, please request owner of the application to delete using Azure portal." `
 			+ "`n`tb) If you choose to skip deletion of AAD Application then no further action needed.");
 			$success = $success -and $false
@@ -3406,7 +3406,7 @@ class CCAutomation: AzCommandBase
 	
 		if($azskRoleAssignments -and -not($roleAssignmentRemoved))
 		{
-			$this.PublishCustomMessage("`r`n`r`n$($index).Role assignment of AzSK CA SPN is not successfully removed." `
+			$this.PublishCustomMessage(" `r`n"+"$($index).Role assignment of AzSK CA SPN is not successfully removed." `
 			+ "`n`ta) Please look at the error details above for more details or you can also remove role assignment using Azure portal." `
 			+ "`n`tb) If you choose to skip deletion of CA SPN's role assignments then no further action needed.");
 			$success = $success -and $false

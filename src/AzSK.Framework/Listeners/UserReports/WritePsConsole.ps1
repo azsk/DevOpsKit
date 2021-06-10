@@ -603,16 +603,26 @@ class WritePsConsole: FileOutputBase
             $this.WriteMessage("Method Name: $methodName `r`nInput Parameters: $(($this.InvocationContext.BoundParameters | Out-String).TrimEnd()) `r`n" + [Constants]::DoubleDashLine , [MessageType]::Info);                           
         }
 		
-		$showSunsetMessage= $false;
-		if([ConfigurationManager]::GetAzSKConfigData().PolicyOrgName -eq [Constants]::OrgNameCSEO)
-		{
-			if(($methodName -and $methodName -ne 'rca') -or ($aliasName -and $aliasName -ne 'RCA'))
+		$showSunsetMessage= $true;
+		try{
+			if([ConfigurationManager]::GetAzSKConfigData().PolicyOrgName -eq [Constants]::OrgNameCSEO)
 			{
-				$showSunsetMessage =$true
+				$paramlist = @()
+				$paramlist = $this.GetParamList()
+				if($methodName -and $paramlist)
+				{
+					if(($methodName -eq 'RCA' -or $methodName -eq 'Remove-AzSKContinuousAssurance')`
+						-and ($paramlist | where-object{$_.Name -eq "CleanUpAllAzSKResources"}))
+					{
+						$showSunsetMessage =$false
+					}
+				}
 			}
 		}
-		
-
+		catch{
+			#no need to break execution 
+		}
+				
 		$this.WriteMessage([ConfigurationManager]::GetAzSKConfigData().PolicyMessage,[MessageType]::Warning)
 		
 		if($showSunsetMessage)
@@ -621,7 +631,7 @@ class WritePsConsole: FileOutputBase
 			$SunsetMessage = [ConfigurationManager]::GetAzSKConfigData().SunsetMessage
 			if(-not [string]::IsNullOrWhiteSpace($SunsetMessage))
 			{
-				$this.WriteMessage("`r`n`r`n$($SunsetMessage)",[MessageType]::Warning)
+				$this.WriteMessage(" `r`n"+"$($SunsetMessage)",[MessageType]::Warning)
 			}
 		}
 				
