@@ -530,7 +530,6 @@ $Global:isAzAvailable = $true
 $setupTimer = [System.Diagnostics.Stopwatch]::StartNew();
 PublishEvent -EventName "CA Setup Started"
 Write-Output("CS: Starting core setup...")
-Write-Output("CS: Running from Github policy server...")
 
 ###Config start--------------------------------------------------
 $AzSKModuleName = "AzSK"
@@ -544,7 +543,7 @@ $retryDownloadIntervalMins = 10
 $monitorjobIntervalMins = 45
 #This gets replaced when org-policy is created/updated. This is the org-specific
 #url that helps bootstrap which module version to use within an org setup
-$azskVersionForOrg = "https://azsdkossep.azureedge.net/1.0.0/AzSK.Pre.json"
+$azskVersionForOrg = "https://raw.githubusercontent.com/azsk/DevOpsKit/master/src/oss-config/1.0.0/AzSK.Pre.json"
 
 #We use this to check if another job is running...
 $Global:FoundExistingJob = $false;
