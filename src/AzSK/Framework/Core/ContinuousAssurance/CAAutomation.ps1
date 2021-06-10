@@ -3266,7 +3266,7 @@ class CCAutomation: AzCommandBase
 				if (($deletedResources | Measure-Object).Count -gt 0)
 				{
 					$this.PublishCustomMessage("`r`n"+"Waiting for resource deletion...", [MessageType]::Warning);
-					Start-Sleep -Seconds 10
+					Start-Sleep -Seconds 20
 				}
 				$allResources = Get-AzResource -ResourceGroupName $azskRGName
 	
