@@ -2640,8 +2640,8 @@ class CCAutomation: AzCommandBase
 	
 		if(($currentLoginRoleAssignments | Where-Object { $_.RoleDefinitionName -eq "Owner" -or $_.RoleDefinitionName -match 'CoAdministrator' -or $_.RoleDefinitionName -like '*ServiceAdministrator*'} | Measure-Object).Count -le 0)
 		{
-			$this.PublishCustomMessage("WARNING: This command can only be run by an Owner of subscription.",[MessageType]::Warning);
-			$messages += [MessageData]::new("WARNING: This command can only be run by an Owner of subscription.",[MessageType]::Warning);
+			$this.PublishCustomMessage("WARNING: This command can only be run by  owner or admin of subscription.",[MessageType]::Warning);
+			$messages += [MessageData]::new("WARNING: This command can only be run by owner or admin of subscription.",[MessageType]::Warning);
 			return $messages;
 		}
 		else{
@@ -3387,7 +3387,7 @@ class CCAutomation: AzCommandBase
 		$index = 1
 		if(-not $azskRGDeleted)
 		{
-			$this.PublishCustomMessage(" `r`n"+"$($index).[$($azskRGName)] is not removed from subscription, please look at the warings/errors listed above after step #3." `
+			$this.PublishCustomMessage(" `r`n"+"$($index).[$($azskRGName)] is not removed from subscription, please look at the warnings/errors listed above after step #3." `
 			+ "`n`ta) If there is any Non-AzSK resources present in $($azskRGName), please remove/delete those resources using Azure portal." `
 			+ "`n`tb) If there is any error occurred while deleting AzSK resources, please look at the error details to resolve or try deleting such resources from Azure portal." `
 			+ "`n`tc) If you choose to skip deletion of selected resourecs then no further action needed.");
