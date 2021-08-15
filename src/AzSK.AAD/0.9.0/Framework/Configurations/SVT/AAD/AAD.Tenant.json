@@ -1,0 +1,370 @@
+{
+    "FeatureName":  "Tenant",
+    "Reference":  "aka.ms/azsktcp/tenant",
+    "IsMaintenanceMode":  false,
+  "Controls": [
+    {
+      "ControlID": "AAD_Tenant_RBAC_Grant_Limited_Access_To_Guests",
+      "Description": "Guests must not be granted full access to the directory",
+      "Id": "Tenant110",
+      "ControlSeverity": "High",
+      "Automated": "Yes",
+      "MethodName": "CheckGuestsHaveLimitedAccess",
+      "Rationale": "Guest users are normally external users who have been invited to the tenant for conducting specific activities. In keeping with the principle of least privilege, Guest users should be allowed limited access to the directory.",
+      "Recommendation": "Refer: https://docs.microsoft.com/ TODO",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Automated",
+        "RBAC"
+      ],
+      "Enabled": true
+    },
+    {
+      "ControlID": "AAD_Tenant_RBAC_Dont_Permit_Guests_To_Invite_Guests",
+      "Description": "Guests must not be allowed to invite other guests",
+      "Id": "Tenant111",
+      "ControlSeverity": "High",
+      "Automated": "Yes",
+      "MethodName": "CheckGuestsIfCanInvite",
+      "Rationale": "Privileges granted to Guest members need to be limited. Allowing Guests to invite other guests dilutes the least privilege desired for such users.",
+      "Recommendation": "Refer: https://docs.microsoft.com/ TODO",
+      "Tags": [
+        "SDL",
+        "TCP",
+        "Automated",
+        "RBAC"
+      ],
+      "Enabled": true
+    },
+    {
+        "ControlID": "AAD_Tenant_MFA_Required_For_Admins",
+        "Description": "Admins must use baseline MFA policy",
+        "Id": "Tenant120",
+        "ControlSeverity": "High",
+        "Automated": "Yes",
+        "MethodName": "CheckBaselineMFAPolicyForAdmins",
+        "Rationale": "Multi-factor authentication significantly reduces the likelihood of account compromise via various password-stealing/cracking attacks. While enabling this is recommended for all users, it is something that tenant admins must absolutely use because a comrpomise of a single admin password effectively renders the entire directory to the mercy of the attacker.",
+        "Recommendation": "Go to..TODO",
+        "Tags": [
+          "SDL",
+          "TCP",
+          "Automated",
+          "AuthN"
+        ],
+        "Enabled": true
+      },
+      {
+          "ControlID": "AAD_Tenant_Apps_Dont_Allow_Users_To_Create_Apps",
+          "Description": "Do not permit users to create apps in tenant",
+          "Id": "Tenant130",
+          "ControlSeverity": "High",
+          "Automated": "Yes",
+          "MethodName": "CheckUserPermissionsToCreateApps",
+          "Rationale": "An application in the tenant can introduce pathways through which tenant data can be accessed by users of the application. Care needs to be exercised in ensuring that only carefully scrutinized applications are created (and subsequently maintained) in the tenant. As a default, it is better to not permit regular users to create applications.",
+          "Recommendation": "Go to..TODO",
+          "Tags": [
+            "SDL",
+            "TCP",
+            "Automated",
+            "AuthZ"
+          ],
+          "Enabled": true
+        },
+        {
+          "ControlID": "AAD_Tenant_RBAC_Dont_Allow_Users_To_Invite_Guests",
+          "Description": "Do not permit users to invite guests to the tenant",
+          "Id": "Tenant140",
+          "ControlSeverity": "High",
+          "Automated": "Yes",
+          "MethodName": "CheckUserPermissionToInviteGuests",
+          "Rationale": "Guest users are created in the tenant for enabling certain limited access scenarios (e.g., to facilitate collaboration in a specific project, etc.). Due governance must be exercised over creation and management of Guest accounts. As a default, it is a good practice to not permit regular users to invite Guests.",
+          "Recommendation": "Go to..TODO",
+          "Tags": [
+            "SDL",
+            "TCP",
+            "Automated",
+            "AuthZ"
+          ],
+          "Enabled": true
+        },
+        {
+          "ControlID": "AAD_Tenant_SSPR_Require_Min_Questions_To_Reset",
+          "Description": "At least 3 questions should be required for password reset",
+          "Id": "Tenant150",
+          "ControlSeverity": "Medium",
+          "Automated": "Yes",
+          "MethodName": "CheckMinQuestionsForSSPR",
+          "Rationale": "It is important to ensure that a password reset cannot be carried out by someone posing to be a specific user. By involving multiple fact-checking questions, high levels of assurance can be reached before a password reset is permitted.",
+          "Recommendation": "Go to..TODO-sspr",
+          "Tags": [
+            "SDL",
+            "TCP",
+            "Automated",
+            "AuthN",
+            "SSPR"
+          ],
+          "Enabled": true
+        },   
+        {
+          "ControlID": "AAD_Tenant_SSPR_Enable_User_Notification_On_Password_Reset",
+          "Description": "Users must be notified upon password reset",
+          "Id": "Tenant160",
+          "ControlSeverity": "Medium",
+          "Automated": "Yes",
+          "MethodName": "CheckUserNotificationUponSSPR",
+          "Rationale": "Attempts to reset password (whether successful or not) should be considered a sensitive activity. It is important to notify the user at their email account in the tenant about this. This can alert the user in a timely manner if the password reset was not initiated by them.",
+          "Recommendation": "Go to..TODO-sspr",
+          "Tags": [
+            "SDL",
+            "TCP",
+            "Automated",
+            "AuthN",
+            "SSPR"
+          ],
+          "Enabled": true
+        },
+        {
+          "ControlID": "AAD_Tenant_SSPR_Enable_Admin_Notify_On_Admin_Password_Reset",
+          "Description": "All admins must be notified upon any admin password reset",
+          "Id": "Tenant170",
+          "ControlSeverity": "High",
+          "Automated": "Yes",
+          "MethodName": "CheckAdminNotificationUponSSPR",
+          "Rationale": "A password reset flow initiated by an admin is a highly sensitive activity. All admins should be notified about it (whether the attempt was successful or not). A timely notification to other admins can help salvage a situation where an attacker is attempting a password reset posing as one of the admins.",
+          "Recommendation": "Go to..TODO-sspr",
+          "Tags": [
+            "SDL",
+            "TCP",
+            "Automated",
+            "AuthN",
+            "SSPR"
+          ],
+          "Enabled": true
+        },
+        {
+          "ControlID": "AAD_Tenant_Misc_Set_Security_Contact_Info",
+          "Description": "Security compliance notification phone and email must be set",
+          "Id": "Tenant180",
+          "ControlSeverity": "Medium",
+          "Automated": "Yes",
+          "MethodName": "CheckTenantSecurityContactInfoIsSet",
+          "Rationale": "Setting up security contact notification details ensures that in the event of a security incident, responsible parties can be reached quickly.",
+          "Recommendation": "Refer: https://docs.microsoft.com/ TODO",
+          "Tags": [
+            "SDL",
+            "TCP",
+            "Automated",
+            "RBAC"
+          ],
+          "Enabled": true
+        },
+        {
+          "ControlID": "AAD_Tenant_Device_Require_MFA_For_Join",
+          "Description": "Enable 'require MFA' for joining devices to tenant",
+          "Id": "Tenant190",
+          "ControlSeverity": "Medium",
+          "Automated": "Yes",
+          "MethodName": "CheckRequireMFAForJoin",
+          "Rationale": "Joining devices to a tenant should be treated as a sensitive activity. Requiring multi-factor authentication ensures that there is a higher level of assurance and accountability involved in the process.",
+          "Recommendation": "Refer: TODO",
+          "Tags": [
+            "SDL",
+            "TCP",
+            "Manual",
+            "AuthZ",
+            "RBAC"
+          ],
+          "Enabled": true
+        },
+        {
+          "ControlID": "AAD_Tenant_Device_Set_Max_Per_User_Limit",
+          "Description": "Set a max device limit for users in the tenant",
+          "Id": "Tenant200",
+          "ControlSeverity": "Medium",
+          "Automated": "Yes",
+          "MethodName": "CheckMaxDeviceLimitSet",
+          "Rationale": "If users do not have any restriction on the number of devices they can add, it leads to bloat and collection of stale entries. Moreover, forcing a reasonable limit also ensures that users regularly removed outdated and potential weaker security platform devies from the directory when they add newer ones.",
+          "Recommendation": "Refer: TODO",
+          "Tags": [
+            "SDL",
+            "TCP",
+            "Manual",
+            "AuthZ",
+            "RBAC"
+          ],
+          "Enabled": true
+        },
+        {
+          "ControlID": "AAD_Tenant_MFA_Review_Bypassed_Users",
+          "Description": "Review list of current 'MFA-bypassed' users in the tenant",
+          "Id": "Tenant180",
+          "ControlSeverity": "High",
+          "Automated": "Yes",
+          "MethodName": "MFAReviewBypassedUsers",
+          "Rationale": "When multi-factor authentication is required for users across the tenant, any exceptions should be carefully scrutinized and kept limited in number and time. This is because in that interval, such user accounts represent a risk to the tenant because of the higher exposure to password-theft attacks.",
+          "Recommendation": "Go to..TODO-mfa",
+          "Tags": [
+            "SDL",
+            "TCP",
+            "Automated",
+            "AuthN"
+          ],
+          "Enabled": true
+        },
+        {
+          "ControlID": "AAD_Tenant_MFA_Allow_Users_To_Notify_About_Fraud",
+          "Description": "Allow users to send notifications about possible fraud",
+          "Id": "Tenant190",
+          "ControlSeverity": "Medium",
+          "Automated": "Yes",
+          "MethodName": "MFACheckUsersCanNotifyFraud",
+          "Rationale": "Security is every tenant members responsibility. Allowing users to send notification about possible fraudulent activity encourages their participation in keeping the tenant secure.",
+          "Recommendation": "Go to..TODO-mfa",
+          "Tags": [
+            "SDL",
+            "TCP",
+            "Automated",
+            "AuthN"
+          ],
+          "Enabled": true
+        },
+        {
+          "ControlID": "AAD_Tenant_SSPR_Require_Min_AuthN_Methods",
+          "Description": "Require at least two authentication methods for password reset",
+          "Id": "Tenant200",
+          "ControlSeverity": "High",
+          "Automated": "Yes",
+          "MethodName": "SSPRMinAuthNMethodsRequired",
+          "Rationale": "It is important to ensure that a password reset cannot be carried out by someone posing to be a specific user. By requiring at least two different methods of verification, a higher level of assurance can be reached before a password reset is permitted.",
+          "Recommendation": "Go to..TODO-sspr",
+          "Tags": [
+            "SDL",
+            "TCP",
+            "Automated",
+            "AuthN",
+            "SSPR"
+          ],
+          "Enabled": true
+        },
+        {
+          "ControlID": "AAD_Tenant_Apps_Regulate_Data_Access_Approval",
+          "Description": "Do not allow users to approve tenant data access for external apps",
+          "Id": "Tenant210",
+          "ControlSeverity": "High",
+          "Automated": "Yes",
+          "MethodName": "CheckTenantDataAccessForApps",
+          "Rationale": "Third-party apps often request permission to access data about users in the tenant. It is important to perform due diligence before this permission is granted to such apps. Do not allow regular users to grant this permission to apps.",
+          "Recommendation": "Go to..TODO-apps-da",
+          "Tags": [
+            "SDL",
+            "TCP",
+            "Automated",
+            "AuthZ"
+          ],
+          "Enabled": true
+        },
+        {
+          "ControlID": "AAD_Tenant_RBAC_Keep_Min_Global_Admins",
+          "Description": "Include at least three members in global admin role",
+          "Id": "Tenant220",
+          "ControlSeverity": "High",
+          "Automated": "Yes",
+          "MethodName": "CheckEnoughGlobalAdmins",
+          "Rationale": "TODO-rbac-min-3-admins.",
+          "Recommendation": "The global (company) admin role is super critical in the context of an AAD tenant. It is important to ensure that there is enough redundancy to cater to any kind of exigency. Ensuring that at least 3 different people can perform the activities corresponding to this role makes for good contingency planning in the context of tenant management and administration.",
+          "Tags": [
+            "SDL",
+            "TCP",
+            "Automated",
+            "AuthZ"
+          ],
+          "Enabled": true
+        },
+        {
+          "ControlID": "AAD_Tenant_RBAC_Dont_Have_Guests_As_Global_Admins",
+          "Description": "Guest users must not be made members of global admin role",
+          "Id": "Tenant230",
+          "ControlSeverity": "High",
+          "Automated": "Yes",
+          "MethodName": "CheckNoGuestsInGlobalAdminRole",
+          "Rationale": "Guest users are normally external users who have been invited to the tenant for conducting specific activities. In keeping with the principle of least privilege, Guest users should be allowed limited access to the directory. In particular, Guest should not be made members of any directory administration roles...in the particular 'Global Admin' role.",
+          "Recommendation": "Go to..TODO-RBAC-no-guest-admins",
+          "Tags": [
+            "SDL",
+            "TCP",
+            "Automated",
+            "AuthN"
+          ],
+          "Enabled": true
+        },
+        {
+          "ControlID": "AAD_Tenant_AuthN_Use_Custom_Banned_Passwords",
+          "Description": "Ensure that custom banned passwords list is configured for use",
+          "Id": "Tenant240",
+          "ControlSeverity": "Medium",
+          "Automated": "Yes",
+          "MethodName": "CheckCustomBannedPasswordConfig",
+          "Rationale": "Although AAD uses a common 'banned passwords' list, user accounts in your tenant will be more secure if you configure additional passwords that are locality/region specific. The 'custom banned passwords' feature supports this requirement.",
+          "Recommendation": "Go to..TODO-RBAC-custom-banned-pswd-config",
+          "Tags": [
+            "SDL",
+            "TCP",
+            "Automated",
+            "AuthN"
+          ],
+          "Enabled": true
+        },
+        {
+          "ControlID": "AAD_Tenant_AuthN_Enforce_Banned_Passwords_OnPrem",
+          "Description": "Ensure that banned password check is enabled on-prem and set to 'Enforce' level",
+          "Id": "Tenant250",
+          "ControlSeverity": "Medium",
+          "Automated": "Yes",
+          "MethodName": "CheckOnPremBannedPasswordsEnforced",
+          "Rationale": "Use of banned passwords should be barred regardless of whether the user sets a password on-prem or in the cloud. Using the 'Enforce' mode as opposed to 'Audit' ensures that users will not be able to set banned passwords on-prem.",
+          "Recommendation": "Go to..TODO-AuthN-on-prem-banned-pswd",
+          "Tags": [
+            "SDL",
+            "TCP",
+            "Automated",
+            "AuthN"
+          ],
+          "Enabled": true
+        },
+        {
+          "ControlID": "AAD_Tenant_Privacy_Configure_Valid_Privacy_Contact",
+          "Description": "Ensure that tenant-wide privacy contact email is set to a valid (current) non-guest user",
+          "Id": "Tenant260",
+          "ControlSeverity": "High",
+          "Automated": "Yes",
+          "MethodName": "CheckPrivacyContactIsValid",
+          "Rationale": "A correct tenant-wide privacy contact setting ensures that internal/external users are aware of who should be contacted for resolution/clarification of privacy issues. This is also a regulatory requirement in most jurisdictions.",
+          "Recommendation": "Go to..TODO-Priv-contact-mail-valid",
+          "Tags": [
+            "SDL",
+            "TCP",
+            "Automated",
+            "Privacy"
+          ],
+          "Enabled": true
+        },
+        {
+          "ControlID": "AAD_Tenant_Privacy_Configure_Valid_Privacy_Statement",
+          "Description": "Ensure that a privacy statement is configured and points to a valid URL",
+          "Id": "Tenant270",
+          "ControlSeverity": "High",
+          "Automated": "Yes",
+          "MethodName": "CheckPrivacyStatementIsValid",
+          "Rationale": "The privacy disclosure/statement helps internal and external users understand how their personal data is processed by in the tenant/directory environment. This is also a regulatory requirement in most jurisdictions.",
+          "Recommendation": "Go to..TODO-Priv-contact-mail-valid",
+          "Tags": [
+            "SDL",
+            "TCP",
+            "Automated",
+            "Privacy"
+          ],
+          "Enabled": true
+        }
+      ]
+    }

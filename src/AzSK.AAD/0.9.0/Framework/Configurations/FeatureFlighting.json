@@ -1,0 +1,14 @@
+﻿{  
+  "Version": "3.1810.0",
+  "Features": [   
+    {
+      "Name": "EnableAzurePolicyBasedScan",
+      "Description" : "",
+      "Sources" : ["*"],
+      "EnabledForSubs": [],
+      "DisabledForSubs": [],      
+      "UnderPreview" : false,
+      "IsEnabled": false      
+    }
+  ]
+}
