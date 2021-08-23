@@ -232,7 +232,7 @@
       "ControlSeverity": "High",
       "Automated": "Yes",
       "MethodName": "CheckARMPolicyConfigured",
-      "Recommendation": "Run command 'Set-AzSKARMPolicies -Tags SDO' to set  ARM Policies. Run 'Get-Help Set-AzSKARMPolicies -full' for more help.",
+      "Recommendation": "Run command 'Set-AzSKARMPolicies -Tags SDL' to set  ARM Policies. Run 'Get-Help Set-AzSKARMPolicies -full' for more help.",
       "Tags": [
         "SDL",
         "TCP",
